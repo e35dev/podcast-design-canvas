@@ -86,6 +86,26 @@ Useful setup states include:
 
 These states should appear in audio review and publish readiness only when they affect the finished episode.
 
+## Cue Re-Validation
+
+A cue that was ready in an earlier export should not be trusted forever. Re-check each placed cue at the start of every new export, because the creator's clearance to use it can lapse and a source file can disappear between one publish and the next.
+
+Re-validation should compare a cue against two things that change over time:
+
+- whether the cue still has usage approval, meaning the creator's confirmation that this music is allowed in the finished episode, the same approval recorded when the cue was first set up
+- whether the chosen source file can still be loaded for this export
+
+When a previously ready cue no longer passes, return it to the matching setup state and tell the creator what changed in plain language, such as "The intro music no longer has usage approval for this episode" or "The outro music file can no longer be found." A cue should never silently fall back to silence or to a different track.
+
+Offer recovery without starting over:
+
+- renew approval for the same cue
+- relink the missing file to the same placement
+- replace with another approved cue in the same spot
+- remove the cue from this export
+
+Keep this re-check tied to export. A cue that stays a draft or sits unused in the library should not be re-validated or flagged until it would actually ship.
+
 ## Template Reuse
 
 Show templates may remember cue purpose, chosen asset, relative placement, and simple fade choices. Future episodes should re-check those cues against new chapter timing, speaker volume, sponsor reads, and episode length before treating them as ready.
