@@ -128,7 +128,7 @@ When separate speaker tracks would affect timing in the exported episode, readin
 
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
-| timing and alignment issues | `docs/speaker-sync-repair.md` | Detected Issues, Repair Actions |
+| timing and alignment issues | `docs/speaker-sync-repair.md` | Detected Issues, Creator Controls |
 | ingest handoff | `docs/episode-ingest-readiness.md` | Readiness Checks, Issue Resolution Mapping |
 | checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
 
@@ -148,7 +148,7 @@ When speaker labels would affect trust in exported captions, searchable transcri
 | --- | --- | --- |
 | wrong speaker labels and relabel actions | `docs/speaker-attribution-review.md` | When To Flag, Creator Controls, Review States |
 | caption review handoff | `docs/audio-caption-quality-review.md` | Review Flow |
-| sync-driven attribution problems | `docs/speaker-sync-repair.md` | Detected Issues, Repair Actions |
+| sync-driven attribution problems | `docs/speaker-sync-repair.md` | Detected Issues, Creator Controls |
 | checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping |
 
 Flag only attribution issues that affect the exported episode:
@@ -186,7 +186,7 @@ When raw speaker files would affect the exported episode, readiness should surfa
 
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
-| per-speaker file health | `docs/source-media-health.md` | Health Checks, Readiness Summary |
+| per-speaker file health | `docs/source-media-health.md` | Health Checks, Review States |
 | ingest handoff | `docs/episode-ingest-readiness.md` | Readiness Checks, Issue Resolution Mapping |
 | checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
 
