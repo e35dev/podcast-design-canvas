@@ -51,6 +51,19 @@ Each state should describe what happens in preview, export warnings, and the nex
 
 Safe areas should be saved with templates where appropriate, but each episode should re-check them against its actual speaker count, brand kit, and export destination.
 
+## Creator Controls
+
+Safe areas should be adjustable while staying tied to real episode content. The creator should be able to:
+
+- show or hide individual safe-area guides while designing the layout
+- resolve a flagged conflict by moving the caption, lower-third, logo, or sponsor mark out of the affected area
+- switch to an alternate layout for a destination crop when an element cannot fit safely
+- adjust a safe-area region for the current episode or save the change to the show template
+- re-check safe areas against a different export destination, speaker count, or brand kit
+- keep a deliberate overlap when the creator confirms it stays readable
+
+A safe-area change should re-check the affected moment and destination rather than applying a static guide everywhere.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes layout safety visible and reusable across presets, canvas editing, thumbnails, and exports. Close work that adds static guides without checking real episode content.
