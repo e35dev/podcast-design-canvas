@@ -28,6 +28,18 @@ Use simple controls:
 
 Avoid exposing raw transcript exports, HTML fields, SEO scoring, feed tags, or destination API settings in this path.
 
+## Preview Contexts
+
+Show notes that read well in the editor can fail on the destination where viewers actually see them, so the creator should preview the assembled notes before marking them ready:
+
+- the podcast app listing with title and description together
+- the chapter list as viewers will scroll it
+- guest links and sponsor disclosure in plain text
+- a mobile publish block where line breaks matter
+- the copy that will paste into the export package handoff
+
+Every context should use the confirmed chapter, guest, glossary, and sponsor content from this episode, so the creator judges one honest destination-ready format instead of a detached notes editor.
+
 ## Review States
 
 Use simple states:
