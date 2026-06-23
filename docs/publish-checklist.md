@@ -21,6 +21,10 @@ The checklist should summarize readiness from work already captured in the works
 
 The checklist should not duplicate full review screens. Each item should link to the place where the creator can fix it.
 
+## Checklist Approach
+
+The checklist is summary first: creators should see what still matters for the chosen destination and jump to the fixing surface—not re-review the whole episode or read pipeline status.
+
 ## Checklist Items
 
 Include creator-facing checks:
@@ -98,15 +102,27 @@ Unresolved approvals should link back to the exact moment, metadata field, or re
 
 ## Status
 
-Use simple states:
+The product should use checklist item status to drive export and handoff behavior:
 
-- ready
-- needs review
-- blocked
-- ignored
-- not needed
+- **ready** — the item is satisfied for the chosen destination; clear blocking on that item in `docs/export-readiness-review.md`
+- **needs review** — surface the publishing consequence and link to the fixing surface; keep export available only when the destination allows unresolved review items
+- **blocked** — stop export for required destination items, such as missing thumbnail, unresolved sponsor disclosure, or unavailable source media; link directly to the review surface
+- **ignored** — record the publishing consequence for that item, keep it visible in the checklist summary, and pass it through to `docs/export-package-handoff.md` without treating the underlying review work as resolved
+- **not needed** — hide only that checklist item for the chosen destination; do not clear unrelated caption, metadata, or sponsor warnings
 
-The checklist should explain why an item matters for the selected destination. Optional items must not block every show.
+Each state should describe what happens at export time for that item—not only the label on the checklist row.
+
+## Creator Controls
+
+Offer simple actions:
+
+- open the linked review surface
+- mark item ready, ignored, or not needed
+- change destination preset
+- open export readiness summary
+- start export or package handoff
+
+Avoid exposing encoder diagnostics, render queue status, or duplicate full review screens in the default checklist path.
 
 ## Completion
 
@@ -122,4 +138,4 @@ Completed exports should hand off to `docs/export-package-handoff.md`.
 
 ## Maintainer Acceptance Notes
 
-Accept work that gives creators confidence before final publishing. Close work that duplicates raw pipeline status, hides ignored warnings, or makes optional items feel mandatory for every show.
+Accept work that gives creators confidence before final publishing. Close work that duplicates raw pipeline status, hides ignored warnings, makes optional items feel mandatory for every show, or clears unrelated review work when one checklist item changes state.
