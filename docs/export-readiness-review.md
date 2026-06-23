@@ -126,6 +126,9 @@ Flag only audio issues that affect the exported episode:
 - cross-talk makes a needed answer hard to understand
 - long dead air remains where the conversation stops
 - a confirmed clarity or noise fix was not applied before this export
+- source audio missing or too quiet for an exported speaker track
+- source video missing where the layout expects video
+- source file marked unavailable still included in the export
 
 Each warning should link back to the speaker and moment where the creator can fix it, such as audio review, pause and cross-talk cleanup, or source media health. Music that covers speech stays with Placed Cue Warnings above, and natural pauses or intentional silence the creator chose to keep should not affect readiness.
 ## Contextual Visual Warnings
