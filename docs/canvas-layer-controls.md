@@ -51,7 +51,7 @@ The editor should make context visible enough to guide the creator, without turn
 Before a creator applies a layout across the episode or saves it as a reusable template, the canvas should surface the visible checks that already shape the surrounding workflow:
 
 - safe-area conflicts from `docs/layout-safe-areas.md` Checks
-- speaker visibility blockers from `docs/speaker-framing-safety.md` Checks and Fixes
+- speaker visibility blockers from `docs/speaker-framing-safety.md` Checks and Creator Controls
 - destination-specific crop failures from `docs/destination-crop-previews.md` Checks and Fixes
 - brand readability risks from `docs/show-brand-kit-setup.md` Preview Surfaces and Guardrails
 - speaker-count fallback choices from `docs/show-template-adaptation.md` Adaptation Flow when the current episode does not match the saved layout

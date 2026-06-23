@@ -104,7 +104,7 @@ When speaker visibility or layout framing would affect the exported episode, rea
 
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
-| face and overlay conflicts | `docs/speaker-framing-safety.md` | Checks, Fixes |
+| face and overlay conflicts | `docs/speaker-framing-safety.md` | Checks, Creator Controls |
 | role-based layout fit | `docs/speaker-role-mapping.md` | Layout Effects |
 | destination crop impact | `docs/destination-crop-previews.md` | Checks, Fixes |
 | visual match across speakers | `docs/speaker-visual-match.md` | Match Signals, Review States |
