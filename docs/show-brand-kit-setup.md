@@ -60,6 +60,27 @@ When a brand choice trips a guardrail, the creator should stay in control of the
 
 A brand kit should never block a creator from previewing an episode. Unresolved conflicts should remain visible warnings the creator can revisit, not hard stops.
 
+## Review States
+
+Use simple creator-facing states:
+
+- clear — brand choices read well across captions, speakers, and the export thumbnail
+- adjust this surface — one preview surface such as captions or lower-thirds still needs a fix
+- keep with warning — the creator accepts a readable tradeoff and the warning stays visible
+- blocks export — contrast, overlap, or sponsor placement would ship unreadably unless fixed or ignored with consequence shown
+
+Each state should describe what a viewer would notice, such as "Sponsor mark crowds the lower-third in the mobile preview."
+
+## Export Warning Routing
+
+Brand conflicts should surface in the readiness section that matches the visible problem, not in a single catch-all warning:
+
+| Brand conflict | Export readiness section |
+| --- | --- |
+| caption contrast, size, lower-third overlap, or motion | Readability Warnings |
+| thumbnail logo, title treatment, or cover readability | Thumbnail Warnings |
+| sponsor mark placement or disclosure fit | Sponsor Placement Warnings |
+
 ## Reuse
 
 A brand kit should attach to a show template but remain editable. Teams should be able to update future episodes without changing already exported episodes.

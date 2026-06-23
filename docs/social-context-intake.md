@@ -60,6 +60,13 @@ When generated context affects visible output, the creator should be able to rev
 
 Corrections should persist into the reusable show template where appropriate, especially recurring host names, show brands, sponsor names, and common segment labels.
 
+Context that remains unresolved at export should surface in the readiness section that owns the problem:
+
+| Unresolved context | Export readiness section |
+| --- | --- |
+| spellings, guest names, or metadata conflicts | Glossary Warnings |
+| b-roll, title, or visual suggestions still needing approval | Contextual Visual Warnings |
+
 ## Maintainer Acceptance Notes
 
 Accept work that turns social links into better captions, titles, b-roll, lower-thirds, and reference accuracy. Close work that makes social context feel invasive, unrelated to the visible episode, or detached from speaker buckets.
