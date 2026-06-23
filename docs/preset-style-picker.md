@@ -52,6 +52,19 @@ Each control should drive the spec that owns its deeper behavior, so a preset st
 
 Changing a control should update the live preview through the owning spec, not open a separate configuration screen. A preset the creator likes should be saveable as a reusable show layout through `docs/show-template-adaptation.md` Template Contents, Adaptation Flow.
 
+## Comparison Preview Flow
+
+When one preset direction looks promising but a creator wants to compare it against another, comparison should stay inside preset selection rather than sending the creator into a separate planning tool.
+
+Comparison should hand off to `docs/preset-comparison-preview.md` with the creator's current episode context:
+
+- keep the same timestamp across compared presets
+- carry current speaker names, roles, and brand kit
+- preserve the current layout density, caption presence, visual moments, and branding strength choices while switching preset directions
+- let the creator apply the chosen preset back to the full-episode preview without rebuilding the setup
+
+Comparison exists to help creators make a faster taste decision on a real episode moment. It should not require mock scenes, placeholder media, or a separate approval step before the creator can apply a preset.
+
 ## Maintainer Acceptance Notes
 
 Accept implementation work that makes preset selection feel visual, direct, and immediately previewable. Close work that turns the preset step into a generic settings form or forces users into manual canvas editing before they can see a polished direction.

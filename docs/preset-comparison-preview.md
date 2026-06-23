@@ -6,6 +6,17 @@ Preset selection should help creators compare polished episode directions before
 
 A creator should be able to preview multiple presets against the same real episode moment and choose the one that best fits the show.
 
+## Relationship To Preset Selection
+
+Comparison preview should extend the preset workflow already defined in `docs/preset-style-picker.md` instead of becoming a detached browse mode.
+
+- launch comparison from preset cards or the first full-episode preview
+- use the creator's current episode speakers, social-context names, and brand kit where available
+- keep the same creator-facing controls for layout density, caption presence, visual moments, and branding strength
+- return the chosen preset to `docs/preset-style-picker.md` Apply And Preview so the creator can commit it to the episode immediately
+
+Comparison should help the creator choose between strong directions, not restart setup from scratch.
+
 ## Comparison Mode
 
 Comparison should support:
@@ -43,6 +54,15 @@ Creators should be able to:
 - inspect mobile or wide layout framing
 - apply a preset to the full episode
 - save a preset plus adjustments as a template
+
+## Decision Handoff
+
+Once a creator chooses a direction in comparison preview, the product should keep the decision actionable:
+
+- carry the selected preset back to the full-episode preview
+- preserve the creator's current control choices unless the creator changes them
+- keep template-save behavior aligned with `docs/show-template-adaptation.md` Template Contents, Adaptation Flow
+- avoid requiring the creator to re-pick the same preset after leaving comparison
 
 ## Maintainer Acceptance Notes
 
