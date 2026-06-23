@@ -37,6 +37,20 @@ Segments can influence:
 
 The product should preview how a segment changes the episode before applying it broadly.
 
+## Creator Controls
+
+Defining and applying segments should stay a creator-facing arranging step, not internal timeline marking. The creator should be able to:
+
+- create a segment from a common type or a custom one, and name it for the show
+- set or adjust where a segment starts and ends from the conversation, without editing raw timeline markers
+- reorder segments and apply the arrangement to the current episode
+- save a segment order and visual treatment to the show template, or change it for this episode only
+- skip or remove a segment for a single episode without dropping it from the template
+- adjust per-episode details such as guest, topic, or sponsor inside a reused segment
+- preview how a segment changes titles, pacing, and branding before applying it across the episode
+
+A segment change should adapt the episode's structure around it rather than forcing every show into the same fixed format.
+
 ## Reuse
 
 Show templates can remember segment order and visual treatment, while each episode can adjust names, topics, guests, and sponsor details.
