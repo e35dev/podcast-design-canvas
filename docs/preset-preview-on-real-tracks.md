@@ -18,6 +18,20 @@ Use the current episode setup from `docs/preset-style-picker.md`:
 
 When an input is missing, keep the preview honest by showing a plain missing state instead of inventing a polished speaker or brand.
 
+## Speaker Role Confirmation
+
+Preset previews should use speaker roles only after the creator has confirmed the imported track labels for `docs/preset-style-picker.md`.
+The preview may show helpful prompts from file names, imported speaker names, or creator-provided show context, but those prompts stay tentative until confirmed.
+
+Role confirmation should protect downstream choices:
+
+- host, guest, co-host, and panel labels stay visible before they affect layouts
+- missing or uncertain roles show a reduced-fit preview instead of guessing a polished preset match
+- speaker-labeled captions use confirmed names only
+- applying a preset carries confirmed roles forward with the layout, caption style, and speaker focus choices
+
+Avoid inferring durable roles from speaking order, talk time, track position, or other hidden heuristics.
+
 ## Preset Comparison
 
 Each preview should render the same episode moment so differences are visible:
