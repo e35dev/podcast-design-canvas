@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next
+/out
+next-env.d.ts
+
+# local infrastructure data (Postgres volume, uploaded media, renders)
+/.data
+
+# env
+.env
+.env.local
+.env*.local
+
+# prisma
+/prisma/migrations/dev.db
+
+# misc
+*.log
+.DS_Store
