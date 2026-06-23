@@ -62,6 +62,18 @@ Managing a review copy should feel like sending a focused decision pass, not ope
 
 These controls should keep review copy rounds tied to episode moments, visible export consequences, and the final publish workflow instead of turning review into a separate task board.
 
+## Review States
+
+Use simple creator-facing states:
+
+- draft — a review copy is prepared but not sent to reviewers yet
+- awaiting feedback — reviewers can watch and comment; the creator waits on decisions
+- changes requested — open feedback still blocks some final export items
+- ready to publish — blocking feedback is resolved or ignored with consequence shown
+- superseded — a newer review round replaced this link but prior feedback stays visible for context
+
+Each state should describe what reviewers and creators can do next, such as "Two caption notes are still open before final export."
+
 ## Agency Fit
 
 For teams producing client shows, the flow should preserve:
