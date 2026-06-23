@@ -50,19 +50,6 @@ Each treatment should preview on the real episode frame before approval.
 
 Contextual visuals are review first with restrained defaults: creators approve moments on the real episode frame, and a long episode should not become visually noisy just because many candidate moments exist.
 
-## Review States
-
-Use simple, creator-facing states so a long episode's visual moments stay easy to scan:
-
-- suggested — the product proposed a moment with a visible reason
-- approved — the creator accepted it for this episode
-- adjusted — approved with a changed treatment, timing, or strength
-- rejected — dismissed for this episode
-- pinned — kept in the show template as a recurring moment
-- needs review — low-confidence context the creator should check
-
-States should group in the long-form review surface rather than flag every candidate equally, so the default view stays calm.
-
 ## Quality Rules
 
 Suggestions should avoid:
@@ -75,10 +62,11 @@ Suggestions should avoid:
 
 ## Review States
 
-The product should use visual moment status to drive contextual review and export readiness:
+The product should use visual moment status to drive contextual review and export readiness, and states should group in the long-form review surface rather than flag every candidate equally, so the default view stays calm:
 
 - **suggested** — show the moment with plain-language context; do not include it in export until the creator approves or replaces it
 - **approved** — include the visual in the exported episode and clear only the related contextual-visual readiness item
+- **adjusted** — approved with a changed treatment, timing, or strength; reopen preview at the affected moment
 - **replaced** — swap the suggestion for creator-chosen media or treatment and reopen preview at the affected moment
 - **rejected** — remove the suggestion from export consideration without clearing unrelated caption, sponsor, or metadata warnings
 - **pinned to template** — save a recurring visual pattern to `docs/show-template-adaptation.md` for future episodes after episode-specific approval
