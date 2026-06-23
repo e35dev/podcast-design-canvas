@@ -79,30 +79,19 @@ Each state should describe what gets handed off, not final approval in the intak
 
 ## Creator Controls
 
-Offer simple actions:
-
-- add or assign a link to a speaker bucket
-- add spelling notes for names, brands, or products
-- see where each link will be used
-- reject a derived suggestion and send the creator to the owning review surface when needed
-- pin guest display details
-- block a topic or link from on-screen use
-
-Avoid unrelated background research, dossier-style summaries, or final caption, b-roll, or title approval on the intake screen.
-
-## Creator Controls
-
-Keep intake about managing the inputs, not approving the visible output:
+Keep intake about managing the inputs, not approving the visible output. The creator should be able to:
 
 - add a public link and attach it to a speaker bucket from episode ingest
 - assign an unmatched link to the right speaker instead of applying it episode-wide
 - add or correct spelling notes for names, brands, products, and recurring terms
 - see the "used for" summary before a link's suggestions are applied
+- pin guest display details such as names, titles, or handles
+- reject a derived suggestion, jumping to the owning review surface when needed
 - block a link, topic, or detail that should not appear on screen
 - jump to the relevant review panel — captions, b-roll, titles, or lower-thirds — to approve how a suggestion actually appears
 - save recurring people, brands, and segment terms to the show template
 
-Avoid turning this screen into a second place to approve captions, b-roll, titles, or lower-thirds, and avoid surfacing unrelated personal details. Each control should manage an input or boundary and let the review panel where a suggestion appears make the final visible decision.
+Keep two boundaries explicit: avoid turning this screen into a second place to approve captions, b-roll, titles, or lower-thirds; and avoid unrelated background research, dossier-style summaries, or surfacing unrelated personal details. Each control should manage an input or boundary and let the review panel where a suggestion appears make the final visible decision.
 
 ## Maintainer Acceptance Notes
 
