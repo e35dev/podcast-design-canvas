@@ -53,3 +53,7 @@ Chapters should stay readable on hour-plus episodes:
 ## Publish Readiness
 
 Confirmed chapters flow forward into the publish path: they populate the chapter fields in `docs/episode-metadata-publishing.md`, appear in `docs/publish-checklist.md` Checklist Item Mapping and Review Approvals, and surface in `docs/export-readiness-review.md` Chapter Marker Warnings when chapter issues would affect export.
+
+## Maintainer Acceptance Notes
+
+Accept work that turns existing episode structure into a calm, reviewable chapter outline creators can carry straight into export and publishing. Close work that exposes timecode or marker mechanics, floods an hour-plus episode with a chapter every minute, or rebuilds a separate timeline editor.
