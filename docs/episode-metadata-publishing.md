@@ -110,6 +110,34 @@ Offer simple actions:
 
 Avoid exposing feed schemas, platform API fields, or bulk metadata import as the default workflow.
 
+## Show Defaults
+
+Some metadata stays the same from episode to episode. A creator should be able to save a few show-level defaults once and have each new episode start already filled in, so they confirm rather than retype.
+
+Let creators save defaults for steady fields:
+
+- show name and episode number pattern
+- default short description opening or sign-off line
+- standard sponsor disclosure wording
+- preferred thumbnail or cover frame style
+- usual publish destination for a new episode
+
+These defaults should prefill a new episode the moment it opens, and every prefilled field stays fully editable. Editing a prefilled field changes only that episode and never the saved show default. Changing a saved show default applies going forward and never reaches back into episodes already in review.
+
+Each show default carries one of two states, and a field is always in exactly one of them:
+
+- saved — the value is remembered and will prefill the next new episode
+- not yet saved — nothing is remembered yet, so this field starts empty for a new episode
+
+When a field has been prefilled from a saved default and the creator then edits it, show a quiet inline marker beside that single field, such as "Different from your show default." When the episode matches the saved defaults, show nothing. Surface this as one calm inline note on the field itself, never a banner and never a running list.
+
+Offer two simple actions where defaults appear:
+
+- save the current value as the show default
+- restore this field to the saved show default
+
+Show defaults should make starting the next episode feel like a head start, not another setup screen.
+
 ## Readiness Checks
 
 Before final export, flag:
