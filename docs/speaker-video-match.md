@@ -18,6 +18,25 @@ Offer plain-language corrections:
 
 Each adjustment should preview on the real speaker frame and show a before-and-after comparison.
 
+## Preview Contexts
+
+Creators should judge video matching on episode moments where mismatches are easiest to notice:
+
+- a solo close-up of the current speaker
+- a split-screen exchange between host and guest
+- a branded preset preview with captions visible
+- a darker or backlit speaking moment
+- a quick switch from one speaker to the next
+
+Previewing more than one moment keeps creators from approving a correction that only works for the brightest frame or a single preset layout.
+
+These previews should make the correction decision obvious:
+
+- show a paused frame and a short playback loop for the same moment
+- compare the corrected speaker against at least one other participant in the same layout
+- keep the active preset framing visible so creators can judge whether matching still feels natural once the episode is styled
+- preserve the same timestamp while switching between corrected and original footage
+
 ## Creator Controls
 
 Use simple controls:
