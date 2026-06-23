@@ -6,6 +6,23 @@ Recurring guest information should be reusable across episodes while staying eas
 
 A creator should be able to recognize a returning guest and reuse approved names, links, title spellings, headshots, and lower-third preferences.
 
+## Relationship To Episode Setup
+
+Guest profile reuse should start from episode context already in the workspace:
+
+- social links and spelling notes from `docs/social-context-intake.md`
+- speaker buckets from `docs/speaker-role-mapping.md`
+- metadata fields from `docs/episode-metadata-publishing.md`
+- show notes assembly from `docs/show-notes-assembly.md`
+- glossary spellings from `docs/transcript-glossary.md`
+- approved assets from `docs/episode-asset-library.md`
+- lower-thirds and layout from `docs/canvas-layer-controls.md`
+- title cards from `docs/contextual-title-cards.md`
+
+## Reuse Approach
+
+Guest reuse is confirm first: suggested matches and changed details should require creator confirmation before they affect the current episode, and durable guest details should stay separate from episode-only overrides.
+
 ## Reusable Details
 
 Store creator-approved details:
@@ -48,15 +65,15 @@ Creators should be able to update the profile or apply changes only to the curre
 
 ## Review States
 
-Use simple creator-facing states:
+The product should use guest profile status to drive reuse and handoff behavior:
 
-- ready to reuse
-- confirm changed details
-- missing approved asset
-- keep episode-only override
-- not the same guest
+- **ready to reuse** — attach approved details to the matched speaker and route them through Reuse Routing without treating them as final in metadata, captions, or layout until the owning spec confirms them
+- **confirm changed details** — show what changed since the last appearance and require confirmation before reuse affects this episode
+- **missing approved asset** — keep the profile reusable but link to `docs/episode-asset-library.md` for the missing headshot or image
+- **keep episode-only override** — apply the change to this episode only without updating the durable guest profile
+- **not the same guest** — reject the suggested match and stop reusing stale details for the current speaker bucket
 
-Each state should describe what changed, such as "Title changed since the last appearance and needs confirmation before reusing the lower-third."
+Each state should describe what gets handed off to the owning review surface—not final publish approval on the guest profile screen itself.
 
 ## Creator Controls
 
@@ -86,4 +103,4 @@ Profile reuse should attach approved details to the matched speaker and let the 
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes recurring guest context accurate and reusable without feeling invasive. Close work that silently applies stale guest data, mixes guest profiles across shows, or stores inferred personal details unrelated to episode quality.
+Accept work that makes recurring guest context accurate and reusable without feeling invasive. Close work that silently applies stale guest data, mixes guest profiles across shows, stores inferred personal details unrelated to episode quality, or treats guest profile confirmation as final approval for metadata, captions, or layout owned elsewhere.
