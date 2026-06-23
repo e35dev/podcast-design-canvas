@@ -50,9 +50,13 @@ A creator can go from raw synced podcast tracks and a few social links to a fini
 
 | Label | Multiplier | Meaning |
 | --- | ---: | --- |
-| `create-a-new-episode-by-importin` | 3 | Moves this product's "Create a new episode by importing a Riverside link or uploading separate synced video files for each speaker, then assign each file to clear speaker buckets such as Host, Guest 1, and Guest 2." workflow toward the intended end state. |
-| `add-host-and-guest-social-links` | 2.25 | Moves this product's "Add host and guest social links during setup so the product can understand names, topics, references, brands, and likely transcript spellings before generating the edit." workflow toward the intended end state. |
-| `choose-a-preset-visual-style-wit` | 2.25 | Moves this product's "Choose a preset visual style with layout and pacing options, preview how the episode will look, and apply it without needing to manually position every element." workflow toward the intended end state. |
+| `episode-ingest` | 3 | Improves importing, uploading, syncing, or assigning podcast episode source tracks and speakers. |
+| `preset-styles` | 2.5 | Improves preset visual styles, layout choices, pacing choices, or first-preview quality. |
+| `canvas-editor` | 2.5 | Improves reusable canvas editing for podcast layouts, layers, frames, overlays, and direct manipulation. |
+| `audio-captions` | 2 | Improves audio cleanup, leveling, speech clarity, transcripts, captions, or text accuracy. |
+| `contextual-visuals` | 2 | Improves context-aware b-roll, title moments, callouts, references, social context, or visual moments. |
+| `template-system` | 1.75 | Improves saving, reusing, adapting, or managing show templates and reusable visual identity. |
+| `export-publish` | 1.75 | Improves long-form episode export, publish readiness, rendering, or final delivery quality. |
 | `product-polish` | 1.5 | Improves Podcast Design Canvas's feel, usability, clarity, or taste fit. |
 | `bugfix` | 1 | Fixes broken behavior that blocks Podcast Design Canvas's captured product direction. |
 | `infrastructure` | 0.5 | Improves checks, deployment, or repo operations without directly advancing product behavior. |
