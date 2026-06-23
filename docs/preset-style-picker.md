@@ -21,12 +21,37 @@ Keep the controls creator-facing:
 
 - layout density: simple, balanced, layered
 - speaker focus: steady panel, active-speaker emphasis, gentle handoff
+- episode pacing: relaxed, balanced, quick-cut
 - caption presence: minimal, standard, high-emphasis
 - caption style: clean lower third, centered emphasis, speaker-labeled, title-safe
 - visual moments: restrained, balanced, energetic
 - branding strength: neutral, show-branded, sponsor-ready
 
 Avoid exposing internal rendering, tracking, or timeline mechanics in this first path.
+
+## Pacing Controls
+
+Preset pacing should stay a creator-level choice in the picker instead of sending the creator into internal routing.
+The preview in `docs/preset-preview-on-real-tracks.md` should show how the selected pace changes a real conversation moment before the preset is applied.
+
+Pacing choices should stay simple:
+
+- choose relaxed, balanced, or quick-cut pacing
+- adjust pacing intensity before applying the preset
+- hold the current speaker or visual moment when the conversation needs room
+- preview pacing against captions, title moments, b-roll room, and speaker focus on the same real episode moment
+- carry the selected pace with the applied preset so recurring episodes keep the same feel
+
+Use creator-facing attention cues:
+
+- ready to apply
+- moment feels rushed
+- moment needs more energy
+- hold recommended for cross-talk or pause
+
+These cues should open the affected preview moment in the picker, not an internal spec or pipeline route.
+
+Avoid timeline lanes, shot lists, edit decision lists, beat grids, or per-cut timing controls in the preset picker.
 
 ## Speaker Switch Framing
 
