@@ -36,6 +36,17 @@ Review readability in:
 
 Different preview contexts should use the same episode content so creators can judge real tradeoffs.
 
+## Review States
+
+Use simple creator-facing states:
+
+- clear
+- adjust this moment
+- apply safer style across the episode
+- blocks export for this destination
+
+Each state should describe what a viewer would notice, such as "captions are readable on desktop but too small in the mobile preview."
+
 ## Creator Controls
 
 Offer simple fixes:
@@ -47,6 +58,16 @@ Offer simple fixes:
 - simplify overlay
 - use alternate lower-third position
 - apply fix across template
+
+## Template Behavior
+
+When a creator chooses a safer readability fix, they should be able to keep it scoped appropriately:
+
+- only this moment
+- this episode
+- future episodes that use the same template
+
+Applying a broader fix should preserve viewer clarity without forcing every episode into the same caption size, motion level, or overlay density when the current problem is local to one moment.
 
 ## Maintainer Acceptance Notes
 
