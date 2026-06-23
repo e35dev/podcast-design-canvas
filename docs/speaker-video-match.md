@@ -69,6 +69,23 @@ Use simple states:
 
 These states should appear during ingest readiness only when the mismatch would be visible in the finished episode. When a creator leaves this step, the chosen state should carry into `docs/preset-style-picker.md` Apply And Preview so preset comparisons reflect the corrected footage instead of the untreated source.
 
+## Correction Strength
+
+After a creator applies an adjustment, the product should tell them how hard the correction had to work on that speaker's frame, so they can tell a confident fix from one that is straining the source.
+
+Show a single plain-language result for each applied adjustment:
+
+- light touch — the frame barely changed
+- balanced — the correction landed cleanly
+- heavy — the frame was pushed far to reach the target
+- at the limit — the source cannot match any closer without visible damage
+
+Only one of these should describe a given adjustment at a time, and it should describe the correction as it currently stands rather than the entire speaker.
+
+When a result is heavy or at the limit, the product should point to what is straining, such as clipped highlights, flattened shadows, or unnatural skin tone, and offer to ease the correction back toward the original frame.
+
+A strong or limited result should never block the creator from keeping the correction; it should only make the trade-off visible before they move on to choosing a preset.
+
 ## Template Reuse
 
 When a show template includes recurring speakers, the product should remember their correction preferences from previous episodes and offer them as a starting point.
