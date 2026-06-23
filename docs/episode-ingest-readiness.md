@@ -6,6 +6,22 @@ The first setup screen should make separate podcast recordings feel organized be
 
 A creator importing Riverside-style synced recordings should be able to confirm every speaker track, fix obvious assignment issues, and continue with confidence that the episode is ready for styling and editing.
 
+## Relationship To Episode Setup
+
+Ingest readiness should connect to the next setup surfaces:
+
+- speaker roles from `docs/speaker-role-mapping.md`
+- social links from `docs/social-context-intake.md`
+- source file health from `docs/source-media-health.md`
+- sync repair from `docs/speaker-sync-repair.md`
+- preset styling from `docs/preset-style-picker.md`
+- publish checklist from `docs/publish-checklist.md`
+- export warnings in `docs/export-readiness-review.md`
+
+## Ingest Approach
+
+Ingest is organize first: creators should confirm speaker buckets and obvious track problems in creator language, then hand off fixes to the owning surface—not stay on a technical diagnostics page.
+
 ## Import Sources
 
 Support clear source choices without exposing production mechanics:
@@ -60,6 +76,32 @@ Each warning should hand off to the owning surface with the creator action attac
 
 Issues that remain unfixed at export should surface in `docs/export-readiness-review.md` Source Media Warnings or Speaker Sync Warnings when they would affect the finished episode.
 
+## Review States
+
+The product should use ingest status to drive setup and handoff behavior:
+
+- **bucket ready** — speaker bucket has the expected track assigned with a clear confidence state; allow continuing to preset styling
+- **needs assignment** — empty or uncertain bucket; link to replace the file, add a missing speaker, or confirm the bucket mapping
+- **handed off to media health** — route missing, corrupted, or audio-only track issues to `docs/source-media-health.md`
+- **handed off to sync repair** — route duplicate audio or duration mismatch issues to `docs/speaker-sync-repair.md`
+- **handed off to social context** — route missing name or link issues to `docs/social-context-intake.md`
+- **ready for preset styling** — required buckets are assigned and only non-blocking issues remain; continuing does not clear export warnings for unfixed problems that would affect the finished episode
+
+Each state should describe the next creator action and owning surface—not internal pipeline status.
+
+## Creator Controls
+
+Offer simple actions:
+
+- paste a Riverside link or upload synced speaker files
+- assign or reassign a track to a speaker bucket
+- replace a mismatched file
+- add a missing speaker before continuing
+- open the linked fix surface for a flagged issue
+- continue to preset styling when blocking issues are resolved or accepted with consequence shown
+
+Avoid manifests, encoders, timecodes, or pipeline-stage language in the default ingest path.
+
 ## Maintainer Acceptance Notes
 
-Accept work that makes import, upload, sync confidence, and speaker assignment feel obvious before editing starts. Close work that turns ingest into a technical diagnostics page or blocks creators on issues that do not affect the visible final episode.
+Accept work that makes import, upload, sync confidence, and speaker assignment feel obvious before editing starts. Close work that turns ingest into a technical diagnostics page, blocks creators on issues that do not affect the visible final episode, or clears export-readiness warnings just because the creator continued to preset styling.
