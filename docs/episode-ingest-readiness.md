@@ -79,6 +79,24 @@ Each warning should hand off to the owning surface with the creator action attac
 
 Issues that remain unfixed at export should surface in `docs/export-readiness-review.md` Source Media Warnings or Speaker Sync Warnings when they would affect the finished episode.
 
+## Resuming A Partial Import
+
+A creator who leaves before every track is confirmed should be able to return and pick up where they stopped, without re-pasting links, re-uploading finished files, or rebuilding speaker buckets.
+
+When a creator reopens an episode that was not fully confirmed, ingest should restore the buckets, names, and previews that were already in place and point only to what still needs attention:
+
+- keep every already-assigned track in its speaker bucket
+- keep names and previews that were already confirmed
+- show one quiet inline prompt naming the next unfinished step, such as "Pick up where you left off: Guest 1 still needs a file"
+
+An import should carry exactly one resume status, and only one prompt should appear:
+
+- fresh import — no prior progress to restore; start from the standard import path
+- resumable import — prior progress exists and is restored; show the single inline pick-up prompt pointing to the first unfinished bucket
+- fully assigned import — every required bucket is already confirmed; show nothing and let the creator continue to preset styling
+
+If no buckets remain unfinished, ingest is treated as fully assigned and shows no resume prompt. The pick-up prompt is a non-blocking inline marker that names the next action only; it never stacks multiple reminders or blocks the screen. Confirming the named step clears the prompt and advances the import status normally.
+
 ## Review States
 
 The product should use ingest status to drive setup and handoff behavior:
