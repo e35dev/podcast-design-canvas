@@ -67,6 +67,18 @@ From a result, the creator should be able to:
 - send the moment into caption review
 - return to the previous search without losing filters
 
+## Review States
+
+Keep search result status simple and creator-facing:
+
+- match — the result points to the right moment and speaker
+- needs glossary — the term should use an approved spelling from `docs/transcript-glossary.md`
+- needs attribution — the result is attached to the wrong speaker
+- needs chapter review — the result suggests a weak chapter boundary or title
+- pinned for clip — the creator marked this moment as a clip candidate
+
+These states should appear on search results and in long-form navigation only when they affect the next editing step, not as raw transcript metadata.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes long-form transcript navigation useful for editing, captions, chapters, and visual moments. Close work that treats search as a generic text box disconnected from the episode preview and speaker context.
