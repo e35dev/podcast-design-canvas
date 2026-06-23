@@ -50,6 +50,18 @@ Flag layout conflicts:
 
 The product should link conflicts to the affected moment and destination.
 
+## Preview Contexts
+
+Creators should check safe areas where elements are most likely to be cut or covered:
+
+- a full desktop frame and a mobile vertical crop
+- the thumbnail or cover-frame area
+- a moment with captions, a lower-third, and a sponsor mark on screen together
+- the active speaker's face area during a reaction
+- each chosen export destination's crop
+
+These previews should use the real episode layout and destination so the creator can confirm text and marks stay inside the readable area at the size viewers will see.
+
 ## Review States
 
 The product should use safe-area status to drive layout review and export readiness:
