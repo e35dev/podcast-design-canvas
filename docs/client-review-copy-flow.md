@@ -87,6 +87,17 @@ For teams producing client shows, the flow should preserve:
 
 This information supports repeatable production without making a solo creator do extra project management.
 
+## Team Checkpoints
+
+When more than one person shares a review copy, the flow should stay readable instead of turning into a generic comment board:
+
+- show which reviewer left feedback in plain language, not a raw account ID
+- keep feedback grouped by episode moment and visible object, not by who commented last
+- make a client-approved checkpoint safe from overwrite no matter who is editing
+- let any collaborator resend an updated review copy without losing prior feedback context
+
+Solo creators should never see team attribution clutter; show it only when a workspace actually has more than one reviewer. Reviewer and approver organization itself stays in `docs/team-workspace-organization.md` — this flow only attributes the meaningful feedback it already anchors to episode moments.
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps teams review long-form podcast episodes before final export. Close work that turns review into a generic task board, requires project-management overhead for solo creators, or treats review copies as final publish files.
