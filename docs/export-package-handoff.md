@@ -20,6 +20,10 @@ The handoff should reflect the destination and checklist completed in:
 
 Each package item should map to a creator-understood publishing outcome, not only a file extension.
 
+## Handoff Approach
+
+Package handoff is delivery first: creators should understand what each file is for, what was ignored, and what still blocks publishing—not receive an unlabeled download folder or render log.
+
 ## Package Contents
 
 The handoff can include:
@@ -39,15 +43,28 @@ The product should label each item by use, not only by file extension.
 
 ## Package States
 
-Use creator-facing states:
+The product should use package status to drive post-export actions:
 
-- complete
-- missing optional item
-- missing required item
-- warning ignored
-- ready to share
+- **complete** — include every required item for the chosen destination; enable download, publish, and review-copy actions
+- **missing optional item** — continue delivery when the destination does not require the item; explain what was omitted, such as show notes or audio-only backup
+- **missing required item** — block publish or share actions for that destination; link back to the checklist item or review surface that still needs attention
+- **warning ignored** — record the publishing consequence in the ignored warnings report; keep ignored items visible in the summary without treating them as resolved review work
+- **ready to share** — when required items are present and ignored warnings are recorded with consequences, enable client review copy or destination publish
 
-Each state should explain what is still needed before publishing, such as "Thumbnail is included but metadata summary was not requested for this destination."
+Each state should describe what the creator can do next with the package—not only the label on the delivery summary.
+
+## Creator Controls
+
+Offer next actions:
+
+- download package
+- copy metadata or show notes
+- publish destination package
+- create review copy
+- duplicate as template
+- start next episode
+
+Avoid exposing encoder diagnostics, render queue IDs, or raw file paths as the default handoff experience.
 
 ## Summary
 
@@ -64,17 +81,8 @@ After export, show:
 
 This gives creators confidence that the package is complete.
 
-## Actions
-
-Offer next actions:
-
-- download package
-- copy metadata
-- publish destination package
-- create review copy
-- duplicate as template
-- start next episode
+Completed exports should preserve readiness decisions from `docs/export-readiness-review.md` rather than resetting ignored warnings or checklist status.
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes final episode delivery clear and publish-ready. Close work that leaves creators with only an unlabeled file download or hides ignored warnings after export.
+Accept work that makes final episode delivery clear and publish-ready. Close work that leaves creators with only an unlabeled file download, hides ignored warnings after export, or treats optional destination items as blocking errors for every show.
