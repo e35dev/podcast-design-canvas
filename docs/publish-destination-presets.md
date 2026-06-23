@@ -6,6 +6,20 @@ Destination presets should translate export settings into publishing outcomes cr
 
 A creator should be able to choose where the episode is going and get sensible defaults for video, audio, captions, metadata, and thumbnail packaging.
 
+## Relationship To Export Flow
+
+Destination choice should shape defaults across:
+
+- metadata fields in `docs/episode-metadata-publishing.md`
+- thumbnail requirement in `docs/thumbnail-cover-frame.md`
+- caption behavior in `docs/audio-caption-quality-review.md`
+- review watermark in `docs/client-review-copy-flow.md`
+- sponsor disclosure in `docs/sponsor-placement-review.md`
+- final readiness in `docs/publish-checklist.md` and `docs/export-readiness-review.md`
+- package delivery in `docs/export-package-handoff.md`
+
+Presets should describe publishing outcomes, not encoder menus.
+
 ## Destinations
 
 Support common long-form podcast destinations:
@@ -34,7 +48,7 @@ Destination presets can set:
 
 Advanced settings can be available, but the default flow should not require render expertise.
 
-## Review
+## Review States
 
 Before export, show what differs from the recommended preset:
 
@@ -45,7 +59,7 @@ Before export, show what differs from the recommended preset:
 - sponsor disclosure missing
 - archive quality reduced
 
-The product should explain the publishing consequence, not just list setting names.
+Each state should explain the publishing consequence, such as "YouTube export will ship without chapter metadata" rather than listing setting names.
 
 ## Maintainer Acceptance Notes
 
