@@ -34,7 +34,7 @@ Use simple controls:
 - play the flagged moment with a few seconds of surrounding audio
 - accept the suggested caption as correct
 - edit the text and optionally add the correction to the glossary
-- skip a flag to return to it later
+- skip a flag to return to it later — skipped flags remain unresolved
 - mark a section as reviewed
 
 Avoid exposing confidence scores, alignment timecodes, language-model internals, or raw transcript diffs.
@@ -45,11 +45,16 @@ Track the creator's position through the episode:
 
 - not started
 - in progress — with a count of remaining flags
-- reviewed — all flags addressed or skipped
+- has skips — all flags visited but some were skipped
+- reviewed — every flag accepted, corrected, or waived
 - done — creator has confirmed the pass is complete
+
+A flag can be resolved by accepting it, correcting it, or explicitly waiving it. Skipped flags do not count as resolved. The pass cannot reach reviewed until every skipped flag has been revisited and resolved or waived.
 
 Progress should persist across sessions so a creator can pause and resume a long episode.
 
 ## Publish Readiness
 
-When the pass reaches done, the captions-reviewed item in `docs/publish-checklist.md` should reflect that status. If new captions are regenerated or the glossary changes after the pass, the status should return to needs review so the creator can re-check affected lines.
+When the pass reaches done, the captions-reviewed item in `docs/publish-checklist.md` should reflect that status. If the pass is in has skips, the publish checklist should show captions as needs review and link back to the remaining skipped flags.
+
+If new captions are regenerated or the glossary changes after the pass, the status should return to needs review so the creator can re-check affected lines.
