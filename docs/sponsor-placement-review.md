@@ -76,32 +76,18 @@ Each state should describe what happens in preview, metadata, and export readine
 
 ## Creator Controls
 
-Offer simple actions:
-
-- place or move sponsor mark
-- edit disclosure text
-- preview at affected moment
-- reduce visual strength
-- swap sponsor asset
-- save sponsor rules to show template
-- mark placement approved for this episode
-- remove sponsor elements for this episode
-
-Avoid exposing ad-serving settings, tracking tags, or campaign dashboards in the default workflow.
-
-## Creator Controls
-
 Placing a sponsor element should stay a quick, tasteful step the creator controls per episode. The creator should be able to:
 
-- add a sponsor element by placement type, such as a lower-corner mark, title card mention, or end-card acknowledgement
+- add or move a sponsor element by placement type, such as a lower-corner mark, title card mention, or end-card acknowledgement
 - set the visual strength to subtle, standard, or prominent
-- choose the placement window and preview it against the real canvas layout
+- choose the placement window and preview it against the real canvas layout at the affected moment
 - confirm the required disclosure text before the element appears in the episode
+- swap the sponsor asset
 - resolve a flagged conflict by accepting the suggested fix, moving the element, or reducing its strength
 - approve a sponsor element for this episode only, or save the rule to the show template for recurring sponsors
 - remove or skip a sponsor element for a single episode without dropping it from the template
 
-Sponsor placement should never feel like configuring an ad system. The creator works with visible episode elements and approves them in context.
+Sponsor placement should never feel like configuring an ad system: the creator works with visible episode elements and approves them in context. Avoid exposing ad-serving settings, tracking tags, or campaign dashboards in the default workflow.
 
 ## Template Reuse
 
