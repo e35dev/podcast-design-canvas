@@ -23,6 +23,18 @@ Guest profile reuse should start from episode context already in the workspace:
 
 Guest reuse is confirm first: suggested matches and changed details should require creator confirmation before they affect the current episode, and durable guest details should stay separate from episode-only overrides.
 
+## Preview Contexts
+
+A reused guest profile can look correct in one surface and wrong in another, so the creator should confirm it where viewers will actually see the guest:
+
+- the lower-third on the guest's first speaking moment
+- a title card or intro that names the guest
+- show notes and metadata fields that list the guest link
+- a returning guest matched against the current speaker bucket
+- the headshot or approved image in the active preset layout
+
+Every context should use the matched guest's approved details together, so the creator judges one honest reuse decision instead of confirming a profile card in isolation.
+
 ## Reusable Details
 
 Store creator-approved details:
