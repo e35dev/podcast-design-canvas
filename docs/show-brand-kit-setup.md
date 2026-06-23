@@ -82,13 +82,16 @@ A brand kit should never block a creator from previewing an episode. Unresolved 
 The product should use brand kit status to drive preview and reuse behavior:
 
 - **using defaults** — apply strong preset defaults when brand inputs are incomplete; do not block episode preview or editing
+- **clear** — brand choices read well across captions, speakers, and the export thumbnail
 - **previewing** — show brand choices on real episode speakers across Preview Surfaces
+- **adjust this surface** — one preview surface such as captions or lower-thirds still needs a fix
 - **conflict flagged** — surface the readability or overlap issue with a suggested fix; keep preview available
 - **adjusted** — apply the chosen fix and refresh previews for the affected surface
 - **accepted with warning** — keep the original brand choice with the publishing consequence visible; do not clear unrelated caption, framing, or sponsor warnings
+- **blocks export** — contrast, overlap, or sponsor placement would ship unreadably unless fixed or ignored with consequence shown
 - **saved to template** — carry approved brand inputs into `docs/show-template-adaptation.md` for future episodes without rewriting already exported episodes
 
-Each state should describe what happens in preview, templates, and export readiness—not only the label on the brand input.
+Each state should describe what a viewer would notice in preview, templates, and export readiness—not only the label on the brand input.
 
 ## Creator Controls
 
