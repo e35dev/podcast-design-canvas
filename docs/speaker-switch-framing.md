@@ -44,6 +44,18 @@ Flag switch framing only when it affects the finished episode:
 
 These states should appear in `docs/long-form-navigation.md` navigation lanes and in `docs/export-readiness-review.md` Speaker Framing Warnings when they would affect export.
 
+## Review States
+
+Use simple creator-facing states:
+
+- ready — the switch style fits the exchange and export preview looks correct
+- override active — a moment-specific framing choice differs from the preset default
+- needs review — a long stretch with no reframe looks static in preview
+- conflict — a switch overlaps with a b-roll moment or sponsor placement
+- reset pending — the creator is previewing a return to the preset default
+
+Each state should describe what viewers would notice, such as "Featured speaker stays pinned through a guest answer."
+
 ## Template Reuse
 
 When saving a show template via `docs/show-template-adaptation.md`, the chosen switch style and speed should carry forward so recurring shows keep a consistent feel across episodes.
