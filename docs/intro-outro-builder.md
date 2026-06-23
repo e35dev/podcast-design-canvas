@@ -59,6 +59,21 @@ Building an intro or outro should stay a quick, per-episode editing step rather 
 
 Defaults should favor a short, branded opening. A creator should never be forced to keep a long intro on an episode that does not need one, and per-episode edits should not overwrite the reusable template unless the creator chooses to save them back.
 
+## Review States
+
+A creator should be able to tell at a glance whether each episode's opening and closing are ready, without opening every element. Each episode's intro and outro should sit in exactly one review state at a time:
+
+- ready — every required element is filled and approved: episode details, branding, an approved cue, and any sponsor disclosure the episode needs
+- needs attention — at least one required element is still missing or unapproved, whether that is a name, title, link, topic line, music or sound cue, or sponsor disclosure
+- skipped — the creator intentionally dropped the intro or outro for this episode
+
+These states are mutually exclusive: a skipped opening never also reads as needing attention, and an opening becomes ready only once nothing is left unresolved. The state summarizes readiness without owning the individual fixes:
+
+- a missing music or sound cue is resolved through `docs/music-cue-setup.md` Placement Flow rather than flagged here as raw audio
+- a missing sponsor disclosure follows the disclosure handling already in Creator Controls above, not a separate sponsor review
+
+A needs attention state should surface in `docs/export-readiness-review.md` Intro And Outro Warnings only when the unresolved opening or closing would affect the chosen export destination, so review stays focused on the finished episode rather than the saved template.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes openings and endings feel consistent, branded, and episode-aware. Close work that hard-codes a single show format, forces long intros on every episode, or treats intros and outros as unrelated video assets.
