@@ -79,6 +79,18 @@ Before applying an asset, flag:
 - wrong speaker association
 - asset already rejected for this episode
 
+## Review States
+
+Use simple creator-facing states:
+
+- approved — the asset is cleared for its role and appears where the creator expects
+- needs approval — usage approval is missing before the asset can ship in export
+- rejected — hidden from future suggestions but kept for context in this episode
+- wrong association — the asset is tied to the wrong speaker, sponsor, or visual role
+- in use — already placed in the episode or template; replacements need an explicit scope
+
+Each state should describe where the asset appears and the next creator action, such as "Sponsor mark is approved but too small on the mobile preview."
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps creators reuse approved podcast assets across episodes, templates, and clients. Close work that becomes a generic file browser, ignores usage context, or hides where assets are used in final exports.
