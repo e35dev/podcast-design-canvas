@@ -36,6 +36,8 @@ The summary should attach to speaker buckets so creators understand which person
 
 Health checks should preview the actual problem when possible: show a dark frame, play a quiet sample, or jump to the missing section. Avoid forcing users to interpret technical file metadata.
 
+When a speaker's problem is mainly visual rather than missing media, the next step should stay in the same creator-facing flow: open `docs/speaker-video-match.md` so the creator can balance brightness, warmth, or contrast before choosing a preset. Audio-only and missing-file problems should stay in source health rather than redirecting into visual matching.
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps creators identify source media issues before styling and export. Close work that exposes raw codec diagnostics as the main experience or blocks progress for issues that do not affect the visible episode.

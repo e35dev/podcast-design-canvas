@@ -48,7 +48,7 @@ Use simple states:
 - needs review
 - skipped
 
-These states should appear during ingest readiness only when the mismatch would be visible in the finished episode.
+These states should appear during ingest readiness only when the mismatch would be visible in the finished episode. When a creator leaves this step, the chosen state should carry into `docs/preset-style-picker.md` Apply And Preview so preset comparisons reflect the corrected footage instead of the untreated source.
 
 ## Template Reuse
 

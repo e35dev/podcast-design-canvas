@@ -32,12 +32,13 @@ Avoid exposing internal rendering, tracking, or timeline mechanics in this first
 
 Applying a preset should produce a polished first look at the whole episode, not just a styled card. When a creator applies a preset, the product should:
 
+- carry forward any confirmed corrections from `docs/speaker-video-match.md` so the preview starts from balanced speaker footage instead of untreated mismatches
 - lay out host, guest, captions, title moments, and b-roll zones for the episode's actual speaker count
 - use the current episode's real speakers and social-context names where available
 - render a previewable direction the creator can scrub before committing
 - keep every choice adjustable without dropping the creator into a blank canvas
 
-This is the core workflow promise: a creator reaches a publishable-feeling direction by choosing a preset, not by positioning every element by hand. Applying a preset should never require manual canvas work to see a first preview.
+This is the core workflow promise: a creator reaches a publishable-feeling direction by choosing a preset, not by positioning every element by hand. Applying a preset should never require manual canvas work to see a first preview, and it should not make the creator redo speaker balancing that was already confirmed before preset selection.
 
 ## Control Mapping
 
@@ -49,6 +50,8 @@ Each control should drive the spec that owns its deeper behavior, so a preset st
 | caption presence | `docs/audio-caption-quality-review.md` | Caption Style Presets |
 | visual moments | `docs/preset-pacing-controls.md` | Pacing Options, Effects |
 | branding strength | `docs/show-brand-kit-setup.md` | Brand Inputs, Guardrails |
+
+Before a preset preview is shown, visible speaker mismatches should route through `docs/speaker-video-match.md` When To Match and Review States so creators can fix footage coherence before judging layout, captions, or branding.
 
 Changing a control should update the live preview through the owning spec, not open a separate configuration screen. A preset the creator likes should be saveable as a reusable show layout through `docs/show-template-adaptation.md` Template Contents, Adaptation Flow.
 
