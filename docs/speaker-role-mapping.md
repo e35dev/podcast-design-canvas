@@ -56,6 +56,28 @@ Support common podcast setups:
 - producer voice without camera
 - guest joins late or leaves early
 
+## Review And Confirm
+
+Before styling starts, the creator should be able to confirm every track's role at a glance and fix the ones that look wrong without restarting ingest.
+
+Each track should show a clear role state:
+
+- confirmed — the creator has accepted the role
+- suggested — the product proposed a role with visible reasoning
+- needs review — low-confidence or conflicting signals
+- unassigned — no role chosen yet
+
+Keep the corrections direct:
+
+- accept a suggested role in one action
+- change a role from the short list of podcast roles
+- swap two speakers' roles when tracks were mixed up
+- mark a track as off-camera or voiceover
+- set a guest who joins late or leaves early without breaking the layout
+- reset a track to its suggested role
+
+Confirming a role should update that speaker's framing, lower-third, and caption attribution in the live preview, so the creator sees the result before moving on. A track should never be silently locked into a role the creator has not seen.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes speaker roles durable across ingest, presets, canvas editing, captions, and templates. Close work that treats tracks as anonymous media files or hard-codes one show format for every podcast.
