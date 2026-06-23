@@ -49,6 +49,19 @@ Review-copy creation, reviewer decisions, and marked fixes should remain visible
 
 Unresolved feedback that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Review Copy Warnings.
 
+## Creator Controls
+
+Managing a review copy should feel like sending a focused decision pass, not opening a generic approval tool. The creator should be able to:
+
+- create a review copy from the current episode state without disturbing the final export setup
+- choose whether to include watermark, timecode overlay, and unresolved warnings summary
+- resend an updated review copy after fixes while preserving prior feedback context
+- jump from feedback back to the exact episode moment and return to the review thread without losing place
+- reopen the publish checklist after reviewer decisions change what is ready to ship
+- stop using an outdated review copy once a newer round replaces it
+
+These controls should keep review copy rounds tied to episode moments, visible export consequences, and the final publish workflow instead of turning review into a separate task board.
+
 ## Agency Fit
 
 For teams producing client shows, the flow should preserve:
