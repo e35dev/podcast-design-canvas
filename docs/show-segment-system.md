@@ -6,6 +6,23 @@ Recurring show segments should be reusable building blocks that keep an episode 
 
 A creator should be able to define repeatable segments, apply them to an episode, and let the visual system adapt titles, pacing, branding, and metadata around them.
 
+## Relationship To Episode Review
+
+Segment arrangement should connect to the surfaces segments influence:
+
+- chapter structure from `docs/episode-chapter-markers.md`
+- title cards from `docs/contextual-title-cards.md`
+- contextual visuals from `docs/contextual-broll-moments.md`
+- music cues from `docs/music-cue-setup.md` and `docs/music-sound-cues.md`
+- sponsor reads from `docs/sponsor-placement-review.md`
+- pacing from `docs/preset-pacing-controls.md`
+- metadata from `docs/episode-metadata-publishing.md`
+- reusable templates from `docs/show-template-adaptation.md`
+
+## Segment Approach
+
+Segment arrangement is structure first: creators define repeatable show sections around the conversation—not internal timeline markers or a fixed format every episode must follow.
+
 ## Segment Types
 
 Support common podcast segments:
@@ -68,7 +85,7 @@ Unresolved — needs a creator decision, shown in the order to address first:
 - needs boundaries — mapped, but the start or end in the conversation is unclear
 - needs a name — bounded, but still using a default type label instead of a show-specific name
 
-Only the unresolved tier should surface as needing attention in long-form review. These states describe the segment arrangement only; how a segment then shapes chapters, titles, pacing, branding, and metadata stays owned by the specs in Segment Behavior.
+Only the unresolved tier should surface as needing attention in long-form review. These states describe the segment arrangement only; how a segment then shapes chapters, titles, pacing, branding, and metadata stays owned by the specs in Segment Behavior. Skipping a segment for one episode should not clear unrelated export-readiness or checklist warnings.
 
 ## Overlap and Gaps
 
@@ -89,4 +106,4 @@ Show templates can remember segment order and visual treatment, while each episo
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes recurring podcast formats easier to produce across episodes. Close work that turns segments into technical markers only or forces every show into the same episode structure.
+Accept work that makes recurring podcast formats easier to produce across episodes. Close work that turns segments into technical markers only, forces every show into the same episode structure, or clears unrelated publish-readiness warnings when a segment is skipped for one episode.
