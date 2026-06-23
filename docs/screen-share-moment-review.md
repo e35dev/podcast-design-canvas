@@ -53,3 +53,7 @@ Unreadable or private screen moments should block only the affected export momen
 ## Template Reuse
 
 Reusable screen layouts should save through `docs/show-template-adaptation.md` so recurring walkthrough segments can keep a consistent shape while each episode still re-checks the actual shared screen, speakers, and destination crop.
+
+## Maintainer Acceptance Notes
+
+Accept work that makes shared screens read as clear visual evidence inside a long-form episode, controlled with simple creator choices. Close work that turns the product into a screen-recording editor, exposes capture settings, monitor names, cursor logs, or resolution diagnostics, or treats screen share as a detached asset rather than episode content.
