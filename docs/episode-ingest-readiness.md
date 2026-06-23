@@ -58,6 +58,8 @@ Each readiness check maps to the spec that owns the fix:
 
 Each warning should hand off to the owning surface with the creator action attached, such as replace the file, align the track, or assign a missing link. Issues that do not affect the visible final episode should not block continuing to preset styling.
 
+Issues that remain unfixed at export should surface in `docs/export-readiness-review.md` Source Media Warnings or Speaker Sync Warnings when they would affect the finished episode.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes import, upload, sync confidence, and speaker assignment feel obvious before editing starts. Close work that turns ingest into a technical diagnostics page or blocks creators on issues that do not affect the visible final episode.
