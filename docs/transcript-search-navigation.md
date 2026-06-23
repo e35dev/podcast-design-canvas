@@ -6,6 +6,22 @@ Transcript search should help creators find important moments in long episodes w
 
 A creator should be able to search names, topics, glossary terms, sponsor mentions, and repeated phrases, then jump directly to the relevant episode moments.
 
+## Relationship To Episode Review
+
+Transcript search should connect to the review surfaces it routes into:
+
+- glossary spellings from `docs/transcript-glossary.md`
+- speaker attribution from `docs/speaker-attribution-review.md`
+- chapters from `docs/episode-chapter-markers.md`
+- captions from `docs/audio-caption-quality-review.md`
+- long-form navigation from `docs/long-form-navigation.md`
+- clip candidates from `docs/clip-candidate-review.md`
+- cross-talk context from `docs/pause-crosstalk-cleanup.md`
+
+## Search Approach
+
+Transcript search is preview first: results should jump to real episode moments with speaker and layout context—not act as a generic text box disconnected from the video.
+
 ## Search Inputs
 
 Support searches for:
@@ -55,7 +71,19 @@ Search results should stay connected to the workflow that already owns the decis
 - caption-related hits open the relevant step in `docs/audio-caption-quality-review.md` Review Flow when the result reflects an unresolved transcript issue
 - pinned transcript moments feed `docs/clip-candidate-review.md` Candidate Signals and Review Cards when a searched line should become a reusable short clip
 
-## Creator Actions
+## Review States
+
+The product should use search-result status to drive navigation and handoff behavior:
+
+- **shown** — display the result with timestamp, speaker, quote, and confidence context
+- **jumped** — open the episode preview at the moment with playback continuity preserved
+- **handed off** — route the result to the owning review surface for glossary, attribution, chapter, caption, or clip work
+- **pinned** — carry the moment into clip-candidate review without treating it as publish-ready
+- **dismissed** — hide the result from the current search session without clearing unrelated export-readiness or checklist warnings
+
+Each state should describe what happens in preview and which owning surface still owns the fix—not only the label on the result.
+
+## Creator Controls
 
 From a result, the creator should be able to:
 
@@ -69,4 +97,4 @@ From a result, the creator should be able to:
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes long-form transcript navigation useful for editing, captions, chapters, and visual moments. Close work that treats search as a generic text box disconnected from the episode preview and speaker context.
+Accept work that makes long-form transcript navigation useful for editing, captions, chapters, and visual moments. Close work that treats search as a generic text box disconnected from the episode preview and speaker context, or clears unrelated publish-readiness warnings when a search result is dismissed.
