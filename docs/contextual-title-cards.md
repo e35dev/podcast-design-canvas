@@ -55,3 +55,7 @@ Title cards should stay calm across a long-form episode, not crowd every moment:
 - preserve confirmed cards and their timing when the episode is re-rendered
 
 Avoid filling quiet stretches with decorative cards just because a moment was detected; the conversation should stay the focus.
+
+## Maintainer Acceptance Notes
+
+Accept work that helps creators place and review tasteful title cards at real episode beats using preset styles and simple text or duration controls. Close work that exposes keyframe editors, motion curves, or compositing tools in the default path, or that floods long-form episodes with decorative cards at every detected topic mention.
