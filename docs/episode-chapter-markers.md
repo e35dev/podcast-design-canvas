@@ -52,4 +52,4 @@ Chapters should stay readable on hour-plus episodes:
 
 ## Publish Readiness
 
-Confirmed chapters flow forward into the publish path: they populate the chapter fields in `docs/episode-metadata-publishing.md` and appear as a checklist item in `docs/publish-checklist.md`, so the creator confirms chapters once and reuses them at export.
+Confirmed chapters flow forward into the publish path: they populate the chapter fields in `docs/episode-metadata-publishing.md`, appear in `docs/publish-checklist.md`, and surface in `docs/export-readiness-review.md` Chapter Marker Warnings when chapter issues would affect export.

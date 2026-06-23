@@ -35,6 +35,26 @@ Flag only cue issues that affect the exported episode:
 
 Each warning should link back to the place where the creator can fix it, such as cue setup, speech ducking review, sponsor placement review, or template adaptation. Unused library music and draft cues that are not present in the export should not affect readiness.
 
+## Chapter Marker Warnings
+
+When chapters from `docs/episode-chapter-markers.md` are included in the finished episode, readiness should treat them as part of metadata and navigation review rather than as a separate marker-editing queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| chapter title and timing issues | `docs/episode-chapter-markers.md` | Review States, Creator Controls |
+| export metadata gaps | `docs/episode-metadata-publishing.md` | Chapter Workflow, Readiness Checks |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Items, Review Approvals |
+
+Flag only chapter issues that affect the exported episode:
+
+- chapter has no title
+- chapter starts mid-sentence
+- chapter is too short to keep
+- chapter overlaps the next chapter
+- confirmed chapters are missing from export metadata
+
+Each warning should link back to chapter review or the metadata fields where the creator can fix it. Unused suggested chapters that are not in the export should not affect readiness.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
