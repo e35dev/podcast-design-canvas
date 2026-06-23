@@ -38,7 +38,12 @@ Source media issues that would affect the chosen export destination should surfa
 
 Health checks should preview the actual problem when possible: show a dark frame, play a quiet sample, or jump to the missing section. Avoid forcing users to interpret technical file metadata.
 
-When a speaker's problem is mainly visual rather than missing media, the next step should stay in the same creator-facing flow: open `docs/speaker-video-match.md` so the creator can balance brightness, warmth, or contrast before choosing a preset. Audio-only and missing-file problems should stay in source health rather than redirecting into visual matching.
+When a speaker's problem is mainly visual rather than missing media, the next step should stay in the same creator-facing flow:
+
+- open `docs/speaker-video-match.md` when one track needs direct correction such as backlight, contrast, or clutter cleanup before preset selection
+- open `docs/speaker-visual-match.md` when multiple speakers need to look more cohesive side by side before the creator judges the preset or canvas result
+
+Audio-only and missing-file problems should stay in source health rather than redirecting into visual matching.
 
 ## Maintainer Acceptance Notes
 

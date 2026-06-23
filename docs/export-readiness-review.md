@@ -27,7 +27,7 @@ Export readiness is publishing first: summarize viewer-facing problems creators 
 Before export, show a compact readiness summary across the parts that matter to a viewer:
 
 - speaker framing and visible layout consistency
-- caption coverage and proper noun confidence
+- caption coverage, speaker attribution, and proper noun confidence
 - audio clarity, loudness balance, and noise cleanup
 - b-roll, overlays, and title moments that still need approval
 - brand elements, sponsor placements, and show template consistency
@@ -139,6 +139,26 @@ Flag only sync issues that affect the exported episode:
 - duplicate audio appears from two speaker tracks
 
 Each warning should link back to sync repair or the speaker bucket where the creator can align, replace, or mark a track audio-only. Raw timecode data should not appear in readiness.
+
+## Speaker Attribution Warnings
+
+When speaker labels would affect trust in exported captions, searchable transcript moments, or publish checks, readiness should surface attribution issues as part of caption review rather than as a separate transcript diagnostics queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| wrong speaker labels and relabel actions | `docs/speaker-attribution-review.md` | When To Flag, Creator Controls, Review States |
+| caption review handoff | `docs/audio-caption-quality-review.md` | Review Flow |
+| sync-driven attribution problems | `docs/speaker-sync-repair.md` | Detected Issues, Repair Actions |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping |
+
+Flag only attribution issues that affect the exported episode:
+
+- caption line assigns speech to the wrong host or guest
+- off-camera or narrator voice is labeled as an on-camera speaker
+- unresolved cross-talk leaves a needed exchange attached to the wrong person
+- sync drift changed who appears to be speaking in searchable transcript moments
+
+Each warning should link back to speaker attribution review or sync repair where the creator can relabel the moment, split the exchange, or fix the underlying timing issue. Internal diarization confidence and raw alignment data should not appear in readiness.
 
 ## Audio Cleanup Warnings
 
