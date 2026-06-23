@@ -64,6 +64,18 @@ Once a creator chooses a direction in comparison preview, the product should kee
 - keep template-save behavior aligned with `docs/show-template-adaptation.md` Template Contents, Adaptation Flow
 - avoid requiring the creator to re-pick the same preset after leaving comparison
 
+## Review States
+
+Use simple creator-facing states:
+
+- comparing — two or more presets preview the same episode moment side by side
+- direction chosen — the creator picked a preset and it is ready to apply to the full episode
+- needs moment check — the preset looks strong on one clip but has not been checked on a contrasting moment
+- brand mismatch — the preset conflicts with the current brand kit on captions or lower-thirds
+- ready to apply — the creator confirmed the preset on multiple moments and can commit it
+
+Each state should describe what the creator sees in comparison preview and the next action, such as "Energetic preset crops guest names on mobile."
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes preset choice visual, comparative, and grounded in the current episode. Close work that turns preset selection into a settings table or uses generic mock previews after episode media is available.
