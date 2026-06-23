@@ -6,6 +6,22 @@ Source media health should tell creators whether their raw speaker files are goo
 
 A creator should be able to import separate speaker recordings and see any media quality issues that will affect the final video before spending time on styling.
 
+## Relationship To Episode Setup
+
+Source media health should connect to the ingest and export path:
+
+- speaker buckets from `docs/episode-ingest-readiness.md`
+- speaker roles from `docs/speaker-role-mapping.md`
+- per-track visual fixes from `docs/speaker-video-match.md`
+- cross-speaker visual match from `docs/speaker-visual-match.md`
+- audio cleanup from `docs/audio-cleanup-controls.md`
+- publish checklist from `docs/publish-checklist.md`
+- export warnings in `docs/export-readiness-review.md`
+
+## Health Approach
+
+Source health is viewer-facing first: flag only problems that affect the finished episode, preview the actual issue when possible, and hand visual-match problems to the owning surface—not codec menus or file metadata screens.
+
 ## Health Checks
 
 Flag issues that matter to the viewer:
@@ -33,17 +49,17 @@ When a source file is flagged, the creator should be able to act on it without o
 
 Each action should explain its effect on the finished episode, and issues that do not affect the visible episode should never block the creator from continuing.
 
-## Readiness Summary
+## Review States
 
-Use clear status labels:
+The product should use source media status to drive speaker-bucket review and export readiness:
 
-- ready
-- review suggested
-- needs replacement
-- audio-only usable
-- unavailable
+- **ready** — the track is usable for the chosen layout and destination; clear only source-media warnings for that speaker bucket
+- **review suggested** — show the issue with preview when possible; keep styling available when the destination allows continuing with consequence shown
+- **needs replacement** — block export when the missing or corrupted file would appear in the finished episode; link directly to replace or re-import
+- **audio-only usable** — keep the speaker in the episode without video when the layout allows it; surface the consequence in export readiness
+- **unavailable** — stop using the track in export until the creator replaces it or marks an allowed fallback
 
-The summary should attach to speaker buckets so creators understand which person is affected.
+Each state should attach to a speaker bucket and describe the next creator action—not codec or pipeline labels.
 
 Source media issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Source Media Warnings.
 
@@ -60,4 +76,4 @@ Audio-only and missing-file problems should stay in source health rather than re
 
 ## Maintainer Acceptance Notes
 
-Accept work that helps creators identify source media issues before styling and export. Close work that exposes raw codec diagnostics as the main experience or blocks progress for issues that do not affect the visible episode.
+Accept work that helps creators identify source media issues before styling and export. Close work that exposes raw codec diagnostics as the main experience, blocks progress for issues that do not affect the visible episode, or clears unrelated sync or caption warnings when a track is marked audio-only or continued with warning.
