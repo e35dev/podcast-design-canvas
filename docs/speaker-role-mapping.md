@@ -11,11 +11,19 @@ A creator should be able to map each imported track to a clear podcast role, the
 Speaker role mapping should stay connected to the creator-facing workflow that already uses those roles:
 
 - imported speaker buckets from `docs/episode-ingest-readiness.md`
+- social context and names from `docs/social-context-intake.md`
 - preset preview and first-look layout decisions from `docs/preset-style-picker.md`
 - speaker labels in captions from `docs/speaker-attribution-review.md`
+- sync-driven relabeling from `docs/speaker-sync-repair.md`
+- off-camera presence from `docs/off-camera-speaker-presence.md`
 - reusable role behavior in future episodes from `docs/show-template-adaptation.md`
+- export warnings in `docs/export-readiness-review.md`
 
-Role confirmation should happen before presets, captions, or template adaptation depend on the wrong speaker identity. This keeps role mapping inside episode setup instead of turning it into a detached track-management screen.
+Role confirmation should happen before presets, captions, or template adaptation depend on the wrong speaker identity.
+
+## Role Approach
+
+Speaker roles are identity first: every track should map to a clear podcast role with visible suggestions and live preview of framing, lower-thirds, and caption attribution—not anonymous file assignment.
 
 ## Core Roles
 
@@ -69,10 +77,6 @@ Support common podcast setups:
 - producer voice without camera
 - guest joins late or leaves early
 
-## Review And Confirm
-
-Before styling starts, the creator should be able to confirm every track's role at a glance and fix the ones that look wrong without restarting ingest.
-
 ## Preview Contexts
 
 Role confirmation should be checked on episode moments where the assignment is easiest to judge:
@@ -85,21 +89,22 @@ Role confirmation should be checked on episode moments where the assignment is e
 
 These previews should show what the creator would actually notice in the episode, such as the wrong speaker getting host framing, the wrong lower-third, or a guest line attributed like a host line.
 
-Role previews should preserve the same episode moment while the creator checks:
+Role previews should preserve the same episode moment while the creator checks speaker framing, lower-third naming, caption attribution, and host-versus-guest emphasis in the same visible layout.
 
-- speaker framing
-- lower-third naming
-- caption attribution
-- host-versus-guest emphasis in the same visible layout
+## Review States
 
-Each track should show a clear role state:
+The product should use role status to drive setup and layout behavior:
 
-- confirmed — the creator has accepted the role
-- suggested — the product proposed a role with visible reasoning
-- needs review — low-confidence or conflicting signals
-- unassigned — no role chosen yet
+- **confirmed** — apply the role to framing, lower-thirds, and caption attribution in the live preview; clear only role-mapping warnings for that speaker bucket
+- **suggested** — show the proposed role with visible reasoning; do not treat layouts or captions as final until the creator confirms
+- **needs review** — surface low-confidence or conflicting signals and keep preset- or caption-dependent steps blocked until the role is resolved
+- **unassigned** — prevent styling that depends on role mapping until the creator chooses a role from the short podcast role list
 
-Keep the corrections direct:
+Each state should describe what happens in preview, attribution, and export readiness—not only the label on the track.
+
+## Creator Controls
+
+Offer simple actions:
 
 - accept a suggested role in one action
 - change a role from the short list of podcast roles
@@ -108,8 +113,8 @@ Keep the corrections direct:
 - set a guest who joins late or leaves early without breaking the layout
 - reset a track to its suggested role
 
-Confirming a role should update that speaker's framing, lower-third, and caption attribution in the live preview, so the creator sees the result before moving on. A track should never be silently locked into a role the creator has not seen.
+Confirming a role should update that speaker's framing, lower-third, and caption attribution in the live preview before the creator moves on. A track should never be silently locked into a role the creator has not seen.
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes speaker roles durable across ingest, presets, canvas editing, captions, and templates. Close work that treats tracks as anonymous media files or hard-codes one show format for every podcast.
+Accept work that makes speaker roles durable across ingest, presets, canvas editing, captions, and templates. Close work that treats tracks as anonymous media files, hard-codes one show format for every podcast, or clears unrelated sync or attribution warnings when a role is confirmed.
