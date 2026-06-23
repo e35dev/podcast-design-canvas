@@ -6,6 +6,20 @@ Publishing metadata should be prepared alongside the finished video so creators 
 
 A creator should be able to confirm the title, description, chapters, guest links, and destination-specific details before downloading or publishing a long-form episode.
 
+## Relationship To Export Flow
+
+This review starts from episode context already captured in the workspace:
+
+- speaker roles and names from episode ingest
+- guest links and spelling notes from `docs/social-context-intake.md`
+- glossary terms from `docs/transcript-glossary.md`
+- chapter and segment structure from `docs/show-segment-system.md`
+- sponsor details from `docs/sponsor-placement-review.md`
+- thumbnail selection from `docs/thumbnail-cover-frame.md`
+- destination defaults from `docs/publish-destination-presets.md`
+
+Metadata editing should not feel like a separate CMS. Fields should stay tied to the episode the creator just finished reviewing.
+
 ## Metadata Fields
 
 The product should support:
@@ -36,14 +50,43 @@ Chapters should remain useful for hour-plus episodes with many topic shifts.
 
 ## Destination Fit
 
-Destination choices should shape defaults:
+Destination choices should shape defaults defined in `docs/publish-destination-presets.md`:
 
-- YouTube long-form video
-- podcast feed backup
-- client review copy
+- YouTube full episode
+- private client review
 - archive master
+- audio-only podcast backup
+- sponsor approval copy
+- internal team review
 
 The product should surface only the metadata required or useful for the chosen destination. Advanced fields can be tucked behind a secondary control.
+
+## Review States
+
+Use creator-facing states:
+
+- complete
+- needs review
+- missing
+- low confidence
+- not needed for destination
+
+Each state should describe what a publisher would notice, such as "Guest link still points to the wrong profile" or "Chapter title may spoil the ending."
+
+## Creator Controls
+
+Offer simple actions:
+
+- edit title or description
+- apply glossary spelling
+- confirm guest link
+- rename or merge chapter
+- add sponsor disclosure
+- choose thumbnail frame
+- copy metadata for another destination
+- reset field to episode default
+
+Avoid exposing feed schemas, platform API fields, or bulk metadata import as the default workflow.
 
 ## Readiness Checks
 
@@ -55,6 +98,8 @@ Before final export, flag:
 - chapter markers with low confidence
 - thumbnail frame not selected
 - sponsor disclosure missing when sponsor visuals are present
+
+These checks should appear in `docs/publish-checklist.md` with a direct link back to the field that needs attention.
 
 ## Maintainer Acceptance Notes
 
