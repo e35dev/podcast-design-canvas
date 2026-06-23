@@ -46,6 +46,18 @@ Canvas objects should understand episode context:
 
 The editor should make context visible enough to guide the creator, without turning the canvas into a timeline engineering tool.
 
+## Preview Guardrails
+
+Before a creator applies a layout across the episode or saves it as a reusable template, the canvas should surface the visible checks that already shape the surrounding workflow:
+
+- safe-area conflicts from `docs/layout-safe-areas.md` Checks
+- speaker visibility blockers from `docs/speaker-framing-safety.md` Checks and Fixes
+- destination-specific crop failures from `docs/destination-crop-previews.md` Checks and Fixes
+- brand readability risks from `docs/show-brand-kit-setup.md` Preview Surfaces and Guardrails
+- speaker-count fallback choices from `docs/show-template-adaptation.md` Adaptation Flow when the current episode does not match the saved layout
+
+These warnings should open the exact moment and preview surface the creator needs to fix. Export readiness can summarize unresolved layout problems later, but the canvas should stay the place where creators actually solve them.
+
 ## Reuse Requirements
 
 Before saving a canvas layout as a template, confirm which parts should adapt next time:
