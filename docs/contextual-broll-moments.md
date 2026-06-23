@@ -6,6 +6,19 @@ B-roll and callouts should make long-form conversations clearer and more engagin
 
 A creator should be able to review suggested visual moments, approve the ones that fit the show, and keep the episode feeling intentionally edited.
 
+## Relationship To Visual Review
+
+Contextual visual review should start from episode context already in the workspace:
+
+- transcript topics and references from episode ingest and `docs/transcript-search-navigation.md`
+- names, brands, and references from `docs/social-context-intake.md`
+- segment structure from `docs/show-segment-system.md`
+- sponsor-safe visuals from `docs/sponsor-placement-review.md`
+- title cards from `docs/contextual-title-cards.md`
+- framing checks from `docs/speaker-framing-safety.md`
+- reusable moments from `docs/show-template-adaptation.md`
+- export warnings in `docs/export-readiness-review.md`
+
 ## Moment Sources
 
 Suggestions can come from:
@@ -33,19 +46,9 @@ Use podcast-appropriate visual treatments:
 
 Each treatment should preview on the real episode frame before approval.
 
-## Approval Flow
+## Visual Approach
 
-Creators should be able to:
-
-- approve, reject, or replace a suggestion
-- adjust the start and end point
-- choose a calmer or stronger treatment
-- block a repeated source from future suggestions
-- pin a visual moment into the show template when it is recurring
-
-The default state should favor restraint. A long episode should not become visually noisy just because many candidate moments exist.
-
-Visual issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Contextual Visual Warnings.
+Contextual visuals are review first with restrained defaults: creators approve moments on the real episode frame, and a long episode should not become visually noisy just because many candidate moments exist.
 
 ## Quality Rules
 
@@ -57,6 +60,32 @@ Suggestions should avoid:
 - repetitive overlays in back-to-back moments
 - short-clip pacing that feels wrong in a full episode
 
+## Review States
+
+The product should use visual moment status to drive contextual review and export readiness:
+
+- **suggested** — show the moment with plain-language context; do not include it in export until the creator approves or replaces it
+- **approved** — include the visual in the exported episode and clear only the related contextual-visual readiness item
+- **replaced** — swap the suggestion for creator-chosen media or treatment and reopen preview at the affected moment
+- **rejected** — remove the suggestion from export consideration without clearing unrelated caption, sponsor, or metadata warnings
+- **pinned to template** — save a recurring visual pattern to `docs/show-template-adaptation.md` for future episodes after episode-specific approval
+- **needs review** — keep the item in `docs/export-readiness-review.md` Contextual Visual Warnings when overlap, low-confidence context, or framing conflicts remain
+
+Each state should describe what happens in preview, export readiness, and template reuse—not only the label on the moment.
+
+## Creator Controls
+
+Offer simple actions:
+
+- approve, reject, or replace a suggestion
+- adjust the start and end point
+- choose a calmer or stronger treatment
+- block a repeated source from future suggestions
+- pin a visual moment into the show template when it is recurring
+- jump to framing or title-card review when overlap appears
+
+Avoid auto-filling the episode with visuals or exposing a separate effects timeline as the default workflow.
+
 ## Maintainer Acceptance Notes
 
-Accept work that helps creators add relevant b-roll, callouts, and title moments with reviewable context. Close work that auto-fills the whole episode with distracting visuals or uses social context beyond visible episode quality.
+Accept work that helps creators add relevant b-roll, callouts, and title moments with reviewable context. Close work that auto-fills the whole episode with distracting visuals, uses social context beyond visible episode quality, or clears unrelated publish-readiness warnings when a visual moment is rejected.
