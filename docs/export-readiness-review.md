@@ -93,6 +93,8 @@ When speaker visibility or layout framing would affect the exported episode, rea
 | face and overlay conflicts | `docs/speaker-framing-safety.md` | Checks, Fixes |
 | role-based layout fit | `docs/speaker-role-mapping.md` | Layout Effects |
 | destination crop impact | `docs/destination-crop-previews.md` | Checks, Fixes |
+| visual match across speakers | `docs/speaker-visual-match.md` | Match Signals, Review States |
+| speaker switch reframing | `docs/speaker-switch-framing.md` | Switch Styles, When to Flag |
 
 Flag only framing issues that affect the exported episode:
 
@@ -100,6 +102,9 @@ Flag only framing issues that affect the exported episode:
 - face cropped too tightly for the destination
 - panel layout makes one speaker unreadable
 - mobile crop cuts off a guest
+- one speaker looks noticeably brighter, darker, or cooler than the others
+- switch framing stays static across a long multi-speaker stretch
+- reframe overlaps a b-roll moment or sponsor placement
 
 Each warning should link back to the moment and preview surface where the creator can fix it.
 

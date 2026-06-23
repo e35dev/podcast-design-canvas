@@ -38,7 +38,7 @@ Use simple states:
 - needs review
 - skipped
 
-These states should appear in `docs/export-readiness-review.md` only when a visual mismatch would be noticeable in the finished episode.
+These states should appear in `docs/export-readiness-review.md` Speaker Framing Warnings only when a visual mismatch would be noticeable in the finished episode.
 
 ## Connection to Preset and Canvas
 
