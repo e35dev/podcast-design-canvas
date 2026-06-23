@@ -44,6 +44,8 @@ After repair, show a small set of checkpoints:
 
 Creators should not need to manually scrub the full timeline to trust the repair.
 
+Sync issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Speaker Framing Warnings.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes speaker sync issues understandable and fixable during ingest. Close work that surfaces raw timecode diagnostics, hides sync problems until export, or requires creators to manually align every track.

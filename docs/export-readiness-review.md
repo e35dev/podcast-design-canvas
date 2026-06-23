@@ -95,6 +95,7 @@ When speaker visibility or layout framing would affect the exported episode, rea
 | destination crop impact | `docs/destination-crop-previews.md` | Checks, Fixes |
 | visual match across speakers | `docs/speaker-visual-match.md` | Match Signals, Review States |
 | speaker switch reframing | `docs/speaker-switch-framing.md` | Switch Styles, When to Flag |
+| speaker track sync | `docs/speaker-sync-repair.md` | Detected Issues, Repair Actions |
 
 Flag only framing issues that affect the exported episode:
 
@@ -105,6 +106,9 @@ Flag only framing issues that affect the exported episode:
 - one speaker looks noticeably brighter, darker, or cooler than the others
 - switch framing stays static across a long multi-speaker stretch
 - reframe overlaps a b-roll moment or sponsor placement
+- speaker video and audio visibly out of sync
+- guest track ends early leaving a visible gap
+- duplicate audio appears from two speaker tracks
 
 Each warning should link back to the moment and preview surface where the creator can fix it.
 
