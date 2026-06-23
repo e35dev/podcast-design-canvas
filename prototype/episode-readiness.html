@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Readiness Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .tracks {
+        display: grid;
+        gap: 12px;
+      }
+
+      .track {
+        display: grid;
+        grid-template-columns: 1.1fr 0.8fr 0.7fr 0.7fr;
+        gap: 10px;
+        align-items: end;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .toggles {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-height: 40px;
+      }
+
+      .toggles label {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .toggles input {
+        width: auto;
+        min-height: auto;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 700;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .track {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Episode readiness</h1>
+      <p class="lede">Review synced speaker tracks before choosing a preset. The prototype flags only issues that affect the finished podcast episode.</p>
+
+      <section class="workspace" aria-label="Episode readiness workspace">
+        <div class="panel">
+          <h2>Speaker tracks</h2>
+          <div class="tracks" id="tracks"></div>
+          <div class="actions">
+            <button type="button" id="addGuest">Add guest</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Readiness summary</h2>
+          <div id="status" class="status ready">Ready</div>
+          <div id="issues" class="issues"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const sampleTracks = [
+        {
+          id: "host",
+          name: "Host",
+          role: "host",
+          duration: 3600,
+          audioKey: "host-audio",
+          hasVideo: true,
+          transcript: "ready",
+        },
+        {
+          id: "guest-1",
+          name: "Guest 1",
+          role: "guest",
+          duration: 3480,
+          audioKey: "guest-audio",
+          hasVideo: true,
+          transcript: "ready",
+        },
+      ];
+
+      let tracks = structuredClone(sampleTracks);
+
+      const tracksElement = document.querySelector("#tracks");
+      const issuesElement = document.querySelector("#issues");
+      const statusElement = document.querySelector("#status");
+
+      document.querySelector("#addGuest").addEventListener("click", () => {
+        tracks.push({
+          id: `guest-${tracks.length}`,
+          name: `Guest ${tracks.length}`,
+          role: "guest",
+          duration: 3000,
+          audioKey: `guest-${tracks.length}-audio`,
+          hasVideo: false,
+          transcript: "not-started",
+        });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        tracks = structuredClone(sampleTracks);
+        render();
+      });
+
+      function evaluateReadiness() {
+        const issues = [];
+
+        if (!tracks.some((track) => track.role === "host")) {
+          issues.push({
+            severity: "blocker",
+            title: "Missing host track",
+            action: "Assign one speaker recording to the host bucket before choosing a preset.",
+          });
+        }
+
+        const fingerprints = new Map();
+        for (const track of tracks) {
+          if (!track.audioKey) {
+            continue;
+          }
+          fingerprints.set(track.audioKey, [...(fingerprints.get(track.audioKey) || []), track]);
+        }
+
+        for (const matches of fingerprints.values()) {
+          if (matches.length > 1) {
+            issues.push({
+              severity: "review",
+              title: `${matches.map((track) => track.name).join(" and ")} appear to share audio`,
+              action: "Confirm these are separate speakers or replace the duplicate recording.",
+            });
+          }
+        }
+
+        const longest = Math.max(...tracks.map((track) => Number(track.duration) || 0));
+        for (const track of tracks) {
+          if (!track.hasVideo) {
+            issues.push({
+              severity: "review",
+              title: `${track.name} is audio-only`,
+              action: "Continue with an audio-only speaker or replace the file with video.",
+            });
+          }
+
+          if (track.transcript !== "ready") {
+            issues.push({
+              severity: "review",
+              title: `${track.name} transcript is ${track.transcript}`,
+              action: "Start transcript generation or continue knowing captions need review.",
+            });
+          }
+
+          if (longest - Number(track.duration) > 120) {
+            issues.push({
+              severity: "review",
+              title: `${track.name} is more than two minutes shorter than another speaker`,
+              action: "Replace the shorter file or continue with a visible gap.",
+            });
+          }
+        }
+
+        return {
+          status: issues.some((issue) => issue.severity === "blocker") ? "blocked" : issues.length ? "review" : "ready",
+          issues,
+        };
+      }
+
+      function render() {
+        tracksElement.replaceChildren(...tracks.map(renderTrack));
+        const readiness = evaluateReadiness();
+        statusElement.className = `status ${readiness.status}`;
+        statusElement.textContent = readiness.status === "ready" ? "Ready" : readiness.status === "blocked" ? "Blocked" : "Needs review";
+        issuesElement.replaceChildren(
+          ...(readiness.issues.length
+            ? readiness.issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "All speaker tracks are ready for preset selection." })]),
+        );
+      }
+
+      function renderTrack(track, index) {
+        const row = document.createElement("article");
+        row.className = "track";
+        row.innerHTML = `
+          <label>Name<input value="${track.name}" data-field="name"></label>
+          <label>Role
+            <select data-field="role">
+              ${["host", "co-host", "guest", "panelist", "producer"].map((role) => `<option value="${role}" ${role === track.role ? "selected" : ""}>${role}</option>`).join("")}
+            </select>
+          </label>
+          <label>Minutes<input type="number" min="0" value="${Math.round(track.duration / 60)}" data-field="duration"></label>
+          <div class="toggles">
+            <label><input type="checkbox" data-field="hasVideo" ${track.hasVideo ? "checked" : ""}> Video</label>
+            <label>
+              Transcript
+              <select data-field="transcript">
+                ${["ready", "processing", "not-started", "failed"].map((status) => `<option value="${status}" ${status === track.transcript ? "selected" : ""}>${status}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+        `;
+
+        row.addEventListener("input", (event) => updateTrack(event, index));
+        row.addEventListener("change", (event) => updateTrack(event, index));
+        return row;
+      }
+
+      function updateTrack(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+
+        tracks[index][field] = field === "hasVideo"
+          ? event.target.checked
+          : field === "duration"
+            ? Number(event.target.value) * 60
+            : event.target.value;
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.severity}`;
+        article.innerHTML = `<strong>${issue.title}</strong><span>${issue.action}</span>`;
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
