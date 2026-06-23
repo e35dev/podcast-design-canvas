@@ -33,6 +33,27 @@ Important moments should appear as compact cards with:
 
 Examples include "Guest introduces launch story," "Caption confidence is low," or "Sponsor mark appears near lower-third."
 
+## Moment Actions
+
+A creator scanning a long episode should be able to act on a moment without leaving the review flow. Each moment card should carry a clear status:
+
+- new — surfaced but not yet looked at
+- reviewed — the creator has seen it and it is fine
+- fixed — the underlying issue was resolved
+- ignored — not relevant for this episode
+- snoozed — deferred until a later review pass
+
+Keep the per-moment actions quick:
+
+- jump to the moment with playback context
+- mark reviewed, fixed, or ignored in one action
+- open the owning review surface to fix the issue
+- add a short review note for a collaborator
+- snooze a moment to revisit later
+- restore a snoozed or ignored moment
+
+Acting on a moment should update its status in place and keep the creator's position in the episode, so a full-length review can move forward without re-scanning handled moments. Resolved and ignored moments should drop out of the default view but stay recoverable.
+
 ## Playback Continuity
 
 When moving across review items, the product should preserve context:
