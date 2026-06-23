@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Attribution Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        margin-bottom: 12px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .moment-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .moment-meta {
+        display: grid;
+        gap: 4px;
+      }
+
+      .time {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .caption {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge,
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 800;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready,
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.needs,
+      .status.needs {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .badge.mismatch,
+      .status.mismatch {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.sync,
+      .status.sync {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.out,
+      .status.out {
+        color: #58635f;
+        background: #e8eeeb;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary-card {
+        display: grid;
+        gap: 4px;
+        min-height: 72px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .summary-card strong {
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .summary-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--info);
+      }
+
+      .issue.done {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .bulk {
+        display: grid;
+        gap: 12px;
+        margin-top: 22px;
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+      }
+
+      .bulk-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        border-color: #c5ceca;
+        background: #e7ece9;
+        color: #87918d;
+        cursor: not-allowed;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .fields,
+        .bulk-row,
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .moment-head {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker attribution review</h1>
+      <p class="lede">Confirm that each caption moment names the right speaker before captions, transcript jumps, and publish checks are marked ready.</p>
+
+      <section class="workspace" aria-label="Speaker attribution review workspace">
+        <div class="panel">
+          <h2>Caption moments</h2>
+          <div class="moments" id="moments"></div>
+          <div class="actions">
+            <button type="button" id="addMoment">Add sample moment</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Attribution review summary">
+          <h2>Attribution summary</h2>
+          <div id="status" class="status ready">Ready</div>
+          <div id="summary" class="summary-grid"></div>
+          <div id="issues" class="issues"></div>
+
+          <div class="bulk" aria-label="Bulk re-attribution preview">
+            <h3>Bulk re-attribution preview</h3>
+            <div class="bulk-row">
+              <label>Change lines from
+                <select id="bulkFrom"></select>
+              </label>
+              <label>To
+                <select id="bulkTo"></select>
+              </label>
+            </div>
+            <div id="bulkStatus" class="issue info"></div>
+            <div class="actions">
+              <button type="button" id="previewBulk">Preview change</button>
+              <button type="button" id="applyBulk">Apply preview</button>
+              <button type="button" class="secondary" id="revertBulk">Undo bulk change</button>
+            </div>
+            <p class="note">Bulk changes only rename caption and transcript moments. Role mapping stays owned by the speaker role step.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const speakers = [
+        { id: "", label: "Needs speaker" },
+        { id: "host", label: "Dana, Host" },
+        { id: "guest", label: "Marcus, Guest" },
+        { id: "panelist", label: "Priya, Panelist" },
+        { id: "off-camera", label: "Off-camera voice" },
+      ];
+
+      const issueSources = [
+        { id: "caption-review", label: "Caption review" },
+        { id: "host-guest-exchange", label: "Host and guest exchange" },
+        { id: "off-camera-voice", label: "Off-camera voice" },
+        { id: "sync-repair", label: "Timing needs sync repair" },
+        { id: "publish-check", label: "Publish readiness" },
+      ];
+
+      const decisions = [
+        { id: "review", label: "Review this moment" },
+        { id: "confirm", label: "Confirm assigned speaker" },
+        { id: "accept-suggestion", label: "Use suggested speaker" },
+        { id: "sync-repair", label: "Open sync repair" },
+        { id: "not-exported", label: "Not in exported episode" },
+      ];
+
+      const sampleMoments = [
+        {
+          id: "m1",
+          time: "03:14",
+          caption: "Welcome back. Marcus, tell us what changed after launch.",
+          assignedSpeaker: "host",
+          suggestedSpeaker: "host",
+          source: "caption-review",
+          decision: "confirm",
+        },
+        {
+          id: "m2",
+          time: "08:42",
+          caption: "The first customer call made the whole roadmap clearer.",
+          assignedSpeaker: "",
+          suggestedSpeaker: "guest",
+          source: "host-guest-exchange",
+          decision: "review",
+        },
+        {
+          id: "m3",
+          time: "16:08",
+          caption: "I want to push back on that before we move on.",
+          assignedSpeaker: "guest",
+          suggestedSpeaker: "panelist",
+          source: "caption-review",
+          decision: "review",
+        },
+        {
+          id: "m4",
+          time: "27:31",
+          caption: "Sorry, the camera lagged right as Priya started answering.",
+          assignedSpeaker: "panelist",
+          suggestedSpeaker: "panelist",
+          source: "sync-repair",
+          decision: "sync-repair",
+        },
+        {
+          id: "m5",
+          time: "41:05",
+          caption: "We tested that joke in the warmup before the published episode starts.",
+          assignedSpeaker: "off-camera",
+          suggestedSpeaker: "off-camera",
+          source: "publish-check",
+          decision: "not-exported",
+        },
+      ];
+
+      const addSamples = [
+        {
+          time: "49:18",
+          caption: "That answer was from the off-camera producer, not the guest.",
+          assignedSpeaker: "guest",
+          suggestedSpeaker: "off-camera",
+          source: "off-camera-voice",
+          decision: "review",
+        },
+        {
+          time: "54:02",
+          caption: "Let's pause there and come back after the break.",
+          assignedSpeaker: "",
+          suggestedSpeaker: "host",
+          source: "host-guest-exchange",
+          decision: "review",
+        },
+      ];
+
+      let moments = structuredClone(sampleMoments);
+      let addSampleIndex = 0;
+      let bulk = {
+        from: "guest",
+        to: "host",
+        status: "not started",
+        previewCount: 0,
+        previousMoments: null,
+      };
+
+      const momentsElement = document.querySelector("#moments");
+      const statusElement = document.querySelector("#status");
+      const summaryElement = document.querySelector("#summary");
+      const issuesElement = document.querySelector("#issues");
+      const bulkFromElement = document.querySelector("#bulkFrom");
+      const bulkToElement = document.querySelector("#bulkTo");
+      const bulkStatusElement = document.querySelector("#bulkStatus");
+      const previewBulkElement = document.querySelector("#previewBulk");
+      const applyBulkElement = document.querySelector("#applyBulk");
+      const revertBulkElement = document.querySelector("#revertBulk");
+
+      document.querySelector("#addMoment").addEventListener("click", () => {
+        const next = addSamples[addSampleIndex % addSamples.length];
+        addSampleIndex += 1;
+        moments.push({ ...structuredClone(next), id: `m${Date.now()}-${addSampleIndex}` });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(sampleMoments);
+        addSampleIndex = 0;
+        bulk = {
+          from: "guest",
+          to: "host",
+          status: "not started",
+          previewCount: 0,
+          previousMoments: null,
+        };
+        render();
+      });
+
+      bulkFromElement.addEventListener("change", (event) => {
+        bulk.from = event.target.value;
+        bulk.status = "not started";
+        bulk.previewCount = 0;
+        render();
+      });
+
+      bulkToElement.addEventListener("change", (event) => {
+        bulk.to = event.target.value;
+        bulk.status = "not started";
+        bulk.previewCount = 0;
+        render();
+      });
+
+      previewBulkElement.addEventListener("click", () => {
+        bulk.previewCount = countBulkMatches();
+        bulk.status = "previewing changes";
+        render();
+      });
+
+      applyBulkElement.addEventListener("click", () => {
+        if (bulk.status !== "previewing changes" || bulk.from === bulk.to || bulk.previewCount === 0) {
+          return;
+        }
+
+        bulk.previousMoments = structuredClone(moments);
+        moments = moments.map((moment) => {
+          if (moment.decision === "not-exported" || moment.assignedSpeaker !== bulk.from) {
+            return moment;
+          }
+
+          return {
+            ...moment,
+            assignedSpeaker: bulk.to,
+            suggestedSpeaker: moment.suggestedSpeaker === bulk.from ? bulk.to : moment.suggestedSpeaker,
+            decision: "confirm",
+          };
+        });
+        bulk.status = "applied";
+        render();
+      });
+
+      revertBulkElement.addEventListener("click", () => {
+        if (!bulk.previousMoments) {
+          return;
+        }
+
+        moments = structuredClone(bulk.previousMoments);
+        bulk.previousMoments = null;
+        bulk.status = "reverted";
+        bulk.previewCount = 0;
+        render();
+      });
+
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          let state = "ready";
+          let issue = null;
+
+          if (moment.decision === "not-exported") {
+            state = "not in exported episode";
+            issue = {
+              tone: "info",
+              title: "Moment skipped for export",
+              action: "This line stays out of publish checks unless it returns to the exported episode.",
+            };
+          } else if (moment.decision === "sync-repair" || moment.source === "sync-repair") {
+            state = "sync repair needed";
+            issue = {
+              tone: "info",
+              title: "Timing should be repaired before relabeling",
+              action: "Open sync repair so the visible speaker and caption moment line up.",
+            };
+          } else if (!moment.assignedSpeaker) {
+            state = "needs speaker";
+            issue = {
+              tone: "blocker",
+              title: "Caption needs a speaker",
+              action: "Assign this line to a speaker bucket before captions can be marked ready.",
+            };
+          } else if (moment.suggestedSpeaker && moment.assignedSpeaker !== moment.suggestedSpeaker && moment.decision !== "confirm") {
+            state = "speaker mismatch";
+            issue = {
+              tone: "review",
+              title: "Assigned speaker differs from the suggestion",
+              action: "Confirm the current label or use the suggested speaker for this caption moment.",
+            };
+          }
+
+          return { id: moment.id, state, issue };
+        });
+
+        const counts = {
+          ready: 0,
+          "needs speaker": 0,
+          "speaker mismatch": 0,
+          "sync repair needed": 0,
+          "not in exported episode": 0,
+        };
+
+        for (const result of results) {
+          counts[result.state] += 1;
+        }
+
+        const exportedCount = list.length - counts["not in exported episode"];
+        const overall = counts["needs speaker"] > 0
+          ? "needs speaker"
+          : counts["speaker mismatch"] > 0
+            ? "speaker mismatch"
+            : counts["sync repair needed"] > 0
+              ? "sync repair needed"
+              : exportedCount === 0 && list.length > 0
+                ? "not in exported episode"
+                : "ready";
+
+        return { overall, counts, results };
+      }
+
+      function countBulkMatches() {
+        return moments.filter((moment) => moment.decision !== "not-exported" && moment.assignedSpeaker === bulk.from).length;
+      }
+
+      function render() {
+        renderSpeakerOptions(bulkFromElement, bulk.from, true);
+        renderSpeakerOptions(bulkToElement, bulk.to, true);
+
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(
+          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
+        );
+
+        statusElement.className = `status ${stateClass(evaluation.overall)}`;
+        statusElement.textContent = statusLabel(evaluation.overall);
+
+        summaryElement.replaceChildren(
+          ...Object.entries(evaluation.counts).map(([state, count]) => renderSummaryCard(state, count)),
+        );
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [textBlock("All exported caption moments have speaker attribution ready for publish checks.")]),
+        );
+
+        renderBulkStatus();
+      }
+
+      function renderMoment(moment, index, result) {
+        const article = document.createElement("article");
+        article.className = "moment";
+
+        const head = document.createElement("div");
+        head.className = "moment-head";
+
+        const meta = document.createElement("div");
+        meta.className = "moment-meta";
+
+        const time = document.createElement("span");
+        time.className = "time";
+        time.textContent = moment.time;
+
+        const caption = document.createElement("p");
+        caption.className = "caption";
+        caption.textContent = moment.caption;
+
+        meta.append(time, caption);
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${stateClass(result.state)}`;
+        badge.textContent = result.state;
+
+        head.append(meta, badge);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+        fields.append(
+          renderField("Assigned speaker", speakerSelect("assignedSpeaker", moment.assignedSpeaker)),
+          renderField("Suggested speaker", speakerSelect("suggestedSpeaker", moment.suggestedSpeaker)),
+          renderField("Issue source", optionSelect("source", issueSources, moment.source)),
+          renderField("Creator decision", optionSelect("decision", decisions, moment.decision)),
+        );
+
+        article.append(head, fields);
+        article.addEventListener("change", (event) => updateMoment(event, index));
+        return article;
+      }
+
+      function updateMoment(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+
+        const moment = moments[index];
+        moment[field] = event.target.value;
+
+        if (field === "decision" && event.target.value === "accept-suggestion") {
+          moment.assignedSpeaker = moment.suggestedSpeaker;
+          moment.decision = "confirm";
+        }
+
+        if (field === "assignedSpeaker" && moment.assignedSpeaker === moment.suggestedSpeaker && moment.assignedSpeaker) {
+          moment.decision = "confirm";
+        }
+
+        if (field === "source" && event.target.value === "sync-repair") {
+          moment.decision = "sync-repair";
+        }
+
+        render();
+      }
+
+      function renderSpeakerOptions(select, selectedValue, excludeBlank) {
+        const available = excludeBlank ? speakers.filter((speaker) => speaker.id !== "") : speakers;
+        select.replaceChildren(
+          ...available.map((speaker) => {
+            const option = document.createElement("option");
+            option.value = speaker.id;
+            option.textContent = speaker.label;
+            option.selected = speaker.id === selectedValue;
+            return option;
+          }),
+        );
+      }
+
+      function speakerSelect(field, selectedValue) {
+        const select = document.createElement("select");
+        select.dataset.field = field;
+        renderSpeakerOptions(select, selectedValue, false);
+        return select;
+      }
+
+      function optionSelect(field, options, selectedValue) {
+        const select = document.createElement("select");
+        select.dataset.field = field;
+
+        select.replaceChildren(
+          ...options.map((item) => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.label;
+            option.selected = item.id === selectedValue;
+            return option;
+          }),
+        );
+
+        return select;
+      }
+
+      function renderField(labelText, control) {
+        const label = document.createElement("label");
+        label.append(document.createTextNode(labelText), control);
+        return label;
+      }
+
+      function renderSummaryCard(state, count) {
+        const card = document.createElement("div");
+        card.className = "summary-card";
+
+        const value = document.createElement("strong");
+        value.textContent = count;
+
+        const label = document.createElement("span");
+        label.textContent = state;
+
+        card.append(value, label);
+        return card;
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+
+        const title = document.createElement("strong");
+        title.textContent = issue.title;
+
+        const action = document.createElement("span");
+        action.textContent = issue.action;
+
+        article.append(title, action);
+        return article;
+      }
+
+      function renderBulkStatus() {
+        bulkStatusElement.replaceChildren();
+
+        const title = document.createElement("strong");
+        const detail = document.createElement("span");
+
+        if (bulk.status === "previewing changes") {
+          title.textContent = "Previewing changes";
+          detail.textContent = bulk.previewCount === 1
+            ? "1 exported caption moment would be reassigned."
+            : `${bulk.previewCount} exported caption moments would be reassigned.`;
+        } else if (bulk.status === "applied") {
+          title.textContent = "Bulk change applied";
+          detail.textContent = "Review the updated moments, then undo if the change reached too far.";
+        } else if (bulk.status === "reverted") {
+          title.textContent = "Bulk change undone";
+          detail.textContent = "The previous speaker labels were restored.";
+        } else {
+          title.textContent = "Not started";
+          detail.textContent = "Preview how many exported caption moments would change before applying.";
+        }
+
+        bulkStatusElement.className = bulk.status === "applied" ? "issue done" : "issue info";
+        bulkStatusElement.append(title, detail);
+
+        applyBulkElement.disabled = bulk.status !== "previewing changes" || bulk.from === bulk.to || bulk.previewCount === 0;
+        revertBulkElement.disabled = !bulk.previousMoments;
+      }
+
+      function textBlock(message) {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = message;
+        return paragraph;
+      }
+
+      function stateClass(state) {
+        return {
+          ready: "ready",
+          "needs speaker": "needs",
+          "speaker mismatch": "mismatch",
+          "sync repair needed": "sync",
+          "not in exported episode": "out",
+        }[state];
+      }
+
+      function statusLabel(state) {
+        return {
+          ready: "Attribution ready",
+          "needs speaker": "Some captions need speakers",
+          "speaker mismatch": "Speaker labels need review",
+          "sync repair needed": "Sync repair needed",
+          "not in exported episode": "Skipped moments only",
+        }[state];
+      }
+
+      render();
+    </script>
+  </body>
+</html>
