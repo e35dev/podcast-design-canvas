@@ -84,7 +84,7 @@ Track only the areas that affect the chosen destination. Each area below maps to
 | guest name and link accuracy | `docs/episode-metadata-publishing.md` | Metadata Fields, Review States |
 | caption and glossary corrections | `docs/transcript-glossary.md` | Glossary Entries, Application |
 | sponsor placement and disclosure | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
-| b-roll, overlays, and title moments | `docs/contextual-broll-moments.md` | Approval Flow |
+| b-roll, overlays, and title moments | `docs/contextual-broll-moments.md` | Review States |
 | thumbnail or cover frame | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
 | chapter markers and metadata | `docs/episode-chapter-markers.md`, `docs/episode-metadata-publishing.md` | Review States, Publish Readiness; Chapter Workflow, Readiness Checks |
 
