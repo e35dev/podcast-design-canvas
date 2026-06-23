@@ -30,6 +30,17 @@ Use simple controls:
 
 Avoid exposing timecode formats, marker tracks, or chapter encoding details. The creator works with named moments, not technical markers.
 
+## Suggestion Confidence
+
+Each suggested chapter should tell the creator how sure the workspace is about it, so a strong auto-detected start reads differently from a soft guess worth a second look:
+
+- strong — backed by a clear segment boundary or title moment the creator can trust at a glance
+- likely — backed by a softer speaker or topic shift the creator may want to confirm
+- tentative — inferred from weak signal and offered mostly as a place to start
+- creator-set — added or moved by the creator, treated as certain and never downgraded by a later suggestion pass
+
+Confidence is one value per chapter and moves up to creator-set the moment the creator adds, renames, or nudges that chapter. Show confidence in plain language next to the chapter rather than as a percentage or score, lead the outline with the chapters most worth checking, and let a calm, high-confidence list stay quiet rather than asking the creator to confirm starts they would obviously trust.
+
 ## Review States
 
 Use simple, creator-facing states:
