@@ -43,3 +43,15 @@ These states should appear in `docs/export-readiness-review.md` Contextual Visua
 ## Template Reuse
 
 Title card styles and placement rules should save with the show template described in `docs/show-template-adaptation.md`, so recurring segments and guest introductions keep a consistent look across episodes.
+
+## Pacing Rules
+
+Title cards should stay calm across a long-form episode, not crowd every moment:
+
+- keep a restrained default count rather than a card at every topic mention
+- space cards so a viewer has time to read one before the next appears
+- favor cards at real beats — topic shifts, guest introductions, and segment changes
+- group repeated suggestions so an hour-plus episode does not surface dozens of equal-priority cards
+- preserve confirmed cards and their timing when the episode is re-rendered
+
+Avoid filling quiet stretches with decorative cards just because a moment was detected; the conversation should stay the focus.
