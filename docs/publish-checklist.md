@@ -23,6 +23,23 @@ Include creator-facing checks:
 
 Each item should link to the place where it can be fixed.
 
+## Checklist Item Mapping
+
+Each checklist item below maps to an existing spec section:
+
+| Checklist item | Source spec | Relevant section |
+| --- | --- | --- |
+| source media ready | `docs/episode-ingest-readiness.md` | Readiness Checks |
+| source media ready | `docs/source-media-health.md` | Health Checks, Readiness Summary |
+| captions reviewed | `docs/audio-caption-quality-review.md` | Caption Confidence, Caption Style Presets, Review Flow |
+| glossary corrections applied | `docs/transcript-glossary.md` | Application |
+| thumbnail selected | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
+| metadata complete | `docs/episode-metadata-publishing.md` | Metadata Fields, Readiness Checks |
+| sponsor disclosure confirmed | `docs/sponsor-placement-review.md` | Conflict Checks |
+| destination preset selected | `docs/publish-destination-presets.md` | Destinations, Review |
+| export warnings resolved or ignored | `docs/export-readiness-review.md` | Review Summary, Timeline Checks |
+| final package generated | `docs/export-package-handoff.md` | Package Contents, Summary |
+
 ## Review Approvals
 
 When `review approvals complete` appears on the checklist, it should summarize sign-off from the review flows already defined elsewhere rather than introducing a separate approval queue.
@@ -37,7 +54,7 @@ Track only the areas that affect the chosen destination. Each area below maps to
 | sponsor placement and disclosure | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
 | b-roll, overlays, and title moments | `docs/contextual-broll-moments.md` | Approval Flow |
 | thumbnail or cover frame | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
-| chapter markers and metadata | `docs/episode-metadata-publishing.md` | Chapter Workflow, Readiness Checks |
+| chapter markers and metadata | `docs/episode-chapter-markers.md`, `docs/episode-metadata-publishing.md` | Review States, Publish Readiness; Chapter Workflow, Readiness Checks |
 
 Use simple team-facing states:
 
