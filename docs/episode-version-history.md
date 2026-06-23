@@ -6,6 +6,22 @@ Version history should help creators compare meaningful episode changes without 
 
 A creator should be able to return to an earlier edit state, compare major creative decisions, and understand what changed before exporting or sending a review copy.
 
+## Relationship To Episode Review
+
+Version history should connect to the workflows that create meaningful checkpoints:
+
+- template apply and divergence from `docs/show-template-adaptation.md`
+- review-copy milestones from `docs/client-review-copy-flow.md`
+- export warning changes from `docs/export-readiness-review.md`
+- package handoff states from `docs/export-package-handoff.md`
+- metadata updates from `docs/episode-metadata-publishing.md`
+- caption and visual approvals from `docs/audio-caption-quality-review.md` and `docs/contextual-broll-moments.md`
+- team attribution from `docs/team-workspace-organization.md` when multiple editors are present
+
+## History Approach
+
+Version history is checkpoint first: show creator-meaningful creative decisions with visual comparison—not raw autosave logs, background processing steps, or file-revision mechanics.
+
 ## Version Events
 
 Capture creator-meaningful events:
@@ -90,8 +106,8 @@ Use simple creator-facing states:
 - browsing — the creator is scanning meaningful checkpoints without changing the live edit
 - comparing — two versions preview side by side with creative differences highlighted
 - restore preview — the creator is seeing what would change before confirming a restore
-- restore confirmed — an earlier checkpoint became the live edit with the effect explained
-- protected checkpoint — a final export or client-approved version stays safe from overwrite
+- **restore confirmed** — an earlier checkpoint became the live edit with the creative effect explained; do not clear unrelated export-readiness or checklist warnings unless the restored checkpoint explicitly resolves them
+- **protected checkpoint** — a final export or client-approved version stays safe from overwrite
 
 Each state should describe the creative effect, such as "Restore would revert the caption style from the last template change."
 
@@ -108,4 +124,4 @@ Solo creators should never see team attribution clutter; show it only when a wor
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes meaningful episode decisions recoverable and understandable. Close work that shows raw autosave logs, treats exports as editable versions, or makes template changes ambiguous.
+Accept work that makes meaningful episode decisions recoverable and understandable. Close work that shows raw autosave logs, treats exports as editable versions, makes template changes ambiguous, or clears unrelated publish-readiness warnings when a creator is only browsing or comparing checkpoints.
