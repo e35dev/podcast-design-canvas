@@ -11,7 +11,7 @@ A creator should be able to confirm that the episode, metadata, thumbnail, capti
 The checklist should summarize readiness from work already captured in the workspace:
 
 - source and sync confidence from `docs/episode-ingest-readiness.md` and `docs/source-media-health.md`
-- captions and glossary from `docs/audio-caption-quality-review.md` and `docs/transcript-glossary.md`
+- captions, speaker attribution, and glossary from `docs/audio-caption-quality-review.md`, `docs/speaker-attribution-review.md`, and `docs/transcript-glossary.md`
 - thumbnail selection from `docs/thumbnail-cover-frame.md`
 - metadata from `docs/episode-metadata-publishing.md`
 - sponsor details from `docs/sponsor-placement-review.md`
@@ -45,7 +45,7 @@ Each checklist item below maps to an existing spec section:
 | Checklist item | Source spec | Relevant section |
 | --- | --- | --- |
 | source media ready | `docs/episode-ingest-readiness.md`, `docs/source-media-health.md` | Readiness Checks; Health Checks, Readiness Summary |
-| captions reviewed | `docs/audio-caption-quality-review.md` | Caption Confidence, Caption Style Presets, Review Flow |
+| captions reviewed | `docs/audio-caption-quality-review.md`, `docs/speaker-attribution-review.md` | Caption Confidence, Caption Style Presets, Review Flow; Review States, Publish Readiness |
 | glossary corrections applied | `docs/transcript-glossary.md` | Application |
 | thumbnail selected | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
 | metadata complete | `docs/episode-metadata-publishing.md` | Metadata Fields, Readiness Checks |

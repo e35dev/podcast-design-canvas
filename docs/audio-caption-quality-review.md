@@ -70,6 +70,8 @@ The product should keep audio and caption fixes tied to speaker buckets:
 - preserve host and guest naming from ingest and social context
 - avoid applying one guest's spelling corrections to another guest unless confirmed
 
+When a creator trusts the words but not who is attached to them, speaker-label fixes should route to `docs/speaker-attribution-review.md` instead of being treated like a wording or style correction.
+
 ## Review Flow
 
 The default review path should group issues by likely publishing impact:
@@ -79,6 +81,8 @@ The default review path should group issues by likely publishing impact:
 - informational
 
 Creators should be able to jump from an issue to the affected moment, play the surrounding context, and mark it fixed or ignored.
+
+Speaker-name mismatches, unlabeled exchanges, and off-camera voice confusion should open `docs/speaker-attribution-review.md` when the caption problem is really about who is speaking rather than how the text looks.
 
 ## Maintainer Acceptance Notes
 
