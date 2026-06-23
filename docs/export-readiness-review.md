@@ -15,9 +15,25 @@ Before export, show a compact readiness summary across the parts that matter to 
 - audio clarity, loudness balance, and noise cleanup
 - b-roll, overlays, and title moments that still need approval
 - brand elements, sponsor placements, and show template consistency
+- placed intro, outro, sponsor, transition, or chapter music that affects the export
 - missing metadata such as title, episode number, or publish destination
 
 The summary should prioritize creator decisions. Do not turn the screen into a render diagnostics report.
+
+## Placed Cue Warnings
+
+When music cues from `docs/music-cue-setup.md` are included in the finished episode, readiness should treat them as part of audio, sponsor, and template review rather than as a separate music-management queue.
+
+Flag only cue issues that affect the exported episode:
+
+- cue file unavailable for render
+- music covers speech that viewers need to understand
+- sponsor cue appears outside the sponsor read, transition, or acknowledgement it belongs to
+- placed cue still needs creator confirmation before this export
+- draft cue is still included in the final export
+- template expects an intro, outro, transition, or chapter cue that is missing from the episode
+
+Each warning should link back to the place where the creator can fix it, such as cue setup, speech ducking review, sponsor placement review, or template adaptation. Unused library music and draft cues that are not present in the export should not affect readiness.
 
 ## Timeline Checks
 
