@@ -83,6 +83,17 @@ This gives creators confidence that the package is complete.
 
 Completed exports should preserve readiness decisions from `docs/export-readiness-review.md` rather than resetting ignored warnings or checklist status.
 
+## Team Checkpoints
+
+When an agency or client team receives a finished package, handoff should stay readable instead of turning into an unlabeled download folder:
+
+- show which client or show the package belongs to in plain language before any file is shared
+- keep ignored warnings and missing optional items grouped by publishing consequence, not buried in a file list
+- make a client-approved package safe from overwrite when a teammate starts a newer export round
+- let any collaborator copy metadata, show notes, or review-copy links without changing what the final approver already accepted
+
+Solo creators should never see team attribution clutter; show it only when a workspace actually has more than one publisher or client approver. Destination and checklist organization stays in `docs/publish-destination-presets.md` and `docs/publish-checklist.md` — this handoff only attributes the meaningful package items it already labels.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes final episode delivery clear and publish-ready. Close work that leaves creators with only an unlabeled file download, hides ignored warnings after export, or treats optional destination items as blocking errors for every show.
