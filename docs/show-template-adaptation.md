@@ -6,6 +6,24 @@ Reusable templates should preserve a show's identity while adapting cleanly to e
 
 A creator or agency should be able to save a polished episode layout as a show template, apply it to the next episode, and review only the parts that need episode-specific decisions.
 
+## Relationship To Episode And Show Identity
+
+Template adaptation should connect to the surfaces a saved layout affects:
+
+- preset and layout choices from `docs/preset-style-picker.md`
+- brand kit defaults from `docs/show-brand-kit-setup.md`
+- intro and outro structure from `docs/intro-outro-builder.md`
+- caption and audio preferences from `docs/audio-caption-quality-review.md`
+- contextual visuals from `docs/contextual-broll-moments.md` and `docs/contextual-title-cards.md`
+- music cues from `docs/music-cue-setup.md` and `docs/music-sound-cues.md`
+- sponsor rules from `docs/sponsor-placement-review.md`
+- episode divergence tracking in `docs/episode-version-history.md`
+- export defaults from `docs/publish-destination-presets.md`
+
+## Adaptation Approach
+
+Template adaptation is adapt, not freeze: reusable structure should carry show identity forward while episode-specific names, guests, sponsors, and one-off visuals stay editable until the creator confirms them.
+
 ## Template Contents
 
 A show template should capture reusable creative choices:
@@ -78,12 +96,12 @@ Template adaptation status should describe what the creator still needs to decid
 - **ready to apply** — the template matches the new episode's speaker count and needs no extra decisions before preview
 - **needs role mapping** — new speaker buckets are not yet mapped to template roles; take the creator to the speaker role step before styling
 - **needs fallback layout** — the speaker count differs from the template, so the creator must confirm a fallback before applying
-- **episode override** — the creator changed something for this episode only; keep it local and show it as a difference against the template
-- **template updated** — the change was pushed to the template for future episodes without rewriting finished exports
-- **diverged** — the episode has drifted from its template; show the difference in the episode's version history so the creator can compare or restore
+- **episode override** — keep the change local to this episode and show it as a difference against the template; do not clear unrelated caption, sponsor, or export-readiness warnings
+- **template updated** — push the change to the template for future episodes without rewriting finished exports
+- **diverged** — show the difference in `docs/episode-version-history.md` so the creator can compare or restore without rebuilding the whole layout
 
 Each state should describe what the creator decides next and which editing or review surface they land on, not only the label on the template.
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes reusable podcast identity practical across episodes and clients. Close work that treats templates as static files, hard-codes one episode's guests into future episodes, or ignores speaker-count adaptation.
+Accept work that makes reusable podcast identity practical across episodes and clients. Close work that treats templates as static files, hard-codes one episode's guests into future episodes, ignores speaker-count adaptation, or clears unrelated publish-readiness warnings when an episode override is kept local.
