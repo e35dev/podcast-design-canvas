@@ -19,6 +19,7 @@ Include:
 - sponsor placement status
 - metadata readiness
 - requested decision deadline
+- approval status for checklist items defined in `docs/publish-checklist.md`
 
 The summary should focus on decisions the reviewer can make.
 
