@@ -10,6 +10,7 @@ A creator importing Riverside-style synced recordings should be able to confirm 
 
 Ingest readiness should connect to the next setup surfaces:
 
+- episode drafts started from `docs/start-from-previous-episode.md`
 - speaker roles from `docs/speaker-role-mapping.md`
 - social links from `docs/social-context-intake.md`
 - source file health from `docs/source-media-health.md`
@@ -21,6 +22,8 @@ Ingest readiness should connect to the next setup surfaces:
 ## Ingest Approach
 
 Ingest is organize first: creators should confirm speaker buckets and obvious track problems in creator language, then hand off fixes to the owning surface—not stay on a technical diagnostics page.
+
+If the episode started from `docs/start-from-previous-episode.md`, ingest should reuse the carried-forward speaker buckets as a draft starting point, then make the creator confirm that the new files still belong in those buckets before preset styling continues.
 
 ## Import Sources
 

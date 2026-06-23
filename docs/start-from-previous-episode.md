@@ -23,6 +23,8 @@ It should not carry forward the previous episode's guests, topic, recordings, or
 
 A saved show template in `docs/show-template-adaptation.md` is the durable, curated identity for a show. Starting from a previous episode is a faster convenience that clones a specific recent episode as a draft. When the creator wants the change to stick for every future episode, they should save it back to the template rather than only into the next clone.
 
+After the draft opens, new recordings should still pass through `docs/episode-ingest-readiness.md` so the reused speaker buckets, track health, and role mapping are confirmed against the new episode's actual media rather than silently copied forward from the older one.
+
 ## Creator Controls
 
 The creator should be able to:
@@ -32,6 +34,8 @@ The creator should be able to:
 - clear the previous guests and topic while keeping the design
 - import the new recordings into the existing speaker buckets
 - save any refinements back to the show template for future episodes
+
+This should feel like a fast starting point between `docs/show-template-adaptation.md` and `docs/episode-ingest-readiness.md`: reuse the show's proven structure first, then confirm the new episode's real speakers and files before styling continues.
 
 ## Boundaries
 

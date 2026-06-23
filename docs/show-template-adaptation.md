@@ -11,6 +11,7 @@ A creator or agency should be able to save a polished episode layout as a show t
 Template adaptation should connect to the surfaces a saved layout affects:
 
 - preset and layout choices from `docs/preset-style-picker.md`
+- fast draft reuse from `docs/start-from-previous-episode.md`
 - brand kit defaults from `docs/show-brand-kit-setup.md`
 - intro and outro structure from `docs/intro-outro-builder.md`
 - caption and audio preferences from `docs/audio-caption-quality-review.md`
@@ -23,6 +24,8 @@ Template adaptation should connect to the surfaces a saved layout affects:
 ## Adaptation Approach
 
 Template adaptation is adapt, not freeze: reusable structure should carry show identity forward while episode-specific names, guests, sponsors, and one-off visuals stay editable until the creator confirms them.
+
+When a creator wants the last episode as a shortcut instead of the curated show template as the main starting point, that handoff should route through `docs/start-from-previous-episode.md` and then return here only for changes meant to become durable show identity.
 
 ## Template Contents
 
