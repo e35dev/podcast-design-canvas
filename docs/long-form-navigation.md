@@ -57,6 +57,18 @@ Keep the per-moment actions quick:
 
 Acting on a moment should update its status in place and keep the creator's position in the episode, so a full-length review can move forward without re-scanning handled moments. Resolved and ignored moments should drop out of the default view but stay recoverable.
 
+## Review States
+
+Use simple creator-facing states:
+
+- scanning — the creator is moving through lanes without a single filter applied
+- focused lane — one review type such as captions or export warnings is filtered to the front
+- section reviewed — the creator marked a chapter or stretch as handled for this pass
+- resume later — snoozed or deferred moments stay hidden but recoverable from navigation
+- review complete — no blocking moments remain in the default lanes for this pass
+
+Each state should describe where the creator is in a long episode review, such as "Caption lane still has twelve unresolved moments."
+
 ## Playback Continuity
 
 When moving across review items, the product should preserve context:
