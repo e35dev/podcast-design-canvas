@@ -6,6 +6,21 @@ When preview or export rendering fails, the product should help creators recover
 
 A creator should understand what part of the episode needs attention, retry safely, and keep working without losing edits.
 
+## Relationship To Export Flow
+
+Render recovery should connect to the export path already in the workspace:
+
+- readiness decisions from `docs/export-readiness-review.md`
+- publish checklist status from `docs/publish-checklist.md`
+- missing assets from `docs/episode-asset-library.md`
+- caption and audio issues from `docs/audio-caption-quality-review.md`
+- source media problems from `docs/source-media-health.md`
+- package handoff after success in `docs/export-package-handoff.md`
+
+## Recovery Approach
+
+Render recovery is creator-facing first: explain what failed in episode terms, preserve edits and readiness decisions, and route the creator back to the owning fix surface—not infrastructure logs or generic retry loops.
+
 ## Failure Messages
 
 Use viewer-facing explanations:
@@ -41,7 +56,7 @@ A creator who hits a failed render should always know where recovery stands, wit
 - retrying — a chosen recovery action is running again
 - needs creator input — the attempt is paused until the creator replaces a missing asset or fixes a readiness issue
 - recovered — a retry or fix produced a usable preview or export
-- exported around the issue — the creator finished by skipping an optional visual or captions
+- exported around the issue — the creator finished by skipping an optional visual or captions; record the publishing consequence in `docs/export-package-handoff.md` without treating the underlying readiness issue as resolved
 - set aside — the creator left this export unfinished and kept their edits to return to later
 
 These are sequential stages, not labels that stack: a render is either still failed, actively retrying, waiting on the creator, or resolved in one of the final ways, and never two at once. Keep the status tied to the chosen recovery action rather than infrastructure progress:
@@ -71,4 +86,4 @@ The product should clearly show the last successful preview or export when avail
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes render and export failures recoverable for creators. Close work that exposes infrastructure internals, loses episode decisions, or leaves creators with only a generic retry button.
+Accept work that makes render and export failures recoverable for creators. Close work that exposes infrastructure internals, loses episode decisions, leaves creators with only a generic retry button, or clears unrelated readiness warnings when a render is exported around the issue.
