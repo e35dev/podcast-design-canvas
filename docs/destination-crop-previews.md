@@ -43,6 +43,8 @@ Offer direct fixes:
 - switch layout for cropped output
 - export only the long-form master
 
+When clip review uses these previews, the chosen crop should stay attached to the clip candidate in `docs/clip-candidate-review.md` rather than changing the default long-form export surface.
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps creators trust destination-specific framing before export. Close work that treats every destination as identical or prioritizes short-form crops over the core long-form episode.

@@ -21,6 +21,8 @@ Suggestions can come from:
 
 The product should explain why a moment was suggested.
 
+Pinned transcript moments should come from `docs/transcript-search-navigation.md` Results and Filters so clip discovery stays grounded in real long-form review instead of a separate short-form-only search path.
+
 ## Review Cards
 
 Each candidate should show:
@@ -33,9 +35,17 @@ Each candidate should show:
 - caption readiness
 - link back to the full episode moment
 
+Those cards should reuse the existing preview and navigation surfaces:
+
+- `destination crop preview` should use `docs/destination-crop-previews.md` Preview Surfaces, Checks, and Fixes
+- `link back to the full episode moment` should return to the long-form review context in `docs/long-form-navigation.md` Moment Cards and Playback Continuity
+- transcript excerpts should stay aligned with `docs/transcript-search-navigation.md` Results so creators can trust the quoted moment before approving a clip
+
 ## Boundaries
 
 Clip review should remain downstream of the long-form workflow. It should not force short-form pacing, captions, or crops into the full episode.
+
+If a candidate needs a different crop, caption treatment, or speaker framing to work, that adjustment should stay localized to clip review and should not rewrite the long-form episode by default.
 
 ## Maintainer Acceptance Notes
 

@@ -33,6 +33,8 @@ Each result should show:
 
 Results should jump to the episode preview with a small lead-in.
 
+When a creator pins a result as a reusable moment, that pinned item should flow into `docs/clip-candidate-review.md` Candidate Signals and Review Cards without losing the speaker, chapter, or surrounding quote context shown here.
+
 ## Filters
 
 Useful filters include:
