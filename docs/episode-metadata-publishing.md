@@ -36,6 +36,8 @@ The product should support:
 
 Fields should start from episode context where possible, but creators must be able to edit them before export.
 
+Show notes should stay tied to this metadata flow through `docs/show-notes-assembly.md` when a destination needs a companion description, chapter list, guest links, or sponsor text beyond the core title and description fields.
+
 ## Chapter Workflow
 
 Chapters should be generated from meaningful conversation transitions, not arbitrary time blocks. The creator should be able to:
@@ -83,6 +85,7 @@ Offer simple actions:
 - rename or merge chapter
 - add sponsor disclosure
 - choose thumbnail frame
+- open show notes assembly
 - copy metadata for another destination
 - reset field to episode default
 

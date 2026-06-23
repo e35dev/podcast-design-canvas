@@ -13,6 +13,7 @@ The handoff should reflect the destination and checklist completed in:
 - `docs/publish-destination-presets.md`
 - `docs/publish-checklist.md`
 - `docs/episode-metadata-publishing.md`
+- `docs/show-notes-assembly.md`
 - `docs/thumbnail-cover-frame.md`
 - `docs/export-readiness-review.md`
 - `docs/client-review-copy-flow.md`
@@ -28,6 +29,7 @@ The handoff can include:
 - caption file
 - audio-only backup
 - metadata summary
+- show notes text
 - chapter list
 - review copy link
 - ignored warnings report

@@ -14,6 +14,8 @@ A creator should be able to assemble accurate show notes for a long-form episode
 - show-specific spellings from `docs/transcript-glossary.md`
 - sponsor disclosures from `docs/sponsor-placement-review.md`
 
+Show notes should stay downstream of metadata review rather than acting like a separate publishing screen. They should extend the creator's confirmed title, description, chapter, guest, and sponsor decisions with a destination-ready notes format.
+
 ## Creator Controls
 
 Use simple controls:
