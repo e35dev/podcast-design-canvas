@@ -63,6 +63,20 @@ Each state should attach to a speaker bucket and describe the next creator actio
 
 Source media issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Source Media Warnings.
 
+## Batch Import Summary
+
+When a creator imports several speaker recordings at once, the product should check every file in the batch and present one calm summary instead of a separate interruption per file. The summary should let the creator see the whole import at a glance and decide where to spend attention first.
+
+The summary should give the batch a single rolled-up status, derived from the per-track review states already attached to each speaker bucket:
+
+- all clear — every track in the batch is usable for the chosen layout and destination; show a quiet inline marker confirming the import is ready, or nothing at all, never a blocking banner
+- attention suggested — at least one track has a non-blocking issue but none would stop export; show a small inline count of how many tracks want a look, and let the creator open them in order
+- action needed — at least one track would not appear correctly in the finished episode; show an inline count of those tracks and link straight to replace or re-import, while leaving the clear tracks ready to style
+
+The rolled-up status should follow the most serious track in the batch: action needed wins over attention suggested, which wins over all clear. The summary should always offer a way to jump to just the tracks that need work, so a creator with twenty good files and two flagged ones is never asked to re-inspect the good ones.
+
+Each per-track action should stay available from the summary without leaving it, and fixing or continuing a flagged track should update the rolled-up status immediately so the creator can watch the import settle toward ready. Whether a replaced file passes once it is checked again is decided by the same track-level health rules, not by the summary itself.
+
 ## Preview
 
 Health checks should preview the actual problem when possible: show a dark frame, play a quiet sample, or jump to the missing section. Avoid forcing users to interpret technical file metadata.
