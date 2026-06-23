@@ -33,6 +33,21 @@ Pacing can influence:
 
 The product should avoid changing the actual conversation meaning just to make the episode feel faster.
 
+## Effect Routing
+
+Pacing owns how energetic an episode feels, but each concrete change it triggers should be rendered and reviewed by the spec that owns that element, so a pacing choice never becomes a second editor for titles, b-roll, captions, or chapters:
+
+| Pacing effect | Owning spec | Relevant section |
+| --- | --- | --- |
+| frequency of title moments | `docs/contextual-title-cards.md` | Sources, Creator Controls |
+| b-roll suggestion intensity | `docs/contextual-broll-moments.md` | Moment Sources, Approval Flow |
+| caption emphasis | `docs/audio-caption-quality-review.md` | Caption Style Presets |
+| speaker frame changes | `docs/speaker-framing-safety.md` | Framing Approach, Review States |
+| pause trimming recommendations | `docs/pause-crosstalk-cleanup.md` | Detected Moments, Cleanup Actions |
+| chapter density | `docs/episode-chapter-markers.md` | Where Chapters Come From, Creator Controls |
+
+Transition strength and overall rhythm stay owned by pacing itself. A pacing choice should set intensity and hand the concrete elements to these specs already attached to the right speakers and moments, not duplicate their review surfaces.
+
 ## Preview
 
 Creators should preview pacing on:
