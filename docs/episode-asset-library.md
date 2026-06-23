@@ -69,6 +69,25 @@ From an asset card, creators should be able to:
 - hide a rejected asset from future suggestions without breaking already exported episodes
 - open the owning workflow directly when the decision depends on guest, sponsor, brand, or thumbnail review
 
+## Review States
+
+Use creator-facing states that explain whether an asset is safe to reuse in this episode:
+
+- ready to use
+- needs approval for this role
+- already used in another template or episode
+- replace only in this episode
+- blocked for this episode
+
+Each state should describe what the creator needs to confirm next, such as "Sponsor mark is already approved for the brand kit but still needs episode-level approval for this read" or "Guest headshot was rejected for this episode and should stay out of new suggestions."
+
+State handling should stay attached to the asset's current role:
+
+- an image can be ready as a thumbnail source while still needing approval as a sponsor mark
+- a rejected episode-specific asset should stay blocked for new suggestions without removing it from past exports
+- replacing a reused asset should show the affected episode, template, or review-copy surfaces before the creator confirms the change
+- already-used status should never hide where the current asset is visible right now
+
 ## Safety Rules
 
 Before applying an asset, flag:
