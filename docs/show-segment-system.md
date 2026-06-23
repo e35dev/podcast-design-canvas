@@ -70,6 +70,18 @@ Defining and applying segments should stay a creator-facing arranging step, not 
 
 A segment change should adapt the episode's structure around it rather than forcing every show into the same fixed format.
 
+## Preview Contexts
+
+Creators should preview a segment where its treatment most affects the episode:
+
+- the opening cold open or host intro
+- a transition between two segments
+- a sponsor read inside a segment
+- a recurring Q&A or teaching section
+- the outro
+
+These previews should show the segment's titles, pacing, and branding on the real episode so the creator can confirm the structure reads clearly before applying it across the episode.
+
 ## Review States
 
 While arranging segments, each segment is either resolved or still needs a decision, so the creator can keep the "needs attention" list focused on segments that are genuinely undecided.
