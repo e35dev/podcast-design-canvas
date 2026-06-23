@@ -143,6 +143,27 @@ Flag only thumbnail issues that affect the exported episode:
 
 Each warning should link back to thumbnail review or the metadata field where the creator can fix it. Destinations that do not require a thumbnail should not block readiness on this item.
 
+## Brand And Sponsor Warnings
+
+When show branding, sponsor placements, or template consistency would affect the exported episode, readiness should surface these as part of brand and sponsor review rather than as a separate design tool or ad-tech queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| sponsor placement conflicts | `docs/sponsor-placement-review.md` | Conflict Checks, Placement Types |
+| brand readability guardrails | `docs/show-brand-kit-setup.md` | Guardrails, Preview Surfaces |
+| template consistency | `docs/show-template-adaptation.md` | Adaptation Flow, Template Contents |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only brand and sponsor issues that affect the exported episode:
+
+- a required sponsor disclosure is missing from a placement that ships in this export
+- sponsor mark covers a face or conflicts with lower-thirds
+- brand colors or logo placement break caption or face readability
+- a sponsor placement appears during an unrelated sensitive moment
+- the episode has diverged from its show template without creator confirmation
+
+Each warning should link back to sponsor placement review, brand kit guardrails, or template adaptation where the creator can fix it. Thumbnail brand and sponsor fit stays with Thumbnail Warnings above, sponsor cue music stays with Placed Cue Warnings, and brand or sponsor rules saved only for future episodes that are not in this export should not affect readiness.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
