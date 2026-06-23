@@ -6,6 +6,25 @@ The asset library should make reusable podcast materials easy to find without ex
 
 A creator should be able to reuse logos, guest photos, b-roll, sponsor marks, title images, and show graphics across episodes with clear ownership and context.
 
+## Relationship To Production Workflow
+
+Asset choices should stay attached to the workflow that gives them meaning:
+
+- workspace scoping from `docs/team-workspace-organization.md`
+- guest headshots and lower-third images from `docs/guest-profile-reuse.md`
+- sponsor marks and disclosure graphics from `docs/sponsor-placement-review.md`
+- approved b-roll clips and screenshots from `docs/contextual-broll-moments.md`
+- title backgrounds and thumbnail images from `docs/thumbnail-cover-frame.md`
+- show logos, textures, and recurring graphics from `docs/show-brand-kit-setup.md`
+- intro and outro elements from `docs/intro-outro-builder.md`
+- reusable show-level assets from `docs/show-template-adaptation.md`
+- export package completeness from `docs/export-package-handoff.md`
+- missing-asset recovery from `docs/render-failure-recovery.md`
+
+## Asset Library Approach
+
+Assets are workflow-owned first: every asset card should show where it belongs, where it is already used, and which review surface approves it—not generic file metadata or folder paths.
+
 ## Asset Types
 
 Support podcast-specific assets:
@@ -48,16 +67,17 @@ Creators should be able to find assets by:
 
 Search and filters should stay tied to podcast workflow rather than generic file management.
 
-## Workflow Connections
+## Review States
 
-Asset choices should stay attached to the workflow that gives them meaning:
+The product should use asset review status to drive placement and handoff behavior. Lifecycle availability (`suggested`, `in use`, `archived`) stays separate in **Asset Status** below—these states describe whether the creator should trust the asset for its role:
 
-- guest headshots and lower-third images should follow `docs/guest-profile-reuse.md` Reusable Details and Episode Review so recurring guest context stays reviewable
-- sponsor marks and disclosure graphics should stay tied to `docs/sponsor-placement-review.md` Sponsor Inputs, Conflict Checks, and Template Reuse
-- approved b-roll clips and screenshots should feed `docs/contextual-broll-moments.md` Visual Types and Approval Flow instead of becoming detached media bins
-- title backgrounds and thumbnail images should route into `docs/thumbnail-cover-frame.md` Candidate Sources and Export Connection when they shape the final package
-- show logos, textures, and recurring graphics should reflect `docs/show-brand-kit-setup.md` Preview Surfaces and Reuse
-- reusable assets should move into `docs/show-template-adaptation.md` Template Contents and Adaptation Flow only after the creator confirms show-level reuse
+- **ready to place** — approved for the intended role in this context and available for new placement; routing to guest, sponsor, brand, b-roll, or thumbnail review still happens through the owning spec when the asset is applied
+- **needs role approval** — visible in the library but blocked for new placement until the creator confirms the role such as sponsor mark, guest headshot, thumbnail source, or b-roll support
+- **flagged in use** — already appears in at least one episode, template, or kit with an active concern; keep the warning wherever it is placed, stop offering it for new placements, and open the owning review surface
+- **rejected for this episode** — hide from current-episode suggestions only; do not treat this as global archival or as clearing approval standing for other episodes or templates
+- **wrong context** — block placement until the creator confirms the correct show, client, speaker, or sponsor kit boundary
+
+Each state should describe what happens on placement and export—not only the label on the asset card. Approving an asset for a role must not auto-clear caption, metadata, sponsor placement, or export-readiness warnings owned elsewhere.
 
 ## Creator Controls
 
@@ -103,4 +123,4 @@ The product should also make clear what each status means for already-finished w
 
 ## Maintainer Acceptance Notes
 
-Accept work that helps creators reuse approved podcast assets across episodes, templates, and clients. Close work that becomes a generic file browser, ignores usage context, or hides where assets are used in final exports.
+Accept work that helps creators reuse approved podcast assets across episodes, templates, and clients with clear ownership and usage context. Close work that becomes a generic file browser, ignores where assets are used in final exports, hides approval concerns behind lifecycle status, or treats asset role approval as final clearance for captions, metadata, sponsor placement, or export readiness owned elsewhere.
