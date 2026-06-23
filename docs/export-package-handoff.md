@@ -53,6 +53,30 @@ The product should use package status to drive post-export actions:
 
 Each state should describe what the creator can do next with the package—not only the label on the delivery summary.
 
+## Re-Delivery
+
+When a creator re-exports after the client already received a package, the product should re-deliver without confusing which version is current.
+
+Each delivered package should carry a single delivery status, and never more than one delivery is current at a time:
+
+- current — the latest delivery the creator stands behind; the version recipients should download, publish, or review against
+- superseded — an earlier delivery the creator replaced with a newer one; it stays visible for reference but is never presented as the version to act on
+- withdrawn — a delivery the creator pulled back; it is no longer offered for download or review
+
+Promoting a new delivery to current should mark the prior current delivery as superseded in the same action, so the statuses stay mutually exclusive and two deliveries are never current at once.
+
+Withdrawing is allowed even when it leaves no current delivery. If the creator withdraws the only current version without promoting a replacement, the package simply has no current delivery: recipients are told it was pulled back and given nothing to act on until the creator promotes a superseded delivery back to current or delivers a new one. "At most one current" is the rule, not "always exactly one."
+
+Separate from that status, each delivery should record plain delivery facts—what changed since the last version, when it was delivered, and whether the recipient has opened it—so the creator can see history without those facts changing which version is current.
+
+When a creator re-delivers, the product should:
+
+- carry forward the labeled contents and recorded ignored warnings so the new version is understood the same way as the first
+- show what changed since the prior delivery rather than presenting an unexplained second download
+- keep the person who receives the package pointed at the current version, even if they still hold a link to a superseded one
+
+Re-delivery should reuse the destination and readiness decisions already completed for the episode, not restart the handoff from an unlabeled folder.
+
 ## Creator Controls
 
 Offer next actions:
