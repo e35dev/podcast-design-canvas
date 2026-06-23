@@ -183,6 +183,25 @@ Flag only metadata issues that affect the exported episode:
 
 Each warning should link back to the field or destination preset where the creator can fix it. Thumbnail quality issues, sponsor placement conflicts, and other visual approvals should stay with their own readiness surfaces rather than duplicate here.
 
+## Review Copy Warnings
+
+When a client or team review copy is part of the publishing path, readiness should surface unresolved review feedback as part of handoff review rather than as a separate task board.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| open review feedback | `docs/client-review-copy-flow.md` | Resolution States, Feedback Anchors |
+| handoff decisions pending | `docs/review-handoff-summary.md` | Summary Contents, Review States |
+| checklist blocking | `docs/publish-checklist.md` | Review Approvals |
+
+Flag only review issues that affect the final export:
+
+- open feedback on a moment that ships in this export
+- required approver has not accepted the episode
+- rejected item was marked fixed but not re-reviewed
+- review copy destination does not match the final export destination
+
+Each warning should link back to the review copy moment or handoff item where the creator can resolve it. Solo-host workflows with no review copy requested should not block readiness on this item.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
