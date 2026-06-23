@@ -149,6 +149,7 @@ When b-roll, overlays, or title moments would affect the exported episode, readi
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
 | b-roll and callout approval | `docs/contextual-broll-moments.md` | Approval Flow, Quality Rules |
+| title card review and overlap | `docs/contextual-title-cards.md` | Review States, Creator Controls |
 | checklist blocking | `docs/publish-checklist.md` | Review Approvals |
 
 Flag only visual issues that affect the exported episode:
@@ -158,6 +159,9 @@ Flag only visual issues that affect the exported episode:
 - repetitive overlays appear in back-to-back moments
 - title moment or callout uses low-confidence context
 - pinned template visual no longer fits this episode
+- placed title card still needs review
+- title card overlaps captions
+- title card hides the active speaker frame
 
 Each warning should link back to the moment where the creator can approve, replace, or remove the visual. Unused suggestions that are not in the export should not affect readiness.
 

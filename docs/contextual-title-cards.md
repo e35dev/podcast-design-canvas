@@ -38,7 +38,7 @@ Use simple states:
 - needs review
 - overlap with caption or speaker frame
 
-These states should appear in `docs/export-readiness-review.md` only when a title card would affect the finished episode.
+These states should appear in `docs/export-readiness-review.md` Contextual Visual Warnings only when a title card in the export would affect the finished episode.
 
 ## Template Reuse
 
