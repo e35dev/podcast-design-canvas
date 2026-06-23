@@ -6,6 +6,22 @@ The editor should make hour-plus podcast episodes easy to scan, review, and refi
 
 A creator should be able to jump between meaningful episode moments, inspect quality issues, and keep context while reviewing a full-length episode.
 
+## Relationship To Episode Review
+
+Long-form navigation should connect to the review surfaces it routes creators through:
+
+- chapters from `docs/episode-chapter-markers.md`
+- transcript search from `docs/transcript-search-navigation.md`
+- captions and audio from `docs/audio-caption-quality-review.md`
+- speaker attribution from `docs/speaker-attribution-review.md`
+- contextual visuals from `docs/contextual-broll-moments.md`
+- export warnings from `docs/export-readiness-review.md`
+- review handoff from `docs/review-handoff-summary.md`
+
+## Navigation Approach
+
+Long-form navigation is context first: creators should move between meaningful moments with playback continuity and calm lanes—not scrub a raw timeline where every generated item feels equally urgent.
+
 ## Navigation Lanes
 
 Use creator-facing lanes that map to real review tasks:
@@ -36,17 +52,21 @@ Examples include "Guest introduces launch story," "Caption confidence is low," o
 
 Attribution-related moments should route to `docs/speaker-attribution-review.md` when the issue is who is speaking, not what the caption text says.
 
-## Moment Actions
+## Review States
 
-A creator scanning a long episode should be able to act on a moment without leaving the review flow. Each moment card should carry a clear status:
+The product should use moment status to drive long-form review without replacing owning review surfaces:
 
-- new — surfaced but not yet looked at
-- reviewed — the creator has seen it and it is fine
-- fixed — the underlying issue was resolved
-- ignored — not relevant for this episode
-- snoozed — deferred until a later review pass
+- **new** — surface the moment in navigation; do not treat the underlying issue as resolved
+- **reviewed** — the creator has seen the moment and confirmed it is fine for this episode; clear only the navigation card when the owning spec agrees
+- **fixed** — route to the owning review surface and refresh the moment after the fix is applied
+- **ignored** — hide the moment from the default navigation view for this episode; do not clear unrelated export-readiness or checklist warnings owned elsewhere
+- **snoozed** — defer the moment to a later review pass while keeping playback position and review context intact
 
-Keep the per-moment actions quick:
+Each state should describe what happens in navigation and which owning surface still owns the fix—not only the label on the card.
+
+## Creator Controls
+
+Offer simple actions:
 
 - jump to the moment with playback context
 - mark reviewed, fixed, or ignored in one action
@@ -55,7 +75,7 @@ Keep the per-moment actions quick:
 - snooze a moment to revisit later
 - restore a snoozed or ignored moment
 
-Acting on a moment should update its status in place and keep the creator's position in the episode, so a full-length review can move forward without re-scanning handled moments. Resolved and ignored moments should drop out of the default view but stay recoverable.
+Acting on a moment should update its status in place and keep the creator's position in the episode. Resolved and ignored moments should drop out of the default view but stay recoverable.
 
 ## Playback Continuity
 
@@ -81,4 +101,4 @@ Long-form navigation should handle dense episodes:
 
 ## Maintainer Acceptance Notes
 
-Accept work that makes full-length podcast review faster and more understandable. Close work that optimizes only for short clips, hides review context in a raw timeline, or makes every generated moment feel equally urgent.
+Accept work that makes full-length podcast review faster and more understandable. Close work that optimizes only for short clips, hides review context in a raw timeline, makes every generated moment feel equally urgent, or clears export-readiness warnings just because a moment was ignored in navigation.
