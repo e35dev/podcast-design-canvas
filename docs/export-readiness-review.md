@@ -163,6 +163,64 @@ Flag only brand and sponsor issues that affect the exported episode:
 - the episode has diverged from its show template without creator confirmation
 
 Each warning should link back to sponsor placement review, brand kit guardrails, or template adaptation where the creator can fix it. Thumbnail brand and sponsor fit stays with Thumbnail Warnings above, sponsor cue music stays with Placed Cue Warnings, and brand or sponsor rules saved only for future episodes that are not in this export should not affect readiness.
+## Sponsor Placement Warnings
+
+When sponsor visuals or disclosures are present in the finished episode, readiness should treat sponsor issues as part of brand and placement review rather than as a separate ad-tech queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| placement and disclosure conflicts | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
+| template reuse review | `docs/show-template-adaptation.md` | Adaptation Flow |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only sponsor issues that affect the exported episode:
+
+- sponsor mark covers a face
+- disclosure text is missing
+- sponsor visual appears during an unrelated sensitive moment
+- sponsor asset does not meet readability requirements
+- sponsor placement still needs episode-specific approval
+
+Each warning should link back to sponsor placement review or the metadata field where the creator can fix it. Episodes without sponsor elements should not block readiness on this item.
+
+## Metadata Warnings
+
+When episode fields or destination-specific publishing details would affect the exported episode, readiness should surface metadata issues as part of publishing review rather than as a separate CMS queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| metadata completeness and confidence | `docs/episode-metadata-publishing.md` | Metadata Fields, Review States, Readiness Checks |
+| destination-specific metadata fit | `docs/publish-destination-presets.md` | Relationship To Export Flow, Preset Effects, Review States |
+
+Flag only metadata issues that affect the exported episode:
+
+- title is missing or still reads like a placeholder
+- episode number is missing where the show format uses one
+- short or full description is missing for the chosen destination
+- guest name, title, or link still needs review
+- publish destination is not selected
+- metadata still matches the wrong destination preset
+
+Each warning should link back to the field or destination preset where the creator can fix it. Thumbnail quality issues, sponsor placement conflicts, and other visual approvals should stay with their own readiness surfaces rather than duplicate here.
+
+## Review Copy Warnings
+
+When a client or team review copy is part of the publishing path, readiness should surface unresolved review feedback as part of handoff review rather than as a separate task board.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| open review feedback | `docs/client-review-copy-flow.md` | Resolution States, Feedback Anchors |
+| handoff decisions pending | `docs/review-handoff-summary.md` | Summary Contents, Review States |
+| checklist blocking | `docs/publish-checklist.md` | Review Approvals |
+
+Flag only review issues that affect the final export:
+
+- open feedback on a moment that ships in this export
+- required approver has not accepted the episode
+- rejected item was marked fixed but not re-reviewed
+- review copy destination does not match the final export destination
+
+Each warning should link back to the review copy moment or handoff item where the creator can resolve it. Solo-host workflows with no review copy requested should not block readiness on this item.
 
 ## Timeline Checks
 
