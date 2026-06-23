@@ -47,6 +47,8 @@ Organizing a workspace should follow podcast production, not generic file manage
 
 Shared resources should always show their owning show or client before they are applied somewhere new.
 
+Guest-profile organization should stay tied to `docs/guest-profile-reuse.md`, so teams can see which show or client owns a reusable guest before applying that profile to a new episode.
+
 ## Boundaries
 
 Teams should not accidentally reuse assets, guests, or sponsor materials across the wrong client or show. The product should make ownership visible before applying shared resources.

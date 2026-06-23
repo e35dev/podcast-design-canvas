@@ -84,6 +84,8 @@ Guest profile reuse is a durable input, not a second review surface for metadata
 
 Profile reuse should attach approved details to the matched speaker and let the owning review surface handle the episode-specific decision. This screen should not become a second place to approve lower-thirds, metadata, captions, or guest-facing context.
 
+For teams managing multiple shows or clients, guest profiles should stay scoped through `docs/team-workspace-organization.md` so creators can tell which workspace owns a reusable guest before copying that context across productions.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes recurring guest context accurate and reusable without feeling invasive. Close work that silently applies stale guest data, mixes guest profiles across shows, or stores inferred personal details unrelated to episode quality.
