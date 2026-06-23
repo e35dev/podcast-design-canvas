@@ -55,15 +55,15 @@ A segment change should adapt the episode's structure around it rather than forc
 
 ## Review States
 
-While arranging segments, each segment should show a clear state so the creator can see what still needs a decision before styling and export:
+While arranging segments, each segment should show one state — the most important unresolved item — so the creator can see what still needs a decision before styling and export. The states form a simple order, from least to most ready:
 
-- ready — the segment is placed with clear start and end points
-- needs boundaries — the segment has no clear start or end in the conversation yet
-- needs a name — still using a default type label instead of a show-specific name
-- empty — no part of the conversation is mapped to the segment
 - skipped — intentionally left out of this episode but kept in the template
+- empty — no part of the conversation is mapped to the segment
+- needs boundaries — mapped, but the start or end in the conversation is unclear
+- needs a name — bounded, but still using a default type label instead of a show-specific name
+- ready — placed, bounded, and named
 
-These states describe the segment arrangement only. How a segment then shapes chapters, titles, pacing, branding, and metadata stays owned by the specs in Segment Behavior, and a state should surface in long-form review only when it would affect the finished episode.
+A segment has exactly one of these states at a time; resolving the current item advances it to the next. These states describe the segment arrangement only. How a segment then shapes chapters, titles, pacing, branding, and metadata stays owned by the specs in Segment Behavior, and a state should surface in long-form review only when it would affect the finished episode.
 
 ## Reuse
 
