@@ -6,6 +6,21 @@ Audio cleanup and captions should feel like one creator-facing quality pass, not
 
 A creator should be able to make speech clearer, keep speaker volume balanced, and trust the captions before publishing a long-form episode.
 
+## Relationship To Export Flow
+
+Audio and caption quality review should summarize open issues from work already captured in the workspace:
+
+- speaker sync and ingest context from episode ingest
+- caption style from `docs/preset-style-picker.md`
+- brand emphasis from `docs/show-brand-kit-setup.md`
+- safe area placement from `docs/layout-safe-areas.md`
+- readability checks from `docs/accessibility-readability-checks.md`
+- conversation cleanup from `docs/pause-crosstalk-cleanup.md`
+- glossary spellings from `docs/transcript-glossary.md`
+- social context from `docs/social-context-intake.md`
+
+Caption style conflicts that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Readability Warnings. Speech clarity, loudness balance, and conversation cleanup issues should surface in `docs/export-readiness-review.md` Audio Cleanup Warnings. Low-confidence proper nouns and spelling gaps should surface in `docs/export-readiness-review.md` Glossary Warnings.
+
 ## Audio Controls
 
 Use plain-language quality controls:

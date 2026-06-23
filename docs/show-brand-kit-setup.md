@@ -47,6 +47,8 @@ Branding should not reduce viewer clarity:
 
 When a brand choice creates a readability problem, the product should suggest a fix rather than silently rejecting it.
 
+Brand conflicts that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Thumbnail Warnings.
+
 ## Reuse
 
 A brand kit should attach to a show template but remain editable. Teams should be able to update future episodes without changing already exported episodes.
