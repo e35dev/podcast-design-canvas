@@ -103,6 +103,25 @@ Flag only framing issues that affect the exported episode:
 
 Each warning should link back to the moment and preview surface where the creator can fix it.
 
+## Contextual Visual Warnings
+
+When b-roll, overlays, or title moments would affect the exported episode, readiness should surface visual approval gaps as part of contextual review rather than as a separate effects queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| b-roll and callout approval | `docs/contextual-broll-moments.md` | Approval Flow, Quality Rules |
+| checklist blocking | `docs/publish-checklist.md` | Review Approvals |
+
+Flag only visual issues that affect the exported episode:
+
+- suggested b-roll or callout still needs approval
+- visual covers an active speaker face
+- repetitive overlays appear in back-to-back moments
+- title moment or callout uses low-confidence context
+- pinned template visual no longer fits this episode
+
+Each warning should link back to the moment where the creator can approve, replace, or remove the visual. Unused suggestions that are not in the export should not affect readiness.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
