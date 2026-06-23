@@ -6,6 +6,22 @@ Chapter markers should give a long-form episode a clear table of contents that c
 
 A creator should be able to confirm where each chapter starts, give it a plain-language title, and trust those chapters in the finished player without hand-editing a timeline.
 
+## Relationship To Episode Review
+
+Chapter review should connect to the surfaces chapters affect:
+
+- segment structure from `docs/show-segment-system.md`
+- long-form navigation from `docs/long-form-navigation.md`
+- transcript search from `docs/transcript-search-navigation.md`
+- title cards from `docs/contextual-title-cards.md`
+- metadata and publishing from `docs/episode-metadata-publishing.md`
+- show notes from `docs/show-notes-assembly.md`
+- export warnings in `docs/export-readiness-review.md`
+
+## Chapter Approach
+
+Chapter review is outline first: creators work with named conversation transitions and a calm chapter list—not timecode tracks or marker-encoding tools.
+
 ## Where Chapters Come From
 
 Chapters should start from context the workspace already has:
@@ -32,15 +48,16 @@ Avoid exposing timecode formats, marker tracks, or chapter encoding details. The
 
 ## Review States
 
-Use simple, creator-facing states:
+The product should use chapter status to drive review and export readiness:
 
-- ready
-- needs a title
-- starts mid-sentence
-- too short to keep
-- overlaps the next chapter
+- **ready** — include the chapter in metadata, show notes, and export package; clear only chapter-related warnings for that marker
+- **needs a title** — keep the chapter in review until the creator adds a plain-language title
+- **starts mid-sentence** — surface the boundary issue and let the creator nudge the start point with playback context
+- **too short to keep** — suggest merge with the neighboring chapter without removing unrelated metadata warnings
+- **overlaps the next chapter** — block export for chapter-dependent destinations until the overlap is resolved or ignored with consequence shown
+- **removed for export** — omit a suggested chapter from the export package without clearing unrelated caption or sponsor warnings
 
-These states should appear in the long-form review surface only when they would affect the finished episode, and they should group rather than flag every chapter equally.
+Each state should describe what happens in metadata, navigation, and export readiness—not only the label on the chapter.
 
 ## Scale Rules
 
@@ -56,4 +73,4 @@ Confirmed chapters flow forward into the publish path: they populate the chapter
 
 ## Maintainer Acceptance Notes
 
-Accept work that turns existing episode structure into a calm, reviewable chapter outline creators can carry straight into export and publishing. Close work that exposes timecode or marker mechanics, floods an hour-plus episode with a chapter every minute, or rebuilds a separate timeline editor.
+Accept work that turns existing episode structure into a calm, reviewable chapter outline creators can carry straight into export and publishing. Close work that exposes timecode or marker mechanics, floods an hour-plus episode with a chapter every minute, rebuilds a separate timeline editor, or clears unrelated publish-readiness warnings when a suggested chapter is removed.
