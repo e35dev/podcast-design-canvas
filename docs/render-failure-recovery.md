@@ -33,6 +33,8 @@ Offer direct actions:
 
 Each action should explain the effect on the final episode.
 
+When the creator chooses `create review copy instead`, that fallback should route through `docs/client-review-copy-flow.md` and keep the current warnings, destination context, and episode state visible so the review copy acts as a temporary share path rather than a hidden replacement for final export.
+
 ## Preservation Rules
 
 Failures should not erase:
