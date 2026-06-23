@@ -33,6 +33,19 @@ Pacing can influence:
 
 The product should avoid changing the actual conversation meaning just to make the episode feel faster.
 
+## Speaker Switch Framing
+
+Pacing owns how the layout reframes when the active speaker changes during a multi-speaker episode, so this behavior stays a preset-level choice instead of manual per-cut editing.
+
+Offer plain-language switch modes:
+
+- follow active speaker
+- hold a steady wide shot
+- split focus between current speakers
+- emphasize host on interjections
+
+The chosen pacing feel sets how often and how strongly the frame follows speaker changes: calmer feels switch less and favor wider holds, punchier feels switch more readily. Switches should respect the visibility rules in `docs/speaker-framing-safety.md` and keep any manual frame positions set in `docs/canvas-layer-controls.md`, and the resulting framing should save with the show template.
+
 ## Preview
 
 Creators should preview pacing on:
@@ -40,6 +53,7 @@ Creators should preview pacing on:
 - episode opening
 - a high-energy exchange
 - a quiet explanation
+- an active-speaker handoff between two speakers
 - a chapter transition
 - a sponsor or metadata-heavy moment
 
