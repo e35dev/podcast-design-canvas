@@ -63,6 +63,25 @@ Destination choices should shape defaults defined in `docs/publish-destination-p
 
 The product should surface only the metadata required or useful for the chosen destination. Advanced fields can be tucked behind a secondary control.
 
+## Review Approach
+
+Metadata review should stay publish first:
+
+- start with the selected destination and show only the fields that matter there
+- preview the title, description, chapters, links, and disclosure text as they would appear to the final audience
+- keep helpful episode defaults visible so the creator can confirm them instead of rewriting everything
+- surface missing or low-confidence fields as clear publishing decisions, not generic form errors
+
+Creators should feel like they are checking a publish-ready episode package, not filling out a detached CMS screen.
+
+Useful metadata previews include:
+
+- the long-form destination page with title, description, and thumbnail together
+- a chapter list preview for destinations that expose timestamps or sections
+- a sponsor disclosure preview where required by the chosen destination
+- a copyable client-review or sponsor-approval preview when the destination is not the public publish target
+- the guest-link and title pairing exactly as it will appear beside the final episode art
+
 ## Review States
 
 Use creator-facing states:
