@@ -38,7 +38,7 @@ Flag switch framing only when it affects the finished episode:
 - needs review — a long stretch with no reframe looks static
 - conflict — switch overlaps with a b-roll moment or sponsor placement
 
-These states should appear in `docs/long-form-navigation.md` navigation lanes and in `docs/export-readiness-review.md` speaker framing warnings when they would affect export.
+These states should appear in `docs/long-form-navigation.md` navigation lanes and in `docs/export-readiness-review.md` Speaker Framing Warnings when they would affect export.
 
 ## Template Reuse
 
