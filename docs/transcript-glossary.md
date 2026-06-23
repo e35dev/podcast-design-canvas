@@ -48,6 +48,8 @@ Approved glossary entries should improve:
 
 The product should show when a correction was applied across repeated instances.
 
+Glossary issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Glossary Warnings.
+
 ## Maintainer Acceptance Notes
 
 Accept work that improves transcript and caption accuracy through reusable creator-approved spellings. Close work that silently changes speaker words, stores sensitive inferred details, or separates glossary corrections from visible episode outputs.

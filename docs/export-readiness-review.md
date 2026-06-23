@@ -202,6 +202,26 @@ Flag only review issues that affect the final export:
 
 Each warning should link back to the review copy moment or handoff item where the creator can resolve it. Solo-host workflows with no review copy requested should not block readiness on this item.
 
+## Glossary Warnings
+
+When proper nouns, names, or show-specific spellings would affect the exported episode, readiness should surface glossary gaps as part of caption and metadata review rather than as a separate transcript editor.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| low-confidence proper nouns | `docs/audio-caption-quality-review.md` | Caption Confidence |
+| approved spellings not applied | `docs/transcript-glossary.md` | Glossary Entries, Application |
+| guest name and link context | `docs/social-context-intake.md` | Context Uses, Accepted Inputs |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping |
+
+Flag only glossary issues that affect the exported episode:
+
+- repeated proper noun still has low caption confidence
+- approved glossary spelling was not applied to captions or metadata
+- guest name or company spelling conflicts with social context
+- glossary suggestion still needs creator approval before export
+
+Each warning should link back to caption review, glossary application, or the metadata field where the creator can fix it. One-off typos the creator already corrected should not flood readiness.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
