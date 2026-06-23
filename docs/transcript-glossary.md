@@ -50,6 +50,25 @@ The product can suggest glossary entries from:
 
 Suggestions should require creator approval before they become reusable.
 
+## Preview Contexts
+
+Creators should preview glossary corrections on the surfaces where the term will actually appear:
+
+- a real caption line with the corrected term in context
+- a chapter title or metadata line that reuses the same wording
+- a lower-third or title card where the approved spelling changes visible on-screen text
+- a transcript search result where the corrected term should become easier to find
+
+Previewing the correction on more than one surface helps creators confirm that the approved spelling improves the episode package instead of only fixing one caption line.
+
+Useful glossary previews should also:
+
+- keep the original wording visible alongside the corrected version before approval
+- show when the same correction would update more than one repeated instance in the episode
+- make it obvious which surfaces change now versus which ones become reusable for later episodes after confirmation
+- keep the creator focused on whether the corrected term improves the visible episode package
+- preserve the same caption or metadata moment while switching between original and corrected text
+
 ## Application
 
 Approved glossary entries should improve:
