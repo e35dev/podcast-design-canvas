@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Role Mapping Prototype</title>
+    <style>
+      :root {
+        --ink: #17211d;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --suggest: #9b5d00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 26px;
+        margin-bottom: 6px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 720px;
+        margin-bottom: 28px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+
+      @media (max-width: 880px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      h2 {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .track {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 14px;
+        background: var(--surface);
+      }
+
+      .track-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #dceae5;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .track-name {
+        font-weight: 600;
+      }
+
+      .track-file {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .role-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .role-btn {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .role-btn[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+
+      .signal {
+        font-size: 13px;
+        color: var(--suggest);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .signal.applied {
+        color: var(--accent);
+      }
+
+      .undo {
+        border: none;
+        background: none;
+        color: var(--accent);
+        font-size: 13px;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 0;
+        font-family: inherit;
+      }
+
+      aside {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px;
+        position: sticky;
+        top: 24px;
+      }
+
+      .effect {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+
+      .effect:last-of-type {
+        border-bottom: none;
+      }
+
+      .effect .label {
+        color: var(--muted);
+      }
+
+      .effect .value {
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .roster {
+        margin: 0 0 16px;
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+      }
+
+      .roster li {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+      }
+
+      .roster .role-tag {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .roster .role-tag.unassigned {
+        color: var(--suggest);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker Role Mapping</h1>
+      <p class="lede">
+        Map each imported track to a clear podcast role. Suggestions come from
+        file names, speaker names, and social links, but every assignment stays
+        visible and reversible so a guest is never silently treated as the host.
+      </p>
+
+      <div class="layout">
+        <section aria-label="Imported tracks">
+          <h2>Imported Tracks</h2>
+          <div id="tracks"></div>
+        </section>
+
+        <aside aria-label="Layout effects">
+          <h2>Episode Roster</h2>
+          <ul class="roster" id="roster"></ul>
+
+          <h2>Layout Effects</h2>
+          <div class="effect">
+            <span class="label">Frame prominence</span>
+            <span class="value" id="fx-frame">—</span>
+          </div>
+          <div class="effect">
+            <span class="label">Lower-third priority</span>
+            <span class="value" id="fx-lower">—</span>
+          </div>
+          <div class="effect">
+            <span class="label">Caption attribution</span>
+            <span class="value" id="fx-caption">—</span>
+          </div>
+          <div class="effect">
+            <span class="label">Title card wording</span>
+            <span class="value" id="fx-title">—</span>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      var ROLES = [
+        "host",
+        "co-host",
+        "guest",
+        "panelist",
+        "producer",
+        "narrator"
+      ];
+
+      var ROLE_LABEL = {
+        host: "Host",
+        "co-host": "Co-host",
+        guest: "Guest",
+        panelist: "Panelist",
+        producer: "Producer / off-camera",
+        narrator: "Narrator / voiceover"
+      };
+
+      // Each track carries a reversible suggestion from an ingest signal.
+      var tracks = [
+        {
+          id: "t1",
+          name: "Maya Okafor",
+          file: "maya-host-cam.mp4",
+          suggested: "host",
+          signalSource: "Riverside track label “Host”",
+          role: "host",
+          fromSuggestion: true
+        },
+        {
+          id: "t2",
+          name: "Dev Patel",
+          file: "guest-1-dev.mp4",
+          suggested: "guest",
+          signalSource: "file name “guest-1”",
+          role: "guest",
+          fromSuggestion: true
+        },
+        {
+          id: "t3",
+          name: "Unknown speaker",
+          file: "track-3.mp4",
+          suggested: "co-host",
+          signalSource: "speaks second across the episode",
+          role: null,
+          fromSuggestion: false
+        },
+        {
+          id: "t4",
+          name: "Sam Reyes",
+          file: "producer-mix.wav",
+          suggested: "producer",
+          signalSource: "audio-only track, social link “show producer”",
+          role: "producer",
+          fromSuggestion: true
+        }
+      ];
+
+      function initials(name) {
+        var parts = name.split(" ").filter(Boolean);
+        if (!parts.length) return "?";
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+
+      function setRole(id, role) {
+        var track = tracks.find(function (t) {
+          return t.id === id;
+        });
+        if (!track) return;
+        // A manual change overrides the suggestion; it is no longer "from suggestion".
+        track.role = role;
+        track.fromSuggestion = role === track.suggested && track.fromSuggestion;
+        render();
+      }
+
+      function applySuggestion(id) {
+        var track = tracks.find(function (t) {
+          return t.id === id;
+        });
+        if (!track) return;
+        track.role = track.suggested;
+        track.fromSuggestion = true;
+        render();
+      }
+
+      function clearRole(id) {
+        var track = tracks.find(function (t) {
+          return t.id === id;
+        });
+        if (!track) return;
+        track.role = null;
+        track.fromSuggestion = false;
+        render();
+      }
+
+      function describeEffects() {
+        var hosts = tracks.filter(function (t) {
+          return t.role === "host" || t.role === "co-host";
+        });
+        var oncamera = tracks.filter(function (t) {
+          return t.role && t.role !== "producer" && t.role !== "narrator";
+        });
+
+        var frame;
+        if (hosts.length) {
+          frame =
+            "Host-led: " +
+            hosts
+              .map(function (t) {
+                return t.name;
+              })
+              .join(" + ") +
+            " featured";
+        } else if (oncamera.length) {
+          frame = "Equal framing across " + oncamera.length + " speakers";
+        } else {
+          frame = "Assign a role to set framing";
+        }
+
+        var producers = tracks.filter(function (t) {
+          return t.role === "producer";
+        }).length;
+        var narrators = tracks.filter(function (t) {
+          return t.role === "narrator";
+        }).length;
+
+        return {
+          frame: frame,
+          lower: hosts.length
+            ? "Host first, then guests"
+            : oncamera.length
+              ? "By speaking order"
+              : "—",
+          caption: oncamera.length
+            ? "Name + role per speaker"
+            : "Names only",
+          title:
+            hosts.length && oncamera.length > 1
+              ? hosts[0].name + " with guests"
+              : oncamera.length === 1
+                ? "Solo episode"
+                : producers || narrators
+                  ? "Off-camera voices hidden from title"
+                  : "—"
+        };
+      }
+
+      function render() {
+        var container = document.getElementById("tracks");
+        container.innerHTML = "";
+
+        tracks.forEach(function (track) {
+          var card = document.createElement("div");
+          card.className = "track";
+
+          var head = document.createElement("div");
+          head.className = "track-head";
+          head.innerHTML =
+            '<div class="avatar">' +
+            initials(track.name) +
+            "</div>" +
+            '<div><div class="track-name">' +
+            track.name +
+            '</div><div class="track-file">' +
+            track.file +
+            "</div></div>";
+          card.appendChild(head);
+
+          var roleRow = document.createElement("div");
+          roleRow.className = "role-row";
+          ROLES.forEach(function (role) {
+            var btn = document.createElement("button");
+            btn.className = "role-btn";
+            btn.type = "button";
+            btn.textContent = ROLE_LABEL[role];
+            btn.setAttribute(
+              "aria-pressed",
+              track.role === role ? "true" : "false"
+            );
+            btn.addEventListener("click", function () {
+              setRole(track.id, role);
+            });
+            roleRow.appendChild(btn);
+          });
+          card.appendChild(roleRow);
+
+          var signal = document.createElement("div");
+          if (track.role === null) {
+            signal.className = "signal";
+            signal.innerHTML =
+              "Suggested <strong>" +
+              ROLE_LABEL[track.suggested] +
+              "</strong> from " +
+              track.signalSource +
+              ". ";
+            var apply = document.createElement("button");
+            apply.className = "undo";
+            apply.type = "button";
+            apply.textContent = "Apply suggestion";
+            apply.addEventListener("click", function () {
+              applySuggestion(track.id);
+            });
+            signal.appendChild(apply);
+          } else if (track.fromSuggestion) {
+            signal.className = "signal applied";
+            signal.innerHTML =
+              "Suggested from " + track.signalSource + ". ";
+            var undo = document.createElement("button");
+            undo.className = "undo";
+            undo.type = "button";
+            undo.textContent = "Clear";
+            undo.addEventListener("click", function () {
+              clearRole(track.id);
+            });
+            signal.appendChild(undo);
+          } else {
+            signal.className = "signal applied";
+            signal.innerHTML = "Set manually. ";
+            var reset = document.createElement("button");
+            reset.className = "undo";
+            reset.type = "button";
+            reset.textContent =
+              "Reset to suggested " + ROLE_LABEL[track.suggested];
+            reset.addEventListener("click", function () {
+              applySuggestion(track.id);
+            });
+            signal.appendChild(reset);
+          }
+          card.appendChild(signal);
+
+          container.appendChild(card);
+        });
+
+        var roster = document.getElementById("roster");
+        roster.innerHTML = "";
+        tracks.forEach(function (track) {
+          var li = document.createElement("li");
+          var tag = track.role
+            ? '<span class="role-tag">' + ROLE_LABEL[track.role] + "</span>"
+            : '<span class="role-tag unassigned">needs role</span>';
+          li.innerHTML = "<span>" + track.name + "</span>" + tag;
+          roster.appendChild(li);
+        });
+
+        var fx = describeEffects();
+        document.getElementById("fx-frame").textContent = fx.frame;
+        document.getElementById("fx-lower").textContent = fx.lower;
+        document.getElementById("fx-caption").textContent = fx.caption;
+        document.getElementById("fx-title").textContent = fx.title;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
