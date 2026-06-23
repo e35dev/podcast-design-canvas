@@ -148,7 +148,6 @@ When speech clarity, loudness balance, or conversation cleanup would affect the 
 | --- | --- | --- |
 | room noise, loudness balance, and clarity | `docs/audio-caption-quality-review.md` | Audio Controls, Review Flow |
 | awkward pauses and heavy cross-talk | `docs/pause-crosstalk-cleanup.md` | Detected Moments, Cleanup Actions |
-| per-speaker source audio problems | `docs/source-media-health.md` | Health Checks, Readiness Summary |
 | checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
 
 Flag only audio issues that affect the exported episode:
@@ -159,7 +158,27 @@ Flag only audio issues that affect the exported episode:
 - long dead air remains where the conversation stops
 - a confirmed clarity or noise fix was not applied before this export
 
-Each warning should link back to the speaker and moment where the creator can fix it, such as audio review, pause and cross-talk cleanup, or source media health. Music that covers speech stays with Placed Cue Warnings above, and natural pauses or intentional silence the creator chose to keep should not affect readiness.
+Each warning should link back to the speaker and moment where the creator can fix it, such as audio review or pause and cross-talk cleanup. Source file availability issues stay with Source Media Warnings below. Music that covers speech stays with Placed Cue Warnings above, and natural pauses or intentional silence the creator chose to keep should not affect readiness.
+
+## Source Media Warnings
+
+When raw speaker files would affect the exported episode, readiness should surface source media availability issues as part of track health review rather than as audio cleanup or framing review.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| per-speaker file health | `docs/source-media-health.md` | Health Checks, Readiness Summary |
+| ingest handoff | `docs/episode-ingest-readiness.md` | Readiness Checks, Issue Resolution Mapping |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only source media issues that affect the exported episode:
+
+- source audio missing or too quiet for an exported speaker track
+- source video missing where the layout expects video
+- source file marked unavailable still included in the export
+- source file appears corrupted or incomplete in the export
+
+Each warning should link back to source media health or the speaker bucket where the creator can replace the file or mark a track audio-only. Codec details should not appear in readiness.
+
 ## Contextual Visual Warnings
 
 When b-roll, overlays, or title moments would affect the exported episode, readiness should surface visual approval gaps as part of contextual review rather than as a separate effects queue.
