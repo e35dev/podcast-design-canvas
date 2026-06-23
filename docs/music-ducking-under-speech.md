@@ -78,3 +78,7 @@ Avoid compressor settings, sidechain routing, decibel thresholds, waveform editi
 ## Publish Readiness
 
 Ducking issues should appear in `docs/export-readiness-review.md` Placed Cue Warnings when music makes speech or captions less trustworthy. They should block publish readiness only when the overlapped spoken moment is necessary for viewers to understand the episode, sponsor message, or chapter transition.
+
+## Maintainer Acceptance Notes
+
+Accept work that keeps placed music present while protecting spoken clarity, offered as simple creator-facing choices reviewed on real episode moments. Close work that introduces a separate music timeline, exposes compressor, sidechain, decibel, or waveform controls, or auto-ducks the whole episode without creator review.
