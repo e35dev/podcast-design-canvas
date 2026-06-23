@@ -59,6 +59,18 @@ Before a creator applies a layout across the episode or saves it as a reusable t
 
 These warnings should open the exact moment and preview surface the creator needs to fix. Export readiness can summarize unresolved layout problems later, but the canvas should stay the place where creators actually solve them.
 
+## Review States
+
+Use simple creator-facing states:
+
+- editing — a layer change is visible in preview but not yet applied broadly or saved
+- applied to moment — the edit affects one timestamp or segment the creator chose
+- applied broadly — the same layout pattern carries to similar moments after confirmation
+- saved to template — the layout is stored for reuse through `docs/show-template-adaptation.md`
+- needs guardrail review — overlap, crop, or brand readability still blocks save or export
+
+Each state should describe what happens in preview and the next creator action, such as "Caption zone overlaps the lower-third on the mobile preview."
+
 ## Reuse Requirements
 
 Before saving a canvas layout as a template, confirm which parts should adapt next time:
