@@ -56,6 +56,20 @@ Support common podcast setups:
 - producer voice without camera
 - guest joins late or leaves early
 
+## Creator Controls
+
+Mapping roles should stay a quick, reversible review step rather than a one-time guess locked in at ingest. The creator should be able to:
+
+- confirm or reject each suggested role before it affects the episode
+- reassign any track to a different role at any point after ingest
+- preview how a role change updates frame prominence, lower-thirds, and caption attribution before applying it
+- apply a role to this episode only or save it to the show template for recurring speakers
+- mark a track as producer or off-camera voice so it stays out of speaker layouts
+- set when a late-joining or early-leaving speaker appears, without forcing them into the full-episode layout
+- keep the original suggestion visible so any change can be undone
+
+A role change should never silently restyle the whole episode. The creator should see what will change across layout, captions, and template previews and choose to apply it.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes speaker roles durable across ingest, presets, canvas editing, captions, and templates. Close work that treats tracks as anonymous media files or hard-codes one show format for every podcast.
