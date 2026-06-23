@@ -34,6 +34,8 @@ Assets should be scoped to:
 
 The product should show where an asset is already used so creators do not accidentally remove something from a finished episode.
 
+This ownership model should match `docs/team-workspace-organization.md` Workspace Structure and Boundaries so teams can tell whether an asset belongs to the current episode, a show template, or a broader client workspace before reusing it.
+
 ## Discovery
 
 Creators should be able to find assets by:

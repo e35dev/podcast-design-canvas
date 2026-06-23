@@ -43,6 +43,8 @@ For teams managing multiple shows, templates should remain clearly scoped:
 - recent exports show which template was used
 - template changes can apply to future episodes without rewriting finished exports
 
+These boundaries should stay aligned with `docs/team-workspace-organization.md` Team Views and Boundaries so teams can review template changes in the right workspace and avoid applying one show's layout choices to the wrong client or episode.
+
 ## Versioning
 
 Template edits should avoid surprising users:
