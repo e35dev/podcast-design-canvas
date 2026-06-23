@@ -86,7 +86,7 @@ When layout, caption, or destination crop issues would affect the exported episo
 | --- | --- | --- |
 | caption contrast, size, and motion | `docs/accessibility-readability-checks.md` | Checks, Creator Controls |
 | safe area and overlap conflicts | `docs/layout-safe-areas.md` | Safe Area Types, Checks |
-| destination crop issues | `docs/destination-crop-previews.md` | Checks, Fixes |
+| destination crop issues | `docs/destination-crop-previews.md` | Checks, Creator Controls |
 | caption style conflicts | `docs/audio-caption-quality-review.md` | Caption Style Presets |
 
 Flag only readability issues that affect the exported episode:
@@ -106,7 +106,7 @@ When speaker visibility or layout framing would affect the exported episode, rea
 | --- | --- | --- |
 | face and overlay conflicts | `docs/speaker-framing-safety.md` | Checks, Creator Controls |
 | role-based layout fit | `docs/speaker-role-mapping.md` | Layout Effects |
-| destination crop impact | `docs/destination-crop-previews.md` | Checks, Fixes |
+| destination crop impact | `docs/destination-crop-previews.md` | Checks, Creator Controls |
 | visual match across speakers | `docs/speaker-visual-match.md` | Match Signals, Review States |
 | speaker switch reframing | `docs/speaker-switch-framing.md` | Switch Styles, When to Flag |
 
@@ -205,7 +205,7 @@ When b-roll, overlays, or title moments would affect the exported episode, readi
 
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
-| b-roll and callout approval | `docs/contextual-broll-moments.md` | Approval Flow, Quality Rules |
+| b-roll and callout approval | `docs/contextual-broll-moments.md` | Review States, Quality Rules |
 | title card review and overlap | `docs/contextual-title-cards.md` | Review States, Creator Controls |
 | checklist blocking | `docs/publish-checklist.md` | Review Approvals |
 
