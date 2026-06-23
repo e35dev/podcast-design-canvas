@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Source Media Health Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .speakers {
+        display: grid;
+        gap: 14px;
+      }
+
+      .speaker {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .frame {
+        position: relative;
+        width: 116px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+      }
+
+      .frame.portrait {
+        width: 72px;
+        aspect-ratio: 9 / 16;
+      }
+
+      .frame-inner {
+        position: absolute;
+        inset: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame-inner::before {
+        content: "";
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        width: 34%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .frame-inner::after {
+        content: "";
+        position: absolute;
+        right: 24%;
+        bottom: 0;
+        left: 24%;
+        height: 42%;
+        border-radius: 999px 999px 0 0;
+        background: #d9ece8;
+      }
+
+      .frame.dark .frame-inner {
+        filter: brightness(0.3);
+      }
+
+      .frame.blur .frame-inner {
+        filter: blur(2.2px);
+      }
+
+      .frame.soft .frame-inner {
+        filter: blur(0.9px) contrast(0.92);
+      }
+
+      .frame.missing .frame-inner {
+        background: repeating-linear-gradient(135deg, #d7ddda, #d7ddda 8px, #e7ece9 8px, #e7ece9 16px);
+      }
+
+      .frame.missing .frame-inner::before,
+      .frame.missing .frame-inner::after {
+        display: none;
+      }
+
+      .chip {
+        position: absolute;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border-radius: 4px;
+        background: rgba(16, 24, 22, 0.8);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 6px;
+        text-align: center;
+      }
+
+      .frame.missing .chip {
+        background: rgba(70, 78, 75, 0.92);
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .speaker {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 130px;
+        }
+
+        .frame.portrait {
+          width: 84px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Source media health</h1>
+      <p class="lede">Check whether each speaker's recording is good enough for a polished, full-length episode before you spend time on styling. We only flag what would show up in the finished video &mdash; choices you make on purpose are fine.</p>
+
+      <section class="workspace" aria-label="Source media health workspace">
+        <div class="panel">
+          <h2>Speaker files</h2>
+          <div class="speakers" id="speakers"></div>
+          <div class="actions">
+            <button type="button" id="addSpeaker">Add a speaker file</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Source health summary">
+          <h2>Source health summary</h2>
+          <div id="status" class="status ready">Ready to style</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Files you continue with a warning still export &mdash; we won't block your episode for a choice you made on purpose.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Each health check maps a detected source problem to plain creator language and a next step.
+      const conditions = {
+        good: { label: "Looks good", preview: "ok", steps: ["keep"] },
+        "low-res": {
+          label: "Video looks soft",
+          preview: "soft",
+          chip: "Soft video",
+          natural: "review suggested",
+          title: (name) => `${name}'s video will look soft at full size`,
+          action: "Swap in a sharper recording, or continue — it still reads fine across a full episode.",
+          steps: ["keep", "warn", "audio-only", "replace"],
+        },
+        dark: {
+          label: "Frame is too dark",
+          preview: "dark",
+          chip: "Too dark",
+          natural: "review suggested",
+          title: (name) => `${name}'s camera is too dark to see clearly`,
+          action: "Open visual match to lift the lighting, replace the file, or continue with a warning.",
+          steps: ["keep", "warn", "audio-only", "replace"],
+        },
+        blurry: {
+          label: "Frame is out of focus",
+          preview: "blur",
+          chip: "Out of focus",
+          natural: "review suggested",
+          title: (name) => `${name}'s camera is out of focus`,
+          action: "Replace the recording, show this speaker audio-only, or continue with a warning.",
+          steps: ["keep", "warn", "audio-only", "replace"],
+        },
+        quiet: {
+          label: "Audio is very quiet",
+          preview: "ok",
+          chip: "Hard to hear",
+          natural: "review suggested",
+          title: (name) => `${name} is hard to hear`,
+          action: "Balance this speaker's volume in audio cleanup, or continue with a warning.",
+          steps: ["keep", "warn", "replace"],
+        },
+        "no-audio": {
+          label: "No sound on this track",
+          preview: "ok",
+          chip: "No sound",
+          natural: "needs replacement",
+          title: (name) => `${name}'s recording has no sound`,
+          action: "Re-upload this speaker with their audio — they can't be heard right now.",
+          steps: ["keep", "replace"],
+        },
+        "motion-mismatch": {
+          label: "Motion won't match the episode",
+          preview: "ok",
+          chip: "Motion off",
+          natural: "review suggested",
+          title: (name) => `${name}'s video motion won't match the rest of the episode`,
+          action: "Let us smooth the motion to match, replace the file, or continue with a warning.",
+          steps: ["keep", "warn", "audio-only", "replace"],
+        },
+        portrait: {
+          label: "Recorded sideways (portrait)",
+          preview: "portrait",
+          chip: "Sideways",
+          natural: "review suggested",
+          title: (name) => `${name} was recorded sideways and won't fill a widescreen layout`,
+          action: "Fit it with a stacked layout, replace with a landscape recording, or continue with a warning.",
+          steps: ["keep", "warn", "audio-only", "replace"],
+        },
+        incomplete: {
+          label: "File looks incomplete",
+          preview: "missing",
+          chip: "No file",
+          natural: "unavailable",
+          title: (name) => `${name}'s file looks incomplete and won't open`,
+          action: "Re-upload this speaker's recording before styling — this part can't be used yet.",
+          steps: ["keep", "replace"],
+        },
+        "no-transcript": {
+          label: "Audio can't be captioned",
+          preview: "ok",
+          chip: "Captions at risk",
+          natural: "review suggested",
+          title: (name) => `Captions may be inaccurate for ${name}`,
+          action: "Improve this speaker's audio for cleaner captions, or continue and review their captions by hand.",
+          steps: ["keep", "warn", "replace"],
+        },
+      };
+
+      // The creator's next step for a flagged file.
+      const dispositions = {
+        keep: "Decide later",
+        warn: "Continue with a warning",
+        "audio-only": "Show audio-only",
+        replace: "Replace with a clean file",
+      };
+
+      const sampleSpeakers = [
+        { id: "host", role: "Host", name: "Host — Dana Brooks", condition: "good", disposition: "keep" },
+        { id: "guest-1", role: "Guest 1", name: "Guest 1 — Marcus Lee", condition: "dark", disposition: "keep" },
+      ];
+
+      let speakers = structuredClone(sampleSpeakers);
+
+      const speakersElement = document.querySelector("#speakers");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addSpeaker").addEventListener("click", () => {
+        const next = speakers.length;
+        speakers.push({
+          id: `speaker-${next + 1}`,
+          role: `Guest ${next}`,
+          name: `Guest ${next}`,
+          condition: "low-res",
+          disposition: "keep",
+        });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        speakers = structuredClone(sampleSpeakers);
+        render();
+      });
+
+      // Single source of truth: map each speaker's detected condition + creator choice
+      // to one of the spec's readiness states, plus a creator-facing issue.
+      function evaluate(list) {
+        const results = list.map((speaker) => {
+          const condition = conditions[speaker.condition];
+          // Honor only steps that are valid for this condition; ignore any stale
+          // value so the logic can never act on an option the UI wouldn't offer.
+          const allowed = condition.steps || ["keep"];
+          const disposition = allowed.includes(speaker.disposition) ? speaker.disposition : "keep";
+          let state = "ready";
+          let issue = null;
+
+          if (speaker.condition === "good") {
+            state = "ready";
+          } else if (disposition === "replace") {
+            state = "ready";
+            issue = {
+              title: `${speaker.name}: replaced with a clean file`,
+              action: "Looks good now — ready for preset selection.",
+              tone: "info",
+            };
+          } else if (condition.natural === "unavailable") {
+            state = "unavailable";
+            issue = { title: condition.title(speaker.name), action: condition.action, tone: "blocker" };
+          } else if (condition.natural === "needs replacement") {
+            state = "needs replacement";
+            issue = { title: condition.title(speaker.name), action: condition.action, tone: "blocker" };
+          } else if (disposition === "audio-only") {
+            state = "audio-only usable";
+            issue = {
+              title: `${speaker.name} will appear as audio-only`,
+              action: "Their video stays hidden — make sure another speaker or b-roll fills the frame here.",
+              tone: "info",
+            };
+          } else if (disposition === "warn") {
+            state = "ready";
+            issue = {
+              title: `${speaker.name}: continuing with a warning`,
+              action: `${condition.title(speaker.name)} — you've chosen to keep it as is.`,
+              tone: "info",
+            };
+          } else {
+            state = "review suggested";
+            issue = { title: condition.title(speaker.name), action: condition.action, tone: "review" };
+          }
+
+          return { id: speaker.id, name: speaker.name, role: speaker.role, state, issue };
+        });
+
+        const hasBlock = results.some((result) => result.state === "unavailable" || result.state === "needs replacement");
+        const hasReview = results.some((result) => result.state === "review suggested");
+        const overall = hasBlock ? "blocked" : hasReview ? "review" : "ready";
+
+        return { overall, results };
+      }
+
+      function render() {
+        const evaluation = evaluate(speakers);
+        speakersElement.replaceChildren(
+          ...speakers.map((speaker, index) => renderSpeaker(speaker, index, evaluation.results[index])),
+        );
+
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready"
+          ? "Ready to style"
+          : evaluation.overall === "blocked"
+            ? "Some files need replacing"
+            : "Review suggested";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "All speaker files are ready for preset selection." })]),
+        );
+      }
+
+      function badgeClass(state) {
+        if (state === "review suggested") {
+          return "review";
+        }
+        if (state === "needs replacement" || state === "unavailable") {
+          return "blocked";
+        }
+        return "ready";
+      }
+
+      function renderSpeaker(speaker, index, result) {
+        const condition = conditions[speaker.condition];
+        const article = document.createElement("article");
+        article.className = "speaker";
+
+        const conditionOptions = Object.entries(conditions)
+          .map(([value, item]) => `<option value="${value}" ${value === speaker.condition ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        // Only offer next steps that actually work for this condition — e.g. a file
+        // with no sound or a broken file can only be replaced, not "warned" away.
+        const allowedSteps = condition.steps || ["keep"];
+        const dispositionOptions = allowedSteps
+          .map((value) => `<option value="${value}" ${value === speaker.disposition ? "selected" : ""}>${dispositions[value]}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled values (preset keys/labels, fixed
+        // states). User-editable text — the speaker role and name — is set via
+        // textContent/value below, so a typed name can never break the input
+        // attribute or inject markup into the page.
+        article.innerHTML = `
+          <div class="frame ${condition.preview}">
+            <div class="frame-inner"></div>
+            ${condition.chip ? `<span class="chip">${condition.chip}</span>` : ""}
+          </div>
+          <div class="fields">
+            <div class="head">
+              <strong data-role></strong>
+              <span class="badge ${badgeClass(result.state)}">${result.state}</span>
+            </div>
+            <label>Speaker name<input data-field="name" aria-label="Speaker name"></label>
+            <div class="fields-row">
+              <label>What we found
+                <select data-field="condition" aria-label="Detected source condition">${conditionOptions}</select>
+              </label>
+              <label>What to do
+                <select data-field="disposition" aria-label="Next step for this file" ${allowedSteps.length <= 1 ? "disabled" : ""}>${dispositionOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        article.querySelector("[data-role]").textContent = speaker.role;
+        article.querySelector('[data-field="name"]').value = speaker.name;
+
+        article.addEventListener("input", (event) => updateSpeaker(event, index));
+        article.addEventListener("change", (event) => updateSpeaker(event, index));
+        return article;
+      }
+
+      function updateSpeaker(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        const speaker = speakers[index];
+        speaker[field] = event.target.value;
+
+        // When the detected condition changes, drop any chosen next step that is
+        // no longer valid so the dropdown never keeps a stale, non-working action.
+        if (field === "condition") {
+          const allowed = conditions[speaker.condition].steps || ["keep"];
+          if (!allowed.includes(speaker.disposition)) {
+            speaker.disposition = "keep";
+          }
+        }
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title and issue.action embed the editable speaker name, so build
+        // them with textContent rather than innerHTML.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
