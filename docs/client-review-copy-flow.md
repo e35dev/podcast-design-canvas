@@ -6,6 +6,22 @@ Podcast teams and agencies need a way to share reviewable episodes before final 
 
 A creator should be able to create a client or team review copy, collect decisions around visible episode quality, and keep the final publish export clean.
 
+## Relationship To Review Flow
+
+Client review should connect to the review and export path:
+
+- review handoff from `docs/review-handoff-summary.md`
+- export readiness from `docs/export-readiness-review.md`
+- publish checklist approvals from `docs/publish-checklist.md`
+- destination watermark defaults from `docs/publish-destination-presets.md`
+- thumbnails and metadata shown to reviewers from `docs/thumbnail-cover-frame.md` and `docs/episode-metadata-publishing.md`
+- review milestones in `docs/episode-version-history.md`
+- final package delivery in `docs/export-package-handoff.md`
+
+## Review Approach
+
+Client review is decision-first on episode moments: feedback should attach to visible quality issues and stay separate from the final publish export—not become a generic task board or project-management screen.
+
 ## Review Copy Defaults
 
 A review copy should make its status obvious:
@@ -69,8 +85,8 @@ Use simple creator-facing states:
 - draft — a review copy is prepared but not sent to reviewers yet
 - awaiting feedback — reviewers can watch and comment; the creator waits on decisions
 - changes requested — open feedback still blocks some final export items
-- ready to publish — blocking feedback is resolved or ignored with consequence shown
-- superseded — a newer review round replaced this link but prior feedback stays visible for context
+- **ready to publish** — blocking feedback is resolved or ignored with consequence shown; clear only review-copy-related checklist items without treating unrelated caption, metadata, or sponsor warnings as resolved
+- **superseded** — a newer review round replaced this link but prior feedback stays visible for context
 
 Each state should describe what reviewers and creators can do next, such as "Two caption notes are still open before final export."
 
@@ -89,4 +105,4 @@ This information supports repeatable production without making a solo creator do
 
 ## Maintainer Acceptance Notes
 
-Accept work that helps teams review long-form podcast episodes before final export. Close work that turns review into a generic task board, requires project-management overhead for solo creators, or treats review copies as final publish files.
+Accept work that helps teams review long-form podcast episodes before final export. Close work that turns review into a generic task board, requires project-management overhead for solo creators, treats review copies as final publish files, or clears unrelated publish-readiness warnings when review feedback is marked not relevant.
