@@ -45,6 +45,8 @@ Roles should influence:
 
 The product should avoid treating every speaker equally when the show format clearly has a host-led structure.
 
+Role-based layout issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Speaker Framing Warnings.
+
 ## Edge Cases
 
 Support common podcast setups:

@@ -33,6 +33,8 @@ Flag layout conflicts:
 
 The product should link conflicts to the affected moment and destination.
 
+Layout conflicts that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Readability Warnings.
+
 ## Template Behavior
 
 Safe areas should be saved with templates where appropriate, but each episode should re-check them against its actual speaker count, brand kit, and export destination.

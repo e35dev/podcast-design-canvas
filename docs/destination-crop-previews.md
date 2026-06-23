@@ -32,6 +32,8 @@ Flag visible issues:
 
 Each issue should link to the affected preview surface and moment.
 
+Destination crop issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Readability Warnings and Speaker Framing Warnings.
+
 ## Fixes
 
 Offer direct fixes:
