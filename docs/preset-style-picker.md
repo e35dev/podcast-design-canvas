@@ -23,10 +23,22 @@ Keep the controls creator-facing:
 - speaker focus: steady panel, active-speaker emphasis, gentle handoff
 - caption presence: minimal, standard, high-emphasis
 - caption style: clean lower third, centered emphasis, speaker-labeled, title-safe
+- pacing: relaxed, balanced, quick-cut
 - visual moments: restrained, balanced, energetic
 - branding strength: neutral, show-branded, sponsor-ready
 
 Avoid exposing internal rendering, tracking, or timeline mechanics in this first path.
+
+## Pacing Options
+
+Pacing choices should stay inside the preset picker, with `docs/preset-preview-on-real-tracks.md` showing the selected tier on the same real podcast moment before it is applied. Use preset-safe tiers:
+
+- relaxed: longer holds for interviews, teaching, or reflective moments
+- balanced: default long-form rhythm with obvious dead air trimmed
+- quick-cut: more frequent speaker and visual changes for energetic commentary
+
+A plain hold recommended cue can flag cross-talk, laughter, or serious discussion without asking the creator to tune a second control.
+Avoid pacing intensity sliders, beat grids, timeline lanes, shot lists, EDLs, or per-cut timing controls.
 
 ## Speaker Switch Framing
 
