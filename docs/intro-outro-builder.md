@@ -42,6 +42,7 @@ Outro content should be easy to keep, remove, or adapt per episode.
 Reusable intros and outros should store structure and brand treatment while replacing episode-specific names, titles, and links for each new episode.
 
 Saved intro and outro cue choices should reuse the structural cue behavior described in `docs/music-cue-setup.md` Template Reuse and `docs/show-template-adaptation.md` Template Contents, so future episodes keep the intended opening or closing cue without freezing episode-specific names, links, or sponsor details.
+That reusable behavior should stay aligned with `docs/show-template-adaptation.md` Template Contents and Adaptation Flow, so opening and closing structure follow the same template review path as the rest of the episode layout instead of becoming a detached template slide.
 
 Intro and outro issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Intro And Outro Warnings.
 

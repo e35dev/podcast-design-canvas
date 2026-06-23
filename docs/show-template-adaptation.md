@@ -11,6 +11,7 @@ A creator or agency should be able to save a polished episode layout as a show t
 A show template should capture reusable creative choices:
 
 - layout structure for common speaker counts
+- intro and outro structure, branding, and default visibility
 - caption style and placement
 - title moment treatment
 - lower-third style
@@ -26,6 +27,7 @@ Templates should not hard-code guest names, one-off b-roll, or episode-specific 
 When applying a template to a new episode, the product should ask only for decisions that affect the result:
 
 - map new speaker buckets to template roles
+- keep, shorten, or skip the saved intro and outro for this episode
 - choose fallback layout when the speaker count changes
 - confirm guest lower-thirds and social context
 - review title moment suggestions
@@ -33,6 +35,8 @@ When applying a template to a new episode, the product should ask only for decis
 - keep or update export destination defaults
 
 The product should preview the adapted layout before the creator commits it to the episode.
+
+Opening and closing changes should stay connected to `docs/intro-outro-builder.md` Template Behavior and Creator Controls, so a creator can adapt the current episode without accidentally overwriting the reusable show template.
 
 ## Agency And Multi-Show Use
 
