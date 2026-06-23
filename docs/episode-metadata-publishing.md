@@ -99,6 +99,8 @@ Before final export, flag:
 - thumbnail frame not selected
 - sponsor disclosure missing when sponsor visuals are present
 
+Metadata issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Metadata Warnings.
+
 These checks should appear in `docs/publish-checklist.md` with a direct link back to the field that needs attention.
 
 ## Maintainer Acceptance Notes

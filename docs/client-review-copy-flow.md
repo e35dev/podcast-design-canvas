@@ -45,6 +45,8 @@ Keep review status simple:
 
 Resolved feedback should remain available for context but should not keep blocking the final export.
 
+Unresolved feedback that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Review Copy Warnings.
+
 ## Agency Fit
 
 For teams producing client shows, the flow should preserve:

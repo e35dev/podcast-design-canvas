@@ -45,6 +45,8 @@ Failures should not erase:
 - template changes
 - export readiness decisions
 
+Failed exports should return creators to the relevant warning surface in `docs/export-readiness-review.md` when recovery requires fixing a readiness issue.
+
 The product should clearly show the last successful preview or export when available.
 
 ## Maintainer Acceptance Notes

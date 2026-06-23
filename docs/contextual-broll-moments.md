@@ -45,6 +45,8 @@ Creators should be able to:
 
 The default state should favor restraint. A long episode should not become visually noisy just because many candidate moments exist.
 
+Visual issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Contextual Visual Warnings.
+
 ## Quality Rules
 
 Suggestions should avoid:

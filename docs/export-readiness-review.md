@@ -123,6 +123,104 @@ Flag only audio issues that affect the exported episode:
 - a confirmed clarity or noise fix was not applied before this export
 
 Each warning should link back to the speaker and moment where the creator can fix it, such as audio review, pause and cross-talk cleanup, or source media health. Music that covers speech stays with Placed Cue Warnings above, and natural pauses or intentional silence the creator chose to keep should not affect readiness.
+## Contextual Visual Warnings
+
+When b-roll, overlays, or title moments would affect the exported episode, readiness should surface visual approval gaps as part of contextual review rather than as a separate effects queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| b-roll and callout approval | `docs/contextual-broll-moments.md` | Approval Flow, Quality Rules |
+| checklist blocking | `docs/publish-checklist.md` | Review Approvals |
+
+Flag only visual issues that affect the exported episode:
+
+- suggested b-roll or callout still needs approval
+- visual covers an active speaker face
+- repetitive overlays appear in back-to-back moments
+- title moment or callout uses low-confidence context
+- pinned template visual no longer fits this episode
+
+Each warning should link back to the moment where the creator can approve, replace, or remove the visual. Unused suggestions that are not in the export should not affect readiness.
+
+## Thumbnail Warnings
+
+When the chosen destination requires a thumbnail or cover frame, readiness should treat thumbnail gaps as part of metadata and package review rather than as a separate design tool.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| thumbnail selection and quality | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
+| brand and sponsor fit | `docs/show-brand-kit-setup.md` | Preview Surfaces, Guardrails |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping |
+| package delivery | `docs/export-package-handoff.md` | Package Contents, Summary |
+
+Flag only thumbnail issues that affect the exported episode:
+
+- no thumbnail selected when the destination requires one
+- guest or show name is inaccurate on the frame
+- text is unreadable at small sizes
+- sponsor mark or brand placement conflicts with the crop
+- frame may spoil sensitive content
+
+Each warning should link back to thumbnail review or the metadata field where the creator can fix it. Destinations that do not require a thumbnail should not block readiness on this item.
+
+## Sponsor Placement Warnings
+
+When sponsor visuals or disclosures are present in the finished episode, readiness should treat sponsor issues as part of brand and placement review rather than as a separate ad-tech queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| placement and disclosure conflicts | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
+| template reuse review | `docs/show-template-adaptation.md` | Adaptation Flow |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only sponsor issues that affect the exported episode:
+
+- sponsor mark covers a face
+- disclosure text is missing
+- sponsor visual appears during an unrelated sensitive moment
+- sponsor asset does not meet readability requirements
+- sponsor placement still needs episode-specific approval
+
+Each warning should link back to sponsor placement review or the metadata field where the creator can fix it. Episodes without sponsor elements should not block readiness on this item.
+
+## Metadata Warnings
+
+When episode fields or destination-specific publishing details would affect the exported episode, readiness should surface metadata issues as part of publishing review rather than as a separate CMS queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| metadata completeness and confidence | `docs/episode-metadata-publishing.md` | Metadata Fields, Review States, Readiness Checks |
+| destination-specific metadata fit | `docs/publish-destination-presets.md` | Relationship To Export Flow, Preset Effects, Review States |
+
+Flag only metadata issues that affect the exported episode:
+
+- title is missing or still reads like a placeholder
+- episode number is missing where the show format uses one
+- short or full description is missing for the chosen destination
+- guest name, title, or link still needs review
+- publish destination is not selected
+- metadata still matches the wrong destination preset
+
+Each warning should link back to the field or destination preset where the creator can fix it. Thumbnail quality issues, sponsor placement conflicts, and other visual approvals should stay with their own readiness surfaces rather than duplicate here.
+
+## Review Copy Warnings
+
+When a client or team review copy is part of the publishing path, readiness should surface unresolved review feedback as part of handoff review rather than as a separate task board.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| open review feedback | `docs/client-review-copy-flow.md` | Resolution States, Feedback Anchors |
+| handoff decisions pending | `docs/review-handoff-summary.md` | Summary Contents, Review States |
+| checklist blocking | `docs/publish-checklist.md` | Review Approvals |
+
+Flag only review issues that affect the final export:
+
+- open feedback on a moment that ships in this export
+- required approver has not accepted the episode
+- rejected item was marked fixed but not re-reviewed
+- review copy destination does not match the final export destination
+
+Each warning should link back to the review copy moment or handoff item where the creator can resolve it. Solo-host workflows with no review copy requested should not block readiness on this item.
 
 ## Timeline Checks
 
@@ -157,6 +255,8 @@ After export, the product should show:
 - template used
 - any ignored warnings
 - next action such as download, publish, duplicate as template, or create clips
+
+When export fails after readiness review, recovery should follow `docs/render-failure-recovery.md` and preserve readiness decisions rather than resetting the episode.
 
 ## Maintainer Acceptance Notes
 
