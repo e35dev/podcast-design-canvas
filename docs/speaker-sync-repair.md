@@ -19,6 +19,19 @@ Flag issues that affect the finished episode:
 
 Warnings should describe the visible or audible problem, not internal timing data.
 
+## Review States
+
+Use simple, creator-facing states so sync issues stay clear during ingest:
+
+- detected — the product found a likely sync problem on a track or moment
+- previewed — the creator has seen the proposed repair on a real moment
+- applied — the repair is in place for this episode
+- applied broadly — the same repair was carried to similar moments after the creator confirmed the pattern
+- accepted — the creator kept the current timing and marked the difference as intentional
+- ignored — not relevant for this episode
+
+States should describe what the creator sees in preview and what happens next, not raw timing offsets. Issues that would still affect the finished episode should remain visible until the creator applies, accepts, or ignores them.
+
 ## Repair Actions
 
 Use simple actions:
