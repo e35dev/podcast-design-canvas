@@ -71,7 +71,7 @@
 
       .track {
         display: grid;
-        grid-template-columns: 1.1fr 0.8fr 0.7fr 0.7fr;
+        grid-template-columns: 1.1fr 0.8fr 1fr 0.7fr 0.8fr;
         gap: 10px;
         align-items: end;
         padding: 14px;
@@ -247,6 +247,12 @@
         },
       ];
 
+      const recordingOptions = [
+        { key: "host-audio", label: "Host studio recording" },
+        { key: "guest-audio", label: "Guest remote recording" },
+        { key: "producer-audio", label: "Producer backup recording" },
+      ];
+
       let tracks = structuredClone(sampleTracks);
 
       const tracksElement = document.querySelector("#tracks");
@@ -348,28 +354,86 @@
       function renderTrack(track, index) {
         const row = document.createElement("article");
         row.className = "track";
-        row.innerHTML = `
-          <label>Name<input value="${track.name}" data-field="name"></label>
-          <label>Role
-            <select data-field="role">
-              ${["host", "co-host", "guest", "panelist", "producer"].map((role) => `<option value="${role}" ${role === track.role ? "selected" : ""}>${role}</option>`).join("")}
-            </select>
-          </label>
-          <label>Minutes<input type="number" min="0" value="${Math.round(track.duration / 60)}" data-field="duration"></label>
-          <div class="toggles">
-            <label><input type="checkbox" data-field="hasVideo" ${track.hasVideo ? "checked" : ""}> Video</label>
-            <label>
-              Transcript
-              <select data-field="transcript">
-                ${["ready", "processing", "not-started", "failed"].map((status) => `<option value="${status}" ${status === track.transcript ? "selected" : ""}>${status}</option>`).join("")}
-              </select>
-            </label>
-          </div>
-        `;
+
+        const nameInput = document.createElement("input");
+        nameInput.dataset.field = "name";
+        nameInput.value = track.name;
+
+        const roleSelect = renderSelect(
+          ["host", "co-host", "guest", "panelist", "producer"].map((role) => ({ value: role, label: role })),
+          track.role,
+          "role",
+        );
+
+        const recordingSelect = renderSelect(getRecordingOptions(track), track.audioKey, "audioKey");
+
+        const durationInput = document.createElement("input");
+        durationInput.type = "number";
+        durationInput.min = "0";
+        durationInput.dataset.field = "duration";
+        durationInput.value = Math.round(track.duration / 60);
+
+        const toggles = document.createElement("div");
+        toggles.className = "toggles";
+
+        const videoInput = document.createElement("input");
+        videoInput.type = "checkbox";
+        videoInput.dataset.field = "hasVideo";
+        videoInput.checked = track.hasVideo;
+
+        const videoLabel = document.createElement("label");
+        videoLabel.append(videoInput, document.createTextNode(" Video"));
+
+        const transcriptSelect = renderSelect(
+          ["ready", "processing", "not-started", "failed"].map((status) => ({ value: status, label: status })),
+          track.transcript,
+          "transcript",
+        );
+
+        toggles.append(videoLabel, renderField("Transcript", transcriptSelect));
+        row.append(
+          renderField("Name", nameInput),
+          renderField("Role", roleSelect),
+          renderField("Recording", recordingSelect),
+          renderField("Minutes", durationInput),
+          toggles,
+        );
 
         row.addEventListener("input", (event) => updateTrack(event, index));
         row.addEventListener("change", (event) => updateTrack(event, index));
         return row;
+      }
+
+      function getRecordingOptions(track) {
+        if (!track.audioKey || recordingOptions.some((option) => option.key === track.audioKey)) {
+          return recordingOptions.map((option) => ({ value: option.key, label: option.label }));
+        }
+
+        return [
+          ...recordingOptions.map((option) => ({ value: option.key, label: option.label })),
+          { value: track.audioKey, label: "Current speaker recording" },
+        ];
+      }
+
+      function renderField(labelText, control) {
+        const label = document.createElement("label");
+        label.append(document.createTextNode(labelText), control);
+        return label;
+      }
+
+      function renderSelect(options, selectedValue, field) {
+        const select = document.createElement("select");
+        select.dataset.field = field;
+
+        for (const option of options) {
+          const optionElement = document.createElement("option");
+          optionElement.value = option.value;
+          optionElement.textContent = option.label;
+          optionElement.selected = option.value === selectedValue;
+          select.append(optionElement);
+        }
+
+        return select;
       }
 
       function updateTrack(event, index) {
@@ -389,7 +453,14 @@
       function renderIssue(issue) {
         const article = document.createElement("article");
         article.className = `issue ${issue.severity}`;
-        article.innerHTML = `<strong>${issue.title}</strong><span>${issue.action}</span>`;
+
+        const title = document.createElement("strong");
+        title.textContent = issue.title;
+
+        const action = document.createElement("span");
+        action.textContent = issue.action;
+
+        article.append(title, action);
         return article;
       }
 
