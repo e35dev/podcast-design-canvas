@@ -6,6 +6,22 @@ The final step should help creators catch obvious publishing problems before ren
 
 A creator should be able to review a finished episode, understand whether it is ready to publish, and export the right long-form file without learning technical render settings.
 
+## Relationship To Export Flow
+
+Readiness review should summarize open issues from work already captured in the workspace:
+
+- destination defaults from `docs/publish-destination-presets.md`
+- checklist status from `docs/publish-checklist.md`
+- metadata gaps from `docs/episode-metadata-publishing.md`
+- thumbnail status from `docs/thumbnail-cover-frame.md`
+- review approvals from `docs/review-handoff-summary.md`
+- package delivery after export in `docs/export-package-handoff.md`
+- failed renders in `docs/render-failure-recovery.md`
+
+## Readiness Approach
+
+Export readiness is publishing first: summarize viewer-facing problems creators can fix before render, not encoder diagnostics, pipeline logs, or render queue status.
+
 ## Review Summary
 
 Before export, show a compact readiness summary across the parts that matter to a viewer:
@@ -17,8 +33,6 @@ Before export, show a compact readiness summary across the parts that matter to 
 - brand elements, sponsor placements, and show template consistency
 - placed intro, outro, sponsor, transition, or chapter music that affects the export
 - missing metadata such as title, episode number, or publish destination
-
-The summary should prioritize creator decisions. Do not turn the screen into a render diagnostics report.
 
 ## Placed Cue Warnings
 
@@ -155,6 +169,31 @@ For hour-plus episodes, the product should make review scalable:
 
 Warnings should describe the viewer-facing problem: "Captions are missing for 00:42:10-00:43:05" is better than "caption segment generation failed."
 
+## Review States
+
+The product should use overall readiness status to drive export and checklist behavior:
+
+- **ready to export** — required warnings for the chosen destination are resolved or explicitly ignored with consequences shown; enable export and clear blocking checklist items in `docs/publish-checklist.md`
+- **needs review** — surface unresolved warnings grouped by severity; keep export available only when the destination allows ignored warnings
+- **blocked** — stop export when a required item is missing for the destination, such as thumbnail, sponsor disclosure, or unavailable cue file; link directly to the fixing surface
+- **warning ignored** — record the publishing consequence, keep the warning visible in the summary, and include it in `docs/export-package-handoff.md`
+- **not relevant for destination** — hide warnings that do not affect the chosen export package and mark the related checklist item not needed
+
+Each state should describe what happens at export time, not only the label on the readiness summary.
+
+## Creator Controls
+
+Offer simple actions:
+
+- jump to affected moment
+- mark issue fixed, ignored, or not relevant
+- open publish checklist
+- change destination preset
+- start export
+- hand off to package delivery
+
+Avoid exposing encoder diagnostics, render queue IDs, or pipeline logs in the default readiness path.
+
 ## Export Choices
 
 Export options should stay tied to publishing outcomes:
@@ -177,7 +216,7 @@ After export, the product should show:
 - any ignored warnings
 - next action such as download, publish, duplicate as template, or create clips
 
-When export fails after readiness review, recovery should follow `docs/render-failure-recovery.md` and preserve readiness decisions rather than resetting the episode.
+Completed exports should hand off to `docs/export-package-handoff.md`. When export fails after readiness review, recovery should follow `docs/render-failure-recovery.md` and preserve readiness decisions rather than resetting the episode.
 
 ## Maintainer Acceptance Notes
 
