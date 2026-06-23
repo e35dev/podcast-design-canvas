@@ -34,13 +34,21 @@ Avoid exposing keyframe timelines, easing curves, camera-track automation, or cu
 
 When a creator overrides switch framing for one moment, that override should still appear in `docs/long-form-navigation.md` as a reviewable moment so the creator can revisit the same exchange without hunting through the whole episode.
 
+## Review States
+
+Keep switch framing status simple and creator-facing:
+
+- ready — the reframe matches the chosen preset style for this stretch
+- needs review — a long stretch with no reframe looks static or confusing
+- conflict — the switch overlaps with a b-roll moment or sponsor placement
+- overridden — the creator chose a different style for this moment than the preset default
+- accepted original — the creator kept the preset default on purpose after review
+
+Each state should point to a clear next step, not a raw cut list or camera track.
+
 ## When to Flag
 
-Flag switch framing only when it affects the finished episode:
-
-- ready
-- needs review — a long stretch with no reframe looks static
-- conflict — switch overlaps with a b-roll moment or sponsor placement
+Flag switch framing only when it affects the finished episode. Use the Review States above rather than surfacing every reframe equally.
 
 These states should appear in `docs/long-form-navigation.md` navigation lanes and in `docs/export-readiness-review.md` Speaker Framing Warnings when they would affect export.
 
