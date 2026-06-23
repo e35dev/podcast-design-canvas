@@ -6,6 +6,18 @@ A show glossary should make recurring names, brands, and phrases accurate across
 
 A creator should be able to approve important spellings once and have those corrections improve future episodes without editing every caption by hand.
 
+## Relationship To Caption And Metadata Review
+
+Glossary review should start from episode context already in the workspace:
+
+- names and spelling notes from `docs/social-context-intake.md`
+- caption confidence from `docs/audio-caption-quality-review.md`
+- guest reuse details from `docs/guest-profile-reuse.md`
+- metadata and show notes from `docs/episode-metadata-publishing.md` and `docs/show-notes-assembly.md`
+- title cards and lower-thirds from contextual visual specs
+- searchable transcript moments from `docs/transcript-search-navigation.md`
+- export warnings in `docs/export-readiness-review.md`
+
 ## Glossary Entries
 
 Support entries for:
@@ -20,6 +32,10 @@ Support entries for:
 - common misspellings
 
 Entries should include the approved spelling, optional pronunciation note, and where the term should be used.
+
+## Glossary Approach
+
+Glossary review is approve once, apply visibly: creators confirm spellings on real caption or metadata lines, and approved terms improve visible episode outputs without silently rewriting speaker intent.
 
 ## Sources
 
@@ -48,28 +64,34 @@ Approved glossary entries should improve:
 
 The product should show when a correction was applied across repeated instances.
 
-Glossary issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Glossary Warnings.
+## Review States
 
-## Review And Manage
+The product should use glossary entry status to drive spelling review and export readiness:
 
-A glossary should stay something the creator skims and trusts, not a list they have to police. Each entry should show a clear state:
+- **suggested** — show the proposed spelling with its source; do not apply it until the creator approves
+- **needs review** — surface conflicting spellings or low-confidence sources; keep related glossary warnings in export readiness until resolved
+- **approved** — apply the spelling to the chosen surfaces for this episode and future show reuse after confirmation; clear only glossary-related checklist items when applied spans are satisfied
+- **declined** — stop offering the suggestion without clearing unrelated caption or attribution warnings
+- **applied across episode** — show which moments changed and allow undo before the correction becomes reusable show-wide
 
-- approved — confirmed and applied to this and future episodes
-- suggested — proposed from a source, waiting for approval
-- needs review — conflicting spellings or a low-confidence source
-- declined — a suggestion the creator rejected, kept out of future prompts
+Each state should describe what happens to captions, metadata, search, and export readiness—not only the label on the entry.
 
-Keep the controls direct:
+## Creator Controls
+
+Offer simple actions:
 
 - approve a suggested entry in one action
 - edit the approved spelling or pronunciation note
 - choose where a term applies, such as captions, titles, or descriptions
 - merge duplicate entries for the same term
-- decline a suggestion so it stops being offered
+- decline a suggestion
+- preview the change on a real caption line before spreading it
 - undo a correction that was applied across the episode
 
-Approving or editing an entry should preview the change on a real caption line before it spreads to repeated instances, and the creator should always be able to see which moments an entry already changed. New entries should default to the current episode and become reusable for the show only after the creator confirms them.
+New entries should default to the current episode and become reusable for the show only after the creator confirms them.
+
+Avoid silently changing speaker words, storing sensitive inferred details, or separating glossary corrections from visible episode outputs.
 
 ## Maintainer Acceptance Notes
 
-Accept work that improves transcript and caption accuracy through reusable creator-approved spellings. Close work that silently changes speaker words, stores sensitive inferred details, or separates glossary corrections from visible episode outputs.
+Accept work that improves transcript and caption accuracy through reusable creator-approved spellings. Close work that silently changes speaker words, stores sensitive inferred details, separates glossary corrections from visible episode outputs, or clears unrelated attribution or caption warnings when a glossary entry is declined or approved.
