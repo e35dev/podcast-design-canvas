@@ -21,11 +21,22 @@ Keep the controls creator-facing:
 
 - layout density: simple, balanced, layered
 - caption presence: minimal, standard, high-emphasis
+- caption style: clean lower third, centered emphasis, speaker-labeled, title-safe
 - visual moments: restrained, balanced, energetic
 - branding strength: neutral, show-branded, sponsor-ready
 
 Avoid exposing internal rendering, tracking, or timeline mechanics in this first path.
 
-## Maintainer Acceptance Notes
+## Caption Style Controls
 
-Accept implementation work that makes preset selection feel visual, direct, and immediately previewable. Close work that turns the preset step into a generic settings form or forces users into manual canvas editing before they can see a polished direction.
+Caption styling should live inside the preset picker rather than a separate caption-design surface.
+The preview in `docs/preset-preview-on-real-tracks.md` should show the chosen caption style on the creator's real transcript sample before the preset is applied.
+
+Caption style choices should stay preset-safe:
+
+- use readable long-form caption sizes before decorative treatments
+- keep captions inside destination-safe areas for desktop, square, and vertical crops
+- preserve speaker labels only when confirmed speaker names are available
+- carry the selected caption style with the applied preset so the creator does not rebuild it on a blank canvas
+
+Avoid font panels, animation timelines, manual coordinates, or caption styling that looks polished in the card but cannot survive the real-track preview.
