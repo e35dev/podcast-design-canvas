@@ -49,6 +49,18 @@ Use simple actions:
 
 Avoid destructive automatic cleanup across the full episode without creator review.
 
+## Preview Contexts
+
+Creators should judge a cleanup where natural conversation is easiest to break:
+
+- a long pause the product proposes trimming
+- a cross-talk stretch where two speakers overlap
+- a cut point between two kept lines
+- a fast back-and-forth exchange
+- a moment where a breath or beat carries meaning
+
+These previews should play the real edited moment in context so the creator can confirm the conversation still sounds natural before applying the cleanup across the episode.
+
 ## Review States
 
 The product should use cleanup status to drive speech and caption review:
