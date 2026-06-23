@@ -39,6 +39,8 @@ Outro content should be easy to keep, remove, or adapt per episode.
 
 Reusable intros and outros should store structure and brand treatment while replacing episode-specific names, titles, and links for each new episode.
 
+Intro and outro issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Intro And Outro Warnings.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes openings and endings feel consistent, branded, and episode-aware. Close work that hard-codes a single show format, forces long intros on every episode, or treats intros and outros as unrelated video assets.

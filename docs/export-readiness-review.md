@@ -242,6 +242,27 @@ Flag only glossary issues that affect the exported episode:
 
 Each warning should link back to caption review, glossary application, or the metadata field where the creator can fix it. One-off typos the creator already corrected should not flood readiness.
 
+## Intro And Outro Warnings
+
+When opening or closing sequences would affect the exported episode, readiness should surface intro and outro issues as part of episode framing review rather than as a separate template editor.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| opening and closing content | `docs/intro-outro-builder.md` | Intro Elements, Outro Elements, Template Behavior |
+| intro or outro music placement | `docs/music-cue-setup.md` | Placement Flow, Review States |
+| sponsor disclosure in intro or outro | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only intro and outro issues that affect the exported episode:
+
+- required show branding or episode title missing from the opening
+- guest name or topic line conflicts with metadata or social context
+- intro or outro music overlaps important speech without approval
+- sponsor disclosure missing from intro or outro when required
+- template intro or outro was not adapted for this episode
+
+Each warning should link back to intro/outro builder, music cue setup, or sponsor placement review where the creator can fix it. Episodes without custom intros or outros should not block readiness on this item.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:
