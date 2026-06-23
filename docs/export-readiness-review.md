@@ -55,6 +55,26 @@ Flag only chapter issues that affect the exported episode:
 
 Each warning should link back to chapter review or the metadata fields where the creator can fix it. Unused suggested chapters that are not in the export should not affect readiness.
 
+## Readability Warnings
+
+When layout, caption, or destination crop issues would affect the exported episode, readiness should surface them as part of caption and layout review rather than as separate compliance queues.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| caption contrast, size, and motion | `docs/accessibility-readability-checks.md` | Checks, Creator Controls |
+| safe area and overlap conflicts | `docs/layout-safe-areas.md` | Safe Area Types, Checks |
+| destination crop issues | `docs/destination-crop-previews.md` | Checks, Fixes |
+| caption style conflicts | `docs/audio-caption-quality-review.md` | Caption Style Presets |
+
+Flag only readability issues that affect the exported episode:
+
+- captions have low contrast or are too small for the destination
+- captions or overlays cover active speaker faces
+- logo, sponsor mark, or lower-third falls outside the destination crop
+- title text is unreadable in thumbnail or mobile preview
+
+Each warning should link back to the review surface where the creator can fix it. Informational preview notes that do not affect the chosen export destination should not block readiness.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:

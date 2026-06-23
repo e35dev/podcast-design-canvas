@@ -21,6 +21,8 @@ Flag viewer-facing issues:
 
 Checks should explain the viewing problem and offer a direct fix.
 
+Issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Readability Warnings.
+
 ## Preview Contexts
 
 Review readability in:
