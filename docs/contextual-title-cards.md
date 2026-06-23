@@ -6,6 +6,28 @@ Title cards should surface key moments — topic shifts, guest introductions, no
 
 A creator should be able to place, style, and review title cards at meaningful moments so the episode feels structured and easy to follow without manual motion-graphics work.
 
+## Relationship To Visual Review
+
+Title card review should start from episode context already in the workspace:
+
+- topics and talking points from `docs/social-context-intake.md`
+- guest names and handles from `docs/guest-profile-reuse.md`
+- segment labels from `docs/show-segment-system.md`
+- chapter titles from `docs/episode-chapter-markers.md`
+- pacing intensity from `docs/preset-pacing-controls.md`
+- canvas placement from `docs/canvas-layer-controls.md`
+- neighboring visuals from `docs/contextual-broll-moments.md`
+- on-screen corrections from `docs/on-screen-correction-note.md`
+- safe areas and readability from `docs/layout-safe-areas.md`
+- speaker framing from `docs/speaker-framing-safety.md`
+- destination crops from `docs/destination-crop-previews.md`
+- reusable styles from `docs/show-template-adaptation.md`
+- export warnings in `docs/export-readiness-review.md`
+
+## Title Card Approach
+
+Title cards are calm structure, not decoration: creators confirm cards at real episode beats on the real frame, keep long-form spacing restrained, and open layout review when a card competes with captions or the active speaker.
+
 ## Sources
 
 Title card content can come from:
@@ -32,13 +54,16 @@ Avoid exposing keyframe editors, motion curves, render layers, or compositing to
 
 ## Review States
 
-Use simple states:
+The product should use title card status to drive contextual review and export readiness. States should group in the long-form review surface rather than flag every suggestion equally:
 
-- ready
-- needs review
-- overlap with caption or speaker frame
+- **suggested** — show the card with plain-language source context; do not include it in export until the creator keeps or edits it
+- **kept** — the card stays on the moment with the chosen style; clear only the related contextual-visual readiness item when overlap and readability checks pass
+- **adjusted** — the creator changed text, timing, position, or duration; reopen preview at the affected moment
+- **dismissed** — remove the card from the episode without clearing unrelated caption, sponsor, metadata, or export-readiness warnings
+- **saved to template** — store the card style or placement rule in `docs/show-template-adaptation.md` for future episodes after episode-specific approval
+- **needs review** — keep the item in `docs/export-readiness-review.md` Contextual Visual Warnings when overlap with captions or speaker frames, mobile readability, or destination crop conflicts remain
 
-These states should appear in `docs/export-readiness-review.md` Contextual Visual Warnings only when a title card in the export would affect the finished episode.
+Each state should describe what happens in preview, export readiness, and template reuse—not only the label on the card.
 
 ## Preview Contexts
 
@@ -52,10 +77,6 @@ A title card that reads well in one view can fail in another, so each card shoul
 
 Every context should use the real episode frame and the same card, so the creator judges one honest tradeoff instead of approving a card that only works in the editor's main view.
 
-## Template Reuse
-
-Title card styles and placement rules should save with the show template described in `docs/show-template-adaptation.md`, so recurring segments and guest introductions keep a consistent look across episodes.
-
 ## Pacing Rules
 
 Title cards should stay calm across a long-form episode, not crowd every moment:
@@ -68,6 +89,10 @@ Title cards should stay calm across a long-form episode, not crowd every moment:
 
 Avoid filling quiet stretches with decorative cards just because a moment was detected; the conversation should stay the focus.
 
+## Template Reuse
+
+Title card styles and placement rules should save with the show template described in `docs/show-template-adaptation.md`, so recurring segments and guest introductions keep a consistent look across episodes.
+
 ## Maintainer Acceptance Notes
 
-Accept work that helps creators place and review tasteful title cards at real episode beats using preset styles and simple text or duration controls. Close work that exposes keyframe editors, motion curves, or compositing tools in the default path, or that floods long-form episodes with decorative cards at every detected topic mention.
+Accept work that helps creators place and review tasteful title cards at real episode beats using preset styles and simple text or duration controls. Close work that exposes keyframe editors, motion curves, or compositing tools in the default path, floods long-form episodes with decorative cards at every detected topic mention, or treats `kept` or `dismissed` as final clearance for captions, metadata, sponsor placement, or export readiness owned elsewhere.
