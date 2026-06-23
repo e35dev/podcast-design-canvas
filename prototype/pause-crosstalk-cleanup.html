@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pause and Cross-Talk Cleanup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .count {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        grid-template-columns: 130px minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .when {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+
+      .time {
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .speaker {
+        justify-self: start;
+        font-size: 12px;
+        color: var(--muted);
+        background: #eef2f0;
+        border-radius: 999px;
+        padding: 2px 9px;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .context {
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .controls-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .lbl {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .row-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button.mini {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .moment {
+          grid-template-columns: 1fr;
+        }
+
+        .controls-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pause and cross-talk cleanup</h1>
+      <p class="lede">Review awkward pauses, false starts, and heavy cross-talk in a long episode, then decide what to soften before export. Nothing changes until you choose &mdash; natural pauses and back-and-forth stay unless you say otherwise.</p>
+
+      <section class="workspace" aria-label="Pause and cross-talk cleanup workspace">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Flagged moments</h2>
+            <span class="count" id="count"></span>
+          </div>
+          <div class="moments" id="moments"></div>
+          <div class="actions">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Speech flow summary">
+          <h2>Speech flow review</h2>
+          <div id="status" class="status review">Moments to review</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Your decisions refresh caption confidence and export readiness. Ongoing loudness or room noise across the whole episode is handled in audio cleanup, not here.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // Each detected moment kind offers only the cleanup choices that make sense
+        // for it, and every choice in a kind leads to a DIFFERENT review state — so no
+        // option in a dropdown is ever a no-op.
+        var KINDS = {
+          "dead-air": { label: "Long dead air", steps: ["suggested", "shorten", "keep", "ignore"] },
+          "false-start": { label: "Repeated false starts", steps: ["suggested", "shorten", "keep", "ignore"] },
+          "cross-talk": { label: "Cross-talk hides words", steps: ["suggested", "reduce", "keep", "caption", "ignore"] },
+          interruption: { label: "Interrupted a guest answer", steps: ["suggested", "reduce", "keep", "caption", "ignore"] },
+          bump: { label: "Cough or bump over speech", steps: ["suggested", "reduce", "keep", "ignore"] },
+          "trailing-silence": { label: "Long silence after a speaker left", steps: ["suggested", "shorten", "keep", "ignore"] },
+        };
+
+        // A creator choice maps to one of the spec's review states.
+        var DISPOSITIONS = {
+          suggested: { label: "Decide later", state: "suggested" },
+          shorten: { label: "Shorten the pause", state: "softened" },
+          reduce: { label: "Reduce the background sound", state: "softened" },
+          keep: { label: "Keep this moment (intentional)", state: "kept natural" },
+          caption: { label: "Review captions here", state: "needs caption review" },
+          ignore: { label: "Ignore for export", state: "ignored for export" },
+        };
+
+        function validKind(kind) {
+          return KINDS[kind] ? kind : "dead-air";
+        }
+
+        function fmt(seconds) {
+          var s = Math.max(0, Math.round(Number(seconds) || 0));
+          var m = Math.floor(s / 60);
+          var ss = String(s % 60).padStart(2, "0");
+          if (m >= 60) {
+            var h = Math.floor(m / 60);
+            var mm = String(m % 60).padStart(2, "0");
+            return h + ":" + mm + ":" + ss;
+          }
+          return m + ":" + ss;
+        }
+
+        // Single source of truth: reconcile each moment to a valid kind + choice, then
+        // map to its review state. A stale choice that is not valid for the moment's
+        // kind falls back to "suggested" so the logic never acts on an unoffered value.
+        function evaluate(list) {
+          var moments = list.map(function (moment) {
+            var kind = validKind(moment.kind);
+            var steps = KINDS[kind].steps;
+            var disp = steps.indexOf(moment.disp) >= 0 ? moment.disp : "suggested";
+            return { id: moment.id, kind: kind, disp: disp, state: DISPOSITIONS[disp].state };
+          });
+
+          var counts = {};
+          moments.forEach(function (moment) {
+            counts[moment.state] = (counts[moment.state] || 0) + 1;
+          });
+
+          var softened = counts.softened || 0;
+          var kept = counts["kept natural"] || 0;
+          var blocked = moments.some(function (moment) {
+            return moment.state === "needs caption review";
+          });
+          var review = moments.some(function (moment) {
+            return moment.state === "suggested";
+          });
+
+          return {
+            moments: moments,
+            counts: counts,
+            overall: blocked ? "blocked" : review ? "review" : "ready",
+            // Taste guard: warn (do not block) when most flagged moments are being
+            // softened, so the conversation keeps its natural texture.
+            overSoftened: softened >= 3 && softened > kept,
+          };
+        }
+
+        // "Apply to similar" is only offered when at least one other moment of the same
+        // kind currently holds a different choice — otherwise the control would do
+        // nothing.
+        function canApplySimilar(index, list) {
+          var me = list[index];
+          if (!me) {
+            return false;
+          }
+          var kind = validKind(me.kind);
+          return list.some(function (other, i) {
+            return i !== index && validKind(other.kind) === kind && other.disp !== me.disp;
+          });
+        }
+
+        function applySimilar(index, list) {
+          var me = list[index];
+          var kind = validKind(me.kind);
+          var disp = me.disp;
+          return list.map(function (other) {
+            var same = validKind(other.kind) === kind;
+            return {
+              id: other.id,
+              at: other.at,
+              speaker: other.speaker,
+              context: other.context,
+              kind: other.kind,
+              disp: same ? disp : other.disp,
+            };
+          });
+        }
+
+        function countSimilar(index, list) {
+          var me = list[index];
+          var kind = validKind(me.kind);
+          return list.filter(function (other, i) {
+            return i !== index && validKind(other.kind) === kind;
+          }).length;
+        }
+
+        // ---- DOM rendering (browser only) ----------------------------------------
+
+        function el(tag, options, children) {
+          var node = document.createElement(tag);
+          options = options || {};
+          if (options.className) {
+            node.className = options.className;
+          }
+          if (options.text != null) {
+            // All dynamic text goes through textContent; this prototype has no free
+            // text inputs at all, so there is no path from typed input into markup.
+            node.textContent = options.text;
+          }
+          if (options.attrs) {
+            Object.keys(options.attrs).forEach(function (key) {
+              node.setAttribute(key, options.attrs[key]);
+            });
+          }
+          if (options.on) {
+            Object.keys(options.on).forEach(function (event) {
+              node.addEventListener(event, options.on[event]);
+            });
+          }
+          (children || []).forEach(function (child) {
+            if (child) {
+              node.appendChild(child);
+            }
+          });
+          return node;
+        }
+
+        function badgeClass(state) {
+          if (state === "needs caption review") {
+            return "blocked";
+          }
+          if (state === "suggested") {
+            return "review";
+          }
+          return "ready";
+        }
+
+        function selectControl(labelText, ariaLabel, options, current, onChange) {
+          var select = el("select", {
+            attrs: { "aria-label": ariaLabel },
+            on: {
+              change: function (event) {
+                onChange(event.target.value);
+              },
+            },
+          });
+          options.forEach(function (option) {
+            var node = el("option", { text: option.label, attrs: { value: option.value } });
+            if (option.value === current) {
+              node.selected = true;
+            }
+            select.appendChild(node);
+          });
+          return el("label", {}, [el("span", { className: "lbl", text: labelText }), select]);
+        }
+
+        var moments;
+        var sample;
+        var momentsElement;
+        var statusElement;
+        var issuesElement;
+        var countElement;
+
+        function renderMoment(moment, index, result) {
+          var when = el("div", { className: "when" }, [
+            el("span", { className: "time", text: fmt(moment.at) }),
+            el("span", { className: "speaker", text: moment.speaker }),
+          ]);
+
+          var context = el("p", { className: "context", text: moment.context });
+          var badge = el("span", { className: "badge " + badgeClass(result.state), text: result.state });
+          var head = el("div", { className: "head" }, [context, badge]);
+
+          var kindOptions = Object.keys(KINDS).map(function (key) {
+            return { value: key, label: KINDS[key].label };
+          });
+          var kindControl = selectControl("What review found", "Detected moment", kindOptions, result.kind, function (value) {
+            moment.kind = value;
+            // Drop a choice that is not valid for the new kind.
+            if (KINDS[validKind(value)].steps.indexOf(moment.disp) < 0) {
+              moment.disp = "suggested";
+            }
+            render();
+          });
+
+          var dispOptions = KINDS[result.kind].steps.map(function (key) {
+            return { value: key, label: DISPOSITIONS[key].label };
+          });
+          var dispControl = selectControl("What to do", "Cleanup choice", dispOptions, result.disp, function (value) {
+            moment.disp = value;
+            render();
+          });
+
+          var controls = el("div", { className: "controls-row" }, [kindControl, dispControl]);
+
+          var children = [head, controls];
+          if (canApplySimilar(index, moments)) {
+            var rowActions = el("div", { className: "row-actions" }, [
+              el("button", {
+                className: "mini secondary",
+                text: "Apply to " + countSimilar(index, moments) + " similar",
+                attrs: { type: "button" },
+                on: {
+                  click: function () {
+                    moments = applySimilar(index, moments);
+                    render();
+                  },
+                },
+              }),
+            ]);
+            children.push(rowActions);
+          }
+
+          var fields = el("div", { className: "fields" }, children);
+          return el("article", { className: "moment", attrs: { "data-index": String(index) } }, [when, fields]);
+        }
+
+        function renderIssue(issue) {
+          return el("article", { className: "issue " + issue.tone }, [
+            el("strong", { text: issue.title }),
+            el("span", { text: issue.action }),
+          ]);
+        }
+
+        function render() {
+          var evaluation = evaluate(moments);
+
+          momentsElement.replaceChildren.apply(
+            momentsElement,
+            moments.map(function (moment, index) {
+              return renderMoment(moment, index, evaluation.moments[index]);
+            })
+          );
+
+          var decided = moments.length - (evaluation.counts.suggested || 0);
+          countElement.textContent = decided + " of " + moments.length + " decided";
+
+          statusElement.className = "status " + evaluation.overall;
+          statusElement.textContent =
+            evaluation.overall === "ready"
+              ? "Speech flow reviewed"
+              : evaluation.overall === "blocked"
+                ? "Caption review needed"
+                : "Moments to review";
+
+          var issues = [];
+          if (evaluation.overSoftened) {
+            issues.push({
+              tone: "info",
+              title: "A lot of moments are being softened",
+              action: "Keep some natural pauses and back-and-forth so the conversation still breathes.",
+            });
+          }
+          moments.forEach(function (moment, index) {
+            var result = evaluation.moments[index];
+            if (result.state === "needs caption review") {
+              issues.push({
+                tone: "blocker",
+                title: fmt(moment.at) + " · " + moment.speaker + ": captions need review",
+                action: "Cross-talk left words unclear here — open caption review before export.",
+              });
+            } else if (result.state === "suggested") {
+              issues.push({
+                tone: "review",
+                title: fmt(moment.at) + " · " + moment.speaker + ": " + KINDS[result.kind].label,
+                action: "Choose what to soften, or keep it as an intentional moment.",
+              });
+            }
+          });
+
+          var issueNodes = issues.length
+            ? issues.map(renderIssue)
+            : [el("p", { text: "Every flagged moment has a decision. Speech flow is ready for export." })];
+          issuesElement.replaceChildren.apply(issuesElement, issueNodes);
+        }
+
+        if (typeof document !== "undefined") {
+          sample = [
+            {
+              id: "m1",
+              at: 185,
+              speaker: "Guest 1",
+              kind: "dead-air",
+              disp: "suggested",
+              context: "“…and that was the moment everything changed.” [4s of silence] “…anyway, where was I?”",
+            },
+            {
+              id: "m2",
+              at: 642,
+              speaker: "Host",
+              kind: "cross-talk",
+              disp: "suggested",
+              context: "“…so the real question is —” [both talking] “— exactly, that is what I mean.”",
+            },
+            {
+              id: "m3",
+              at: 1377,
+              speaker: "Guest 1",
+              kind: "interruption",
+              disp: "suggested",
+              context: "“My biggest mistake was —” “sorry, go on” “no, no — you first.”",
+            },
+            {
+              id: "m4",
+              at: 2010,
+              speaker: "Guest 2",
+              kind: "bump",
+              disp: "suggested",
+              context: "“…the data shows” [cough] “a clear upward trend across the year.”",
+            },
+            {
+              id: "m5",
+              at: 2890,
+              speaker: "Host",
+              kind: "false-start",
+              disp: "suggested",
+              context: "“I think — I mean — what I really think is that timing matters most.”",
+            },
+          ];
+          moments = structuredClone(sample);
+
+          momentsElement = document.querySelector("#moments");
+          statusElement = document.querySelector("#status");
+          issuesElement = document.querySelector("#issues");
+          countElement = document.querySelector("#count");
+
+          document.querySelector("#reset").addEventListener("click", function () {
+            moments = structuredClone(sample);
+            render();
+          });
+
+          render();
+        }
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports = {
+            KINDS: KINDS,
+            DISPOSITIONS: DISPOSITIONS,
+            fmt: fmt,
+            evaluate: evaluate,
+            canApplySimilar: canApplySimilar,
+            applySimilar: applySimilar,
+            countSimilar: countSimilar,
+          };
+        }
+      })();
+    </script>
+  </body>
+</html>
