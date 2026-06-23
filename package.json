@@ -1,0 +1,15 @@
+{
+  "name": "podcast-design-canvas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && node --test dist/**/*.test.js",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.5.4"
+  }
+}
