@@ -20,6 +20,19 @@ Flag issues that matter to the viewer:
 
 The product should explain what the creator can do next, such as replace the file, continue with a warning, or mark a track as audio-only.
 
+## Creator Controls
+
+When a source file is flagged, the creator should be able to act on it without opening technical file tools. From a speaker bucket, the creator should be able to:
+
+- replace a flagged file with a better take
+- mark a track as audio-only when the video cannot be used
+- continue with a visible warning when the issue does not affect the final episode
+- re-import or relink a missing file
+- trim or adjust a track that starts late or runs long
+- re-check the track against the chosen export destination after a fix
+
+Each action should explain its effect on the finished episode, and issues that do not affect the visible episode should never block the creator from continuing.
+
 ## Readiness Summary
 
 Use clear status labels:
