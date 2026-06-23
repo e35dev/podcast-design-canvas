@@ -50,6 +50,18 @@ Each treatment should preview on the real episode frame before approval.
 
 Contextual visuals are review first with restrained defaults: creators approve moments on the real episode frame, and a long episode should not become visually noisy just because many candidate moments exist.
 
+## Preview Contexts
+
+A b-roll or callout moment that looks right in one view can fail in another, so a candidate should be checked the same way a viewer will actually see it before it is approved:
+
+- full-size desktop preview
+- small mobile preview
+- the moment under active speech, to confirm the visual does not bury a face or a line viewers need
+- the moment held on a paused frame, to confirm it reads on its own
+- the seconds just before and after, to confirm it does not collide with a neighboring overlay or title moment
+
+Every context should use the real episode frame and the same candidate, so the creator judges one honest tradeoff instead of approving a moment that only works in the editor's main view.
+
 ## Quality Rules
 
 Suggestions should avoid:
