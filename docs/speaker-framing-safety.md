@@ -16,7 +16,7 @@ Framing review should start from episode context already in the workspace:
 - destination crops from `docs/destination-crop-previews.md`
 - contextual visuals from `docs/contextual-broll-moments.md`
 - readability checks from `docs/accessibility-readability-checks.md`
-- export warnings in `docs/export-readiness-review.md`
+- export warnings in `docs/export-readiness-review.md` Speaker Framing Warnings
 
 ## Checks
 
