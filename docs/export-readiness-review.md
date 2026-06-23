@@ -14,6 +14,7 @@ Readiness review should summarize open issues from work already captured in the 
 - checklist status from `docs/publish-checklist.md`
 - metadata gaps from `docs/episode-metadata-publishing.md`
 - thumbnail status from `docs/thumbnail-cover-frame.md`
+- watch-through confidence from `docs/episode-watch-through-preview.md`
 - review approvals from `docs/review-handoff-summary.md`
 - package delivery after export in `docs/export-package-handoff.md`
 - failed renders in `docs/render-failure-recovery.md`
@@ -32,6 +33,7 @@ Before export, show a compact readiness summary across the parts that matter to 
 - b-roll, overlays, and title moments that still need approval
 - brand elements, sponsor placements, and show template consistency
 - placed intro, outro, sponsor, transition, or chapter music that affects the export
+- whether the creator has watched the current cut through as a viewer since the latest material change
 - missing metadata such as title, episode number, or publish destination
 
 ## Placed Cue Warnings
@@ -373,6 +375,7 @@ Offer simple actions:
 
 - jump to affected moment
 - mark issue fixed, ignored, or not relevant
+- open the latest `docs/episode-watch-through-preview.md` pass when the creator wants a final linear confidence check
 - open publish checklist
 - change destination preset
 - start export

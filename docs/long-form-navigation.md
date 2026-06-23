@@ -15,6 +15,7 @@ Long-form navigation should connect to the review surfaces it routes creators th
 - captions and audio from `docs/audio-caption-quality-review.md`
 - speaker attribution from `docs/speaker-attribution-review.md`
 - contextual visuals from `docs/contextual-broll-moments.md`
+- watch-through markers from `docs/episode-watch-through-preview.md`
 - export warnings from `docs/export-readiness-review.md`
 - review handoff from `docs/review-handoff-summary.md`
 
@@ -32,6 +33,7 @@ Use creator-facing lanes that map to real review tasks:
 - speaker attribution
 - b-roll and callouts
 - title moments
+- watch-through notes
 - audio warnings
 - export readiness warnings
 - comments or review notes

@@ -31,6 +31,8 @@ For hour-plus episodes the watch-through should stay practical to use:
 
 A dropped marker should hand the creator to the surface that owns the fix when they choose to act on it, rather than becoming a second editing tool.
 
+Those markers should stay visible through `docs/long-form-navigation.md`, so a creator can resume a calm watch-through pass and then jump back into the owning review surface without losing playback context.
+
 ## Review States
 
 The product should show the watch-through as a quiet readiness signal, surfaced as a calm indicator on the export readiness summary rather than a blocking banner:
