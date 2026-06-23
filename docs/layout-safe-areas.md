@@ -35,6 +35,18 @@ The product should link conflicts to the affected moment and destination.
 
 Layout conflicts that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Readability Warnings.
 
+## Review States
+
+Use simple creator-facing states:
+
+- flagged — show the overlap on the affected moment and destination preview
+- fixed — apply reposition or resize and refresh previews for that moment
+- applied broadly — carry the same adjustment to similar moments after confirmation
+- accepted — creator marks overlap as intentional and clears the related export warning
+- blocked for export — destination would hide captions, logos, or sponsor marks until fixed or ignored with consequence shown
+
+Each state should describe what happens in preview, export warnings, and the next creator action.
+
 ## Template Behavior
 
 Safe areas should be saved with templates where appropriate, but each episode should re-check them against its actual speaker count, brand kit, and export destination.
