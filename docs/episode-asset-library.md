@@ -79,6 +79,28 @@ Before applying an asset, flag:
 - wrong speaker association
 - asset already rejected for this episode
 
+## Asset Status
+
+Every asset should carry one lifecycle status at a time, describing where the asset is in its life rather than whether it is cleared for a role. A single asset should be in exactly one of:
+
+- suggested — pulled in automatically or proposed for the creator, not yet placed in any episode, template, or kit
+- in use — currently placed in at least one current episode, template, speaker profile, or sponsor kit
+- archived — retired by the creator from future suggestions and new placements
+
+These three states should be mutually exclusive: an asset that becomes placed moves out of suggested, and archiving overrides suggested or in use.
+
+Lifecycle status is separate from the approval and review flags above, and the two can apply at once, so the product should define the combined picture rather than hide one behind the other:
+
+- when an in-use asset also carries a rejection or review flag such as a wrong-speaker or missing-approval concern, keep a clear warning wherever the asset already appears, stop offering it for new placements, and point the creator to the approval concern to resolve — while leaving any already-exported episode untouched
+- an archived asset keeps whatever approval or rejection it last had, so restoring it later brings back that same standing instead of silently clearing it
+- status decides availability for new use; the approval flag decides whether the creator should trust the asset, and a status change never counts as resolving an approval concern
+
+The product should also make clear what each status means for already-finished work:
+
+- archiving an asset keeps it out of new suggestions and new placements while leaving every already-exported episode untouched
+- an archived asset stays findable when a creator opens an episode or template that already relies on it, so retired material is never silently lost
+- moving an asset back from archived to suggested or in use should be a deliberate creator action, not an automatic side effect of search or filtering
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps creators reuse approved podcast assets across episodes, templates, and clients. Close work that becomes a generic file browser, ignores usage context, or hides where assets are used in final exports.
