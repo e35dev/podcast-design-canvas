@@ -6,6 +6,19 @@ The first editing path should let a creator choose a strong podcast visual style
 
 A creator with synced host and guest recordings should be able to preview a polished long-form episode direction by choosing a preset, adjusting a few plain-language options, and applying it to the episode.
 
+## Relationship To Episode Setup
+
+Preset selection should start from episode context already in the workspace:
+
+- speaker roles and bucket mapping from `docs/speaker-role-mapping.md`
+- names and show context from `docs/social-context-intake.md`
+- brand defaults from `docs/show-brand-kit-setup.md`
+- side-by-side comparison in `docs/preset-comparison-preview.md`
+- reusable layouts through `docs/show-template-adaptation.md`
+- framing checks in `docs/speaker-framing-safety.md`
+
+The preset step should feel like choosing a polished direction for this episode, not configuring a blank project.
+
 ## Preset Cards
 
 Each preset card should show:
@@ -14,6 +27,10 @@ Each preset card should show:
 - the pacing style, such as calm interview, punchy commentary, or teaching-focused
 - the best-fit show type, such as solo host, two-person interview, panel, or agency client show
 - a short preview state that uses the current episode speakers where available
+
+## Selection Approach
+
+Preset selection is visual first: creators preview a polished episode direction from real speaker media, not a generic settings form.
 
 ## Controls
 
@@ -67,6 +84,31 @@ Comparison should hand off to `docs/preset-comparison-preview.md` with the creat
 - let the creator apply the chosen preset back to the full-episode preview without rebuilding the setup
 
 Comparison exists to help creators make a faster taste decision on a real episode moment. It should not require mock scenes, placeholder media, or a separate approval step before the creator can apply a preset.
+
+## Review States
+
+The product should use preset status to drive the first-edit path:
+
+- **previewing** — show the preset against real episode media; do not apply layout changes until the creator commits
+- **selected** — lock the preset direction for apply and open comparison or control adjustments without leaving the preview
+- **applied** — lay out the episode through the owning specs in Control Mapping; surface framing or caption follow-up only through the owning review surface, not by clearing unrelated warnings
+- **saved as template** — carry the preset into `docs/show-template-adaptation.md` for future episodes
+- **needs adjustment** — when speaker count, brand kit, or caption style conflicts with the preset, link to the owning spec instead of exposing canvas editing as the default fix
+
+Each state should describe what the creator sees next in preset selection and preview—not unrelated export or caption readiness.
+
+## Creator Controls
+
+Offer simple actions:
+
+- compare presets
+- switch preview moment
+- adjust plain-language controls
+- apply preset to episode
+- save as show template
+- open canvas for advanced edits
+
+Avoid forcing manual canvas positioning before the creator sees a polished first preview.
 
 ## Maintainer Acceptance Notes
 

@@ -47,6 +47,19 @@ Branding should not reduce viewer clarity:
 
 When a brand choice creates a readability problem, the product should suggest a fix rather than silently rejecting it.
 
+## Resolving Brand Conflicts
+
+When a brand choice trips a guardrail, the creator should stay in control of the trade-off instead of having the choice silently changed or rejected. For each flagged conflict, the product should:
+
+- show the specific readability problem and where it appears in the episode
+- offer a suggested fix the creator can accept in one action
+- let the creator keep the original brand choice with a visible readability warning
+- let the creator adjust the underlying brand input rather than only the single instance
+- apply the resolution to the current episode only or save it back to the show template
+- preview the fix against real episode content before it is applied
+
+A brand kit should never block a creator from previewing an episode. Unresolved conflicts should remain visible warnings the creator can revisit, not hard stops.
+
 Brand conflicts that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Thumbnail Warnings.
 
 ## Reuse
