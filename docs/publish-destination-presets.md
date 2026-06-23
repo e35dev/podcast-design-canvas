@@ -48,6 +48,19 @@ Destination presets can set:
 
 Advanced settings can be available, but the default flow should not require render expertise.
 
+## Creator Controls
+
+Choosing a destination should stay a publishing decision, not an encoder configuration step. The creator should be able to:
+
+- choose a destination preset and see the publishing outcomes it sets before exporting
+- override a single default, such as caption behavior or thumbnail requirement, without leaving the preset
+- prepare more than one destination for the same episode, such as a YouTube full episode and a sponsor approval copy
+- save a preferred destination as the show's default for future episodes
+- switch destinations after review and see which checklist items reopen as a result
+- keep advanced render settings available but out of the default path
+
+Destination changes should describe the publishing consequence, not raw setting names.
+
 ## Review States
 
 Before export, show what differs from the recommended preset:
