@@ -89,3 +89,7 @@ These states should appear in audio review and publish readiness only when they 
 ## Template Reuse
 
 Show templates may remember cue purpose, chosen asset, relative placement, and simple fade choices. Future episodes should re-check those cues against new chapter timing, speaker volume, sponsor reads, and episode length before treating them as ready.
+
+## Maintainer Acceptance Notes
+
+Accept work that lets creators add approved music to structural podcast moments with simple placement and preview controls tied to the show template. Close work that exposes audio lanes, waveform handles, routing, or mixer-style automation in the default path, or that treats music setup as a separate rights-management workflow instead of a creator-facing usage approval check.
