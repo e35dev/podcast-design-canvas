@@ -50,3 +50,7 @@ Caption wording, style, and confidence stay owned by `docs/audio-caption-quality
 ## Publish Readiness
 
 Speaker attribution should clear the `captions reviewed` item in `docs/publish-checklist.md` only when exported captions and searchable transcript moments point to the right speaker. Export readiness should surface unresolved attribution only when it affects the finished episode, then link back to this review or `docs/speaker-sync-repair.md` for the fix.
+
+## Maintainer Acceptance Notes
+
+Accept work that helps creators confirm the right speaker in captions, search, and publish checks using the show's existing roles and speaker buckets. Close work that exposes diarization scores, speaker embeddings, or word-level timing grids, or that asks creators to relabel every caption instead of routing timing problems to sync repair.
