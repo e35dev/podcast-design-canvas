@@ -88,6 +88,17 @@ Different reviewers need different summaries:
 
 The product should avoid exposing production details that are not relevant to the selected reviewer.
 
+## Team Checkpoints
+
+When more than one reviewer receives a handoff, the summary should stay readable instead of turning into a generic status report:
+
+- show which reviewer still needs to decide in plain language, not a raw account ID
+- keep review items grouped by episode moment and decision type, not by who was notified last
+- make a final approver's pending items safe from being hidden by unrelated production status
+- let any collaborator resend an updated summary without losing prior reviewer context
+
+Solo creators should never see team attribution clutter; show it only when a handoff actually has more than one reviewer. Client review copy setup stays in `docs/client-review-copy-flow.md` — this summary only attributes the meaningful decisions it already links to episode moments.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes episode review easier to hand off and complete. Close work that creates generic status reports, exposes internal pipeline logs, or disconnects review decisions from video moments.
