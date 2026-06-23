@@ -14,7 +14,8 @@ Cleanup review should start from episode context already in the workspace:
 - caption confidence gaps in `docs/audio-caption-quality-review.md`
 - pacing trim suggestions in `docs/preset-pacing-controls.md`
 - transcript search for surrounding context in `docs/transcript-search-navigation.md`
-- export warnings in `docs/export-readiness-review.md`
+
+Cleanup issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Audio Cleanup Warnings.
 
 ## Detected Moments
 
