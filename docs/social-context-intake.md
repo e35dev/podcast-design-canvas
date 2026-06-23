@@ -29,6 +29,20 @@ Social context should improve visible episode quality in these areas:
 
 The product should show a short "used for" summary so creators understand why a link is being requested.
 
+## Context Routing
+
+Social context is an input, not an output surface. Each context use should flow to the spec that owns how it appears and gets approved, so corrections happen in one place per concern rather than on this intake screen:
+
+| Context use | Owning spec | Relevant section |
+| --- | --- | --- |
+| display names, titles, handles, and lower-thirds | `docs/guest-profile-reuse.md` | Reusable Details, Matching |
+| proper-noun spellings and recurring terms | `docs/transcript-glossary.md` | Glossary Entries, Application |
+| caption accuracy review | `docs/audio-caption-quality-review.md` | Caption Confidence |
+| b-roll and visual callout candidates | `docs/contextual-broll-moments.md` | Moment Sources, Approval Flow |
+| title moments | `docs/contextual-title-cards.md` | Sources, Review States |
+
+Intake should hand each link's derived suggestions to these specs already attached to the right speaker bucket, and let the owning review surface make the final visible decision. This screen should not become a second place to approve captions, b-roll, or titles.
+
 ## Privacy And Taste Boundaries
 
 Do not surface unrelated personal details or sensitive inferred information. The product should use public context to make the episode more accurate and relevant, not to create a dossier on the guest.
