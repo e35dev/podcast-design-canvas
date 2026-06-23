@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sponsor Placement Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .count {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .placements {
+        display: grid;
+        gap: 14px;
+      }
+
+      .placement {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .when {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+
+      .ptype {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .chip {
+        justify-self: start;
+        font-size: 12px;
+        color: var(--muted);
+        background: #eef2f0;
+        border-radius: 999px;
+        padding: 2px 9px;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .sponsor {
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .sponsor strong {
+        font-weight: 800;
+      }
+
+      .controls-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .lbl {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .placement {
+          grid-template-columns: 1fr;
+        }
+
+        .controls-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sponsor placement review</h1>
+      <p class="lede">Place sponsor visuals and disclosures, preview them in context, and confirm they do not cover a speaker, clash with captions, or miss a required disclosure before export. A blocking conflict can be fixed or skipped &mdash; never approved over.</p>
+
+      <section class="workspace" aria-label="Sponsor placement review workspace">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Sponsor elements</h2>
+            <span class="count" id="count"></span>
+          </div>
+          <div class="placements" id="placements"></div>
+          <div class="actions">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Sponsor readiness summary">
+          <h2>Sponsor readiness</h2>
+          <div id="status" class="status review">Sponsors to confirm</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Sponsor decisions clear only sponsor-related export and checklist items. Sponsorship is never required, and unrelated metadata or caption warnings stay untouched.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var PLACEMENT_TYPES = {
+          "lower-corner": "Lower-corner mark",
+          "title-card": "Title-card mention",
+          "chapter-slate": "Chapter intro slate",
+          "host-read": "Host-read support",
+          "end-card": "End-card acknowledgement",
+          description: "Description reminder",
+        };
+
+        var STRENGTHS = {
+          subtle: "Subtle",
+          standard: "Standard",
+          prominent: "Prominent",
+        };
+
+        // Each detected condition offers only the choices that make sense for it, and
+        // every choice within a condition leads to a DIFFERENT review state, so no
+        // option in a dropdown is ever a no-op. A blocking conflict never offers
+        // "approve" — it can only be fixed or skipped.
+        var CONDITIONS = {
+          clean: {
+            label: "No conflict",
+            blocking: false,
+            steps: ["place", "approve", "skip"],
+          },
+          "lower-third": {
+            label: "Overlaps the lower-third",
+            blocking: false,
+            fix: "Nudge it clear of the lower-third",
+            steps: ["needs-review", "fix", "approve", "skip"],
+          },
+          "low-contrast": {
+            label: "Hard to read (low contrast)",
+            blocking: false,
+            fix: "Swap in a higher-contrast asset",
+            steps: ["needs-review", "fix", "approve", "skip"],
+          },
+          "covers-face": {
+            label: "Covers a speaker's face",
+            blocking: true,
+            fix: "Move it off the speaker's face",
+            steps: ["conflict", "fix", "skip"],
+          },
+          "missing-disclosure": {
+            label: "Disclosure text is missing",
+            blocking: true,
+            fix: "Add the required disclosure",
+            steps: ["conflict", "fix", "skip"],
+          },
+          "sensitive-moment": {
+            label: "Lands on a sensitive moment",
+            blocking: true,
+            fix: "Move it away from that moment",
+            steps: ["conflict", "fix", "skip"],
+          },
+        };
+
+        // A creator choice maps to one of the spec's review states. The "fix" label is
+        // condition-specific (see CONDITIONS[...].fix); its state is always "placed".
+        var DISPOSITIONS = {
+          place: { label: "Place and decide later", state: "placed" },
+          "needs-review": { label: "Keep in review", state: "needs review" },
+          conflict: { label: "Leave flagged", state: "conflict flagged" },
+          fix: { label: "Apply the suggested fix", state: "placed" },
+          approve: { label: "Approve for export", state: "approved for export" },
+          skip: { label: "Skip for this episode", state: "not applicable for episode" },
+        };
+
+        function validCondition(condition) {
+          return CONDITIONS[condition] ? condition : "clean";
+        }
+
+        function dispositionLabel(disp, condition) {
+          if (disp === "fix") {
+            return CONDITIONS[validCondition(condition)].fix || DISPOSITIONS.fix.label;
+          }
+          return DISPOSITIONS[disp].label;
+        }
+
+        function fmt(seconds) {
+          var s = Math.max(0, Math.round(Number(seconds) || 0));
+          var m = Math.floor(s / 60);
+          var ss = String(s % 60).padStart(2, "0");
+          if (m >= 60) {
+            var h = Math.floor(m / 60);
+            var mm = String(m % 60).padStart(2, "0");
+            return h + ":" + mm + ":" + ss;
+          }
+          return m + ":" + ss;
+        }
+
+        function placedAt(item) {
+          return item.type === "description" ? "In description" : "at " + fmt(item.at);
+        }
+
+        // Single source of truth: reconcile each placement to a valid condition + choice
+        // and map to its review state. A stale choice not valid for the condition falls
+        // back to that condition's default so the logic never acts on an unoffered value.
+        function evaluate(list) {
+          var placements = list.map(function (item) {
+            var condition = validCondition(item.condition);
+            var steps = CONDITIONS[condition].steps;
+            var disp = steps.indexOf(item.disp) >= 0 ? item.disp : steps[0];
+            return { id: item.id, condition: condition, disp: disp, state: DISPOSITIONS[disp].state };
+          });
+
+          var counts = {};
+          placements.forEach(function (placement) {
+            counts[placement.state] = (counts[placement.state] || 0) + 1;
+          });
+
+          var blocked = placements.some(function (placement) {
+            return placement.state === "conflict flagged";
+          });
+          var pending = placements.some(function (placement) {
+            return placement.state === "needs review" || placement.state === "placed";
+          });
+          var allSkipped = placements.length > 0 && placements.every(function (placement) {
+            return placement.state === "not applicable for episode";
+          });
+
+          return {
+            placements: placements,
+            counts: counts,
+            overall: blocked ? "blocked" : pending ? "review" : "ready",
+            allSkipped: allSkipped,
+          };
+        }
+
+        // ---- DOM rendering (browser only) ----------------------------------------
+
+        function el(tag, options, children) {
+          var node = document.createElement(tag);
+          options = options || {};
+          if (options.className) {
+            node.className = options.className;
+          }
+          if (options.text != null) {
+            // All dynamic text goes through textContent; this prototype has no free
+            // text inputs at all, so there is no path from typed input into markup.
+            node.textContent = options.text;
+          }
+          if (options.attrs) {
+            Object.keys(options.attrs).forEach(function (key) {
+              node.setAttribute(key, options.attrs[key]);
+            });
+          }
+          if (options.on) {
+            Object.keys(options.on).forEach(function (event) {
+              node.addEventListener(event, options.on[event]);
+            });
+          }
+          (children || []).forEach(function (child) {
+            if (child) {
+              node.appendChild(child);
+            }
+          });
+          return node;
+        }
+
+        function badgeClass(state) {
+          if (state === "conflict flagged") {
+            return "blocked";
+          }
+          if (state === "needs review" || state === "placed") {
+            return "review";
+          }
+          return "ready";
+        }
+
+        function selectControl(labelText, ariaLabel, options, current, onChange) {
+          var select = el("select", {
+            attrs: { "aria-label": ariaLabel },
+            on: {
+              change: function (event) {
+                onChange(event.target.value);
+              },
+            },
+          });
+          options.forEach(function (option) {
+            var node = el("option", { text: option.label, attrs: { value: option.value } });
+            if (option.value === current) {
+              node.selected = true;
+            }
+            select.appendChild(node);
+          });
+          return el("label", {}, [el("span", { className: "lbl", text: labelText }), select]);
+        }
+
+        var placements;
+        var sample;
+        var placementsElement;
+        var statusElement;
+        var issuesElement;
+        var countElement;
+
+        function renderPlacement(item, index, result) {
+          var when = el("div", { className: "when" }, [
+            el("span", { className: "ptype", text: PLACEMENT_TYPES[item.type] || "Sponsor element" }),
+            el("span", { className: "chip", text: placedAt(item) }),
+          ]);
+
+          var sponsor = el("p", { className: "sponsor" }, [
+            el("strong", { text: item.sponsor }),
+            el("span", { text: " · " + (STRENGTHS[item.strength] || "Standard") + " strength" }),
+          ]);
+          var badge = el("span", { className: "badge " + badgeClass(result.state), text: result.state });
+          var head = el("div", { className: "head" }, [sponsor, badge]);
+
+          var conditionOptions = Object.keys(CONDITIONS).map(function (key) {
+            return { value: key, label: CONDITIONS[key].label };
+          });
+          var conditionControl = selectControl("What review found", "Detected sponsor condition", conditionOptions, result.condition, function (value) {
+            item.condition = value;
+            var steps = CONDITIONS[validCondition(value)].steps;
+            if (steps.indexOf(item.disp) < 0) {
+              item.disp = steps[0];
+            }
+            render();
+          });
+
+          var dispOptions = CONDITIONS[result.condition].steps.map(function (key) {
+            return { value: key, label: dispositionLabel(key, result.condition) };
+          });
+          var dispControl = selectControl("What to do", "Sponsor decision", dispOptions, result.disp, function (value) {
+            item.disp = value;
+            render();
+          });
+
+          var controls = el("div", { className: "controls-row" }, [conditionControl, dispControl]);
+          var fields = el("div", { className: "fields" }, [head, controls]);
+          return el("article", { className: "placement", attrs: { "data-index": String(index) } }, [when, fields]);
+        }
+
+        function renderIssue(issue) {
+          return el("article", { className: "issue " + issue.tone }, [
+            el("strong", { text: issue.title }),
+            el("span", { text: issue.action }),
+          ]);
+        }
+
+        function render() {
+          var evaluation = evaluate(placements);
+
+          placementsElement.replaceChildren.apply(
+            placementsElement,
+            placements.map(function (item, index) {
+              return renderPlacement(item, index, evaluation.placements[index]);
+            })
+          );
+
+          var decided = (evaluation.counts["approved for export"] || 0) + (evaluation.counts["not applicable for episode"] || 0);
+          countElement.textContent = decided + " of " + placements.length + " resolved";
+
+          statusElement.className = "status " + evaluation.overall;
+          statusElement.textContent =
+            evaluation.overall === "ready"
+              ? "Sponsors ready for export"
+              : evaluation.overall === "blocked"
+                ? "Resolve before export"
+                : "Sponsors to confirm";
+
+          var issues = [];
+          if (evaluation.allSkipped) {
+            issues.push({
+              tone: "info",
+              title: "No sponsor elements active for this episode",
+              action: "Sponsor checklist and export items are set aside; nothing else is affected.",
+            });
+          }
+          placements.forEach(function (item, index) {
+            var result = evaluation.placements[index];
+            var name = item.sponsor + " · " + (PLACEMENT_TYPES[item.type] || "sponsor element");
+            if (result.state === "conflict flagged") {
+              issues.push({
+                tone: "blocker",
+                title: name + ": " + CONDITIONS[result.condition].label,
+                action: "Blocks export for sponsor destinations — " + (CONDITIONS[result.condition].fix || "resolve the conflict") + ", or skip it for this episode.",
+              });
+            } else if (result.state === "needs review") {
+              issues.push({
+                tone: "review",
+                title: name + ": " + CONDITIONS[result.condition].label,
+                action: "Apply the fix, approve it as-is, or skip it for this episode.",
+              });
+            } else if (result.state === "placed") {
+              issues.push({
+                tone: "review",
+                title: name + ": placed, awaiting approval",
+                action: "Approve it for export or skip it for this episode.",
+              });
+            }
+          });
+
+          var issueNodes = issues.length
+            ? issues.map(renderIssue)
+            : [el("p", { text: "Every sponsor element is approved or set aside. Ready for export." })];
+          issuesElement.replaceChildren.apply(issuesElement, issueNodes);
+        }
+
+        if (typeof document !== "undefined") {
+          sample = [
+            { id: "s1", sponsor: "Acme Tools", type: "lower-corner", strength: "subtle", at: 95, condition: "clean", disp: "place" },
+            { id: "s2", sponsor: "Brightline", type: "title-card", strength: "standard", at: 612, condition: "low-contrast", disp: "needs-review" },
+            { id: "s3", sponsor: "Norththread", type: "end-card", strength: "prominent", at: 3380, condition: "missing-disclosure", disp: "conflict" },
+            { id: "s4", sponsor: "Acme Tools", type: "description", strength: "subtle", at: 0, condition: "clean", disp: "place" },
+          ];
+          placements = structuredClone(sample);
+
+          placementsElement = document.querySelector("#placements");
+          statusElement = document.querySelector("#status");
+          issuesElement = document.querySelector("#issues");
+          countElement = document.querySelector("#count");
+
+          document.querySelector("#reset").addEventListener("click", function () {
+            placements = structuredClone(sample);
+            render();
+          });
+
+          render();
+        }
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports = {
+            PLACEMENT_TYPES: PLACEMENT_TYPES,
+            STRENGTHS: STRENGTHS,
+            CONDITIONS: CONDITIONS,
+            DISPOSITIONS: DISPOSITIONS,
+            fmt: fmt,
+            evaluate: evaluate,
+            dispositionLabel: dispositionLabel,
+          };
+        }
+      })();
+    </script>
+  </body>
+</html>
