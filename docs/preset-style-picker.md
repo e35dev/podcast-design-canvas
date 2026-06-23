@@ -24,6 +24,8 @@ Keep the controls creator-facing:
 - visual moments: restrained, balanced, energetic
 - branding strength: neutral, show-branded, sponsor-ready
 
+Caption presence choices should open the caption style preset path described in `docs/audio-caption-quality-review.md` Caption Style Presets.
+
 Avoid exposing internal rendering, tracking, or timeline mechanics in this first path.
 
 ## Maintainer Acceptance Notes

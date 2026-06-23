@@ -30,6 +30,37 @@ Caption review should focus attention where corrections matter most:
 
 Corrections should apply across repeated terms when the creator confirms they are show-specific spellings.
 
+## Caption Style Presets
+
+Caption look and placement should follow the chosen visual preset, not a separate font menu the creator has to assemble by hand.
+
+Style choices should start from the preset path in `docs/preset-style-picker.md` Controls and brand emphasis from `docs/show-brand-kit-setup.md` Brand Inputs. Each style should preview on the current episode's real caption lines.
+
+| Style choice | Source spec | Relevant section |
+| --- | --- | --- |
+| caption presence and pacing feel | `docs/preset-style-picker.md` | Controls |
+| brand emphasis and readability guardrails | `docs/show-brand-kit-setup.md` | Brand Inputs, Guardrails |
+| placement and overlap checks | `docs/layout-safe-areas.md` | Safe Area Types, Checks |
+| contrast, size, and motion readability | `docs/accessibility-readability-checks.md` | Checks, Creator Controls |
+| template reuse | `docs/show-template-adaptation.md` | Template Contents |
+
+Offer ready-to-use looks with plain-language steps:
+
+- size: compact, standard, large
+- placement zone: lower third, lower center, top safe band
+- emphasis for names, products, and show terms
+- motion: static lines, word-by-word reveal, or smooth fade
+
+Use simple controls: choose a style that fits the preset, adjust size and placement with named steps, turn motion up or down, and keep one reset back to the preset default. Avoid keyframes, easing curves, font files, timecode offsets, or per-frame animation editing in this path.
+
+Flag caption style only when it affects the finished episode:
+
+- ready
+- needs review
+- conflict with lower-thirds, sponsor marks, or speaker faces
+
+These states should surface in caption review and in `docs/publish-checklist.md` captions reviewed when placement or readability would affect export.
+
 ## Speaker Awareness
 
 The product should keep audio and caption fixes tied to speaker buckets:
