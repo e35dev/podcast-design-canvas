@@ -122,6 +122,27 @@ Flag only visual issues that affect the exported episode:
 
 Each warning should link back to the moment where the creator can approve, replace, or remove the visual. Unused suggestions that are not in the export should not affect readiness.
 
+## Thumbnail Warnings
+
+When the chosen destination requires a thumbnail or cover frame, readiness should treat thumbnail gaps as part of metadata and package review rather than as a separate design tool.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| thumbnail selection and quality | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
+| brand and sponsor fit | `docs/show-brand-kit-setup.md` | Preview Surfaces, Guardrails |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping |
+| package delivery | `docs/export-package-handoff.md` | Package Contents, Summary |
+
+Flag only thumbnail issues that affect the exported episode:
+
+- no thumbnail selected when the destination requires one
+- guest or show name is inaccurate on the frame
+- text is unreadable at small sizes
+- sponsor mark or brand placement conflicts with the crop
+- frame may spoil sensitive content
+
+Each warning should link back to thumbnail review or the metadata field where the creator can fix it. Destinations that do not require a thumbnail should not block readiness on this item.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:

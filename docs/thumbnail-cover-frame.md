@@ -48,7 +48,7 @@ Advanced canvas editing can be available, but the default path should produce a 
 
 ## Export Connection
 
-The selected thumbnail should appear in export readiness, client review copies, and destination metadata where relevant.
+The selected thumbnail should appear in `docs/export-readiness-review.md` Thumbnail Warnings, client review copies, and destination metadata where relevant.
 
 ## Maintainer Acceptance Notes
 
