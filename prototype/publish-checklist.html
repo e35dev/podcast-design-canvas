@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Checklist Prototype</title>
+    <style>
+      :root {
+        --ink: #17211d;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --ready: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 720px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 18px;
+      }
+
+      .destination {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        border-color: var(--ready);
+        background: #e0f3ee;
+        color: var(--ready);
+      }
+
+      .checklist {
+        display: grid;
+        gap: 10px;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 170px;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 13px;
+      }
+
+      .item strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .item span {
+        color: var(--muted);
+      }
+
+      select {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 7px 9px;
+      }
+
+      .summary {
+        display: grid;
+        gap: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        width: fit-content;
+        min-height: 32px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .badge.ready {
+        background: #dcf4ed;
+        color: var(--ready);
+      }
+
+      .badge.review {
+        background: #fff1d7;
+        color: var(--review);
+      }
+
+      .badge.blocked {
+        background: #ffe0e0;
+        color: var(--blocked);
+      }
+
+      .warning {
+        border-left: 4px solid var(--review);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+      }
+
+      .warning.blocked {
+        border-left-color: var(--blocked);
+      }
+
+      @media (max-width: 820px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .item {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Publish checklist</h1>
+      <p class="lede">Confirm the visible episode package before export. The checklist changes based on the destination and keeps optional items from blocking every show.</p>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>Destination</h2>
+          <div class="destination" id="destinations"></div>
+          <div class="checklist" id="checklist"></div>
+        </div>
+
+        <aside class="panel summary" aria-live="polite">
+          <h2>Export status</h2>
+          <div id="status" class="badge ready">Ready</div>
+          <div id="nextAction"></div>
+          <div id="warnings"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const destinations = {
+        youtube: "YouTube full episode",
+        review: "Client review copy",
+        archive: "Archive master",
+      };
+
+      const items = [
+        {
+          id: "source",
+          label: "Source media",
+          detail: "Speaker tracks are synced and usable.",
+          requiredFor: ["youtube", "review", "archive"],
+        },
+        {
+          id: "captions",
+          label: "Captions",
+          detail: "Captions and glossary corrections are reviewed.",
+          requiredFor: ["youtube", "review"],
+        },
+        {
+          id: "thumbnail",
+          label: "Thumbnail",
+          detail: "A publish-ready cover frame is selected.",
+          requiredFor: ["youtube"],
+        },
+        {
+          id: "metadata",
+          label: "Metadata",
+          detail: "Title, description, chapters, and guest links are complete.",
+          requiredFor: ["youtube"],
+        },
+        {
+          id: "watermark",
+          label: "Review watermark",
+          detail: "Review copy is clearly labeled.",
+          requiredFor: ["review"],
+        },
+        {
+          id: "master",
+          label: "Archive quality",
+          detail: "Master export settings are preserved.",
+          requiredFor: ["archive"],
+        },
+      ];
+
+      const stateLabels = {
+        ready: "Ready",
+        review: "Needs review",
+        blocked: "Blocked",
+        ignored: "Ignored",
+        "not-needed": "Not needed",
+      };
+
+      let selectedDestination = "youtube";
+      let itemStates = Object.fromEntries(items.map((item) => [item.id, "ready"]));
+      itemStates.thumbnail = "review";
+      itemStates.metadata = "blocked";
+
+      const destinationsElement = document.querySelector("#destinations");
+      const checklistElement = document.querySelector("#checklist");
+      const statusElement = document.querySelector("#status");
+      const warningsElement = document.querySelector("#warnings");
+      const nextActionElement = document.querySelector("#nextAction");
+
+      function render() {
+        destinationsElement.replaceChildren(
+          ...Object.entries(destinations).map(([id, label]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = label;
+            button.setAttribute("aria-pressed", String(id === selectedDestination));
+            button.addEventListener("click", () => {
+              selectedDestination = id;
+              render();
+            });
+            return button;
+          }),
+        );
+
+        checklistElement.replaceChildren(...items.map(renderItem));
+
+        const result = evaluateChecklist();
+        statusElement.className = `badge ${result.status}`;
+        statusElement.textContent = result.status === "ready" ? "Ready to export" : result.status === "blocked" ? "Blocked" : "Needs review";
+        nextActionElement.textContent = result.nextAction;
+        warningsElement.replaceChildren(
+          ...(result.warnings.length
+            ? result.warnings.map(renderWarning)
+            : [Object.assign(document.createElement("p"), { textContent: "No destination warnings." })]),
+        );
+      }
+
+      function renderItem(item) {
+        const required = item.requiredFor.includes(selectedDestination);
+        const state = required ? itemStates[item.id] : "not-needed";
+        const article = document.createElement("article");
+        article.className = "item";
+        article.innerHTML = `
+          <div>
+            <strong>${item.label}</strong>
+            <span>${item.detail}${required ? "" : " Not required for this destination."}</span>
+          </div>
+        `;
+
+        const select = document.createElement("select");
+        select.disabled = !required;
+        for (const [value, label] of Object.entries(stateLabels)) {
+          if (value === "not-needed" && required) {
+            continue;
+          }
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          option.selected = value === state;
+          select.append(option);
+        }
+        select.addEventListener("change", () => {
+          itemStates[item.id] = select.value;
+          render();
+        });
+        article.append(select);
+        return article;
+      }
+
+      function evaluateChecklist() {
+        const relevantItems = items.filter((item) => item.requiredFor.includes(selectedDestination));
+        const warnings = relevantItems
+          .map((item) => ({ item, state: itemStates[item.id] }))
+          .filter(({ state }) => state !== "ready" && state !== "not-needed");
+
+        const status = warnings.some(({ state }) => state === "blocked")
+          ? "blocked"
+          : warnings.length
+            ? "review"
+            : "ready";
+
+        return {
+          status,
+          warnings,
+          nextAction: status === "ready"
+            ? `Export ${destinations[selectedDestination]}.`
+            : status === "blocked"
+              ? "Fix blocked checklist items before export."
+              : "Review or ignore warnings before final export.",
+        };
+      }
+
+      function renderWarning({ item, state }) {
+        const warning = document.createElement("article");
+        warning.className = `warning ${state}`;
+        warning.innerHTML = `<strong>${item.label}: ${stateLabels[state]}</strong><p>${item.detail}</p>`;
+        return warning;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
