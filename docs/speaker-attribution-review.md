@@ -29,6 +29,18 @@ Use simple controls:
 
 Avoid diarization scores, word-level timing grids, model logs, waveform alignment, or speaker embeddings in the default path.
 
+## Preview Contexts
+
+Creators should check attribution where the speaker is hardest to confirm:
+
+- a fast back-and-forth exchange between two speakers
+- a moment where speakers talk over each other
+- an off-camera or audio-only speaker's line
+- a caption that names or quotes a guest
+- a handoff between host and guest
+
+These previews should play the real moment with the active speaker shown so the creator can confirm the line is attached to the right person before it reaches captions or chapters.
+
 ## Review States
 
 Use simple states:
