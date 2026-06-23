@@ -143,6 +143,26 @@ Flag only thumbnail issues that affect the exported episode:
 
 Each warning should link back to thumbnail review or the metadata field where the creator can fix it. Destinations that do not require a thumbnail should not block readiness on this item.
 
+## Sponsor Placement Warnings
+
+When sponsor visuals or disclosures are present in the finished episode, readiness should treat sponsor issues as part of brand and placement review rather than as a separate ad-tech queue.
+
+| Warning type | Source spec | Relevant section |
+| --- | --- | --- |
+| placement and disclosure conflicts | `docs/sponsor-placement-review.md` | Placement Types, Conflict Checks |
+| template reuse review | `docs/show-template-adaptation.md` | Adaptation Flow |
+| checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
+
+Flag only sponsor issues that affect the exported episode:
+
+- sponsor mark covers a face
+- disclosure text is missing
+- sponsor visual appears during an unrelated sensitive moment
+- sponsor asset does not meet readability requirements
+- sponsor placement still needs episode-specific approval
+
+Each warning should link back to sponsor placement review or the metadata field where the creator can fix it. Episodes without sponsor elements should not block readiness on this item.
+
 ## Timeline Checks
 
 For hour-plus episodes, the product should make review scalable:

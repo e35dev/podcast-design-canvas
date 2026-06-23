@@ -45,6 +45,8 @@ Before export, flag:
 
 Warnings should explain the viewer-facing issue and offer a direct fix.
 
+Sponsor issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Sponsor Placement Warnings.
+
 ## Template Reuse
 
 Recurring sponsor rules can be saved to a show template, but episode-specific approvals should remain tied to the current episode.
