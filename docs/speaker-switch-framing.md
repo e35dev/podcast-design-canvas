@@ -68,3 +68,7 @@ The creator sees a short note on each segment where the live count differed from
 When saving a show template via `docs/show-template-adaptation.md`, the chosen switch style and speed should carry forward so recurring shows keep a consistent feel across episodes.
 
 Template reuse should preserve the default switch style while still letting each episode review whether a specific exchange needs a different framing choice.
+
+## Maintainer Acceptance Notes
+
+Accept work that makes speaker reframing feel natural and preset-driven across hour-plus episodes, with simple creator-facing styles and per-moment overrides. Close work that exposes keyframe timelines, easing curves, camera-track automation, or cut-list editing, or that treats speaker reframing as a detached camera mode instead of part of the chosen preset.
