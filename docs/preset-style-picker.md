@@ -20,12 +20,27 @@ Each preset card should show:
 Keep the controls creator-facing:
 
 - layout density: simple, balanced, layered
+- speaker focus: steady panel, active-speaker emphasis, gentle handoff
 - caption presence: minimal, standard, high-emphasis
 - caption style: clean lower third, centered emphasis, speaker-labeled, title-safe
 - visual moments: restrained, balanced, energetic
 - branding strength: neutral, show-branded, sponsor-ready
 
 Avoid exposing internal rendering, tracking, or timeline mechanics in this first path.
+
+## Speaker Switch Framing
+
+Speaker switch framing should stay inside the preset choice instead of becoming a separate camera-editing workflow.
+The preview in `docs/preset-preview-on-real-tracks.md` should show how the selected speaker focus behaves on a real moment where the conversation moves between confirmed speakers.
+
+Speaker focus choices should stay preset-safe:
+
+- keep host and guest roles stable while the active speaker changes
+- hold a steady panel during quick back-and-forth or cross-talk
+- keep faces and captions inside destination-safe areas when emphasis changes
+- carry the selected speaker focus with the applied preset so the creator does not cut every transition by hand
+
+Avoid keyframes, face-tracking controls, shot lists, or per-speaker camera automation in the preset picker.
 
 ## Caption Style Controls
 
