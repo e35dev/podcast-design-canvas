@@ -32,6 +32,8 @@ Use clear status labels:
 
 The summary should attach to speaker buckets so creators understand which person is affected.
 
+Source media issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Source Media Warnings.
+
 ## Preview
 
 Health checks should preview the actual problem when possible: show a dark frame, play a quiet sample, or jump to the missing section. Avoid forcing users to interpret technical file metadata.

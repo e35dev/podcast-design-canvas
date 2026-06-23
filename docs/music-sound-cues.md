@@ -6,6 +6,17 @@ Music and sound cues should support show identity and episode structure without 
 
 A creator should be able to add tasteful music or sound cues to intros, outros, sponsor transitions, and major segment changes.
 
+## Relationship To Cue Setup
+
+Music and sound cues should extend the placement workflow in `docs/music-cue-setup.md` instead of acting like a detached sound library.
+
+- choose cue types that match the episode purpose already defined in setup
+- preview the cue against the current episode audio before saving it to the episode or template
+- carry usage approval, placement context, and template reuse state through the same review flow
+- send speech-overlap follow-up to `docs/music-ducking-under-speech.md` only after a cue is already placed
+
+Cue browsing should help a creator pick the right structural sound, not make them manage a second audio workflow.
+
 ## Cue Types
 
 Support simple cue categories:
@@ -43,6 +54,8 @@ Flag issues that affect publish quality:
 - cue is missing usage approval
 - cue is too loud compared with speakers
 - cue conflicts with sponsor or intro branding
+
+These checks should link back to the cue placement and review states in `docs/music-cue-setup.md`, so creators can fix the cue in context rather than debug it as a standalone audio asset.
 
 ## Maintainer Acceptance Notes
 

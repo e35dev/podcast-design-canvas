@@ -44,6 +44,19 @@ Place music by episode purpose before exposing timing controls:
 
 The product should preview each cue against the current episode audio and show the speaker or chapter context around the placement.
 
+## Cue Safety Mapping
+
+`docs/music-sound-cues.md` defines the creator-facing cue types and quality checks that this setup flow should honor once a cue is chosen and placed.
+
+| Cue concern | Source spec | Relevant section |
+| --- | --- | --- |
+| cue type and episode purpose | `docs/music-sound-cues.md` | Cue Types |
+| creator-facing loudness and timing controls | `docs/music-sound-cues.md` | Controls |
+| repeated, too-loud, or branding-conflicting cues | `docs/music-sound-cues.md` | Safety Checks |
+| speech clarity after placement | `docs/music-ducking-under-speech.md` | Relationship To Cue Setup, When To Flag |
+
+Setup should keep these checks inside the same cue workflow. A creator should not have to re-create the cue in a separate music browser just to understand why it needs review.
+
 ## Creator Controls
 
 Use simple controls:

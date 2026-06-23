@@ -44,6 +44,27 @@ Useful filters include:
 - caption issue present
 - visual moment present
 
+## Workflow Connections
+
+Search results should stay connected to the workflow that already owns the decision:
+
+- glossary corrections route to `docs/transcript-glossary.md` Application when a repeated term needs one approved spelling
+- chapter and segment hits open `docs/episode-chapter-markers.md` Creator Controls or Publish Readiness when a result suggests a weak boundary or title
+- preview jumps preserve the viewing context described in `docs/long-form-navigation.md` Playback Continuity instead of resetting the creator's place
+- caption-related hits open the relevant step in `docs/audio-caption-quality-review.md` Review Flow when the result reflects an unresolved transcript issue
+- pinned transcript moments feed `docs/clip-candidate-review.md` Candidate Signals and Review Cards when a searched line should become a reusable short clip
+
+## Creator Actions
+
+From a result, the creator should be able to:
+
+- jump to the moment with the current layout and speaker context
+- apply a glossary correction across repeated matches
+- mark a chapter title or boundary for review
+- pin the moment as a clip candidate
+- send the moment into caption review
+- return to the previous search without losing filters
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes long-form transcript navigation useful for editing, captions, chapters, and visual moments. Close work that treats search as a generic text box disconnected from the episode preview and speaker context.
