@@ -61,6 +61,22 @@ Before export, show what differs from the recommended preset:
 
 Each state should explain the publishing consequence, such as "YouTube export will ship without chapter metadata" rather than listing setting names.
 
+## Checklist Handling
+
+The `destination preset selected` item in `docs/publish-checklist.md` should turn ready only after the creator chooses a destination and reviews the visible consequences of that preset.
+
+If the destination changes after other review work is complete, the checklist should reopen any affected items rather than silently leaving the old destination marked ready.
+
+Reopened items can include:
+
+- thumbnail requirements
+- metadata fields
+- review watermark behavior
+- sponsor disclosure expectations
+- final package contents
+
+Checklist warnings should use the consequence language above, not generic settings errors.
+
 ## Maintainer Acceptance Notes
 
 Accept work that makes export choices map to real publishing destinations. Close work that exposes raw encoder menus as the primary experience or treats every destination like the same generic download.

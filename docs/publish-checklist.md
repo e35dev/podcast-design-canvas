@@ -50,9 +50,23 @@ Each checklist item below maps to an existing spec section:
 | thumbnail selected | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
 | metadata complete | `docs/episode-metadata-publishing.md` | Metadata Fields, Readiness Checks |
 | sponsor disclosure confirmed | `docs/sponsor-placement-review.md` | Conflict Checks |
-| destination preset selected | `docs/publish-destination-presets.md` | Destinations, Review |
+| destination preset selected | `docs/publish-destination-presets.md` | Destinations, Preset Effects, Review States |
 | export warnings resolved or ignored | `docs/export-readiness-review.md` | Review Summary, Timeline Checks |
 | final package generated | `docs/export-package-handoff.md` | Package Contents, Summary |
+
+## Destination Preset Handling
+
+When `destination preset selected` is blocked or needs review, the checklist should send the creator back to `docs/publish-destination-presets.md` and explain the publishing consequence, not a render-setting mismatch.
+
+Common consequences can include:
+
+- thumbnail is now required or no longer required
+- metadata fields no longer match the chosen destination
+- review watermark behavior is wrong for the delivery type
+- sponsor disclosure expectations changed
+- final package contents no longer fit the destination
+
+If the creator changes the destination late in the workflow, the checklist should reopen any affected items instead of leaving the previous destination marked ready.
 
 ## Review Approvals
 
