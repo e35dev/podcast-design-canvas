@@ -31,6 +31,18 @@ Each preview should render the same episode moment so differences are visible:
 
 Preset cards should communicate through the preview first and short labels second.
 
+## Real Episode Fit
+
+Preset previews should prove that the choices in `docs/preset-style-picker.md` work on the selected episode rather than on an ideal sample.
+A preview is trustworthy only when it:
+
+- uses the speaker count the preset claims to support, including panel presets when three or more confirmed speakers exist
+- makes layout, caption style, speaker focus, and branding differences visible before labels explain them
+- shows a missing or reduced-fit state when the episode lacks enough confirmed speakers, captions, or brand inputs for that preset
+- keeps every comparison on the same episode moment so the creator can judge identity and fit without sample-only data
+
+Avoid inventing extra speakers, sample brands, or polished fallback captions just to make a preset card look complete.
+
 ## Creator Controls
 
 Use simple controls:
