@@ -6,6 +6,22 @@ Audio cleanup and captions should feel like one creator-facing quality pass, not
 
 A creator should be able to make speech clearer, keep speaker volume balanced, and trust the captions before publishing a long-form episode.
 
+## Relationship To Speech And Caption Review
+
+Audio and caption review should start from episode context already in the workspace:
+
+- speaker buckets and roles from `docs/speaker-role-mapping.md`
+- names and spellings from `docs/social-context-intake.md` and `docs/transcript-glossary.md`
+- cross-talk cleanup from `docs/pause-crosstalk-cleanup.md`
+- speaker attribution from `docs/speaker-attribution-review.md`
+- caption style from `docs/preset-style-picker.md`
+- readability checks from `docs/accessibility-readability-checks.md`
+- export warnings in `docs/export-readiness-review.md`
+
+## Review Approach
+
+Audio cleanup and caption review are one quality pass: creators fix speech clarity and caption trust in context, not through separate engineering tools or a raw transcript editor.
+
 ## Audio Controls
 
 Use plain-language quality controls:
@@ -84,6 +100,32 @@ Creators should be able to jump from an issue to the affected moment, play the s
 
 Speaker-name mismatches, unlabeled exchanges, and off-camera voice confusion should open `docs/speaker-attribution-review.md` when the caption problem is really about who is speaking rather than how the text looks.
 
+## Review States
+
+The product should use audio and caption status to drive the quality pass and export readiness:
+
+- **needs review** — surface issues grouped by publishing impact; link to the affected moment and speaker bucket
+- **corrected** — apply the wording, audio, or style fix and refresh preview for that span
+- **glossary applied** — carry confirmed spellings to repeated captions and linked metadata without clearing unrelated attribution issues
+- **attribution handoff** — route speaker-label problems to `docs/speaker-attribution-review.md` or `docs/speaker-sync-repair.md` instead of treating them as caption-style fixes
+- **approved for export** — clear only caption and audio checklist items when exported spans are accurate, readable, attributed, and clear enough for the destination
+- **ignored for export** — record the publishing consequence for that issue; do not clear unrelated attribution, glossary, or cross-talk caption warnings
+
+Each state should describe what happens to playback, captions, search, and export readiness—not only the label on the issue.
+
+## Creator Controls
+
+Offer simple actions:
+
+- adjust plain-language audio controls per speaker
+- edit caption text at the affected moment
+- apply glossary spelling to repeated terms
+- choose or reset caption style from the preset default
+- jump to speaker attribution or sync repair when labels are wrong
+- mark an issue fixed or ignored for export
+
+Avoid exposing compressor settings, diarization scores, font files, or raw transcript editors in the default path.
+
 ## Maintainer Acceptance Notes
 
-Accept work that makes speech clarity and caption accuracy easier to review before export. Close work that exposes audio engineering internals, treats captions as a raw transcript editor, or ignores speaker buckets and long-form review needs.
+Accept work that makes speech clarity and caption accuracy easier to review before export. Close work that exposes audio engineering internals, treats captions as a raw transcript editor, ignores speaker buckets and long-form review needs, or clears unrelated attribution or glossary warnings when one caption issue is ignored.
