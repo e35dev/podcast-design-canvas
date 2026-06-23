@@ -44,4 +44,6 @@ These states should appear in `docs/export-readiness-review.md` Speaker Framing 
 
 Visual match adjustments should apply before the preset style layer so that brand colors, overlays, and lower-thirds look consistent across all speakers. Changes saved here should carry into `docs/show-template-adaptation.md` Template Contents when the creator reuses the same recording setup.
 
-Source media issues that affect individual tracks before matching should surface in `docs/source-media-health.md` Health Checks.
+Source media issues that affect individual tracks before matching should surface in `docs/source-media-health.md` Health Checks. When source health detects a cross-speaker mismatch rather than a single damaged track, it should route the creator here instead of treating the issue as isolated media cleanup.
+
+If the creator continues into layout editing, the corrected match should remain visible in `docs/canvas-layer-controls.md` Preview Guardrails so framing and brand decisions are judged against the harmonized speaker look rather than the untreated recordings.

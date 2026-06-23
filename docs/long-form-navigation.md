@@ -13,6 +13,7 @@ Use creator-facing lanes that map to real review tasks:
 - chapters
 - speakers
 - captions
+- speaker attribution
 - b-roll and callouts
 - title moments
 - audio warnings
@@ -32,6 +33,8 @@ Important moments should appear as compact cards with:
 - quick action
 
 Examples include "Guest introduces launch story," "Caption confidence is low," or "Sponsor mark appears near lower-third."
+
+Attribution-related moments should route to `docs/speaker-attribution-review.md` when the issue is who is speaking, not what the caption text says.
 
 ## Moment Actions
 

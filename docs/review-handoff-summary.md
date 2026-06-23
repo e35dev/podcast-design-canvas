@@ -10,7 +10,7 @@ A creator should be able to send a client, teammate, or producer a concise revie
 
 The handoff should summarize open decisions from:
 
-- caption and spelling review in `docs/audio-caption-quality-review.md` and `docs/transcript-glossary.md`
+- caption, speaker attribution, and spelling review in `docs/audio-caption-quality-review.md`, `docs/speaker-attribution-review.md`, and `docs/transcript-glossary.md`
 - contextual visuals in `docs/contextual-broll-moments.md` and `docs/sponsor-placement-review.md`
 - metadata readiness from `docs/episode-metadata-publishing.md`
 - thumbnail candidates from `docs/thumbnail-cover-frame.md`
@@ -30,6 +30,7 @@ Include:
 - unresolved warnings
 - moments needing approval
 - caption or spelling decisions
+- speaker attribution decisions
 - sponsor placement status
 - metadata readiness
 - requested decision deadline
@@ -39,6 +40,7 @@ Include:
 Every review item should link to the relevant moment:
 
 - caption issue
+- speaker attribution fix
 - b-roll approval
 - sponsor placement
 - lower-third question

@@ -54,6 +54,7 @@ Before a creator applies a layout across the episode or saves it as a reusable t
 - speaker visibility blockers from `docs/speaker-framing-safety.md` Checks and Creator Controls
 - destination-specific crop failures from `docs/destination-crop-previews.md` Checks and Fixes
 - brand readability risks from `docs/show-brand-kit-setup.md` Preview Surfaces and Guardrails
+- cross-speaker visual mismatch carried from `docs/speaker-visual-match.md` Review States and Connection to Preset and Canvas
 - speaker-count fallback choices from `docs/show-template-adaptation.md` Adaptation Flow when the current episode does not match the saved layout
 
 These warnings should open the exact moment and preview surface the creator needs to fix. Export readiness can summarize unresolved layout problems later, but the canvas should stay the place where creators actually solve them.

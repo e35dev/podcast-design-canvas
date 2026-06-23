@@ -6,6 +6,19 @@ Sponsor elements should be easy to place, review, and export without disrupting 
 
 A creator should be able to add sponsor visuals or disclosures, preview them in context, and confirm they do not conflict with speakers, captions, or show branding.
 
+## Relationship To Episode Review
+
+Sponsor placement should start from episode context already in the workspace:
+
+- brand and sponsor-safe areas from `docs/show-brand-kit-setup.md`
+- reusable sponsor rules from `docs/show-template-adaptation.md`
+- disclosure text in `docs/episode-metadata-publishing.md`
+- intro and outro acknowledgements in `docs/intro-outro-builder.md`
+- sponsor music from `docs/music-cue-setup.md`
+- framing and readability from `docs/speaker-framing-safety.md` and `docs/layout-safe-areas.md`
+- nearby visual moments in `docs/contextual-broll-moments.md`
+- export warnings in `docs/export-readiness-review.md`
+
 ## Sponsor Inputs
 
 Support creator-facing inputs:
@@ -19,6 +32,10 @@ Support creator-facing inputs:
 - reuse across future episodes
 
 Do not require creators to configure ad-serving systems, tracking tags, or campaign mechanics in the default flow.
+
+## Placement Approach
+
+Sponsor review is context first: creators preview each placement on the real episode frame at the affected moment, not in a detached ad-management screen.
 
 ## Placement Types
 
@@ -45,7 +62,32 @@ Before export, flag:
 
 Warnings should explain the viewer-facing issue and offer a direct fix.
 
-Sponsor issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Sponsor Placement Warnings.
+## Review States
+
+The product should use sponsor status to drive placement and export readiness:
+
+- **placed** — show the sponsor element on the episode timeline with preview context; do not treat it as export-ready until episode-specific approval is complete
+- **needs review** — keep the item in `docs/export-readiness-review.md` Sponsor Placement Warnings until disclosure, readability, or placement conflicts are resolved
+- **approved for export** — include the placement and disclosure in the exported episode; clear only sponsor-related checklist and readiness items
+- **conflict flagged** — block export for required sponsor destinations when the mark covers a face, misses disclosure, or appears during a sensitive moment; link directly to the fixing surface
+- **not applicable for episode** — hide sponsor checklist and readiness items when the episode has no sponsor elements; do not clear unrelated metadata or caption warnings
+
+Each state should describe what happens in preview, metadata, and export readiness—not only the label on the sponsor placement.
+
+## Creator Controls
+
+Offer simple actions:
+
+- place or move sponsor mark
+- edit disclosure text
+- preview at affected moment
+- reduce visual strength
+- swap sponsor asset
+- save sponsor rules to show template
+- mark placement approved for this episode
+- remove sponsor elements for this episode
+
+Avoid exposing ad-serving settings, tracking tags, or campaign dashboards in the default workflow.
 
 ## Creator Controls
 
@@ -67,4 +109,4 @@ Recurring sponsor rules can be saved to a show template, but episode-specific ap
 
 ## Maintainer Acceptance Notes
 
-Accept work that helps creators place sponsor visuals and disclosures tastefully in long-form podcast episodes. Close work that adds generic ad-tech workflow, hides sponsor conflicts until export, or makes sponsorship mandatory for all shows.
+Accept work that helps creators place sponsor visuals and disclosures tastefully in long-form podcast episodes. Close work that adds generic ad-tech workflow, hides sponsor conflicts until export, makes sponsorship mandatory for all shows, or clears unrelated publish-readiness warnings when sponsor review changes state.
