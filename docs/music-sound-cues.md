@@ -42,6 +42,18 @@ Support simple cue categories:
 
 Each cue should be previewed in context with the current episode audio.
 
+## Preview Contexts
+
+A structural cue that sounds fine alone can fail once speech and layout are live, so each cue should be checked on real episode moments before it is saved:
+
+- intro music ending before the host's first line
+- a segment transition between two planned sections
+- sponsor bed under an active read
+- a title moment accent over a highlighted phrase
+- outro music starting near the final sign-off
+
+Every context should use the current episode audio and the same cue, so the creator judges one honest tradeoff instead of approving a sound that only works in the cue browser.
+
 ## Controls
 
 Use plain-language controls:
