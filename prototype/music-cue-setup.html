@@ -376,6 +376,38 @@
         });
       }
 
+      function screenIdFromFile(file) {
+        var clean = (file || "").split("#")[0].split("?")[0];
+        var name = clean.split("/").pop() || "";
+        return name.replace(/\.html$/, "");
+      }
+
+      function isEmbeddedInPreviewApp() {
+        try {
+          return typeof window !== "undefined" &&
+            window.self !== window.top &&
+            /\/preview\/app\.html$/.test(window.top.location.pathname);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function musicActionHref(file) {
+        if (isEmbeddedInPreviewApp()) {
+          return "../preview/app.html#" + screenIdFromFile(file);
+        }
+        return file;
+      }
+
+      function navigateToMusicAction(file) {
+        var href = musicActionHref(file);
+        if (isEmbeddedInPreviewApp()) {
+          window.top.location.href = href;
+          return;
+        }
+        window.location.href = href;
+      }
+
       function el(tag, className, text) {
         var node = document.createElement(tag);
         if (className) node.className = className;
@@ -415,7 +447,7 @@
         if (item.state === "overlap-speech") {
           var duck = el("button", "secondary", "Review ducking");
           duck.addEventListener("click", function () {
-            window.location.href = "music-ducking-under-speech.html";
+            navigateToMusicAction("music-ducking-under-speech.html");
           });
           actions.append(duck);
         }
@@ -504,6 +536,10 @@
           evaluate: evaluate,
           issuesFor: issuesFor,
           placementSummary: placementSummary,
+          screenIdFromFile: screenIdFromFile,
+          isEmbeddedInPreviewApp: isEmbeddedInPreviewApp,
+          musicActionHref: musicActionHref,
+          navigateToMusicAction: navigateToMusicAction,
         };
       }
     </script>
