@@ -113,6 +113,7 @@ function routeSearchFromFile(file) {
   const params = new URLSearchParams(queryWithoutHash(file));
   const from = params.get("from");
   const filePath = params.get("path");
+  const screen = screenIdFromFile(file);
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   const path = filePath || shellPath;
 
@@ -122,6 +123,14 @@ function routeSearchFromFile(file) {
   }
   if (path === "episode" || path === "reuse" || path === "ingest") {
     out.set("path", path);
+  }
+  if (screen === "social-context-intake") {
+    ["moment", "reason"].forEach((key) => {
+      const value = params.get(key);
+      if (value) {
+        out.set(key, value);
+      }
+    });
   }
   const search = out.toString();
   return search ? `?${search}` : "";

@@ -299,6 +299,13 @@ assert.equal(
   "ingest social context step hands into the episode source-media path",
 );
 
+ingestRoles.reroute("#social-context-intake?path=ingest&moment=18%3A42&reason=Needs%20speaker%20context&extra=drop");
+assert.equal(
+  ingestRoles.nodes.frame.src,
+  "../prototype/social-context-intake.html?path=ingest&moment=18%3A42&reason=Needs+speaker+context",
+  "social context keeps the B-roll moment payload and strips unrelated params",
+);
+
 ingestRoles.reroute("#speaker-visual-match?path=episode");
 assert.equal(
   ingestRoles.nodes.frame.src,

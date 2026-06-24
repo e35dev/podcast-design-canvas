@@ -170,6 +170,11 @@ assert.equal(
   "",
   "visuals nav strips unsupported handoff context from preview app hashes",
 );
+assert.equal(
+  routeSearchFor("social-context-intake.html?moment=18%3A42&reason=Needs%20speaker%20context&path=ingest"),
+  "?path=ingest&moment=18%3A42&reason=Needs+speaker+context",
+  "visuals nav preserves B-roll moment context for social context intake",
+);
 
 const firstNav = renderNavFor("contextual-broll-moments.html", "contextual-broll-moments");
 const cleanupBackLink = linkWithText(firstNav, "Previous: On-screen correction note");
@@ -405,7 +410,7 @@ const embeddedBrollSocialFix = renderNavFor(
   "contextual-broll-moments",
   true,
   "?path=episode&from=style",
-  ["social-context-intake.html"],
+  ["social-context-intake.html", "social-context-intake.html?moment=18%3A42&reason=Needs%20speaker%20context"],
 );
 const embeddedSocialFix = linkWithText(embeddedBrollSocialFix, "social-context-intake.html");
 assert.equal(
@@ -414,6 +419,11 @@ assert.equal(
   "embedded visuals nav routes social context fix links through the preview app",
 );
 assert.equal(embeddedSocialFix.target, "_top", "embedded social context fix links target the parent app");
+assert.equal(
+  linkWithText(embeddedBrollSocialFix, "social-context-intake.html?moment=18%3A42&reason=Needs%20speaker%20context").href,
+  "../preview/app.html#social-context-intake?path=ingest&moment=18%3A42&reason=Needs+speaker+context",
+  "embedded visuals nav keeps B-roll moment payload on social context fix links",
+);
 
 const dynamicBrollSocialLinks = renderNavFor(
   "contextual-title-cards.html",

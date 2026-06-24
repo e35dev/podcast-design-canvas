@@ -13,8 +13,15 @@ const html = fs.readFileSync(path.join(dir, "contextual-broll-moments.html"), "u
 
 assert.ok(html.includes('openLink = document.createElement("a")'), "B-roll issues render an open-fix-screen link");
 assert.ok(html.includes("openLink.href = issue.fixScreen"), "open link routes to the owning fix screen");
+assert.ok(html.includes("./broll-context-scorer.js"), "B-roll review loads the context scorer");
+assert.ok(html.includes("contextScorer.socialContextHref(moment)"), "weak context handoff carries moment context");
 
-const fixScreens = [...html.matchAll(/fixScreen:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+const fixScreens = [
+  ...new Set([
+    ...[...html.matchAll(/fixScreen:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]),
+    ...(html.includes("contextScorer.socialContextHref(moment)") ? ["social-context-intake.html"] : []),
+  ]),
+];
 assert.ok(fixScreens.length >= 2, "B-roll issues declare fix screens");
 for (const file of fixScreens) {
   assert.ok(fs.existsSync(path.join(dir, file)), `fix screen exists: ${file}`);

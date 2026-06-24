@@ -135,6 +135,14 @@ function createPreviewAppRouting(order) {
       out.set("layout", layout);
       out.set("slots", layoutSlots);
     }
+    if (screen === "social-context-intake") {
+      ["moment", "reason"].forEach((key) => {
+        const value = params.get(key);
+        if (value) {
+          out.set(key, value);
+        }
+      });
+    }
     const search = out.toString();
     return search ? `?${search}` : "";
   }

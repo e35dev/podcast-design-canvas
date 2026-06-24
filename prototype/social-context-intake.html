@@ -216,6 +216,15 @@
         text-decoration: line-through;
       }
 
+      .request-note {
+        margin: 0;
+        border-radius: 6px;
+        background: #eef7f5;
+        color: #2f4a44;
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+
       .issues {
         display: grid;
         gap: 10px;
@@ -256,6 +265,25 @@
         text-decoration: underline;
         outline: 2px solid var(--accent);
         outline-offset: 2px;
+      }
+
+      .context-request {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 14px;
+        border: 1px solid #b8d7d0;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .context-request strong {
+        color: var(--accent);
+      }
+
+      .context-request span {
+        color: var(--muted);
+        font-size: 13px;
       }
 
       .actions {
@@ -316,6 +344,7 @@
       <section class="workspace" aria-label="Social context intake workspace">
         <div class="panel">
           <h2>People &amp; links</h2>
+          <div id="context-request" class="context-request" hidden></div>
           <div class="links" id="links"></div>
           <div class="actions">
             <button type="button" id="addLink">Add a link</button>
@@ -386,11 +415,45 @@
         { id: "k3", handle: "priya.codes", platform: "instagram", bucket: "", visibility: "screen" },
       ];
 
-      let links = structuredClone(sampleLinks);
-
       const linksElement = document.querySelector("#links");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const contextRequestElement = document.querySelector("#context-request");
+
+      function incomingContextRequest() {
+        const params = new URLSearchParams(window.location.search || "");
+        const moment = params.get("moment");
+        const reason = params.get("reason");
+        if (!moment && !reason) {
+          return null;
+        }
+        return {
+          moment: moment || "this visual moment",
+          reason: reason || "Add clearer context before showing this visual.",
+        };
+      }
+
+      const contextRequest = incomingContextRequest();
+
+      function linksWithContextRequest() {
+        const base = structuredClone(sampleLinks);
+        if (!contextRequest) {
+          return base;
+        }
+        return [
+          {
+            id: "k-broll-context",
+            handle: "",
+            platform: "company",
+            bucket: "",
+            visibility: "screen",
+            request: `B-roll ${contextRequest.moment}: ${contextRequest.reason}`,
+          },
+          ...base,
+        ];
+      }
+
+      let links = linksWithContextRequest();
 
       document.querySelector("#addLink").addEventListener("click", () => {
         const next = links.length + 1;
@@ -399,7 +462,7 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        links = structuredClone(sampleLinks);
+        links = linksWithContextRequest();
         render();
       });
 
@@ -446,7 +509,20 @@
         linksElement.replaceChildren(
           ...links.map((link, index) => renderLink(link, index, evaluation.results[index])),
         );
+        renderContextRequest();
         updateSummary(evaluation);
+      }
+
+      function renderContextRequest() {
+        if (!contextRequestElement || !contextRequest) {
+          return;
+        }
+        const title = document.createElement("strong");
+        title.textContent = `B-roll moment ${contextRequest.moment} needs clearer context`;
+        const detail = document.createElement("span");
+        detail.textContent = contextRequest.reason;
+        contextRequestElement.replaceChildren(title, detail);
+        contextRequestElement.hidden = false;
       }
 
       function updateSummary(evaluation) {
@@ -537,6 +613,7 @@
               <strong>${buckets[link.bucket] || "Unassigned"}</strong>
               <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
             </div>
+            ${link.request ? '<p class="request-note" data-request-note></p>' : ""}
             <label>Handle or link<input data-field="handle" aria-label="Handle or link"></label>
             <div class="fields-row">
               <label>Source
@@ -560,6 +637,10 @@
 
         article.querySelector('[data-field="handle"]').value = link.handle;
         article.querySelector("[data-initial]").textContent = initial(link.handle);
+        const requestNote = article.querySelector("[data-request-note]");
+        if (requestNote) {
+          requestNote.textContent = link.request;
+        }
 
         // Text fields update live on input but only refresh badges/summary, so the field
         // keeps focus. Selects re-render fully on change (safe — no caret).

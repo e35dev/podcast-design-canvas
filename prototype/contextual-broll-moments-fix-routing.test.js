@@ -12,21 +12,27 @@ const assert = require("assert");
 const root = path.join(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "prototype", "contextual-broll-moments.html"), "utf8");
 
-// Each flagged condition declares the owning fix screen it routes to.
-const routes = [
-  { key: "fixScreen", file: "contextual-title-cards.html" },
-  { key: "fixScreen", file: "social-context-intake.html" },
-];
+assert.ok(
+  source.includes('fixScreen: "contextual-title-cards.html"'),
+  "contextual-broll-moments routes repeated title cards to contextual-title-cards.html",
+);
+assert.ok(
+  source.includes("contextScorer.socialContextHref(moment)"),
+  "contextual-broll-moments builds a moment-specific social-context handoff",
+);
+assert.ok(
+  source.includes('"social-context-intake.html"'),
+  "contextual-broll-moments keeps a social-context fallback route",
+);
 
-for (const { key, file } of routes) {
-  assert.ok(source.includes(`${key}: "${file}"`), `contextual-broll-moments routes ${key} to ${file}`);
+const targets = ["contextual-title-cards.html", "social-context-intake.html"];
+for (const file of targets) {
   assert.ok(fs.existsSync(path.join(root, "prototype", file)), `fix screen ${file} exists as a real prototype`);
 }
 
-const targets = [...new Set(routes.map((r) => r.file))];
 assert.strictEqual(targets.length, 2, "each fix screen is listed once");
 
 // The hand-off is a navigable link, not just a status note.
 assert.ok(source.includes("createElement(\"a\")"), "hand-off renders a navigable link");
 
-console.log("contextual-broll-moments: " + routes.length + " flagged conditions route to " + targets.length + " owning fix screens");
+console.log("contextual-broll-moments: weak-context and repeat reviews route to " + targets.length + " owning fix screens");

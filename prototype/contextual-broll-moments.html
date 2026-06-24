@@ -326,6 +326,7 @@
       }
     </style>
       <script src="../preview/visuals-nav.js" defer></script>
+      <script src="./broll-context-scorer.js"></script>
   </head>
   <body data-visuals-step="contextual-broll-moments">
     <main>
@@ -388,13 +389,25 @@
       };
 
       const sampleMoments = [
-        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
-        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
-        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
-        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
+        { id: "m1", timecode: "08:15", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
+        { id: "m2", timecode: "12:04", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
+        { id: "m3", timecode: "18:42", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
+        { id: "m4", timecode: "27:10", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
       ];
 
-      let moments = structuredClone(sampleMoments);
+      const sampleTranscripts = {
+        m1: "Guest Marcus describes the Acme launch workflow and the customer demo.",
+        m2: "Host Dana says this next segment explains the case study.",
+        m3: "They mention it briefly and move on.",
+        m4: "Host Dana says the best editing choice is the one viewers never notice.",
+      };
+
+      const contextScorer = window.PodcastBrollContextScorer;
+      const startingMoments = contextScorer
+        ? contextScorer.annotateMoments(sampleMoments, sampleTranscripts)
+        : structuredClone(sampleMoments);
+
+      let moments = structuredClone(startingMoments);
 
       const momentsElement = document.querySelector("#moments");
       const statusElement = document.querySelector("#status");
@@ -407,7 +420,7 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        moments = structuredClone(sampleMoments);
+        moments = structuredClone(startingMoments);
         render();
       });
 
@@ -449,13 +462,13 @@
                 ? { fixScreen: "contextual-title-cards.html", fixLabel: "title cards" }
                 : {}),
             };
-          } else if (moment.decision === "suggested" && source.weak) {
+          } else if (moment.decision === "suggested" && (source.weak || moment.contextWeak)) {
             state = "review";
             issue = {
               title: `Check the context for "${moment.reason}"`,
-              action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
+              action: moment.contextReason || "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
               tone: "review",
-              fixScreen: "social-context-intake.html",
+              fixScreen: contextScorer ? contextScorer.socialContextHref(moment) : "social-context-intake.html",
               fixLabel: "social context intake",
             };
           } else if (moment.decision === "adjusted") {
