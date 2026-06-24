@@ -113,6 +113,11 @@ function renderSpeakerSetupNav() {
     prevLink.href = previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
+  } else {
+    const roles = document.createElement("a");
+    roles.href = "speaker-role-mapping.html?path=episode";
+    roles.textContent = "Previous: Speaker roles";
+    wrap.appendChild(roles);
   }
 
   if (next) {
