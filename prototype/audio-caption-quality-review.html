@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audio &amp; Caption Quality Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .lines {
+        display: grid;
+        gap: 14px;
+      }
+
+      .line {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .caption-preview {
+        border-radius: 6px;
+        background: #10201d;
+        color: #f4f7f6;
+        font-weight: 600;
+        padding: 10px 12px;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.confirmed {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.fixed {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Audio &amp; caption quality review</h1>
+      <p class="lede">Review only the caption lines that need you &mdash; uncertain names, words lost to cross-talk, or captions that collide with a lower-third &mdash; and fix them in plain language. Confident lines stay out of your way.</p>
+
+      <section class="workspace" aria-label="Caption quality review workspace">
+        <div class="panel">
+          <h2>Flagged caption lines</h2>
+          <div class="lines" id="lines"></div>
+          <div class="actions">
+            <button type="button" id="addLine">Add a line</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Caption review summary">
+          <h2>Caption review summary</h2>
+          <div id="status" class="status ready">Captions look good</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">We only surface lines worth your attention. A correction you confirm applies wherever that word repeats.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // What the system flagged about a caption line. "weak" means it can't be confirmed
+      // as-is without a creator check; "layout" means the words are right but the caption
+      // collides with something on screen.
+      const flags = {
+        clear: { label: "Reads clearly", weak: false },
+        "low-confidence": { label: "Uncertain name or term", weak: true, title: "We're not sure this name is spelled right" },
+        crosstalk: { label: "Word lost to cross-talk", weak: true, title: "A word was hard to hear over cross-talk" },
+        collision: { label: "Collides with a lower-third", weak: false, layout: true, title: "This caption overlaps the lower-third" },
+        "long-line": { label: "Line is too long to read", weak: false, layout: true, title: "This line is too long to read in time" },
+      };
+
+      // The creator's decision. "confirm" accepts the line as written; "edit" means they
+      // corrected the words above; "move"/"split" resolve a layout collision.
+      const actions = {
+        review: "Decide later",
+        confirm: "Looks right",
+        edit: "I fixed the wording",
+        move: "Move the caption",
+        split: "Split the line",
+      };
+
+      // Which actions make sense for each flag.
+      const actionsFor = {
+        clear: ["confirm"],
+        "low-confidence": ["review", "confirm", "edit"],
+        crosstalk: ["review", "confirm", "edit"],
+        collision: ["review", "move"],
+        "long-line": ["review", "split", "edit"],
+      };
+
+      const sampleLines = [
+        { id: "l1", text: "Welcome back to the show.", flag: "clear", action: "confirm" },
+        { id: "l2", text: "Today we're joined by Anika Rao.", flag: "low-confidence", action: "review" },
+        { id: "l3", text: "I think the the launch was huge.", flag: "crosstalk", action: "review" },
+        { id: "l4", text: "Founder and CEO of Northwind Labs since 2019.", flag: "collision", action: "review" },
+      ];
+
+      let lines = structuredClone(sampleLines);
+
+      const linesElement = document.querySelector("#lines");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addLine").addEventListener("click", () => {
+        const next = lines.length + 1;
+        lines.push({ id: `l${next}-${lines.length}`, text: "", flag: "low-confidence", action: "review" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        lines = structuredClone(sampleLines);
+        render();
+      });
+
+      // Single source of truth: map each line's flag + the creator's action to a review
+      // state and a plain-language issue. Confident lines pass; flagged lines need the
+      // creator to confirm, edit, or resolve a layout collision.
+      function evaluate(list) {
+        const results = list.map((line) => {
+          const flag = flags[line.flag] || flags.clear;
+          const allowed = actionsFor[line.flag] || ["confirm"];
+          const action = allowed.includes(line.action) ? line.action : (line.flag === "clear" ? "confirm" : "review");
+          let state;
+          let issue = null;
+
+          if (line.flag === "clear") {
+            state = "confirmed";
+          } else if (!line.text.trim()) {
+            state = "review";
+            issue = { title: "A caption line is empty", action: "Add the caption text, or remove the line.", tone: "review" };
+          } else if (action === "review") {
+            state = "review";
+            issue = { title: flag.title, action: "Confirm the wording, fix it, or resolve the overlap.", tone: "review" };
+          } else if (action === "confirm") {
+            state = "confirmed";
+          } else {
+            state = "fixed";
+            issue = { title: `Line resolved: ${actions[action].toLowerCase()}`, action: "Looks good for the finished captions.", tone: "info" };
+          }
+
+          return { id: line.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold a
+      // caret, so replacing them is safe).
+      function render() {
+        const evaluation = evaluate(lines);
+        linesElement.replaceChildren(
+          ...lines.map((line, index) => renderLine(line, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Captions look good" : "Lines to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every flagged line is settled. Captions are ready." })]),
+        );
+      }
+
+      // Light update used while typing a caption: refresh the badge, the caption preview,
+      // and the summary in place, without rebuilding the input the creator is typing in.
+      function refreshStates() {
+        const evaluation = evaluate(lines);
+        Array.from(linesElement.children).forEach((node, index) => {
+          const badge = node.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+          const preview = node.querySelector("[data-preview]");
+          if (preview && lines[index]) {
+            preview.textContent = lines[index].text || "(empty caption)";
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function badgeClass(state) {
+        if (state === "confirmed") {
+          return "confirmed";
+        }
+        if (state === "fixed") {
+          return "fixed";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "confirmed") {
+          return "confirmed";
+        }
+        if (state === "fixed") {
+          return "fixed";
+        }
+        return "needs review";
+      }
+
+      function renderLine(line, index, result) {
+        const article = document.createElement("article");
+        article.className = "line";
+
+        const flagOptions = Object.entries(flags)
+          .map(([value, item]) => `<option value="${value}" ${value === line.flag ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const allowed = actionsFor[line.flag] || ["confirm"];
+        const actionOptions = allowed
+          .map((value) => `<option value="${value}" ${value === line.action ? "selected" : ""}>${actions[value]}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled values (flag/action keys and their fixed
+        // labels, fixed states). The editable caption text is written via .value and the
+        // preview via textContent below, so typed text can never inject markup.
+        article.innerHTML = `
+          <div class="caption-preview"><span data-preview></span></div>
+          <div class="head">
+            <strong>Caption line</strong>
+            <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+          </div>
+          <div class="fields">
+            <label>Caption text<input data-field="text" aria-label="Caption text"></label>
+            <div class="fields-row">
+              <label>What we found
+                <select data-field="flag" aria-label="What the system flagged">${flagOptions}</select>
+              </label>
+              <label>What to do
+                <select data-field="action" aria-label="How to resolve it" ${allowed.length <= 1 ? "disabled" : ""}>${actionOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        article.querySelector('[data-field="text"]').value = line.text;
+        article.querySelector("[data-preview]").textContent = line.text || "(empty caption)";
+
+        // Text field updates live on input but only refreshes badge/preview/summary, so it
+        // keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so the caption input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        const line = lines[index];
+        line[field] = event.target.value;
+
+        // When the flag changes, drop any action the new flag doesn't offer.
+        if (field === "flag" && !(actionsFor[line.flag] || ["confirm"]).includes(line.action)) {
+          line.action = line.flag === "clear" ? "confirm" : "review";
+        }
+
+        if (full) {
+          render();
+        } else {
+          refreshStates();
+        }
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
