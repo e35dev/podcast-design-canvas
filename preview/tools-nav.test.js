@@ -52,6 +52,7 @@ const styleFlow = new Set([
   "preset-comparison-preview.html",
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
+  "canvas-layer-controls.html",
 ]);
 
 const visualsFlow = new Set([

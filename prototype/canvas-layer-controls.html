@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Canvas Layer Controls Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px; }
+
+      .layers { display: grid; gap: 10px; }
+      .layer {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .layer.hidden { opacity: 0.55; }
+      .layer.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+      .swatch { width: 30px; height: 30px; border-radius: 6px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+      .layer-main { display: grid; gap: 3px; min-width: 0; }
+      .layer-name { font-weight: 700; font-size: 14px; }
+      .layer-meta { color: var(--muted); font-size: 12px; }
+
+      .layer-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+      .badge { display: inline-flex; align-items: center; min-height: 24px; border-radius: 999px; padding: 0 9px; font-weight: 700; font-size: 12px; }
+      .badge.locked { color: #1f4f7a; background: #e0eefb; }
+      .badge.hidden { color: #7a4400; background: #fff1d6; }
+
+      .status { display: inline-flex; align-items: center; min-height: 32px; border-radius: 999px; padding: 0 12px; font-weight: 800; }
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+
+      .stage {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+        margin-bottom: 14px;
+      }
+      .stage .obj { position: absolute; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; text-align: center; padding: 2px; }
+      .obj.speaker { inset: 16% 18% 24% 18%; background: #e8f4f1; color: #1d554d; }
+      .obj.captions { left: 14%; right: 14%; bottom: 9%; height: 14%; background: rgba(16,24,22,0.78); color: #fff; }
+      .obj.lower-thirds { left: 8%; bottom: 26%; width: 42%; height: 12%; background: rgba(19,111,99,0.9); color: #fff; }
+      .obj.title { left: 14%; right: 14%; top: 10%; height: 18%; background: rgba(255,214,120,0.92); color: #4a3500; }
+      .obj.broll { right: 8%; top: 30%; width: 30%; height: 30%; background: rgba(255,255,255,0.82); color: #1d554d; }
+      .obj.background { inset: 0; background: rgba(13,40,36,0.25); color: #fff; }
+      .obj.brand { right: 6%; bottom: 9%; width: 22%; height: 18%; background: rgba(255,255,255,0.95); color: #1d554d; }
+      .obj.safe-area { inset: 6%; background: transparent; border: 1px dashed rgba(255,255,255,0.7); color: #fff; }
+      .obj.is-hidden { display: none; }
+
+      .checks { display: grid; gap: 10px; }
+      .check { border-left: 4px solid var(--warn); border-radius: 6px; background: #ffffff; padding: 12px; }
+      .check.info { border-left-color: var(--accent); }
+      .check strong { display: block; margin-bottom: 4px; }
+      .check span { color: var(--muted); }
+
+      .reuse { display: grid; gap: 8px; margin: 14px 0 0; }
+      .reuse label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+      button { min-height: 40px; border: 1px solid #0f5d53; border-radius: 6px; background: var(--accent); color: #ffffff; font: inherit; font-weight: 700; padding: 8px 12px; cursor: pointer; }
+      button.secondary { background: #ffffff; color: var(--accent); }
+      button.tiny { min-height: 30px; padding: 3px 9px; font-size: 13px; }
+      button:disabled { opacity: 0.4; cursor: not-allowed; }
+      select { min-height: 40px; border: 1px solid #bfcbc7; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; padding: 8px 10px; }
+
+      .summary-note { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+
+      @media (max-width: 860px) {
+        .workspace { grid-template-columns: 1fr; }
+        .layer { grid-template-columns: auto minmax(0, 1fr); }
+        .layer-actions { grid-column: 1 / -1; justify-content: flex-start; }
+      }
+    </style>
+  </head>
+  <body data-style-step="canvas-layer-controls">
+    <main>
+      <h1>Canvas layer controls</h1>
+      <p class="lede">Customize a podcast layout by stacking speaker frames, captions, overlays, and brand elements &mdash; then save it as a reusable show layout. Reordering, hiding, and locking happen here; the preset keeps the polished foundation.</p>
+
+      <section class="workspace" aria-label="Canvas layer controls workspace">
+        <div class="panel">
+          <h2>Layer stack</h2>
+          <p class="summary-note">Top of the list draws on top. Lock brand elements so they cannot move by accident.</p>
+          <div class="layers" id="layers"></div>
+          <div class="actions">
+            <label for="addType" class="layer-meta">Add layer</label>
+            <select id="addType" aria-label="Layer type to add">
+              <option value="speaker">Speaker video frame</option>
+              <option value="captions">Captions</option>
+              <option value="lower-thirds">Lower-third</option>
+              <option value="title">Title moment</option>
+              <option value="broll">B-roll zone</option>
+              <option value="background">Shape / background</option>
+              <option value="brand">Logo / show branding</option>
+              <option value="safe-area">Safe-area guide</option>
+            </select>
+            <button type="button" id="addLayer">Add</button>
+            <button type="button" id="saveLayout">Save as reusable layout</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Layout preview and checks">
+          <h2>Layout preview</h2>
+          <div class="stage" id="stage" aria-hidden="true"></div>
+          <div id="status" class="status ready">Layout ready to save</div>
+          <div id="applied"></div>
+          <div class="checks" id="checks"></div>
+          <h2 style="margin-top:18px;">Adapts when reused</h2>
+          <p class="summary-note">Choose which parts re-fit each new episode when this layout is saved as a template.</p>
+          <div class="reuse" id="reuse"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      function el(tag, props, children) {
+        const node = document.createElement(tag);
+        const settings = props || {};
+        Object.keys(settings).forEach(function (key) {
+          const value = settings[key];
+          if (key === "class") { node.className = value; }
+          else if (key === "text") { node.textContent = value; }
+          else if (key === "checked") { node.checked = value; }
+          else { node.setAttribute(key, value); }
+        });
+        (children || []).forEach(function (child) { node.appendChild(child); });
+        return node;
+      }
+
+      // Podcast-specific layer objects. brand elements are the ones worth locking.
+      const LAYER_TYPES = {
+        speaker: { label: "Speaker video frame", swatch: "#1d554d", brand: false },
+        captions: { label: "Captions", swatch: "#16211f", brand: false },
+        "lower-thirds": { label: "Lower-third", swatch: "#136f63", brand: false },
+        title: { label: "Title moment", swatch: "#d6a83c", brand: false },
+        broll: { label: "B-roll zone", swatch: "#9fb8b1", brand: false },
+        background: { label: "Shape / background", swatch: "#0d2824", brand: false },
+        brand: { label: "Logo / show branding", swatch: "#a15c00", brand: true },
+        "safe-area": { label: "Safe-area guide", swatch: "#5e6b67", brand: false },
+      };
+
+      // The six reuse choices from the spec; default to adapting episode-specific parts.
+      const REUSE_KEYS = [
+        { id: "roles", label: "Speaker count and roles", on: true },
+        { id: "guests", label: "Guest names and lower-thirds", on: true },
+        { id: "brand", label: "Brand colors and logo placement", on: false },
+        { id: "captions", label: "Caption style", on: false },
+        { id: "title", label: "Title moment treatment", on: true },
+        { id: "broll", label: "B-roll placement rules", on: true },
+      ];
+
+      function sampleLayers() {
+        return [
+          { id: "l1", type: "captions", visible: true, locked: false },
+          { id: "l2", type: "lower-thirds", visible: true, locked: false },
+          { id: "l3", type: "speaker", visible: true, locked: false },
+          { id: "l4", type: "brand", visible: true, locked: false },
+          { id: "l5", type: "background", visible: true, locked: true },
+        ];
+      }
+
+      let layers = sampleLayers();
+      let selectedId = "l3";
+      let reuse = REUSE_KEYS.map(function (k) { return { id: k.id, label: k.label, on: k.on }; });
+      let counter = 6;
+      let savedSignature = null;
+      function layoutSignature(layerList, reuseList) { return JSON.stringify({ layers: layerList, reuse: reuseList }); }
+      function signature() { return layoutSignature(layers, reuse); }
+
+      const layersEl = document.querySelector("#layers");
+      const stageEl = document.querySelector("#stage");
+      const statusEl = document.querySelector("#status");
+      const checksEl = document.querySelector("#checks");
+      const reuseEl = document.querySelector("#reuse");
+      const saveBtn = document.querySelector("#saveLayout");
+      const appliedEl = document.querySelector("#applied");
+
+      saveBtn.addEventListener("click", function () {
+        if (evaluate(layers).overall !== "ready") { return; }
+        savedSignature = signature();
+        render();
+      });
+
+      document.querySelector("#addLayer").addEventListener("click", function () {
+        const type = document.querySelector("#addType").value;
+        const id = "l" + counter;
+        counter += 1;
+        layers.unshift({ id: id, type: type, visible: true, locked: false });
+        selectedId = id;
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", function () {
+        layers = sampleLayers();
+        selectedId = "l3";
+        reuse = REUSE_KEYS.map(function (k) { return { id: k.id, label: k.label, on: k.on }; });
+        render();
+      });
+
+      // Surface the visible guardrails from the spec: captions hidden behind a frame,
+      // unlocked brand elements, and hidden speakers. Top of the list draws on top,
+      // so a lower index sits above a higher index.
+      function evaluate(list) {
+        const checks = [];
+        const indexOfType = function (type) {
+          return list.findIndex(function (layer) { return layer.type === type && layer.visible; });
+        };
+        const captionsIdx = indexOfType("captions");
+        const speakerIdx = indexOfType("speaker");
+        if (captionsIdx >= 0 && speakerIdx >= 0 && speakerIdx < captionsIdx) {
+          checks.push({
+            title: "Captions may be covered",
+            action: "A speaker frame sits above the captions. Move captions higher in the stack so they stay readable.",
+            tone: "review",
+          });
+        }
+        list.forEach(function (layer) {
+          if (LAYER_TYPES[layer.type].brand && layer.visible && !layer.locked) {
+            checks.push({
+              title: "Brand element is unlocked",
+              action: "Lock the logo or show branding so it cannot move by accident while editing.",
+              tone: "review",
+            });
+          }
+        });
+        const hiddenSpeakers = list.filter(function (l) { return l.type === "speaker" && !l.visible; }).length;
+        if (hiddenSpeakers > 0) {
+          checks.push({
+            title: hiddenSpeakers + " speaker frame" + (hiddenSpeakers === 1 ? "" : "s") + " hidden",
+            action: "A hidden speaker will not appear in this layout. Show the frame or confirm they are audio-only.",
+            tone: "info",
+          });
+        }
+        const hasReview = checks.some(function (c) { return c.tone === "review"; });
+        return { checks: checks, overall: hasReview ? "review" : "ready" };
+      }
+
+      function render() {
+        const evaluation = evaluate(layers);
+
+        layersEl.replaceChildren.apply(layersEl, layers.map(renderLayer));
+        renderStage();
+
+        statusEl.className = "status " + evaluation.overall;
+        const isSaved = savedSignature !== null && savedSignature === signature();
+        statusEl.textContent = isSaved
+          ? "Saved as a reusable layout"
+          : evaluation.overall === "ready" ? "Layout ready to save" : "Review before saving";
+        saveBtn.disabled = evaluation.overall !== "ready" || isSaved;
+        if (isSaved) {
+          const visible = layers.filter(function (l) { return l.visible; }).length;
+          const adapts = reuse.filter(function (r) { return r.on; }).map(function (r) { return r.label.toLowerCase(); });
+          appliedEl.replaceChildren(el("div", { class: "check info" }, [
+            el("strong", { text: "Saved as a reusable layout" }, []),
+            el("span", { text: visible + " visible layer" + (visible === 1 ? "" : "s") + " · adapts next episode: " + (adapts.length ? adapts.join(", ") : "nothing pinned") }, []),
+          ]));
+        } else {
+          appliedEl.replaceChildren();
+        }
+
+        if (evaluation.checks.length === 0) {
+          checksEl.replaceChildren(el("p", { class: "summary-note", text: "No layout conflicts. Reorder, lock, and save as a reusable show layout." }, []));
+        } else {
+          checksEl.replaceChildren.apply(checksEl, evaluation.checks.map(function (c) {
+            return el("div", { class: "check " + c.tone }, [el("strong", { text: c.title }, []), el("span", { text: c.action }, [])]);
+          }));
+        }
+
+        reuseEl.replaceChildren.apply(reuseEl, reuse.map(function (item, index) {
+          const box = el("input", { type: "checkbox", "aria-label": item.label, checked: item.on }, []);
+          box.addEventListener("change", function () { reuse[index].on = box.checked; render(); });
+          const label = el("label", {}, [box]);
+          label.appendChild(document.createTextNode(item.label));
+          return label;
+        }));
+      }
+
+      function renderStage() {
+        const objs = [];
+        for (let i = layers.length - 1; i >= 0; i -= 1) {
+          const layer = layers[i];
+          if (!layer.visible) { continue; }
+          objs.push(el("div", { class: "obj " + layer.type, text: shortLabel(layer.type) }, []));
+        }
+        stageEl.replaceChildren.apply(stageEl, objs);
+      }
+
+      function shortLabel(type) {
+        if (type === "speaker") { return "Speaker"; }
+        if (type === "captions") { return "Captions"; }
+        if (type === "lower-thirds") { return "Lower-third"; }
+        if (type === "title") { return "Title"; }
+        if (type === "broll") { return "B-roll"; }
+        if (type === "brand") { return "Brand"; }
+        if (type === "safe-area") { return "Safe area"; }
+        return "";
+      }
+
+      function renderLayer(layer, index) {
+        const type = LAYER_TYPES[layer.type];
+
+        const swatch = el("div", { class: "swatch" }, []);
+        swatch.style.background = type.swatch;
+
+        const nameRow = el("div", { class: "layer-name", text: type.label }, []);
+        const metaBits = [];
+        metaBits.push(index === 0 ? "Top of stack" : "Layer " + (index + 1));
+        if (layer.locked) { metaBits.push("locked"); }
+        if (!layer.visible) { metaBits.push("hidden"); }
+        const meta = el("div", { class: "layer-meta", text: metaBits.join(" · ") }, []);
+        const main = el("div", { class: "layer-main" }, [nameRow, meta]);
+
+        const up = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " up", text: "▲" }, []);
+        if (index === 0) { up.disabled = true; }
+        up.addEventListener("click", function () { move(index, -1); });
+        const down = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " down", text: "▼" }, []);
+        if (index === layers.length - 1) { down.disabled = true; }
+        down.addEventListener("click", function () { move(index, 1); });
+
+        const vis = el("button", { type: "button", class: "tiny secondary", text: layer.visible ? "Hide" : "Show" }, []);
+        vis.addEventListener("click", function () { layers[index].visible = !layers[index].visible; render(); });
+
+        const lock = el("button", { type: "button", class: "tiny secondary", text: layer.locked ? "Unlock" : "Lock" }, []);
+        lock.addEventListener("click", function () { layers[index].locked = !layers[index].locked; render(); });
+
+        const remove = el("button", { type: "button", class: "tiny secondary", "aria-label": "Remove " + type.label, text: "Remove" }, []);
+        remove.addEventListener("click", function () {
+          if (layer.locked) { return; }
+          layers.splice(index, 1);
+          render();
+        });
+        if (layer.locked) { remove.disabled = true; }
+
+        const actions = el("div", { class: "layer-actions" }, [up, down, vis, lock, remove]);
+
+        let cls = "layer";
+        if (!layer.visible) { cls += " hidden"; }
+        if (layer.id === selectedId) { cls += " selected"; }
+        const row = el("article", { class: cls }, [swatch, main, actions]);
+        row.addEventListener("click", function (event) {
+          if (event.target.tagName === "BUTTON") { return; }
+          selectedId = layer.id;
+          render();
+        });
+        return row;
+      }
+
+      function move(index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= layers.length) { return; }
+        const copy = layers.slice();
+        const item = copy.splice(index, 1)[0];
+        copy.splice(target, 0, item);
+        layers = copy;
+        render();
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature };
+      }
+
+      render();
+    </script>
+    <script src="../preview/style-nav.js" defer></script>
+  </body>
+</html>
