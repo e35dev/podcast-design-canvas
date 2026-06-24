@@ -155,6 +155,38 @@ function setVisualsScreenLink(link, file) {
   link.href = resolved;
 }
 
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeVisualsHref(href) {
+  return isLocalScreenHref(href) && isPreviewAppVisualsTarget(href);
+}
+
+function normalizeVisualsScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeVisualsHref(href)) {
+    setVisualsScreenLink(link, href);
+  }
+}
+
+function normalizeVisualsScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeVisualsScreenLink);
+}
+
+function normalizeVisualsLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeVisualsScreenLink(link);
+  }
+}
+
 function visualsEntryContext() {
   const from = new URLSearchParams((window.location.search || "").replace(/^\?/, "")).get("from");
   if (from === "style") {
@@ -311,6 +343,8 @@ function renderVisualsNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeVisualsScreenLinks(document);
+  document.addEventListener("click", normalizeVisualsLinkClick);
 }
 
 if (document.readyState === "loading") {

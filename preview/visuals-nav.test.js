@@ -49,10 +49,17 @@ function createElement(tagName) {
     id: "",
     target: "",
     textContent: "",
+    getAttribute(name) {
+      if (name === "href") return this.href;
+      return this.attributes[name] || "";
+    },
     setAttribute(name, value) {
       this.attributes[name] = value;
       if (name === "id") this.id = value;
       if (name === "class") this.className = value;
+    },
+    closest(selector) {
+      return selector === "a[href]" && this.tagName === "a" && this.getAttribute("href") ? this : null;
     },
     appendChild(child) {
       this.children.push(child);
@@ -70,6 +77,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
+function appendStaticLink(body, href, text = href) {
+  const link = createElement("a");
+  link.href = href;
+  link.textContent = text;
+  body.appendChild(link);
+  return link;
+}
+
 function makeWindow(fileName, embedded = false, search = "") {
   const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
@@ -77,12 +92,14 @@ function makeWindow(fileName, embedded = false, search = "") {
   return window;
 }
 
-function renderNavFor(fileName, visualsStep, embedded = false, search = "") {
+function renderNavFor(fileName, visualsStep, embedded = false, search = "", staticHrefs = []) {
   const head = createElement("head");
   const body = createElement("body");
+  const listeners = {};
   if (visualsStep) {
     body.dataset = { visualsStep };
   }
+  staticHrefs.forEach((href) => appendStaticLink(body, href));
   const document = {
     readyState: "complete",
     head,
@@ -96,6 +113,13 @@ function renderNavFor(fileName, visualsStep, embedded = false, search = "") {
       const className = selector.slice(1);
       return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
     },
+    querySelectorAll(selector) {
+      if (selector !== "a[href]") return [];
+      return flatten(body).filter((node) => node.tagName === "a" && node.getAttribute("href"));
+    },
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    },
   };
 
   vm.runInNewContext(navScript, {
@@ -104,7 +128,9 @@ function renderNavFor(fileName, visualsStep, embedded = false, search = "") {
     URLSearchParams,
   });
 
-  return flatten(body);
+  const nodes = flatten(body);
+  nodes.listeners = listeners;
+  return nodes;
 }
 
 function linkWithText(nodes, text) {
@@ -300,5 +326,78 @@ assert.equal(
   "on-screen-correction-note.html?from=cleanup&path=episode",
   "visuals nav merges episode path context onto cleanup entry backlinks",
 );
+
+const standaloneBrollLinks = renderNavFor(
+  "contextual-broll-moments.html",
+  "contextual-broll-moments",
+  false,
+  "?path=episode&from=style",
+  [
+    "contextual-title-cards.html",
+    "social-context-intake.html",
+    "#preview",
+    "https://example.com/contextual-title-cards.html",
+    "//cdn.example.com/contextual-title-cards.html",
+  ],
+);
+assert.equal(
+  linkWithText(standaloneBrollLinks, "contextual-title-cards.html").href,
+  "contextual-title-cards.html?from=style&path=episode",
+  "standalone visuals nav keeps visuals context on in-page visuals links",
+);
+assert.equal(
+  linkWithText(standaloneBrollLinks, "social-context-intake.html").href,
+  "social-context-intake.html",
+  "visuals nav leaves non-visuals in-page links alone",
+);
+assert.equal(
+  linkWithText(standaloneBrollLinks, "#preview").href,
+  "#preview",
+  "visuals nav leaves same-page anchors alone",
+);
+assert.equal(
+  linkWithText(standaloneBrollLinks, "https://example.com/contextual-title-cards.html").href,
+  "https://example.com/contextual-title-cards.html",
+  "visuals nav leaves external links alone",
+);
+assert.equal(
+  linkWithText(standaloneBrollLinks, "//cdn.example.com/contextual-title-cards.html").href,
+  "//cdn.example.com/contextual-title-cards.html",
+  "visuals nav leaves protocol-relative external links alone",
+);
+
+const embeddedBrollLinks = renderNavFor(
+  "contextual-broll-moments.html",
+  "contextual-broll-moments",
+  true,
+  "?from=cleanup",
+  ["contextual-title-cards.html"],
+);
+const embeddedTitleLink = linkWithText(embeddedBrollLinks, "contextual-title-cards.html");
+assert.equal(
+  embeddedTitleLink.href,
+  "../preview/app.html#contextual-title-cards?from=cleanup",
+  "embedded visuals nav routes in-page visuals links through the preview app",
+);
+assert.equal(embeddedTitleLink.target, "_top", "embedded in-page visuals links target the parent app");
+
+const dynamicBrollLinks = renderNavFor(
+  "contextual-broll-moments.html",
+  "contextual-broll-moments",
+  true,
+  "?path=episode&from=style",
+);
+const dynamicTitleLink = appendStaticLink(
+  dynamicBrollLinks[0],
+  "contextual-title-cards.html",
+  "Open title cards",
+);
+dynamicBrollLinks.listeners.click({ target: dynamicTitleLink });
+assert.equal(
+  dynamicTitleLink.href,
+  "../preview/app.html#contextual-title-cards?from=style&path=episode",
+  "embedded visuals nav normalizes dynamically rendered visuals links before navigation",
+);
+assert.equal(dynamicTitleLink.target, "_top", "dynamic embedded visuals links target the parent app");
 
 console.log("visuals nav: contextual-visuals screens connected into one path");
