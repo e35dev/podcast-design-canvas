@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Destination Presets Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1200px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .destination-list,
+      .destination-toggle-list,
+      .outcomes,
+      .reopened,
+      .packages {
+        display: grid;
+        gap: 12px;
+      }
+
+      .destination-card,
+      .toggle-card,
+      .package-card,
+      .outcome,
+      .warning {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .destination-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(19, 111, 99, 0.12);
+      }
+
+      .destination-card label,
+      .toggle-card label {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+        cursor: pointer;
+      }
+
+      input[type="radio"],
+      input[type="checkbox"] {
+        margin-top: 2px;
+      }
+
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .card-head strong,
+      .package-card strong,
+      .warning strong,
+      .outcome strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .card-head span,
+      .toggle-card span,
+      .package-card span,
+      .warning span,
+      .outcome span,
+      .note,
+      .override-grid label {
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.primary { color: #075246; background: #dff5ef; }
+      .badge.additional { color: #2a4c8a; background: #e2ebfb; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.blocked { color: #8b1e1e; background: #ffe0e0; }
+      .badge.optional { color: #5e6b67; background: #eceeed; }
+
+      .override-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 14px 0 16px;
+      }
+
+      .summary-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .summary-card strong {
+        display: block;
+        font-size: 24px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      .warning { border-left: 4px solid var(--warn); }
+      .warning.blocked { border-left-color: var(--block); }
+      .warning.info { border-left-color: var(--info); }
+
+      .package-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      .toolbar button.active {
+        border-color: var(--accent);
+        background: #def3ed;
+        color: var(--accent);
+      }
+
+      @media (max-width: 920px) {
+        .workspace,
+        .override-grid,
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .package-card {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Publish Destination Presets Prototype</h1>
+      <p class="lede">
+        Choose one primary destination, prepare additional destination packages alongside it, and keep overrides and reopened checklist consequences scoped to the destination they belong to.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Destination Selection</h2>
+          <div class="destination-list" id="primaryDestinations"></div>
+
+          <h3 style="margin-top: 22px;">Additional destinations</h3>
+          <div class="destination-toggle-list" id="additionalDestinations"></div>
+
+          <h3 style="margin-top: 22px;">Primary destination overrides</h3>
+          <p class="note">A single override stays attached to the destination it was changed on and does not silently change other prepared packages.</p>
+          <div class="override-grid">
+            <label>
+              Caption behavior
+              <select id="captionOverride"></select>
+            </label>
+            <label>
+              Thumbnail requirement
+              <select id="thumbnailOverride"></select>
+            </label>
+            <label>
+              Review watermark
+              <select id="watermarkOverride"></select>
+            </label>
+            <label>
+              Saved default
+              <select id="defaultOverride"></select>
+            </label>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2 id="summaryTitle">Primary destination summary</h2>
+          <div id="summaryBadge" class="badge primary">primary destination</div>
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <h3>Publishing outcomes</h3>
+          <div class="outcomes" id="outcomes"></div>
+
+          <h3 style="margin-top: 20px;">Prepared packages</h3>
+          <div class="packages" id="packages"></div>
+
+          <h3 style="margin-top: 20px;">Checklist reopens</h3>
+          <div class="reopened" id="reopened"></div>
+
+          <div class="toolbar" id="packageToolbar"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const destinations = {
+        youtube: {
+          name: "YouTube full episode",
+          description: "Long-form public publish with thumbnail, chapters, metadata, and polished captions.",
+          outcomes: [
+            ["Thumbnail required", "Cover frame must stay selected and readable at small sizes."],
+            ["Chapter metadata included", "Publish package carries titles and chapter timing into the final destination."],
+            ["Captions ship publicly", "Reviewed captions remain attached to the public-facing export."],
+          ],
+          defaults: {
+            captions: "reviewed captions",
+            thumbnail: "required",
+            watermark: "disabled",
+            defaultSave: "show default",
+          },
+          reopen: [
+            "thumbnail selection reopens when the destination starts requiring a cover",
+            "metadata fields reopen because YouTube expects title, description, and chapters",
+          ],
+        },
+        review: {
+          name: "Private client review",
+          description: "Reviewer-facing package with watermark, destination context, and visible unresolved decisions.",
+          outcomes: [
+            ["Review watermark on", "The package stays visually distinct from the final public export."],
+            ["Caption behavior optional", "A reviewer copy can hold captions back if attribution still needs confirmation."],
+            ["Decision summary included", "Reviewer-facing notes stay attached to the package instead of a detached task board."],
+          ],
+          defaults: {
+            captions: "current caption state",
+            thumbnail: "not required",
+            watermark: "required",
+            defaultSave: "episode only",
+          },
+          reopen: [
+            "review watermark behavior reopens if the destination changes from public publish to review copy",
+            "review-copy warnings reopen when unresolved reviewer feedback affects the chosen package",
+          ],
+        },
+        archive: {
+          name: "Archive master",
+          description: "Long-term storage package with durable video, captions, metadata snapshot, and export context.",
+          outcomes: [
+            ["Archive-quality file", "Package prioritizes durable storage over public-facing surface defaults."],
+            ["Thumbnail optional", "The archive can preserve the episode without blocking on cover-frame work."],
+            ["Metadata snapshot included", "The package keeps a point-in-time record of export context and publish notes."],
+          ],
+          defaults: {
+            captions: "reviewed captions",
+            thumbnail: "optional",
+            watermark: "disabled",
+            defaultSave: "show default",
+          },
+          reopen: [
+            "archive package contents reopen if the creator removes captions or metadata from the durable snapshot",
+          ],
+        },
+        sponsor: {
+          name: "Sponsor approval copy",
+          description: "Targeted package for sponsor review with disclosure context and only the sponsor-relevant moments emphasized.",
+          outcomes: [
+            ["Sponsor disclosure visible", "Approval copy keeps disclosure expectations attached to the sponsor package."],
+            ["Watermark optional", "The creator can keep it private without forcing the same watermark on the main public export."],
+            ["Caption behavior independent", "Sponsor copy can exclude or simplify captions without changing the main destination."],
+          ],
+          defaults: {
+            captions: "current caption state",
+            thumbnail: "not required",
+            watermark: "optional",
+            defaultSave: "episode only",
+          },
+          reopen: [
+            "sponsor disclosure review reopens when a sponsor approval package is prepared",
+            "watermark choice stays scoped to the sponsor copy instead of changing the main destination",
+          ],
+        },
+      };
+
+      const captionOptions = ["reviewed captions", "current caption state", "captions excluded"];
+      const thumbnailOptions = ["required", "optional", "not required"];
+      const watermarkOptions = ["disabled", "required", "optional"];
+      const defaultOptions = ["show default", "episode only"];
+
+      let primary = "youtube";
+      let additional = new Set(["review"]);
+      const overrides = {
+        youtube: {},
+        review: {},
+        archive: {},
+        sponsor: {},
+      };
+
+      const primaryEl = document.querySelector("#primaryDestinations");
+      const additionalEl = document.querySelector("#additionalDestinations");
+      const outcomesEl = document.querySelector("#outcomes");
+      const packagesEl = document.querySelector("#packages");
+      const reopenedEl = document.querySelector("#reopened");
+      const summaryGridEl = document.querySelector("#summaryGrid");
+      const summaryTitleEl = document.querySelector("#summaryTitle");
+      const summaryBadgeEl = document.querySelector("#summaryBadge");
+      const toolbarEl = document.querySelector("#packageToolbar");
+      const captionOverrideEl = document.querySelector("#captionOverride");
+      const thumbnailOverrideEl = document.querySelector("#thumbnailOverride");
+      const watermarkOverrideEl = document.querySelector("#watermarkOverride");
+      const defaultOverrideEl = document.querySelector("#defaultOverride");
+
+      function overrideValue(destinationKey, key) {
+        return overrides[destinationKey][key] || destinations[destinationKey].defaults[key];
+      }
+
+      function createOptions(select, values) {
+        select.innerHTML = "";
+        values.forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          select.appendChild(option);
+        });
+      }
+
+      function renderPrimaryDestinations() {
+        primaryEl.innerHTML = "";
+        Object.entries(destinations).forEach(([key, destination]) => {
+          const article = document.createElement("article");
+          article.className = `destination-card${key === primary ? " active" : ""}`;
+          article.innerHTML = `
+            <label>
+              <input type="radio" name="primary-destination" value="${key}" ${key === primary ? "checked" : ""}>
+              <span>
+                <span class="card-head">
+                  <span>
+                    <strong>${destination.name}</strong>
+                    <span>${destination.description}</span>
+                  </span>
+                  <span class="badge primary">${key === primary ? "primary" : "available"}</span>
+                </span>
+              </span>
+            </label>
+          `;
+          article.querySelector("input").addEventListener("change", () => {
+            primary = key;
+            additional.delete(key);
+            syncOverrideFields();
+            render();
+          });
+          primaryEl.appendChild(article);
+        });
+      }
+
+      function renderAdditionalDestinations() {
+        additionalEl.innerHTML = "";
+        Object.entries(destinations).forEach(([key, destination]) => {
+          if (key === primary) return;
+          const checked = additional.has(key);
+          const article = document.createElement("article");
+          article.className = "toggle-card";
+          article.innerHTML = `
+            <label>
+              <input type="checkbox" value="${key}" ${checked ? "checked" : ""}>
+              <span>
+                <span class="card-head">
+                  <span>
+                    <strong>${destination.name}</strong>
+                    <span>${destination.description}</span>
+                  </span>
+                  <span class="badge ${checked ? "additional" : "optional"}">${checked ? "prepared" : "off"}</span>
+                </span>
+              </span>
+            </label>
+          `;
+          article.querySelector("input").addEventListener("change", (event) => {
+            if (event.target.checked) additional.add(key);
+            else additional.delete(key);
+            render();
+          });
+          additionalEl.appendChild(article);
+        });
+      }
+
+      function renderSummary() {
+        const destination = destinations[primary];
+        summaryTitleEl.textContent = destination.name;
+        summaryBadgeEl.textContent = "primary destination";
+        summaryGridEl.innerHTML = `
+          <div class="summary-card">
+            <strong>${1 + additional.size}</strong>
+            <span>prepared package${additional.size ? "s" : ""}</span>
+          </div>
+          <div class="summary-card">
+            <strong>${destination.reopen.length}</strong>
+            <span>checklist item${destination.reopen.length === 1 ? "" : "s"} can reopen</span>
+          </div>
+          <div class="summary-card">
+            <strong>${overrideValue(primary, "captions")}</strong>
+            <span>caption outcome for the primary destination</span>
+          </div>
+          <div class="summary-card">
+            <strong>${overrideValue(primary, "thumbnail")}</strong>
+            <span>thumbnail requirement for the primary destination</span>
+          </div>
+        `;
+      }
+
+      function renderOutcomes() {
+        const destination = destinations[primary];
+        outcomesEl.innerHTML = "";
+        destination.outcomes.forEach(([title, detail]) => {
+          const item = document.createElement("div");
+          item.className = "outcome";
+          item.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
+          outcomesEl.appendChild(item);
+        });
+      }
+
+      function renderPackages() {
+        const prepared = [primary, ...Array.from(additional)];
+        packagesEl.innerHTML = "";
+        prepared.forEach((key) => {
+          const destination = destinations[key];
+          const card = document.createElement("div");
+          const tone = key === primary ? "primary" : "additional";
+          card.className = "package-card";
+          card.innerHTML = `
+            <div>
+              <strong>${destination.name}</strong>
+              <span>Captions: ${overrideValue(key, "captions")} · Thumbnail: ${overrideValue(key, "thumbnail")} · Watermark: ${overrideValue(key, "watermark")}</span>
+            </div>
+            <span class="badge ${tone}">${key === primary ? "primary package" : "additional package"}</span>
+          `;
+          packagesEl.appendChild(card);
+        });
+      }
+
+      function renderReopened() {
+        reopenedEl.innerHTML = "";
+        destinations[primary].reopen.forEach((detail) => {
+          const item = document.createElement("div");
+          item.className = "warning";
+          item.innerHTML = `<strong>Destination change can reopen review</strong><span>${detail}</span>`;
+          reopenedEl.appendChild(item);
+        });
+
+        if (overrideValue(primary, "captions") === "captions excluded") {
+          const item = document.createElement("div");
+          item.className = "warning blocked";
+          item.innerHTML = `<strong>Caption override has a publishing consequence</strong><span>The primary destination will ship without captions unless the creator changes this override back on this destination only.</span>`;
+          reopenedEl.appendChild(item);
+        }
+
+        if (overrideValue(primary, "thumbnail") === "required") {
+          const item = document.createElement("div");
+          item.className = "warning info";
+          item.innerHTML = `<strong>Thumbnail review must stay visible</strong><span>This primary destination requires a cover frame even if another prepared destination does not.</span>`;
+          reopenedEl.appendChild(item);
+        }
+      }
+
+      function renderToolbar() {
+        toolbarEl.innerHTML = "";
+        const actions = [
+          ["show-default", "Show saved default"],
+          ["compare-packages", "Compare prepared packages"],
+          ["reset-primary-overrides", "Reset primary overrides"],
+        ];
+        actions.forEach(([id, label]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = label;
+          button.dataset.action = id;
+          button.className = id === "show-default" ? "active" : "";
+          button.addEventListener("click", () => {
+            if (id === "reset-primary-overrides") {
+              overrides[primary] = {};
+              syncOverrideFields();
+              render();
+            }
+          });
+          toolbarEl.appendChild(button);
+        });
+      }
+
+      function syncOverrideFields() {
+        captionOverrideEl.value = overrideValue(primary, "captions");
+        thumbnailOverrideEl.value = overrideValue(primary, "thumbnail");
+        watermarkOverrideEl.value = overrideValue(primary, "watermark");
+        defaultOverrideEl.value = overrideValue(primary, "defaultSave");
+      }
+
+      function attachOverrideListeners() {
+        captionOverrideEl.addEventListener("change", () => {
+          overrides[primary].captions = captionOverrideEl.value;
+          render();
+        });
+        thumbnailOverrideEl.addEventListener("change", () => {
+          overrides[primary].thumbnail = thumbnailOverrideEl.value;
+          render();
+        });
+        watermarkOverrideEl.addEventListener("change", () => {
+          overrides[primary].watermark = watermarkOverrideEl.value;
+          render();
+        });
+        defaultOverrideEl.addEventListener("change", () => {
+          overrides[primary].defaultSave = defaultOverrideEl.value;
+          render();
+        });
+      }
+
+      function render() {
+        renderPrimaryDestinations();
+        renderAdditionalDestinations();
+        renderSummary();
+        renderOutcomes();
+        renderPackages();
+        renderReopened();
+        renderToolbar();
+      }
+
+      createOptions(captionOverrideEl, captionOptions);
+      createOptions(thumbnailOverrideEl, thumbnailOptions);
+      createOptions(watermarkOverrideEl, watermarkOptions);
+      createOptions(defaultOverrideEl, defaultOptions);
+      attachOverrideListeners();
+      syncOverrideFields();
+      render();
+    </script>
+  </body>
+</html>
