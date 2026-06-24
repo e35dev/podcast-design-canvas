@@ -63,6 +63,12 @@ function buttonsFor(issueKey) {
   return allText(M.renderTrack(track, 0, result));
 }
 
+function labelsForPreviewMoment(previewMoment) {
+  const track = { id: "t", name: "Guest 1 — Marcus Lee", issue: "drift", proposedRepair: "compress", resolution: null, previewMoment };
+  const result = M.evaluate([track]).results[0];
+  return allText(M.renderTrack(track, 0, result));
+}
+
 // 1. Data contract the gate relies on: the two blocking issues omit "intentional";
 //    the issues where deliberate timing is plausible include it.
 assert.ok(M.issues["ends-early"].blocksExport === true && !M.issues["ends-early"].repairs.includes("intentional"),
@@ -94,5 +100,13 @@ const endsEarly = { id: "x", name: "Guest", issue: "ends-early", proposedRepair:
 assert.strictEqual(M.evaluate([endsEarly]).overall, "blocked", "ends-early blocks export while unresolved");
 assert.strictEqual(M.evaluate([{ ...endsEarly, resolution: "accepted" }]).results[0].state, "accepted",
   "'accepted' is non-blocking — which is exactly why the button must be gated off here");
+
+// 5. Preview moment choices expose active state in visible text, not just styling or
+//    aria-pressed, so the current comparison target is clear in review.
+assert.strictEqual(M.previewMomentButtonLabel({ label: "Guest answer" }, true), "Previewing: Guest answer");
+assert.strictEqual(M.previewMomentButtonLabel({ label: "Guest answer" }, false), "Preview Guest answer");
+const previewLabels = labelsForPreviewMoment("first-guest");
+assert.ok(previewLabels.includes("Previewing: First guest response"), "active preview moment is visible in the button label");
+assert.ok(previewLabels.includes("Preview Episode start"), "inactive preview moments stay action-oriented");
 
 console.log("speaker-sync-repair (Mark intentional gate): all assertions passed");

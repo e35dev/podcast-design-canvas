@@ -1157,8 +1157,9 @@
           const button = document.createElement("button");
           button.type = "button";
           button.className = "secondary moment-choice";
-          button.textContent = moment.label;
-          button.setAttribute("aria-pressed", track.previewMoment === moment.id ? "true" : "false");
+          const active = track.previewMoment === moment.id;
+          button.textContent = previewMomentButtonLabel(moment, active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
           button.addEventListener("click", () => {
             tracks[index].previewMoment = moment.id;
             render();
@@ -1168,6 +1169,10 @@
 
         label.appendChild(group);
         return label;
+      }
+
+      function previewMomentButtonLabel(moment, active) {
+        return active ? `Previewing: ${moment.label}` : `Preview ${moment.label}`;
       }
 
       function scaleLayout(layout, severity) {
@@ -1368,7 +1373,7 @@
       // Exported only for the committed Node test (speaker-sync-repair.test.js). In the
       // page `module` is undefined, so this block is skipped and nothing changes.
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack };
+        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack, previewMomentButtonLabel };
       }
     </script>
     <script src="../preview/episode-flow-nav.js" defer></script>
