@@ -152,6 +152,11 @@ assert.equal(
   "",
   "style nav strips unsupported handoff context from preview app hashes",
 );
+assert.equal(
+  routeSearchFor("layout-safe-areas.html?path=publish"),
+  "?path=publish",
+  "style nav preserves publish path when entered from publish prep",
+);
 
 const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
 assert.ok(
@@ -248,6 +253,18 @@ assert.equal(
   linkWithText(embeddedPathNav.nodes, "Preview app").href,
   "../preview/app.html#layout-safe-areas?path=episode",
   "embedded style nav keeps episode path context on the preview app link",
+);
+
+const embeddedPublishPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", true, "?path=publish");
+assert.equal(
+  linkWithText(embeddedPublishPathNav.nodes, "Preview app").href,
+  "../preview/app.html#layout-safe-areas?path=publish",
+  "embedded style nav keeps publish context on the preview app link",
+);
+assert.equal(
+  linkWithText(embeddedPublishPathNav.nodes, "Next: Speaker framing safety").href,
+  "../preview/app.html#speaker-framing-safety?path=publish",
+  "embedded style nav keeps publish context between publish-routed style screens",
 );
 
 const handoffPathNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
@@ -373,5 +390,18 @@ assert.ok(
 );
 assert.ok(dynamicLink.href.includes("from=cleanup"), "embedded style fix links keep cleanup context");
 assert.ok(dynamicLink.href.includes("path=episode"), "embedded style fix links keep episode path context");
+
+const publishStyleLinks = renderNavWithInPageLinks(
+  "speaker-framing-safety.html",
+  "speaker-framing-safety",
+  true,
+  "?path=publish",
+  ["canvas-layer-controls.html"],
+);
+assert.equal(
+  linkWithText(publishStyleLinks.nodes, "canvas-layer-controls.html").href,
+  "../preview/app.html#canvas-layer-controls?path=publish",
+  "embedded style nav keeps publish context on in-page style links",
+);
 
 console.log("style nav: visual direction screens connected back to the preview shell");

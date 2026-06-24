@@ -34,6 +34,7 @@ const PREVIEW_APP_STYLE_TARGETS = new Set([
 const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
   Object.keys(STYLE_FIX_PATHS).map((file) => screenIdFromFile(file)),
 );
+const STYLE_ROUTE_PATHS = new Set(["episode", "style", "publish"]);
 
 function currentStyleIndex() {
   const fromBody = document.body.dataset.styleStep;
@@ -107,14 +108,13 @@ function routeSearchFromFile(file) {
   const params = new URLSearchParams(queryWithoutHash(file));
   const from = params.get("from");
   const filePath = params.get("path");
-  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  const path = filePath || shellPath;
+  const path = filePath || shellPath();
 
   const out = new URLSearchParams();
   if (from === "style" || from === "cleanup") {
     out.set("from", from);
   }
-  if (path === "episode" || path === "style") {
+  if (STYLE_ROUTE_PATHS.has(path)) {
     out.set("path", path);
   }
   const search = out.toString();
@@ -131,25 +131,27 @@ function setTopTargetWhenEmbedded(link) {
 // who entered the style steps from the guided episode path stays in that context,
 // matching the other flow navs (ingest, speaker setup, reuse, episode flow).
 function pathQuerySuffix() {
+  return routePathSearch(shellPath());
+}
+
+function shellPath() {
   const path = new URLSearchParams(window.location.search).get("path");
-  if (path === "episode") {
-    return "?path=episode";
-  }
-  if (path === "style") {
-    return "?path=style";
-  }
-  return "";
+  return STYLE_ROUTE_PATHS.has(path) ? path : "";
+}
+
+function routePathSearch(path) {
+  return STYLE_ROUTE_PATHS.has(path) ? `?path=${path}` : "";
 }
 
 function hrefWithPath(file) {
-  const shellPath = new URLSearchParams(window.location.search).get("path");
-  if (shellPath !== "episode" && shellPath !== "style") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
     return file;
   }
-  return mergeRouteSearch(file, { path: shellPath });
+  return mergeRouteSearch(file, { path });
 }
 
 function linkBase(href) {
@@ -161,8 +163,7 @@ function resolveStyleLink(file) {
   const hasStyleHandoff = new URLSearchParams(queryWithoutHash(file)).get("from") === "style";
   if (Object.prototype.hasOwnProperty.call(STYLE_FIX_PATHS, base) && !hasStyleHandoff) {
     const overrides = { ...STYLE_FIX_PATHS[base] };
-    const shellPath = new URLSearchParams(window.location.search).get("path");
-    if (!shellPath) {
+    if (!shellPath()) {
       delete overrides.path;
     }
     return mergeRouteSearch(file, overrides);

@@ -210,6 +210,11 @@ assert.equal(
   "ingest nav preserves ingest path when extra query params are present",
 );
 assert.equal(
+  routeSearchFor("social-context-intake.html?path=publish"),
+  "?path=publish",
+  "ingest nav preserves publish path when entered from publish prep",
+);
+assert.equal(
   hrefWithPathFor("social-context-intake.html?draft=links", "?path=ingest"),
   "social-context-intake.html?draft=links&path=ingest",
   "ingest nav appends ingest path without dropping existing query params",
@@ -233,6 +238,11 @@ assert.equal(
   (hrefWithPathFor("speaker-role-mapping.html?path=episode", "?path=ingest").match(/path=/g) || []).length,
   1,
   "ingest nav emits a single canonical path query param",
+);
+assert.equal(
+  hrefWithPathFor("social-context-intake.html?draft=links", "?path=publish"),
+  "social-context-intake.html?draft=links&path=publish",
+  "ingest nav appends publish path without dropping existing query params",
 );
 
 const standaloneRoleLink = normalizeIngestHrefFor("speaker-role-mapping.html", "?path=ingest");
@@ -289,6 +299,14 @@ assert.equal(
   "ingest nav normalizes dynamically rendered ingest links before navigation",
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links target the parent app");
+
+const dynamicPublishSocialLink = normalizeIngestClickFor("social-context-intake.html", "?path=publish", true);
+assert.equal(
+  dynamicPublishSocialLink.href,
+  "../preview/app.html#social-context-intake?path=publish",
+  "ingest nav keeps publish context on dynamic social links from publish prep",
+);
+assert.equal(dynamicPublishSocialLink.target, "_top", "dynamic embedded publish social links target the parent app");
 
 const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
@@ -388,6 +406,23 @@ assert.equal(
   "embedded ingest nav routes the source media health handoff through the preview app hash with episode context",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded ingest handoff targets the parent app");
+
+const embeddedPublishSocialNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=publish", true);
+assert.equal(
+  linkWithText(embeddedPublishSocialNav.nodes, "Preview app").href,
+  "../preview/app.html#social-context-intake?path=publish",
+  "embedded ingest nav preserves publish context on the current preview app link",
+);
+assert.equal(
+  linkWithText(embeddedPublishSocialNav.nodes, "Previous: Speaker roles").href,
+  "../preview/app.html#speaker-role-mapping?path=publish",
+  "embedded ingest nav keeps publish context when stepping back from a publish handoff",
+);
+assert.equal(
+  linkWithText(embeddedPublishSocialNav.nodes, "Continue: Source media health").href,
+  "../preview/app.html#source-media-health?path=publish",
+  "embedded ingest nav keeps publish context on the source media continuation",
+);
 
 const duplicateNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping");
 vm.runInNewContext(navSource, {

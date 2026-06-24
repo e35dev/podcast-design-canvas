@@ -231,6 +231,18 @@ assert.ok(
   "reuse nav adds no path suffix when there is no path context",
 );
 
+const publishChapterNav = renderNavWithSearch("episode-chapter-markers.html", "episode-chapter-markers", "?path=publish");
+assert.equal(
+  linkWithText(publishChapterNav, "Previous: Start from previous episode").href,
+  "start-from-previous-episode.html?path=publish",
+  "reuse nav keeps publish context when stepping back from a publish checklist chapter fix",
+);
+assert.equal(
+  linkWithText(publishChapterNav, "Next: Intro & outro builder").href,
+  "intro-outro-builder.html?path=publish",
+  "reuse nav keeps publish context when advancing from a publish checklist chapter fix",
+);
+
 const conflictingPathNav = renderNavWithSearch("show-segment-system.html", "show-segment-system", "?path=episode");
 assert.equal(
   linkWithText(conflictingPathNav, "Previous: Sensitive moment review").href,
@@ -425,6 +437,24 @@ assert.equal(
   linkWithText(embeddedPreviousRoleFix.nodes, "speaker-role-mapping.html?path=ingest").href,
   "../preview/app.html#speaker-role-mapping?path=ingest",
   "embedded reuse nav routes ingest-path role fixes through the preview app",
+);
+
+const embeddedPublishChapter = renderNavWithInPageLinks(
+  "episode-chapter-markers.html",
+  "episode-chapter-markers",
+  true,
+  "?path=publish",
+  ["intro-outro-builder.html"],
+);
+assert.equal(
+  linkWithText(embeddedPublishChapter.nodes, "Preview app").href,
+  "../preview/app.html#episode-chapter-markers?path=publish",
+  "embedded reuse nav keeps publish context on the current preview app href",
+);
+assert.equal(
+  linkWithText(embeddedPublishChapter.nodes, "intro-outro-builder.html").href,
+  "../preview/app.html#intro-outro-builder?path=publish",
+  "embedded reuse nav keeps publish context on in-page reuse links",
 );
 
 console.log("reuse nav: make-it-reusable screens connected into one path");

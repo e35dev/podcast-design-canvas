@@ -22,6 +22,7 @@ const INGEST_IN_PAGE_TARGETS = new Set(PREVIEW_APP_INGEST_TARGETS);
 const PREVIEW_APP_INGEST_HANDOFFS = new Map([
   ["speaker-sync-repair", "?path=episode"],
 ]);
+const INGEST_ROUTE_PATHS = new Set(["episode", "ingest", "publish"]);
 
 function screenIdFromFile(file) {
   const clean = (file || "").split("#")[0].split("?")[0];
@@ -65,9 +66,7 @@ function currentPreviewAppHref(step) {
 
 function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
-  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  const path = filePath || shellPath;
-  return path === "episode" || path === "ingest" ? `?path=${path}` : "";
+  return routePathSearch(filePath || shellPath());
 }
 
 function queryWithoutHash(file) {
@@ -76,6 +75,15 @@ function queryWithoutHash(file) {
 
 function pathFromQuery(query) {
   return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function shellPath() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return INGEST_ROUTE_PATHS.has(path) ? path : "";
+}
+
+function routePathSearch(path) {
+  return INGEST_ROUTE_PATHS.has(path) ? `?path=${path}` : "";
 }
 
 function mergeRouteSearch(file, overrides = {}) {
@@ -127,7 +135,7 @@ function hrefWithIngestHandoff(file) {
 }
 
 function setIngestHandoffLink(link) {
-  const file = shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html";
+  const file = sourceMediaHandoffFile();
   if (isEmbeddedInPreviewApp()) {
     link.href = previewAppHref(file);
     link.target = "_top";
@@ -212,34 +220,34 @@ function normalizeIngestLinkClick(event) {
 }
 
 function pathQuerySuffix() {
-  const path = new URLSearchParams(window.location.search).get("path");
-  if (path === "episode") {
-    return "?path=episode";
-  }
-  if (path === "ingest") {
-    return "?path=ingest";
-  }
-  return "";
+  return routePathSearch(shellPath());
 }
 
 function isEpisodeShellPath() {
-  return new URLSearchParams(window.location.search).get("path") === "episode";
+  return shellPath() === "episode";
 }
 
 function shouldHandoffToEpisodePath() {
-  const path = new URLSearchParams(window.location.search).get("path");
+  const path = shellPath();
   return path === "episode" || path === "ingest";
 }
 
+function sourceMediaHandoffFile() {
+  if (shellPath() === "publish") {
+    return "source-media-health.html?path=publish";
+  }
+  return shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html";
+}
+
 function hrefWithPath(file) {
-  const shellPath = new URLSearchParams(window.location.search).get("path");
-  if (shellPath !== "episode" && shellPath !== "ingest") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
     return file;
   }
-  return mergeRouteSearch(file, { path: shellPath });
+  return mergeRouteSearch(file, { path });
 }
 
 function currentIngestIndex() {

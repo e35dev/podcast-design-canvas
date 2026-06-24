@@ -27,6 +27,7 @@ const PREVIEW_APP_CLEANUP_HANDOFFS = new Map([
   ["contextual-title-cards", "?from=cleanup"],
   ["social-context-intake", "?path=ingest"],
   ["guest-profile-reuse", ""],
+  ["clip-candidate-review", "?path=publish"],
 ]);
 const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
 const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);

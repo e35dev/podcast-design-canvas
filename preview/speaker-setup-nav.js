@@ -35,6 +35,7 @@ const PREVIEW_APP_SETUP_HANDOFFS = new Map([
   ["social-context-intake", "?path=ingest"],
   ["preset-comparison-preview", "?path=episode"],
 ]);
+const SETUP_ROUTE_PATHS = new Set(["episode", "publish"]);
 
 function currentSetupIndex() {
   const fromBody = document.body.dataset.setupStep;
@@ -72,8 +73,7 @@ function pathFromQuery(query) {
 }
 
 function pathQuerySuffix() {
-  const path = new URLSearchParams(window.location.search).get("path");
-  return path === "episode" ? "?path=episode" : "";
+  return routePathSearch(shellPath());
 }
 
 function queryWithoutHash(file) {
@@ -101,11 +101,18 @@ function mergeRouteSearch(file, overrides = {}) {
   return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
+function shellPath() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return SETUP_ROUTE_PATHS.has(path) ? path : "";
+}
+
+function routePathSearch(path) {
+  return SETUP_ROUTE_PATHS.has(path) ? `?path=${path}` : "";
+}
+
 function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
-  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  const path = filePath || shellPath;
-  return path === "episode" ? "?path=episode" : "";
+  return routePathSearch(filePath || shellPath());
 }
 
 function setupHandoffSearch(file) {
@@ -131,14 +138,14 @@ function currentPreviewAppHref(step) {
 }
 
 function hrefWithPath(file) {
-  const shellPath = new URLSearchParams(window.location.search).get("path");
-  if (shellPath !== "episode") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  if (pathFromQuery(queryWithoutHash(file)) === "episode") {
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
     return file;
   }
-  return mergeRouteSearch(file, { path: "episode" });
+  return mergeRouteSearch(file, { path });
 }
 
 function resolveSetupLink(file) {

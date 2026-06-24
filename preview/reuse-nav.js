@@ -36,6 +36,7 @@ const PREVIEW_APP_REUSE_TARGETS = new Set([
 const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
   Object.keys(REUSE_FIX_PATHS).map((file) => screenIdFromFile(file)),
 );
+const REUSE_ROUTE_PATHS = new Set(["episode", "reuse", "ingest", "publish"]);
 
 function currentReuseIndex() {
   const fromBody = document.body.dataset.reuseStep;
@@ -107,9 +108,7 @@ function mergeRouteSearch(file, overrides = {}) {
 
 function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
-  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  const path = filePath || shellPath;
-  return path === "episode" || path === "reuse" || path === "ingest" ? `?path=${path}` : "";
+  return routePathSearch(filePath || shellPath());
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -122,25 +121,27 @@ function setTopTargetWhenEmbedded(link) {
 // the reuse step from the guided episode path stays in that context, matching the
 // other flow navs (ingest, speaker setup, episode flow).
 function pathQuerySuffix() {
+  return routePathSearch(shellPath());
+}
+
+function shellPath() {
   const path = new URLSearchParams(window.location.search).get("path");
-  if (path === "episode") {
-    return "?path=episode";
-  }
-  if (path === "reuse") {
-    return "?path=reuse";
-  }
-  return "";
+  return REUSE_ROUTE_PATHS.has(path) ? path : "";
+}
+
+function routePathSearch(path) {
+  return REUSE_ROUTE_PATHS.has(path) ? `?path=${path}` : "";
 }
 
 function hrefWithPath(file) {
-  const shellPath = new URLSearchParams(window.location.search).get("path");
-  if (shellPath !== "episode" && shellPath !== "reuse") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
     return file;
   }
-  return mergeRouteSearch(file, { path: shellPath });
+  return mergeRouteSearch(file, { path });
 }
 
 function linkBase(href) {

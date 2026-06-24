@@ -90,6 +90,31 @@ function createPreviewAppRouting(order) {
     "client-review-copy-flow",
     "publish-checklist",
   ]);
+  const pathedPublishContextScreens = new Set([
+    "transcript-search-navigation",
+    "audio-caption-quality-review",
+    "source-media-health",
+    "episode-chapter-markers",
+    "show-segment-system",
+    "show-template-adaptation",
+    "start-from-previous-episode",
+    "intro-outro-builder",
+    "episode-runtime-shaping",
+    "speaker-attribution-review",
+    "guest-profile-reuse",
+    "speaker-visual-match",
+    "speaker-eye-line-coherence",
+    "off-camera-speaker-presence",
+    "preset-style-picker",
+    "preset-comparison-preview",
+    "preset-pacing-controls",
+    "speaker-framing-safety",
+    "layout-safe-areas",
+    "canvas-layer-controls",
+    "social-context-intake",
+    "episode-readiness",
+    "speaker-role-mapping",
+  ]);
 
   function routeSearchFor(screen, rawSearch) {
     const params = new URLSearchParams(rawSearch || "");
@@ -117,6 +142,9 @@ function createPreviewAppRouting(order) {
       out.set("path", "reuse");
     }
     if (path === "publish" && pathedPublishScreens.has(screen)) {
+      out.set("path", "publish");
+    }
+    if (path === "publish" && pathedPublishContextScreens.has(screen)) {
       out.set("path", "publish");
     }
     const search = out.toString();

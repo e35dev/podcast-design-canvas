@@ -397,6 +397,7 @@ const standaloneCleanupFixLinks = renderNavFor(
     "contextual-title-cards.html",
     "social-context-intake.html",
     "guest-profile-reuse.html",
+    "clip-candidate-review.html",
   ],
 );
 assert.equal(
@@ -424,6 +425,11 @@ assert.equal(
   "guest-profile-reuse.html",
   "standalone cleanup nav leaves guest profile links direct",
 );
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "clip-candidate-review.html").href,
+  "clip-candidate-review.html",
+  "standalone cleanup nav leaves clip candidate links direct",
+);
 
 const embeddedCleanupFixLinks = renderNavFor(
   "accessibility-readability-checks.html",
@@ -436,6 +442,7 @@ const embeddedCleanupFixLinks = renderNavFor(
     "contextual-title-cards.html",
     "social-context-intake.html",
     "guest-profile-reuse.html",
+    "clip-candidate-review.html",
   ],
 );
 const embeddedCaptionFix = linkWithText(embeddedCleanupFixLinks, "audio-caption-quality-review.html");
@@ -469,6 +476,11 @@ assert.equal(
   "../preview/app.html#guest-profile-reuse",
   "embedded cleanup nav routes guest profile links through the preview app",
 );
+assert.equal(
+  linkWithText(embeddedCleanupFixLinks, "clip-candidate-review.html").href,
+  "../preview/app.html#clip-candidate-review?path=publish",
+  "embedded cleanup nav routes clip candidate links through the publish preview app path",
+);
 
 const dynamicPronunciationLinks = renderNavFor(
   "pronunciation-name-review.html",
@@ -501,5 +513,18 @@ assert.equal(
   "embedded cleanup nav normalizes dynamic social context links before navigation",
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic social context links target the parent app");
+
+const dynamicClipLink = appendStaticLink(
+  dynamicPronunciationLinks[0],
+  "clip-candidate-review.html",
+  "Pin as clip candidate",
+);
+dynamicPronunciationLinks.listeners.click({ target: dynamicClipLink });
+assert.equal(
+  dynamicClipLink.href,
+  "../preview/app.html#clip-candidate-review?path=publish",
+  "embedded cleanup nav normalizes dynamic clip candidate links before navigation",
+);
+assert.equal(dynamicClipLink.target, "_top", "dynamic clip candidate links target the parent app");
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");

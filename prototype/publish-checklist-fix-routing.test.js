@@ -32,7 +32,7 @@ assert.ok(
 // creator returns to the publish checklist after fixing on another flow screen.
 const vm = require("vm");
 const navSource = fs.readFileSync(path.join(dir, "..", "preview", "publish-nav.js"), "utf8");
-function checklistFixHref(href, search) {
+function checklistFixHref(href, search, embedded = false) {
   const link = {
     value: href,
     getAttribute(name) { return name === "href" ? this.value : null; },
@@ -51,7 +51,7 @@ function checklistFixHref(href, search) {
   };
   const window = { location: { pathname: "/prototype/publish-checklist.html", search } };
   window.self = window;
-  window.top = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   vm.runInNewContext(navSource + ";setPublishChecklistFixLink(link);", { document, window, URLSearchParams, link });
   return link.href;
 }
@@ -70,6 +70,11 @@ assert.equal(
   checklistFixHref("client-review-copy-flow.html", "?path=publish"),
   "client-review-copy-flow.html",
   "in-flow publish targets are left to the existing publish-link normalizer",
+);
+assert.equal(
+  checklistFixHref("audio-caption-quality-review.html", "?path=publish", true),
+  "../preview/app.html#audio-caption-quality-review?path=publish",
+  "embedded checklist fixes route through the parent preview app",
 );
 
 console.log(`publish checklist: ${fixScreens.length} checklist items open their owning fix screen`);

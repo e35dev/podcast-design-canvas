@@ -179,7 +179,11 @@ function resolvePublishLink(file) {
 }
 
 function routesThroughPreviewApp(file) {
-  return isPreviewAppPublishTarget(file) || PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
+  return (
+    isPreviewAppPublishTarget(file) ||
+    PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS.has(screenIdFromFile(file)) ||
+    Object.prototype.hasOwnProperty.call(PUBLISH_CHECKLIST_FIX_PATHS, checklistFixBase(file))
+  );
 }
 
 function setTopTargetWhenEmbedded(link) {

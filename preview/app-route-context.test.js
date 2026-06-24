@@ -436,6 +436,79 @@ assert.equal(
   "non-publish screens discard publish route context",
 );
 
+publishPath.reroute("#audio-caption-quality-review?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/audio-caption-quality-review.html?path=publish",
+  "publish checklist caption fix handoffs keep publish route context",
+);
+
+publishPath.reroute("#source-media-health?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/source-media-health.html?path=publish",
+  "publish checklist source media fix handoffs keep publish route context",
+);
+
+publishPath.reroute("#episode-chapter-markers?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/episode-chapter-markers.html?path=publish",
+  "publish checklist chapter fix handoffs keep publish route context",
+);
+publishPath.reroute("#intro-outro-builder?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/intro-outro-builder.html?path=publish",
+  "publish-routed reuse neighbors keep publish route context",
+);
+
+publishPath.reroute("#clip-candidate-review?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/clip-candidate-review.html?path=publish",
+  "transcript pin handoffs keep clip candidate review in publish route context",
+);
+
+publishPath.reroute("#transcript-search-navigation?from=cleanup&path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/transcript-search-navigation.html?from=cleanup&path=publish",
+  "clip review transcript handoffs keep cleanup and publish route context",
+);
+
+publishPath.reroute("#social-context-intake?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/social-context-intake.html?path=publish",
+  "metadata social-context handoffs keep publish route context",
+);
+publishPath.reroute("#speaker-role-mapping?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=publish",
+  "publish-routed ingest neighbors keep publish route context",
+);
+
+publishPath.reroute("#speaker-framing-safety?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/speaker-framing-safety.html?path=publish",
+  "publish package framing handoffs keep publish route context",
+);
+publishPath.reroute("#canvas-layer-controls?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/canvas-layer-controls.html?path=publish",
+  "publish-routed style neighbors keep publish route context",
+);
+publishPath.reroute("#guest-profile-reuse?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/guest-profile-reuse.html?path=publish",
+  "publish-routed speaker setup neighbors keep publish route context",
+);
+
 styleEntry.reroute("#missing-screen?from=style");
 assert.equal(
   styleEntry.nodes.frame.src,

@@ -350,6 +350,23 @@ assert.equal(
   "embedded speaker setup nav preserves episode path context on next links",
 );
 
+const publishPathNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review", true, "?path=publish");
+assert.equal(
+  linkWithText(publishPathNav.nodes, "Preview app").href,
+  "../preview/app.html#speaker-attribution-review?path=publish",
+  "embedded speaker setup nav preserves publish context on the current preview app link",
+);
+assert.equal(
+  linkWithText(publishPathNav.nodes, "Previous: Speaker roles").href,
+  "../preview/app.html#speaker-role-mapping?path=publish",
+  "embedded speaker setup nav keeps publish context on the roles back-link",
+);
+assert.equal(
+  linkWithText(publishPathNav.nodes, "Next: Guest profile reuse").href,
+  "../preview/app.html#guest-profile-reuse?path=publish",
+  "embedded speaker setup nav keeps publish context on the next setup link",
+);
+
 const standaloneEpisodePath = renderNavFor("speaker-visual-match.html", "speaker-visual-match", false, "?path=episode");
 assert.equal(
   linkWithText(standaloneEpisodePath.nodes, "Next: Speaker eye-line coherence").href,
