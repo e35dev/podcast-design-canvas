@@ -144,14 +144,19 @@ assert.equal(
   "",
   "cleanup nav strips unsupported handoff context from preview app hashes",
 );
+assert.equal(
+  routeSearchFor("publish-checklist.html?draft=final&path=publish"),
+  "?path=publish",
+  "cleanup nav preserves publish path context when returning to publish prep",
+);
 
 const firstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-crosstalk-cleanup");
 const publishBackLink = linkWithText(firstNav, "Previous: Publish checklist");
 assert.ok(publishBackLink, "first cleanup screen renders publish checklist as its previous step");
 assert.equal(
   publishBackLink.href,
-  "publish-checklist.html",
-  "first cleanup screen previous link returns to publish checklist",
+  "publish-checklist.html?path=publish",
+  "first cleanup screen previous link returns to publish checklist with publish path context",
 );
 
 const middleNav = renderNavFor("transcript-glossary.html", "transcript-glossary");
@@ -176,11 +181,14 @@ const embeddedFirstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-cro
 const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded cleanup nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
+assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded cleanup nav keeps the preview app href");
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedPublishBack = linkWithText(embeddedFirstNav, "Previous: Publish checklist");
 assert.equal(
   embeddedPublishBack.href,
-  "../preview/app.html#publish-checklist",
-  "embedded cleanup nav routes the publish back-link through the preview app hash",
+  "../preview/app.html#publish-checklist?path=publish",
+  "embedded cleanup nav routes the publish back-link through the preview app hash with publish context",
 );
 assert.equal(embeddedPublishBack.target, "_top", "embedded publish back-link targets the parent app");
 const embeddedNext = linkWithText(embeddedFirstNav, "Next: Transcript glossary");

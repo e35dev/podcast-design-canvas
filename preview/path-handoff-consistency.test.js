@@ -65,9 +65,9 @@ for (const { script, href, text, note } of expectedHandoffs) {
 const expectedEntryBacklinks = [
   {
     script: "cleanup-nav.js",
-    href: 'prep.href = "publish-checklist.html"',
+    href: 'CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish"',
     text: "Previous: Publish checklist",
-    note: "cleanup helpers link back to publish prep",
+    note: "cleanup helpers link back to publish prep with publish path context",
   },
   {
     script: "reuse-nav.js",
@@ -77,9 +77,9 @@ const expectedEntryBacklinks = [
   },
   {
     script: "visuals-nav.js",
-    href: 'cleanup: { href: "on-screen-correction-note.html"',
+    href: 'cleanup: { href: "on-screen-correction-note.html?from=cleanup"',
     text: 'label: "On-screen correction note"',
-    note: "contextual visuals link back to cleanup helpers",
+    note: "contextual visuals link back to cleanup helpers with cleanup context",
   },
 ];
 
