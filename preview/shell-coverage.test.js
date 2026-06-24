@@ -38,6 +38,15 @@ for (const file of linked) {
 assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
+assert.match(shell, /Example podcast layout canvas/, "shell shows an example podcast layout canvas");
+assert.match(shell, /Host video slot/, "shell shows a host drop zone in the example canvas");
+assert.match(shell, /Guest video slot/, "shell shows a guest drop zone in the example canvas");
+assert.match(shell, /Caption area/, "shell shows a caption slot in the example canvas");
+assert.match(shell, /B-roll drop zone/, "shell shows a contextual visuals drop zone in the example canvas");
+assert.ok(
+  shell.indexOf("Example podcast layout canvas") < shell.indexOf("Episode path"),
+  "the example canvas leads the shell before the workflow lists",
+);
 assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
 assert.match(shell, /Episode ingest setup/, "shell documents the ingest setup path");
 assert.ok(
@@ -63,6 +72,7 @@ assert.ok(shell.includes("episode-readiness.html"), "shell links to episode read
 assert.ok(shell.includes("social-context-intake.html"), "shell links to social context intake in ingest path");
 assert.ok(shell.includes("speaker-attribution-review.html"), "shell links to speaker attribution in setup path");
 assert.ok(shell.includes("preset-style-picker.html"), "shell links to preset style picker in visual path");
+assert.ok(shell.includes("canvas-layer-controls.html"), "shell links the example canvas to canvas layer controls");
 assert.ok(shell.includes("speaker-framing-safety.html"), "shell links to speaker framing in visual path");
 assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to watch-through in publish path");
 assert.ok(shell.includes("destination-crop-preview.html"), "shell links to destination crop in publish path");

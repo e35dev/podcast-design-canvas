@@ -24,6 +24,19 @@ const flowSteps = [
 
 assert.match(html, /<title>Podcast Design Canvas — Preview<\/title>/, "preview shell has product title");
 assert.match(html, /aria-label="Podcast Design Canvas preview shell"/, "preview shell exposes landmark label");
+assert.match(html, /Example podcast layout canvas/, "preview shell leads with an example podcast layout canvas");
+assert.match(html, /Host video slot/, "preview shell shows a host video drop zone");
+assert.match(html, /Guest video slot/, "preview shell shows a guest video drop zone");
+assert.match(html, /Caption area/, "preview shell reserves a caption area on the example canvas");
+assert.match(html, /B-roll drop zone/, "preview shell shows a contextual visuals drop zone");
+assert.ok(
+  html.includes("./app.html#canvas-layer-controls?path=episode"),
+  "preview shell links the example canvas to canvas layer controls",
+);
+assert.ok(
+  html.includes("./app.html#layout-safe-areas?path=episode"),
+  "preview shell links the example canvas to layout safe areas",
+);
 
 for (const step of flowSteps) {
   assert.ok(html.includes(step), `preview shell links to ${step}`);

@@ -24,7 +24,7 @@
       }
 
       main {
-        max-width: 760px;
+        max-width: 1120px;
         margin: 0 auto;
         padding: 40px 20px 56px;
       }
@@ -123,6 +123,226 @@
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
+
+      .canvas-title {
+        margin: 0 0 10px;
+        font-size: 26px;
+      }
+
+      .canvas-lede {
+        margin: 0 0 18px;
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .canvas-stage {
+        margin: 0 0 30px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #f8fbfa, #eef5f2);
+      }
+
+      .canvas-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.95fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .canvas-frame {
+        position: relative;
+        min-height: 420px;
+        padding: 18px;
+        border: 1px solid #bfd0ca;
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at top left, rgba(19, 111, 99, 0.12), transparent 30%),
+          linear-gradient(135deg, #10312b, #1c5d53 52%, #6a6888);
+        overflow: hidden;
+      }
+
+      .canvas-chip {
+        position: absolute;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        background: rgba(246, 251, 249, 0.94);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 800;
+        padding: 0 12px;
+      }
+
+      .canvas-chip.scene { top: 18px; left: 18px; }
+      .canvas-chip.runtime { top: 18px; right: 18px; }
+
+      .speaker-row {
+        position: absolute;
+        inset: 72px 18px 104px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.95fr;
+        gap: 16px;
+      }
+
+      .drop-zone {
+        position: relative;
+        display: grid;
+        align-content: end;
+        min-height: 100%;
+        padding: 16px;
+        border: 2px dashed rgba(255, 255, 255, 0.72);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+      }
+
+      .drop-zone::before {
+        content: "";
+        position: absolute;
+        top: 14%;
+        left: 50%;
+        width: 26%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: rgba(240, 248, 245, 0.94);
+      }
+
+      .drop-zone::after {
+        content: "";
+        position: absolute;
+        right: 26%;
+        bottom: 28%;
+        left: 26%;
+        height: 28%;
+        border-radius: 999px 999px 0 0;
+        background: rgba(225, 239, 234, 0.94);
+      }
+
+      .drop-zone.guest {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .drop-zone.broll {
+        align-content: center;
+        justify-items: center;
+        min-height: 132px;
+        padding: 14px;
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.55);
+        background: rgba(16, 24, 22, 0.28);
+      }
+
+      .drop-zone.broll::before,
+      .drop-zone.broll::after {
+        display: none;
+      }
+
+      .slot-label {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.76);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 0 10px;
+      }
+
+      .slot-note {
+        position: relative;
+        z-index: 2;
+        margin-top: 8px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .canvas-footer {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 14px;
+        align-items: end;
+      }
+
+      .caption-slot,
+      .title-slot {
+        min-height: 72px;
+        padding: 12px 14px;
+        border: 2px dashed rgba(255, 255, 255, 0.6);
+        border-radius: 14px;
+        background: rgba(16, 24, 22, 0.68);
+      }
+
+      .canvas-actions {
+        display: grid;
+        gap: 10px;
+      }
+
+      .canvas-actions .action-card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 12px 14px;
+      }
+
+      .canvas-actions .action-card strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      .canvas-actions .action-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .canvas-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .canvas-links a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      .canvas-links a.primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .canvas-links a.secondary {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+      }
+
+      .canvas-links a:hover,
+      .canvas-links a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
     
       .tools-title { margin: 34px 0 4px; font-size: 22px; }
       .tools-lede { margin: 0 0 18px; color: var(--muted); max-width: 640px; }
@@ -132,12 +352,80 @@
       .tools a { display: block; padding: 12px 14px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 14px; }
       .tools a span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; font-weight: 400; }
       .tools a:hover, .tools a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      @media (max-width: 900px) {
+        .canvas-grid,
+        .canvas-footer,
+        .speaker-row {
+          grid-template-columns: 1fr;
+        }
+
+        .canvas-frame {
+          min-height: 620px;
+        }
+
+        .speaker-row {
+          inset: 72px 18px 186px;
+        }
+      }
     </style>
   </head>
   <body>
     <main aria-label="Podcast Design Canvas preview shell">
       <h1>Podcast Design Canvas</h1>
-      <p class="lede">Follow the core episode path from imported speaker files through cleanup, captions, and export readiness. Each step opens a working prototype screen.</p>
+      <p class="lede">Open a creator-facing example canvas first, then follow the episode path from imported speaker files through cleanup, captions, and export readiness. Each step opens a working prototype screen.</p>
+
+      <section class="canvas-stage" aria-labelledby="canvas-title">
+        <div class="canvas-grid">
+          <div>
+            <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
+            <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
+            <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
+              <span class="canvas-chip scene">Interview scene · intro beat</span>
+              <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
+              <div class="speaker-row">
+                <div class="drop-zone host">
+                  <span class="slot-label">Host video slot</span>
+                  <span class="slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
+                </div>
+                <div class="drop-zone guest">
+                  <span class="slot-label">Guest video slot</span>
+                  <span class="slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
+                </div>
+              </div>
+              <div class="canvas-footer">
+                <div class="caption-slot">
+                  <span class="slot-label">Caption area</span>
+                  <div class="slot-note">Reserved for readable long-form captions and lower-thirds that never cover a speaker.</div>
+                </div>
+                <div class="title-slot drop-zone broll">
+                  <span class="slot-label">B-roll drop zone</span>
+                  <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
+                </div>
+              </div>
+            </div>
+            <div class="canvas-links" aria-label="Example canvas actions">
+              <a class="primary" href="./app.html#canvas-layer-controls?path=episode">Open canvas layer controls →</a>
+              <a class="secondary" href="./app.html#layout-safe-areas?path=episode">Review layout safe areas →</a>
+              <a class="secondary" href="./app.html#speaker-role-mapping?path=episode">Map speaker tracks →</a>
+            </div>
+          </div>
+          <div class="canvas-actions" aria-label="Example canvas setup notes">
+            <div class="action-card">
+              <strong>Drag speakers into clear roles</strong>
+              <p>Assign host and guest tracks before styling so the example canvas shows exactly where each face belongs.</p>
+            </div>
+            <div class="action-card">
+              <strong>Keep every layout slot visible</strong>
+              <p>Use the canvas example to inspect frame balance, safe areas, and whether captions or title cards crowd the conversation.</p>
+            </div>
+            <div class="action-card">
+              <strong>Reserve visual space for context</strong>
+              <p>The b-roll drop zone shows where contextual visuals should land without turning the episode into short-form clutter.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <p class="catalog-link"><a href="../index.html">Browse the full screen catalog →</a></p>
 
