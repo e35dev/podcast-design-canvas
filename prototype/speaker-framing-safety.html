@@ -332,6 +332,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -418,6 +434,8 @@
           fixes: ["review", "move", "switch", "accept"],
           title: (name) => `Captions cover ${name}'s face`,
           suggest: "Move the captions for this moment, switch to a layout with room, or accept it.",
+          fixScreen: "layout-safe-areas.html",
+          fixLabel: "layout safe areas",
         },
         lower: {
           label: "Lower-third covers the face",
@@ -425,6 +443,8 @@
           fixes: ["review", "move", "switch", "accept"],
           title: (name) => `The lower-third covers ${name}'s face`,
           suggest: "Move the lower-third, switch the layout, or accept it.",
+          fixScreen: "layout-safe-areas.html",
+          fixLabel: "layout safe areas",
         },
         broll: {
           label: "B-roll covers the speaker",
@@ -432,6 +452,8 @@
           fixes: ["review", "shorten", "switch", "accept"],
           title: (name) => `B-roll hides ${name} while they speak`,
           suggest: "Shorten the b-roll over this moment, switch to a side-by-side layout, or accept it.",
+          fixScreen: "contextual-broll-moments.html",
+          fixLabel: "contextual B-roll moments",
         },
         tight: {
           label: "Cropped too tight",
@@ -439,6 +461,8 @@
           fixes: ["review", "recrop", "switch", "accept"],
           title: (name) => `${name} is cropped too tight for the destination`,
           suggest: "Loosen the crop, switch the layout, or accept the close framing.",
+          fixScreen: "destination-crop-preview.html",
+          fixLabel: "destination crop preview",
         },
         panel: {
           label: "Too small in the panel",
@@ -446,6 +470,8 @@
           fixes: ["review", "feature", "switch", "accept"],
           title: (name) => `${name} is too small to read in the panel layout`,
           suggest: "Feature this speaker while they talk, switch the layout, or accept it.",
+          fixScreen: "destination-crop-preview.html",
+          fixLabel: "destination crop preview",
         },
         mobile: {
           label: "Cut off on mobile",
@@ -453,6 +479,8 @@
           fixes: ["review", "recrop", "switch", "accept"],
           title: (name) => `${name} is cut off in the mobile crop`,
           suggest: "Re-center the mobile crop, switch to a stacked layout, or accept it.",
+          fixScreen: "destination-crop-preview.html",
+          fixLabel: "destination crop preview",
         },
       };
 
@@ -533,6 +561,8 @@
               title: check.title(frame.name || "This speaker"),
               action: check.suggest,
               tone: "review",
+              fixScreen: check.fixScreen,
+              fixLabel: check.fixLabel,
             };
           }
 
@@ -794,6 +824,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
