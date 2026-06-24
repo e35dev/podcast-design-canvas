@@ -129,6 +129,7 @@ function renderSpeakerSetupNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
+  stepLabel.setAttribute("aria-current", "step");
   stepLabel.textContent = `Speaker setup step ${index + 1} of ${SPEAKER_SETUP_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 

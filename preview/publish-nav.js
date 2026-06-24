@@ -130,6 +130,7 @@ function renderPublishNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
+  stepLabel.setAttribute("aria-current", "step");
   stepLabel.textContent = `Publish step ${index + 1} of ${PUBLISH_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 

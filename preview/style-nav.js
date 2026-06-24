@@ -128,6 +128,7 @@ function renderStyleNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
+  stepLabel.setAttribute("aria-current", "step");
   stepLabel.textContent = `Style step ${index + 1} of ${STYLE_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 

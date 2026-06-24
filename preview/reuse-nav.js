@@ -128,6 +128,7 @@ function renderReuseNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
+  stepLabel.setAttribute("aria-current", "step");
   stepLabel.textContent = `Reuse step ${index + 1} of ${REUSE_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 
