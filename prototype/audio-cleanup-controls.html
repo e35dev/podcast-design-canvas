@@ -570,8 +570,10 @@
         const parts = [];
 
         if (appliedSpeakers.length) {
+          const previewLabel = previewMoments.find((moment) => moment.id === preview)?.label?.toLowerCase();
+          const previewPhrase = previewLabel ? ` after previewing "${previewLabel}"` : "";
           parts.push(
-            `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} to ${appliedSpeakers.map(bucketLabel).join(" and ")} after previewing "${previewMoments.find((moment) => moment.id === preview).label.toLowerCase()}".`,
+            `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} to ${appliedSpeakers.map(bucketLabel).join(" and ")}${previewPhrase}.`,
           );
         }
 
