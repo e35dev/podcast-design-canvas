@@ -167,6 +167,36 @@ assert.equal(
   "reuse nav preserves unrelated flags and hash segments when merging path context",
 );
 
+function reuseResolveFor(file, search) {
+  const window = { location: { pathname: "/prototype/episode-runtime-shaping.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${reuseSource}\nglobalThis.result = resolveReuseLink(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  reuseResolveFor("episode-watch-through-preview.html", "?path=episode"),
+  "episode-watch-through-preview.html?path=publish",
+  "reuse nav promotes watch-through handoff links to the publish path",
+);
+assert.equal(
+  reuseResolveFor("episode-watch-through-preview.html?path=episode&draft=watch", "?path=reuse"),
+  "episode-watch-through-preview.html?path=publish&draft=watch",
+  "reuse nav replaces conflicting path values on watch-through handoff links",
+);
+assert.equal(
+  (reuseResolveFor("episode-watch-through-preview.html?path=episode", "").match(/path=/g) || []).length,
+  1,
+  "reuse handoff emits one canonical path query param",
+);
+
 const styleSource = fs.readFileSync(path.join(previewDir, "style-nav.js"), "utf8");
 function styleHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/layout-safe-areas.html", search } };
