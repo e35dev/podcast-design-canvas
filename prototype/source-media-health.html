@@ -297,6 +297,25 @@
         margin-top: 18px;
       }
 
+      .batch-summary {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .batch-summary strong,
+      .batch-summary span {
+        display: block;
+      }
+
+      .batch-summary span {
+        color: var(--muted);
+      }
+
       button {
         min-height: 40px;
         border: 1px solid #0f5d53;
@@ -351,6 +370,10 @@
       <section class="workspace" aria-label="Source media health workspace">
         <div class="panel">
           <h2>Speaker files</h2>
+          <div class="batch-summary" aria-live="polite">
+            <div id="batchSummary"></div>
+            <div id="batchActions" class="actions"></div>
+          </div>
           <div class="speakers" id="speakers"></div>
           <div class="actions">
             <button type="button" id="addSpeaker">Add a speaker file</button>
@@ -468,10 +491,13 @@
       ];
 
       let speakers = structuredClone(sampleSpeakers);
+      let showFlaggedOnly = false;
 
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const batchSummaryElement = document.querySelector("#batchSummary");
+      const batchActionsElement = document.querySelector("#batchActions");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -542,14 +568,23 @@
         const hasBlock = results.some((result) => result.state === "unavailable" || result.state === "needs replacement");
         const hasReview = results.some((result) => result.state === "review suggested");
         const overall = hasBlock ? "blocked" : hasReview ? "review" : "ready";
+        const flaggedCount = results.filter((result) => result.state !== "ready").length;
+        const blockedCount = results.filter(
+          (result) => result.state === "unavailable" || result.state === "needs replacement",
+        ).length;
 
-        return { overall, results };
+        return { overall, results, flaggedCount, blockedCount };
       }
 
       function render() {
         const evaluation = evaluate(speakers);
+        const visibleIndexes = speakers
+          .map((speaker, index) => ({ speaker, index, result: evaluation.results[index] }))
+          .filter(({ result }) => !showFlaggedOnly || result.state !== "ready")
+          .map(({ index }) => index);
+
         speakersElement.replaceChildren(
-          ...speakers.map((speaker, index) => renderSpeaker(speaker, index, evaluation.results[index])),
+          ...visibleIndexes.map((index) => renderSpeaker(speakers[index], index, evaluation.results[index])),
         );
 
         statusElement.className = `status ${evaluation.overall}`;
@@ -559,12 +594,51 @@
             ? "Some files need replacing"
             : "Review suggested";
 
+        renderBatchSummary(evaluation);
+
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "All speaker files are ready for preset selection." })]),
         );
+      }
+
+      function renderBatchSummary(evaluation) {
+        const summary = document.createElement("div");
+        const title = document.createElement("strong");
+        const detail = document.createElement("span");
+
+        if (evaluation.blockedCount > 0) {
+          title.textContent = `${evaluation.blockedCount} file${evaluation.blockedCount === 1 ? "" : "s"} need action`;
+          detail.textContent = "Jump straight to the files that need replacing and leave the ready tracks alone.";
+        } else if (evaluation.flaggedCount > 0) {
+          title.textContent = evaluation.flaggedCount === 1
+            ? "1 file wants a look"
+            : `${evaluation.flaggedCount} files want a look`;
+          detail.textContent = "The batch stays calm: review only the flagged tracks instead of re-checking the clear ones.";
+        } else {
+          title.textContent = "All clear";
+          detail.textContent = "Every file in this batch is ready for styling on the chosen episode layout.";
+        }
+
+        summary.replaceChildren(title, detail);
+        batchSummaryElement.replaceChildren(summary);
+
+        const buttons = [];
+        if (evaluation.flaggedCount > 0) {
+          const toggle = document.createElement("button");
+          toggle.type = "button";
+          toggle.className = "secondary";
+          toggle.textContent = showFlaggedOnly ? "Show all tracks" : `Show ${evaluation.flaggedCount} flagged track${evaluation.flaggedCount === 1 ? "" : "s"}`;
+          toggle.addEventListener("click", () => {
+            showFlaggedOnly = !showFlaggedOnly;
+            render();
+          });
+          buttons.push(toggle);
+        }
+
+        batchActionsElement.replaceChildren(...buttons);
       }
 
       function badgeClass(state) {
@@ -641,6 +715,9 @@
           if (!allowed.includes(speaker.disposition)) {
             speaker.disposition = "keep";
           }
+        }
+        if (showFlaggedOnly && evaluate(speakers).flaggedCount === 0) {
+          showFlaggedOnly = false;
         }
         render();
       }
