@@ -409,6 +409,35 @@
         gap: 8px;
       }
 
+      .speaker-cleanup-context {
+        display: grid;
+        gap: 8px;
+        margin-top: 2px;
+      }
+
+      .speaker-cleanup-context > span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .speaker-choice-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .speaker-choice-tags .speaker-choice-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 0 9px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #075246;
+        background: #dff5ef;
+      }
+
       button.secondary {
         min-height: 38px;
         border: 1px solid #b9c8c3;
@@ -974,6 +1003,49 @@
         return button;
       }
 
+      function activeChoicesForSpeaker(speaker) {
+        return choices.filter((choice) => {
+          if (!enabled.has(choice.id)) return false;
+          if (speaker.id === "host" && choice.id === "quiet") return false;
+          return true;
+        });
+      }
+
+      function renderSpeakerChoiceContext(speaker) {
+        const active = activeChoicesForSpeaker(speaker);
+        const wrap = document.createElement("div");
+        wrap.className = "speaker-cleanup-context";
+
+        const lead = document.createElement("span");
+        lead.textContent = active.length
+          ? "Active cleanup choices for this speaker:"
+          : "Turn on cleanup choices above to preview changes here.";
+        wrap.appendChild(lead);
+
+        if (!active.length) {
+          return wrap;
+        }
+
+        const tags = document.createElement("div");
+        tags.className = "speaker-choice-tags";
+        tags.setAttribute("aria-label", "Active cleanup choices for speaker");
+
+        for (const choice of active) {
+          if (typeof choice.label !== "string" || !choice.label.length) continue;
+          const tag = document.createElement("span");
+          tag.className = "speaker-choice-tag";
+          const effect = typeof choice.effect === "string" && choice.effect.length ? choice.effect : null;
+          tag.textContent = effect ? `${choice.label} — ${effect}` : choice.label;
+          tags.appendChild(tag);
+        }
+
+        if (tags.childElementCount) {
+          wrap.appendChild(tags);
+        }
+
+        return wrap;
+      }
+
       function renderSpeaker(speaker, index, filteredOut = false) {
         const article = document.createElement("article");
         article.className = filteredOut ? "speaker filtered-out" : "speaker";
@@ -1011,6 +1083,8 @@
         article.append(head, label);
 
         if (speaker.state === "suggested" || speaker.state === "applied") {
+          article.appendChild(renderSpeakerChoiceContext(speaker));
+
           const actions = document.createElement("div");
           actions.className = "speaker-actions";
 
