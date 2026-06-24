@@ -12,6 +12,7 @@
         --surface: #f7faf9;
         --accent: #116a5d;
         --warn: #a15f00;
+        --ready: #075246;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
@@ -52,7 +53,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        margin: 24px 0;
+        margin: 24px 0 12px;
       }
 
       button {
@@ -71,6 +72,58 @@
         border-color: var(--accent);
         background: #dcf2ee;
         color: var(--accent);
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+        border-color: #b9c6c2;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .surface-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ok {
+        color: var(--ready);
+        background: #dff5ef;
+      }
+
+      .badge.attention {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.reviewed {
+        color: #3f4d66;
+        background: #e8edf5;
+      }
+
+      .badge.untargeted {
+        color: #5e6b67;
+        background: #eceeed;
       }
 
       .workspace {
@@ -101,7 +154,8 @@
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
       }
 
-      .preview.wide {
+      .preview.wide,
+      .preview.archive {
         aspect-ratio: 16 / 9;
       }
 
@@ -117,6 +171,38 @@
 
       .preview.thumbnail {
         aspect-ratio: 16 / 9;
+      }
+
+      .preview.review {
+        aspect-ratio: 16 / 9;
+      }
+
+      .preview.review::after {
+        content: "Review copy";
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(15, 24, 22, 0.18);
+        color: rgba(255, 255, 255, 0.72);
+        font-size: clamp(28px, 6vw, 52px);
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      .archive-tag {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 800;
+        padding: 5px 10px;
+        z-index: 2;
       }
 
       .speaker {
@@ -196,6 +282,12 @@
         text-align: right;
       }
 
+      .controls {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
       .issues {
         display: grid;
         gap: 10px;
@@ -217,6 +309,12 @@
         color: var(--muted);
       }
 
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
       @media (max-width: 860px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -227,9 +325,10 @@
   <body>
     <main>
       <h1>Destination crop preview</h1>
-      <p class="lede">Check whether speakers, captions, logos, and title text survive each publishing surface before export.</p>
+      <p class="lede">Check whether speakers, captions, logos, and title text survive each publishing surface before export. Mark surfaces that matter for this episode and record when you accept how a crop looks.</p>
 
       <div class="toolbar" id="toolbar"></div>
+      <div class="surface-meta" id="surfaceMeta" aria-live="polite"></div>
 
       <section class="workspace">
         <div class="panel preview-wrap">
@@ -244,20 +343,24 @@
 
         <aside class="panel">
           <h2>Crop checks</h2>
+          <div class="controls" id="controls"></div>
           <div id="issues" class="issues" aria-live="polite"></div>
+          <p class="summary-note" id="summaryNote"></p>
         </aside>
       </section>
     </main>
 
     <script>
       const surfaces = {
-        wide: "Wide episode",
-        mobile: "Mobile crop",
-        square: "Square preview",
-        thumbnail: "Thumbnail",
+        wide: { label: "Wide episode", previewClass: "wide" },
+        mobile: { label: "Mobile crop", previewClass: "mobile" },
+        square: { label: "Square preview", previewClass: "square" },
+        thumbnail: { label: "Thumbnail", previewClass: "thumbnail" },
+        review: { label: "Client review copy", previewClass: "review" },
+        archive: { label: "Archive master", previewClass: "archive" },
       };
 
-      const checks = {
+      const checksBySurface = {
         wide: [],
         mobile: [
           ["Guest frame is cropped", "Use a one-speaker focus crop or switch to stacked mobile layout."],
@@ -270,20 +373,67 @@
           ["Title may be small at thumbnail size", "Shorten title text or use a dedicated cover frame."],
           ["Captions are not useful in thumbnail", "Hide captions for thumbnail export."],
         ],
+        review: [
+          ["Review watermark must stay visible", "Keep the review label on every frame of the client copy."],
+          ["Sponsor mark should stay subtle in review copy", "Use the standard sponsor strength for client delivery."],
+        ],
+        archive: [],
+      };
+
+      const stateLabels = {
+        ok: "Ok",
+        "needs attention": "Needs attention",
+        reviewed: "Reviewed",
+        "not targeted": "Not targeted",
+      };
+
+      // Creator overrides per surface; null means derive from crop checks.
+      let surfaceOverrides = {
+        wide: null,
+        mobile: null,
+        square: null,
+        thumbnail: null,
+        review: null,
+        archive: "reviewed",
       };
 
       let selectedSurface = "wide";
 
       const toolbar = document.querySelector("#toolbar");
+      const surfaceMeta = document.querySelector("#surfaceMeta");
       const preview = document.querySelector("#preview");
+      const controls = document.querySelector("#controls");
       const issues = document.querySelector("#issues");
+      const summaryNote = document.querySelector("#summaryNote");
 
-      function render() {
+      function checksFor(surfaceId) {
+        return checksBySurface[surfaceId] || [];
+      }
+
+      function derivedState(surfaceId) {
+        return checksFor(surfaceId).length ? "needs attention" : "ok";
+      }
+
+      function effectiveState(surfaceId) {
+        const override = surfaceOverrides[surfaceId];
+        if (override === "not targeted" || override === "reviewed") {
+          return override;
+        }
+        return derivedState(surfaceId);
+      }
+
+      function summarizeSurfaces() {
+        const targeted = Object.keys(surfaces).filter((id) => effectiveState(id) !== "not targeted");
+        const attention = targeted.filter((id) => effectiveState(id) === "needs attention");
+        return { targeted: targeted.length, attention: attention.length };
+      }
+
+      function renderToolbar() {
         toolbar.replaceChildren(
-          ...Object.entries(surfaces).map(([id, label]) => {
+          ...Object.entries(surfaces).map(([id, surface]) => {
             const button = document.createElement("button");
             button.type = "button";
-            button.textContent = label;
+            button.textContent = surface.label;
             button.setAttribute("aria-pressed", String(id === selectedSurface));
             button.addEventListener("click", () => {
               selectedSurface = id;
@@ -292,13 +442,96 @@
             return button;
           }),
         );
+      }
 
-        preview.className = `preview ${selectedSurface}`;
-        const currentChecks = checks[selectedSurface];
+      function renderSurfaceMeta() {
+        const state = effectiveState(selectedSurface);
+        surfaceMeta.replaceChildren();
+        const badge = document.createElement("span");
+        badge.className = `badge ${state === "ok" || state === "reviewed" ? state === "ok" ? "ok" : "reviewed" : state === "not targeted" ? "untargeted" : "attention"}`;
+        badge.textContent = stateLabels[state];
+        const detail = document.createElement("span");
+        const summary = summarizeSurfaces();
+        detail.textContent = `${summary.targeted} surfaces targeted for this episode${summary.attention ? ` · ${summary.attention} still need attention` : ""}.`;
+        surfaceMeta.append(badge, detail);
+      }
+
+      function renderPreview() {
+        const surface = surfaces[selectedSurface];
+        preview.className = `preview ${surface.previewClass}`;
+        preview.querySelector(".archive-tag")?.remove();
+        preview.querySelector(".caption").hidden = selectedSurface === "thumbnail";
+        if (selectedSurface === "archive") {
+          const tag = document.createElement("span");
+          tag.className = "archive-tag";
+          tag.textContent = "Archive master";
+          preview.append(tag);
+        }
+      }
+
+      function renderControls() {
+        const state = effectiveState(selectedSurface);
+        const derived = derivedState(selectedSurface);
+        controls.replaceChildren();
+
+        const notTargeted = document.createElement("button");
+        notTargeted.type = "button";
+        notTargeted.className = "secondary";
+        notTargeted.textContent = state === "not targeted" ? "Target this surface" : "Not targeted for this episode";
+        notTargeted.addEventListener("click", () => {
+          surfaceOverrides[selectedSurface] = state === "not targeted" ? null : "not targeted";
+          render();
+        });
+
+        const reviewed = document.createElement("button");
+        reviewed.type = "button";
+        reviewed.className = "secondary";
+        reviewed.textContent = "Mark surface reviewed";
+        reviewed.disabled = state === "not targeted" || state === "ok";
+        reviewed.addEventListener("click", () => {
+          surfaceOverrides[selectedSurface] = "reviewed";
+          render();
+        });
+
+        const reopen = document.createElement("button");
+        reopen.type = "button";
+        reopen.className = "secondary";
+        reopen.textContent = "Reopen surface review";
+        reopen.disabled = surfaceOverrides[selectedSurface] !== "reviewed" && surfaceOverrides[selectedSurface] !== "not targeted";
+        reopen.addEventListener("click", () => {
+          surfaceOverrides[selectedSurface] = null;
+          render();
+        });
+
+        controls.append(notTargeted, reviewed, reopen);
+
+        if (state === "reviewed") {
+          summaryNote.textContent = "You accepted how this surface looks. Unrelated caption or readability work still needs its own review.";
+        } else if (state === "not targeted") {
+          summaryNote.textContent = "This surface is hidden from export readiness for this episode. The long-form master is unchanged.";
+        } else if (derived === "needs attention") {
+          summaryNote.textContent = "Fix or accept each issue before export when this surface is required for the chosen destination.";
+        } else {
+          summaryNote.textContent = "No crop issues on this surface.";
+        }
+      }
+
+      function renderIssues() {
+        const state = effectiveState(selectedSurface);
+        if (state === "not targeted") {
+          issues.replaceChildren(
+            Object.assign(document.createElement("p"), {
+              textContent: "Crop checks are hidden because this surface is not targeted for this episode.",
+            }),
+          );
+          return;
+        }
+
+        const currentChecks = checksFor(selectedSurface);
         issues.replaceChildren(
           ...(currentChecks.length
             ? currentChecks.map(([title, action]) => renderIssue(title, action))
-            : [Object.assign(document.createElement("p"), { textContent: "No crop issues for this destination." })]),
+            : [Object.assign(document.createElement("p"), { textContent: "No crop issues for this surface." })]),
         );
       }
 
@@ -307,6 +540,14 @@
         issue.className = "issue";
         issue.innerHTML = `<strong>${title}</strong><span>${action}</span>`;
         return issue;
+      }
+
+      function render() {
+        renderToolbar();
+        renderSurfaceMeta();
+        renderPreview();
+        renderControls();
+        renderIssues();
       }
 
       render();
