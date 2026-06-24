@@ -10,10 +10,6 @@
 const TOOL_STAGE = {
   "episode-readiness.html": "Bring in the recording",
   "speaker-role-mapping.html": "Bring in the recording",
-  "speaker-attribution-review.html": "Bring in the recording",
-  "speaker-visual-match.html": "Bring in the recording",
-  "speaker-eye-line-coherence.html": "Bring in the recording",
-  "guest-profile-reuse.html": "Bring in the recording",
   "pause-crosstalk-cleanup.html": "Clean up audio & captions",
   "transcript-glossary.html": "Clean up audio & captions",
   "transcript-search-navigation.html": "Clean up audio & captions",
