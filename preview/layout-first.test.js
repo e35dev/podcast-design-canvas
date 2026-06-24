@@ -798,4 +798,20 @@ controller.placeDroppedFiles([{ name: "guest.mp4", type: "video/mp4", size: 8, l
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "drop-anywhere targets the next empty slot when the first is taken");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "host.mp4", "drop-anywhere leaves an already-filled slot untouched");
 
+// Drag-over highlight stays steady while the cursor crosses the slot's contents. dragenter and
+// dragleave fire for each child (label, badge, input), so the highlight is tracked by enter/
+// leave depth rather than toggled on every crossing — which would flicker — and a drop clears it.
+controller.resetVideos();
+const dragZone = controller.zonesBySlot.host;
+dragZone.listeners.dragenter({ preventDefault() {} });
+assert.equal(dragZone.classList.contains("drag-over"), true, "entering a slot highlights it as a drop target");
+dragZone.listeners.dragenter({ preventDefault() {} }); // cursor crosses into a child element
+dragZone.listeners.dragleave({ preventDefault() {} }); // ...and back out of that child
+assert.equal(dragZone.classList.contains("drag-over"), true, "crossing the slot's contents keeps the highlight");
+dragZone.listeners.dragleave({ preventDefault() {} }); // cursor truly leaves the slot
+assert.equal(dragZone.classList.contains("drag-over"), false, "leaving the slot clears the highlight");
+dragZone.listeners.dragenter({ preventDefault() {} });
+dragZone.listeners.drop({ preventDefault() {}, stopPropagation() {}, dataTransfer: { files: [] } });
+assert.equal(dragZone.classList.contains("drag-over"), false, "a drop clears the highlight even mid-drag");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

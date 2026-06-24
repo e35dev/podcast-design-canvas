@@ -723,18 +723,32 @@
           input.click();
         }
       });
-      zone.addEventListener("dragover", (event) => {
-        event.preventDefault();
+      // Keep the drop-target highlight steady while a file is dragged over the slot. dragenter
+      // and dragleave fire each time the cursor crosses one of the slot's children (the label,
+      // the status badge, the file input), so adding on dragover and removing on every
+      // dragleave makes the highlight flicker as the pointer moves across the slot. Track
+      // enter/leave depth and only clear the highlight once the cursor has truly left the slot.
+      let dragDepth = 0;
+      zone.addEventListener("dragenter", () => {
+        dragDepth += 1;
         zone.classList.add("drag-over");
       });
+      zone.addEventListener("dragover", (event) => {
+        // Required so the slot is a valid drop target; the highlight is owned by dragenter.
+        event.preventDefault();
+      });
       zone.addEventListener("dragleave", () => {
-        zone.classList.remove("drag-over");
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) {
+          zone.classList.remove("drag-over");
+        }
       });
       zone.addEventListener("drop", (event) => {
         event.preventDefault();
         // A drop aimed at a specific slot is owned by that slot — stop it from also
         // bubbling to the layout-wide drop handler, which would re-route the files.
         event.stopPropagation();
+        dragDepth = 0;
         zone.classList.remove("drag-over");
         placeVideoFiles(zone, event.dataTransfer && event.dataTransfer.files);
       });
