@@ -608,10 +608,17 @@
             };
           } else {
             state = "review";
+            const audioHandoff = kind.preview === "overlap"
+              ? {
+                fixScreen: "audio-cleanup-controls.html",
+                fixLabel: "audio cleanup",
+              }
+              : {};
             issue = {
               title: `${kind.title} (${moment.at})`,
               action: kind.suggest,
               tone: "review",
+              ...audioHandoff,
             };
           }
 
