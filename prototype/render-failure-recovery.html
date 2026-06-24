@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Render Failure Recovery Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 28px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; font-size: 13px;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+      .badge.optional { background: #eceeed; color: #55615d; }
+
+      .failure-card {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px; margin-bottom: 12px;
+      }
+      .failure-card .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+      .failure-card strong { font-size: 15px; }
+      .failure-card .detail { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+      .failure-card .moment { font-size: 13px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+
+      .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      button {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 36px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; font-size: 13px; padding: 6px 12px; cursor: pointer;
+      }
+      button:hover { background: #f0f4f2; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.52; cursor: not-allowed; }
+      button.primary-action { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+
+      .fix-link {
+        display: inline-block; margin-top: 8px; color: var(--accent);
+        font-weight: 700; font-size: 13px; text-decoration: none;
+      }
+      .fix-link:hover, .fix-link:focus-visible { text-decoration: underline; outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .timeline { display: grid; gap: 8px; margin-top: 12px; }
+      .timeline-step {
+        display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px;
+        border-radius: 6px; font-size: 13px;
+      }
+      .timeline-step .marker { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+      .timeline-step .marker.done { background: var(--accent); }
+      .timeline-step .marker.current { background: var(--review); }
+      .timeline-step .marker.pending { background: var(--line); }
+      .timeline-step strong { font-size: 13px; }
+      .timeline-step span { color: var(--muted); }
+
+      .preserved { border-left: 4px solid var(--accent); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .preserved strong { display: block; margin-bottom: 4px; }
+      .preserved span { color: var(--muted); }
+
+      .status-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        padding: 11px 12px; color: var(--muted);
+      }
+      .status-note strong { display: block; margin-bottom: 4px; color: var(--ink); }
+
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="render-failure-recovery">
+    <main>
+      <h1>Render Failure Recovery Prototype</h1>
+      <p class="lede">
+        When export rendering fails, understand what part of the episode needs attention, retry safely, and keep working without losing edits or readiness decisions.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Recovery status</h2>
+          <div id="statusHeader" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;"></div>
+          <div id="failures"></div>
+
+          <h3 style="margin-top: 20px;">Recovery actions</h3>
+          <div class="action-row" id="actions"></div>
+          <div class="status-note" id="statusNote" aria-live="polite"></div>
+        </div>
+
+        <aside class="panel">
+          <h2>What is preserved</h2>
+          <div id="preserved" style="display:grid; gap:10px;"></div>
+
+          <h3 style="margin-top: 18px;">Recovery timeline</h3>
+          <div class="timeline" id="timeline"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var EPISODE_CONTEXT = {
+        title: "The Deep Dive — Episode 47",
+        duration: "58 min",
+        template: "Interview split-screen",
+        speakers: ["Marcus Rivera (Host)", "Sarah Chen (Guest 1)", "David Okafor (Guest 2)"],
+      };
+
+      var FAILURE_SCENARIOS = {
+        missingAsset: {
+          title: "B-roll asset missing at 23:14",
+          detail: "A contextual b-roll clip referenced at 23:14 could not be found during rendering. The episode exported up to that moment before stopping.",
+          status: ["blocked", "failed"],
+          moment: "23:14 — Sarah discusses research methodology",
+          fixScreen: "contextual-broll-moments.html",
+          fixLabel: "contextual b-roll moments",
+          actions: [
+            { id: "replace", label: "Replace missing asset", primary: true },
+            { id: "skip", label: "Skip this b-roll" },
+            { id: "retry", label: "Retry export" },
+          ],
+        },
+        captionFail: {
+          title: "Captions could not be included",
+          detail: "The caption file references a speaker attribution that was removed after the last review pass. The episode can export without captions or the attribution can be fixed first.",
+          status: ["review", "needs creator input"],
+          moment: "Full episode — speaker attribution mismatch",
+          fixScreen: "speaker-attribution-review.html",
+          fixLabel: "speaker attribution review",
+          actions: [
+            { id: "fixAttribution", label: "Fix attribution", primary: true },
+            { id: "exportWithout", label: "Export without captions" },
+            { id: "setAside", label: "Set aside for later" },
+          ],
+        },
+        audioMix: {
+          title: "Audio mix could not be prepared",
+          detail: "Guest 2's audio track has a corrupted segment at 41:08. The leveling pass cannot process that section. The source file can be replaced or the segment can be trimmed.",
+          status: ["blocked", "failed"],
+          moment: "41:08 — David Okafor's track has corruption",
+          fixScreen: "source-media-health.html",
+          fixLabel: "source media health",
+          actions: [
+            { id: "replaceSource", label: "Replace source file", primary: true },
+            { id: "trimSegment", label: "Trim corrupted segment" },
+            { id: "retry", label: "Retry export" },
+          ],
+        },
+      };
+
+      var state = {
+        scenario: "missingAsset",
+        recoveryStatus: "failed",
+        lastAction: null,
+      };
+
+      var RECOVERY_STEPS = [
+        { label: "Export started", status: "done" },
+        { label: "Rendering reached failure point", status: "done" },
+        { label: "Failure detected", status: "current" },
+        { label: "Recovery action chosen", status: "pending" },
+        { label: "Fix applied or export completed around the issue", status: "pending" },
+      ];
+
+      function currentScenario() {
+        return FAILURE_SCENARIOS[state.scenario];
+      }
+
+      function statusAfterAction(actionId) {
+        if (actionId === "replace" || actionId === "fixAttribution" || actionId === "replaceSource") return "retrying";
+        if (actionId === "skip" || actionId === "exportWithout" || actionId === "trimSegment") return "exported around the issue";
+        if (actionId === "retry") return "retrying";
+        if (actionId === "setAside") return "set aside";
+        return "failed";
+      }
+
+      function statusBadgeClass(status) {
+        if (status === "retrying") return "review";
+        if (status === "recovered" || status === "exported around the issue") return "ready";
+        if (status === "set aside") return "optional";
+        return "blocked";
+      }
+
+      function renderStatusHeader() {
+        var container = document.getElementById("statusHeader");
+        container.replaceChildren();
+        var scenario = currentScenario();
+
+        var info = document.createElement("div");
+        var ep = document.createElement("strong");
+        ep.textContent = EPISODE_CONTEXT.title;
+        ep.style.display = "block";
+        ep.style.marginBottom = "4px";
+        var meta = document.createElement("span");
+        meta.style.color = "var(--muted)";
+        meta.style.fontSize = "13px";
+        meta.textContent = EPISODE_CONTEXT.duration + " · " + EPISODE_CONTEXT.template + " · " + EPISODE_CONTEXT.speakers.length + " speakers";
+        info.append(ep, meta);
+
+        var badge = document.createElement("span");
+        badge.className = "badge " + statusBadgeClass(state.recoveryStatus);
+        badge.textContent = state.recoveryStatus;
+
+        container.append(info, badge);
+      }
+
+      function renderFailures() {
+        var container = document.getElementById("failures");
+        container.replaceChildren();
+
+        Object.keys(FAILURE_SCENARIOS).forEach(function (key) {
+          var sc = FAILURE_SCENARIOS[key];
+          var card = document.createElement("div");
+          card.className = "failure-card";
+          var isActive = key === state.scenario;
+          if (isActive) card.style.borderColor = "var(--accent)";
+
+          var header = document.createElement("div");
+          header.className = "header";
+          var title = document.createElement("strong");
+          title.textContent = sc.title;
+          var badge = document.createElement("span");
+          badge.className = "badge " + (isActive ? statusBadgeClass(state.recoveryStatus) : sc.status[0]);
+          badge.textContent = isActive ? state.recoveryStatus : sc.status[1];
+          header.append(title, badge);
+
+          var detail = document.createElement("div");
+          detail.className = "detail";
+          detail.textContent = sc.detail;
+
+          var moment = document.createElement("div");
+          moment.className = "moment";
+          moment.textContent = sc.moment;
+
+          card.append(header, detail, moment);
+
+          if (!isActive) {
+            var selectBtn = document.createElement("button");
+            selectBtn.type = "button";
+            selectBtn.textContent = "View this failure";
+            selectBtn.addEventListener("click", function () {
+              state.scenario = key;
+              state.recoveryStatus = "failed";
+              state.lastAction = null;
+              render();
+            });
+            card.appendChild(selectBtn);
+          } else if (sc.fixScreen) {
+            var fix = document.createElement("a");
+            fix.className = "fix-link";
+            fix.href = sc.fixScreen;
+            fix.textContent = "Open " + sc.fixLabel + " \u2192";
+            card.appendChild(fix);
+          }
+
+          container.appendChild(card);
+        });
+      }
+
+      function renderActions() {
+        var container = document.getElementById("actions");
+        container.replaceChildren();
+        var scenario = currentScenario();
+        scenario.actions.forEach(function (action) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = action.label;
+          if (action.primary) btn.className = "primary-action";
+          btn.addEventListener("click", function () {
+            state.lastAction = action.id;
+            state.recoveryStatus = statusAfterAction(action.id);
+            render();
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function renderStatusNote() {
+        var container = document.getElementById("statusNote");
+        container.replaceChildren();
+        var scenario = currentScenario();
+        var s = document.createElement("strong");
+        var d = document.createElement("span");
+
+        if (!state.lastAction) {
+          s.textContent = "Waiting for recovery action";
+          d.textContent = "Choose how to handle the failure. All edits, caption corrections, and readiness decisions are preserved.";
+        } else if (state.recoveryStatus === "retrying") {
+          s.textContent = "Retrying export";
+          d.textContent = "The export is running again with the chosen fix. Edits and readiness decisions remain intact.";
+        } else if (state.recoveryStatus === "exported around the issue") {
+          s.textContent = "Exported around the issue";
+          d.textContent = "The episode exported successfully by skipping the problem element. The underlying readiness issue is not marked resolved.";
+        } else if (state.recoveryStatus === "set aside") {
+          s.textContent = "Export set aside";
+          d.textContent = "This export is paused. All edits are preserved and you can return to it later.";
+        } else {
+          s.textContent = "Recovery in progress";
+          d.textContent = scenario.title + " — waiting for the fix to complete.";
+        }
+        container.append(s, d);
+      }
+
+      function renderPreserved() {
+        var container = document.getElementById("preserved");
+        container.replaceChildren();
+        var items = [
+          { title: "Canvas edits", detail: "All layer positions, frames, and overlays remain as placed." },
+          { title: "Caption corrections", detail: "Speaker attribution fixes and spelling edits are kept." },
+          { title: "Approved b-roll", detail: "Contextual visuals already reviewed stay approved." },
+          { title: "Metadata and show notes", detail: "Title, chapters, and guest links are not affected." },
+          { title: "Export readiness decisions", detail: "Checklist approvals from the publish flow carry forward." },
+          { title: "Template changes", detail: "Show template updates made during this episode stay saved." },
+        ];
+        items.forEach(function (item) {
+          var el = document.createElement("div");
+          el.className = "preserved";
+          var title = document.createElement("strong");
+          title.textContent = item.title;
+          var detail = document.createElement("span");
+          detail.textContent = item.detail;
+          el.append(title, detail);
+          container.appendChild(el);
+        });
+      }
+
+      function renderTimeline() {
+        var container = document.getElementById("timeline");
+        container.replaceChildren();
+
+        var steps = RECOVERY_STEPS.map(function (step) { return { label: step.label, status: step.status }; });
+        if (state.lastAction) {
+          steps[3].status = "done";
+          if (state.recoveryStatus === "retrying") {
+            steps[4].status = "current";
+          } else if (state.recoveryStatus === "exported around the issue" || state.recoveryStatus === "set aside") {
+            steps[4].status = "done";
+          }
+        }
+
+        steps.forEach(function (step) {
+          var el = document.createElement("div");
+          el.className = "timeline-step";
+          var marker = document.createElement("div");
+          marker.className = "marker " + step.status;
+          var label = document.createElement("div");
+          var strong = document.createElement("strong");
+          strong.textContent = step.label;
+          label.appendChild(strong);
+          el.append(marker, label);
+          container.appendChild(el);
+        });
+      }
+
+      function render() {
+        renderStatusHeader();
+        renderFailures();
+        renderActions();
+        renderStatusNote();
+        renderPreserved();
+        renderTimeline();
+      }
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          EPISODE_CONTEXT: EPISODE_CONTEXT,
+          FAILURE_SCENARIOS: FAILURE_SCENARIOS,
+          state: state,
+          currentScenario: currentScenario,
+          statusAfterAction: statusAfterAction,
+          statusBadgeClass: statusBadgeClass,
+          RECOVERY_STEPS: RECOVERY_STEPS,
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -442,8 +442,8 @@ assert.equal(
 );
 assert.equal(
   publishPath.nodes.nextStep.href,
-  "#clip-candidate-review?path=publish",
-  "publish path context is preserved when stepping from export package handoff to clip review",
+  "#render-failure-recovery?path=publish",
+  "publish path context is preserved when stepping from export package handoff to render failure recovery",
 );
 
 publishPath.reroute("#clip-candidate-review?path=publish");
@@ -454,7 +454,7 @@ assert.equal(
 );
 assert.equal(
   publishPath.nodes.prevStep.href,
-  "#export-package-handoff?path=publish",
+  "#render-failure-recovery?path=publish",
   "publish path context is preserved when stepping back from clip review",
 );
 assert.equal(
