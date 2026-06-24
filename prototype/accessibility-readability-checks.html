@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accessibility &amp; Readability Checks Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .checks {
+        display: grid;
+        gap: 14px;
+      }
+
+      .check {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.clear {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.fixed {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.accepted {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .frame {
+        position: relative;
+        width: 128px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .face {
+        position: absolute;
+        top: 16%;
+        left: 50%;
+        width: 32%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .cap {
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        bottom: 12%;
+        height: 16%;
+        border-radius: 3px;
+        background: rgba(16, 24, 22, 0.85);
+      }
+
+      .frame.small .cap {
+        height: 8%;
+        left: 30%;
+        right: 30%;
+      }
+
+      .frame.low .cap {
+        background: rgba(120, 130, 126, 0.5);
+      }
+
+      .frame.coverface .cap {
+        top: 20%;
+        bottom: auto;
+        height: 30%;
+      }
+
+      .frame.motion .cap {
+        background: repeating-linear-gradient(90deg, #f4d35e, #f4d35e 6px, #e0664e 6px, #e0664e 12px);
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .check {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Accessibility &amp; readability checks</h1>
+      <p class="lede">Catch the things that make an episode harder to watch &mdash; captions that are too small or low-contrast, text over a speaker's face, or motion that's too fast &mdash; without thinking like a compliance specialist. We flag the viewing problem and offer a direct fix.</p>
+
+      <section class="workspace" aria-label="Accessibility and readability workspace">
+        <div class="panel">
+          <h2>Readability checks</h2>
+          <div class="checks" id="checks"></div>
+          <div class="actions">
+            <button type="button" id="addCheck">Add a check</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Readability summary">
+          <h2>Readability summary</h2>
+          <div id="status" class="status ready">Easy to watch</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">We check the same episode on desktop and mobile. A look you accept on purpose still exports.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Where the check shows up, so the same episode is judged on more than one screen.
+      const contexts = {
+        desktop: "Desktop preview",
+        mobile: "Mobile preview",
+        paused: "Paused frame",
+        title: "Title-card moment",
+      };
+
+      // The viewing problem a check found. "preview" styles the sample frame, "fixes"
+      // lists only the resolutions that fit.
+      const checks = {
+        clear: { label: "Reads clearly", preview: "", fixes: ["keep"] },
+        "low-contrast": {
+          label: "Captions are low-contrast",
+          preview: "low",
+          fixes: ["review", "contrast", "accept"],
+          title: "Captions are hard to read against the background",
+          suggest: "Increase the caption contrast, or accept it if it reads fine here.",
+        },
+        small: {
+          label: "Captions are too small",
+          preview: "small",
+          fixes: ["review", "size", "accept"],
+          title: "Captions are too small to read comfortably",
+          suggest: "Increase the caption size, or accept it for this destination.",
+        },
+        "covers-face": {
+          label: "Captions cover a face",
+          preview: "coverface",
+          fixes: ["review", "move", "accept"],
+          title: "Captions sit over the active speaker's face",
+          suggest: "Move the captions, or accept it if the face still reads.",
+        },
+        "fast-motion": {
+          label: "Title moves too fast",
+          preview: "motion",
+          fixes: ["review", "slow", "accept"],
+          title: "A title card moves too fast to read",
+          suggest: "Slow the title animation, or accept it if it's still legible.",
+        },
+        flashing: {
+          label: "Repeated flashing motion",
+          preview: "motion",
+          fixes: ["review", "reduce"],
+          title: "Flashing or intense motion repeats",
+          suggest: "Reduce the motion so it's comfortable to watch — this one shouldn't ship as is.",
+        },
+        "no-text": {
+          label: "Visual has no text version",
+          preview: "",
+          fixes: ["review", "addtext", "accept"],
+          title: "Important on-screen info has no text equivalent",
+          suggest: "Add a caption or on-screen text for it, or accept it if it's decorative.",
+        },
+      };
+
+      // The creator's resolution. "accept" keeps a deliberate look; the rest fix it.
+      const fixes = {
+        keep: "Looks good",
+        review: "Decide later",
+        contrast: "Improve contrast",
+        size: "Increase size",
+        move: "Move captions",
+        slow: "Slow the motion",
+        reduce: "Reduce the motion",
+        addtext: "Add a text version",
+        accept: "Keep it on purpose",
+      };
+
+      const sampleChecks = [
+        { id: "a1", check: "clear", context: "desktop", fix: "keep" },
+        { id: "a2", check: "small", context: "mobile", fix: "review" },
+        { id: "a3", check: "covers-face", context: "desktop", fix: "accept" },
+        { id: "a4", check: "flashing", context: "title", fix: "review" },
+      ];
+
+      let items = structuredClone(sampleChecks);
+
+      const checksElement = document.querySelector("#checks");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addCheck").addEventListener("click", () => {
+        const next = items.length + 1;
+        items.push({ id: `a${next}-${items.length}`, check: "low-contrast", context: "mobile", fix: "review" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        items = structuredClone(sampleChecks);
+        render();
+      });
+
+      // Single source of truth: map each check + the creator's fix to a review state and a
+      // plain-language issue. Accepting a deliberate look is valid; a flashing-motion check
+      // can only be reduced, not accepted, because it shouldn't ship as is.
+      function evaluate(list) {
+        const results = list.map((item) => {
+          const check = checks[item.check];
+          const where = contexts[item.context] || "Preview";
+          const allowed = check.fixes;
+          const fix = allowed.includes(item.fix) ? item.fix : (item.check === "clear" ? "keep" : "review");
+          let state;
+          let issue = null;
+
+          if (item.check === "clear") {
+            state = "clear";
+          } else if (fix === "accept") {
+            state = "accepted";
+            issue = {
+              title: `${check.label} (${where}): kept on purpose`,
+              action: "Accepted — it stays as is in the export.",
+              tone: "info",
+            };
+          } else if (fix !== "review") {
+            state = "fixed";
+            issue = {
+              title: `${check.label} (${where}): ${fixes[fix].toLowerCase()}`,
+              action: "Resolved for the finished episode.",
+              tone: "info",
+            };
+          } else {
+            state = "review";
+            issue = {
+              title: `${check.title} (${where})`,
+              action: check.suggest,
+              tone: "review",
+            };
+          }
+
+          return { id: item.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild. Every control here is a <select>, so there is no text caret to
+      // preserve and a full re-render on change is always safe.
+      function render() {
+        const evaluation = evaluate(items);
+        checksElement.replaceChildren(
+          ...items.map((item, index) => renderCheck(item, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Easy to watch" : "Readability to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every check reads clearly across desktop and mobile." })]),
+        );
+      }
+
+      function badgeClass(state) {
+        if (state === "clear") {
+          return "clear";
+        }
+        if (state === "fixed") {
+          return "fixed";
+        }
+        if (state === "accepted") {
+          return "accepted";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        return state === "review" ? "needs review" : state;
+      }
+
+      function renderCheck(item, index, result) {
+        const check = checks[item.check];
+        const article = document.createElement("article");
+        article.className = "check";
+
+        const checkOptions = Object.entries(checks)
+          .map(([value, c]) => `<option value="${value}" ${value === item.check ? "selected" : ""}>${c.label}</option>`)
+          .join("");
+        const contextOptions = Object.entries(contexts)
+          .map(([value, label]) => `<option value="${value}" ${value === item.context ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const allowed = check.fixes;
+        const fixOptions = allowed
+          .map((value) => `<option value="${value}" ${value === item.fix ? "selected" : ""}>${fixes[value]}</option>`)
+          .join("");
+
+        // Every value here is a controlled key or its fixed label, and there is no
+        // user-editable free text in this prototype, so the scaffold is safe to build
+        // with innerHTML.
+        article.innerHTML = `
+          <div class="frame ${check.preview}">
+            <span class="face"></span>
+            <span class="cap"></span>
+          </div>
+          <div class="fields">
+            <div class="head">
+              <strong>${check.label}</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <div class="fields-row">
+              <label>What we found
+                <select data-field="check" aria-label="Readability check">${checkOptions}</select>
+              </label>
+              <label>Shows in
+                <select data-field="context" aria-label="Preview context">${contextOptions}</select>
+              </label>
+            </div>
+            <label>What to do
+              <select data-field="fix" aria-label="How to resolve it" ${allowed.length <= 1 ? "disabled" : ""}>${fixOptions}</select>
+            </label>
+          </div>
+        `;
+
+        article.addEventListener("change", (event) => onChange(event, index));
+        return article;
+      }
+
+      function onChange(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        const item = items[index];
+        item[field] = event.target.value;
+
+        // When the detected check changes, drop any fix the new check does not offer so
+        // the dropdown never keeps a stale, non-working action.
+        if (field === "check" && !checks[item.check].fixes.includes(item.fix)) {
+          item.fix = item.check === "clear" ? "keep" : "review";
+        }
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
