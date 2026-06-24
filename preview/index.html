@@ -430,6 +430,11 @@
         color: var(--ink);
       }
 
+      .canvas-links a[aria-disabled="true"] {
+        opacity: 0.58;
+        pointer-events: none;
+      }
+
       .canvas-links a:hover,
       .canvas-links a:focus-visible {
         outline: 2px solid var(--accent);
@@ -506,10 +511,12 @@
               </div>
             </div>
             <div class="canvas-links" aria-label="Example canvas actions">
-              <a class="primary" href="./app.html#canvas-layer-controls?path=episode">Open canvas layer controls →</a>
+              <a class="primary" id="canvas-continue" aria-disabled="true">Fill all layout slots to continue</a>
+              <a class="secondary" href="./app.html#canvas-layer-controls?path=episode">Open canvas layer controls →</a>
               <a class="secondary" href="./app.html#layout-safe-areas?path=episode">Review layout safe areas →</a>
               <a class="secondary" href="./app.html#speaker-role-mapping?path=episode">Map speaker tracks →</a>
             </div>
+            <p class="summary-note" id="canvas-continue-note">Place the host, guest, and b-roll into the layout before continuing into speaker roles.</p>
           </div>
           <div class="canvas-actions" aria-label="Example canvas setup notes">
             <div class="action-card">
@@ -963,6 +970,28 @@
 
         var slotStatus = document.getElementById("canvas-slot-status");
         var resetButton = document.getElementById("canvas-reset");
+        var continueLink = document.getElementById("canvas-continue");
+        var continueNote = document.getElementById("canvas-continue-note");
+
+        function updateContinueLink(filled) {
+          if (!continueLink) return;
+          if (filled === 3) {
+            continueLink.href = "./app.html#speaker-role-mapping?path=episode";
+            continueLink.setAttribute("aria-disabled", "false");
+            continueLink.textContent = "Continue to speaker roles →";
+            if (continueNote) {
+              continueNote.textContent = "Layout slots are filled. Continue into speaker roles with the placed host, guest, and b-roll context.";
+            }
+            return;
+          }
+
+          continueLink.removeAttribute("href");
+          continueLink.setAttribute("aria-disabled", "true");
+          continueLink.textContent = "Fill all layout slots to continue";
+          if (continueNote) {
+            continueNote.textContent = "Place the host, guest, and b-roll into the layout before continuing into speaker roles.";
+          }
+        }
 
         function filledSlotCount() {
           return document.querySelectorAll(".drop-zone.filled").length;
@@ -970,13 +999,14 @@
 
         function updateSlotStatus(message) {
           if (!slotStatus) return;
+          updateContinueLink(filledSlotCount());
           if (message) {
             slotStatus.textContent = message;
             return;
           }
           var filled = filledSlotCount();
           if (filled === 3) {
-            slotStatus.textContent = "All layout slots filled — open canvas layer controls to stack layers.";
+            slotStatus.textContent = "All layout slots filled — continue to speaker roles or open canvas layer controls to stack layers.";
             return;
           }
           slotStatus.textContent = filled + " of 3 layout slots filled";
@@ -1020,6 +1050,8 @@
             updateSlotStatus("0 of 3 layout slots filled");
           });
         }
+
+        updateContinueLink(filledSlotCount());
       }());
     </script>
   </body>

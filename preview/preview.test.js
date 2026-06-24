@@ -36,6 +36,8 @@ assert.match(html, /data-slot="guest"/, "preview shell labels the guest video sl
 assert.match(html, /data-slot="broll"/, "preview shell labels the b-roll slot for drag-in placement");
 assert.match(html, /Reset layout/, "preview shell lets creators reset the example canvas layout");
 assert.match(html, /canvas-slot-status/, "preview shell shows live slot fill status on the example canvas");
+assert.match(html, /id="canvas-continue"/, "preview shell exposes a continue handoff from the example canvas");
+assert.match(html, /speaker-role-mapping\?path=episode/, "example canvas continue handoff targets speaker roles in the preview app");
 assert.ok(html.includes("dragover"), "preview shell handles drag-over on example canvas slots");
 assert.ok(
   html.includes("./app.html#canvas-layer-controls?path=episode"),
@@ -44,6 +46,10 @@ assert.ok(
 assert.ok(
   html.includes("./app.html#layout-safe-areas?path=episode"),
   "preview shell links the example canvas to layout safe areas",
+);
+assert.ok(
+  html.includes("Fill all layout slots to continue"),
+  "preview shell keeps the continue handoff gated until layout slots are placed",
 );
 
 for (const step of flowSteps) {
