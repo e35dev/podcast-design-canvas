@@ -511,6 +511,11 @@
         return;
       }
       placeVideoFile(zone, files[0]);
+      if (!zone.classList.contains("filled")) {
+        // The target slot rejected the first file — do not spill the rest into other slots,
+        // or valid recordings shift into the wrong speaker assignments.
+        return;
+      }
       // Only spill the extra files that are actually videos, so a stray non-video in the
       // batch never flags a slot the creator didn't aim at.
       const extras = files.slice(1).filter(isVideoFile);
