@@ -211,6 +211,42 @@ assert.equal(
   "non-ingest screens discard ingest route context",
 );
 
+const publishPath = runApp("#episode-watch-through-preview?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/episode-watch-through-preview.html?path=publish",
+  "publish path context loads watch-through preview with its route context",
+);
+assert.equal(
+  publishPath.nodes.nextStep.href,
+  "#destination-crop-preview?path=publish",
+  "publish path context steps forward inside publish prep",
+);
+
+publishPath.reroute("#destination-crop-preview?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/destination-crop-preview.html?path=publish",
+  "publish path context loads middle publish prep screens with its route context",
+);
+assert.equal(
+  publishPath.nodes.prevStep.href,
+  "#episode-watch-through-preview?path=publish",
+  "publish path context is preserved when stepping back inside publish prep",
+);
+assert.equal(
+  publishPath.nodes.nextStep.href,
+  "#thumbnail-cover-frame?path=publish",
+  "publish path context is preserved when stepping forward inside publish prep",
+);
+
+publishPath.reroute("#export-readiness-review?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/export-readiness-review.html",
+  "non-publish screens discard publish route context",
+);
+
 styleEntry.reroute("#missing-screen?from=style");
 assert.equal(
   styleEntry.nodes.frame.src,

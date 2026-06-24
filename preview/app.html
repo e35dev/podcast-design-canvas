@@ -276,10 +276,9 @@
           "episode-chapter-markers", "intro-outro-builder",
         ]],
         ["Review & publish", [
-          "export-readiness-review", "episode-watch-through-preview", "episode-metadata-publishing",
-          "export-package-handoff",
-          "publish-checklist", "client-review-copy-flow", "destination-crop-preview",
-          "thumbnail-cover-frame", "show-notes-assembly",
+          "export-readiness-review", "episode-watch-through-preview", "destination-crop-preview",
+          "thumbnail-cover-frame", "show-notes-assembly", "episode-metadata-publishing",
+          "export-package-handoff", "client-review-copy-flow", "publish-checklist",
         ]],
       ];
 
@@ -310,6 +309,16 @@
         "source-media-health",
       ]);
       const INGEST_PATH_CONTEXTS = new Set(["episode", "ingest"]);
+      const PATHED_PUBLISH_SCREENS = new Set([
+        "episode-watch-through-preview",
+        "destination-crop-preview",
+        "thumbnail-cover-frame",
+        "show-notes-assembly",
+        "episode-metadata-publishing",
+        "export-package-handoff",
+        "client-review-copy-flow",
+        "publish-checklist",
+      ]);
 
       const railElement = document.querySelector("#rail");
       const frame = document.querySelector("#screen");
@@ -399,6 +408,9 @@
             return "?path=ingest";
           }
         }
+        if (PATHED_PUBLISH_SCREENS.has(screen) && params.get("path") === "publish") {
+          return "?path=publish";
+        }
         return "";
       }
 
@@ -419,9 +431,15 @@
         return INGEST_PATH_CONTEXTS.has(path) ? path : "";
       }
 
+      function publishPathContext(search) {
+        const path = new URLSearchParams((search || "").replace(/^\?/, "")).get("path");
+        return path === "publish" ? path : "";
+      }
+
       function stepTarget(screen, index, offset, search) {
         const context = visualsEntryContext(search);
         const pathContext = ingestPathContext(search);
+        const publishContext = publishPathContext(search);
         const orderedTarget = ORDER[index + offset];
         if (pathContext === "episode") {
           if (screen === "episode-readiness" && offset < 0) {
@@ -462,6 +480,9 @@
           if (screen === "social-context-intake" && offset > 0) {
             return { screen: "source-media-health", search: "?path=episode" };
           }
+        }
+        if (publishContext === "publish" && PATHED_PUBLISH_SCREENS.has(screen) && PATHED_PUBLISH_SCREENS.has(orderedTarget)) {
+          return { screen: orderedTarget, search };
         }
         if (offset < 0 && screen === "contextual-broll-moments") {
           if (context === "cleanup") {

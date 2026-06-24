@@ -63,19 +63,35 @@ function isEmbeddedInPreviewApp() {
 }
 
 function pathFromQuery(query) {
-  const part = (query || "").split("&").find((item) => item.startsWith("path="));
-  return part ? part.split("=")[1] : "";
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
 }
 
 function pathQuerySuffix() {
-  const path = new URLSearchParams(window.location.search).get("path");
+  return pathSearch(pathFromQuery(window.location.search));
+}
+
+function pathSearch(path) {
   return path === "publish" ? "?path=publish" : "";
 }
 
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
 function routeSearchFromFile(file) {
-  const query = (file || "").split("?")[1] || "";
+  const query = queryWithoutHash(file);
   const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  return path === "publish" ? "?path=publish" : "";
+  return pathSearch(path);
+}
+
+function hrefHasPublishPath(file) {
+  return pathFromQuery(queryWithoutHash(file)) === "publish";
+}
+
+function appendPublishPath(file) {
+  const [base, hash = ""] = (file || "").split("#");
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}path=publish${hash ? `#${hash}` : ""}`;
 }
 
 function previewAppHref(file) {
@@ -83,12 +99,10 @@ function previewAppHref(file) {
 }
 
 function hrefWithPath(file) {
-  const base = (file || "").split("?")[0];
-  if (pathFromQuery((file || "").split("?")[1] || "") === "publish") {
+  if (hrefHasPublishPath(file)) {
     return file;
   }
-  const suffix = pathQuerySuffix();
-  return suffix ? `${base}${suffix}` : file;
+  return pathQuerySuffix() ? appendPublishPath(file) : file;
 }
 
 function setTopTargetWhenEmbedded(link) {

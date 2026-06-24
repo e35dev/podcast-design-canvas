@@ -102,6 +102,26 @@ function renderNavFor(fileName, embedded = false, search = "") {
   return flatten(body);
 }
 
+function publishNavApi(fileName, search = "") {
+  const context = {
+    document: {
+      readyState: "complete",
+      body: { dataset: {} },
+      createElement,
+      getElementById() {
+        return createElement("style");
+      },
+      querySelector() {
+        return createElement("div");
+      },
+    },
+    window: makeWindow(fileName, false, search),
+    URLSearchParams,
+  };
+  vm.runInNewContext(navScript, context);
+  return context;
+}
+
 function linkWithText(nodes, text) {
   return nodes.find((node) => node.tagName === "a" && node.textContent === text);
 }
@@ -196,6 +216,29 @@ assert.equal(
   standaloneNext.href,
   "episode-metadata-publishing.html?path=publish",
   "standalone publish nav keeps publish path context between publish prep screens",
+);
+
+const publishApi = publishNavApi("show-notes-assembly.html", "?path=publish");
+assert.equal(
+  publishApi.hrefWithPath("episode-metadata-publishing.html?draft=notes"),
+  "episode-metadata-publishing.html?draft=notes&path=publish",
+  "standalone publish nav preserves existing file query while appending publish context",
+);
+assert.equal(
+  publishApi.hrefWithPath("episode-metadata-publishing.html?draft=notes#details"),
+  "episode-metadata-publishing.html?draft=notes&path=publish#details",
+  "standalone publish nav preserves hash fragments while appending publish context",
+);
+
+const embeddedExplicitPublishPath = renderNavFor(
+  "episode-watch-through-preview.html",
+  true,
+  "?draft=notes&path=publish",
+);
+assert.equal(
+  linkWithText(embeddedExplicitPublishPath, "Next: Destination crop preview").href,
+  "../preview/app.html#destination-crop-preview?path=publish",
+  "embedded publish nav reads publish context with URLSearchParams instead of positional parsing",
 );
 
 // Rendering twice must still leave a single nav (matches the script's guard).
