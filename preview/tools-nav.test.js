@@ -85,6 +85,7 @@ const cleanupFlow = new Set([
   "accessibility-readability-checks.html",
   "line-pickup-insert.html",
   "on-screen-correction-note.html",
+  "pronunciation-name-review.html",
 ]);
 
 const prototypes = fs

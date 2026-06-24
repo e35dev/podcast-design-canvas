@@ -25,11 +25,12 @@ const cleanupScreens = [
   "transcript-search-navigation.html",
   "accessibility-readability-checks.html",
   "line-pickup-insert.html",
+  "pronunciation-name-review.html",
   "on-screen-correction-note.html",
 ];
 
 const flowFiles = [...navScript.matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-assert.deepStrictEqual(flowFiles, cleanupScreens, "cleanup nav path is the six cleanup screens, in order");
+assert.deepStrictEqual(flowFiles, cleanupScreens, "cleanup nav path is the seven cleanup screens, in order");
 
 for (const file of cleanupScreens) {
   const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
@@ -164,8 +165,8 @@ assert.equal(
   "embedded cleanup nav routes previous cleanup steps through the preview app hash",
 );
 assert.equal(
-  linkWithText(embeddedMiddleNav, "Next: On-screen correction note").href,
-  "../preview/app.html#on-screen-correction-note",
+  linkWithText(embeddedMiddleNav, "Next: Pronunciation & name review").href,
+  "../preview/app.html#pronunciation-name-review",
   "embedded cleanup nav routes middle next steps through the preview app hash",
 );
 

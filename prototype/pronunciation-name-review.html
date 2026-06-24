@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pronunciation &amp; Name Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+      .panel + .panel { margin-top: 18px; }
+
+      .entries { display: grid; gap: 14px; }
+      .entry {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .entry-name { font-weight: 700; font-size: 16px; }
+      .entry-guide { font-size: 14px; color: var(--muted); margin-top: 2px; }
+      .entry-source { font-size: 12px; color: var(--muted); margin-top: 4px; }
+      .entry-context { font-size: 13px; color: var(--muted); margin-top: 6px; font-style: italic; }
+
+      .entry-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+
+      .badge {
+        display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
+        padding: 0 10px; font-weight: 700; font-size: 12px; white-space: nowrap;
+      }
+      .badge.confirmed { color: #075246; background: #dff5ef; }
+      .badge.suggested { color: #2a4c8a; background: #e2ebfb; }
+      .badge.needs-review { color: #7a4400; background: #fff1d6; }
+      .badge.guest-preferred { color: #075246; background: #dff5ef; }
+      .badge.not-spoken { color: var(--muted); background: #eee; }
+
+      button {
+        min-height: 34px; border: 1px solid var(--accent); border-radius: 6px;
+        background: var(--accent); color: #fff; font: inherit; font-size: 13px;
+        font-weight: 700; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+      }
+      button.secondary { background: #fff; color: var(--accent); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .routed-link {
+        font-size: 13px; font-weight: 700; color: var(--accent);
+        text-decoration: none; white-space: nowrap;
+      }
+      .routed-link:hover { text-decoration: underline; }
+      .routed-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .summary-row {
+        display: flex; align-items: center; gap: 10px;
+        flex-wrap: wrap; margin-bottom: 12px;
+      }
+      .summary-count { font-weight: 700; font-size: 14px; }
+      .summary-note { font-size: 13px; color: var(--muted); }
+
+      .correction-input {
+        display: flex; gap: 6px; margin-top: 8px; align-items: center;
+      }
+      .correction-input input {
+        flex: 1; min-height: 34px; border: 1px solid var(--line); border-radius: 6px;
+        padding: 6px 10px; font: inherit; font-size: 14px; color: var(--ink);
+        background: #fff;
+      }
+      .correction-input input:focus { border-color: var(--accent); outline: 2px solid rgba(19,111,99,.2); }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/cleanup-nav.js" defer></script>
+  </head>
+  <body data-cleanup-step="pronunciation-name-review">
+    <main>
+      <h1>Pronunciation &amp; name review</h1>
+      <p class="lede">
+        Confirm how names, brands, and recurring terms are pronounced before
+        the episode publishes. A short plain-language note is enough &mdash; no
+        phonetic alphabet required.
+      </p>
+
+      <section class="workspace" aria-label="Pronunciation review workspace">
+        <div>
+          <div class="panel">
+            <div class="summary-row" id="summary"></div>
+            <div class="entries" id="entries"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2>How this works</h2>
+            <p class="summary-note">
+              Names and terms that are easy to say wrong are gathered from the
+              episode transcript, social context, and guest profile. Confirm a
+              pronunciation in plain language (&ldquo;sounds like EYE-rin&rdquo;) and
+              it carries forward for intros, outros, and review handoff.
+            </p>
+            <p class="summary-note" style="margin-top:8px;">
+              Written spellings stay owned by the
+              <a class="routed-link" href="transcript-glossary.html">transcript glossary</a>.
+              Names and links come from
+              <a class="routed-link" href="social-context-intake.html">social context</a> and
+              <a class="routed-link" href="guest-profile-reuse.html">guest profile reuse</a>.
+            </p>
+          </div>
+
+          <div class="panel">
+            <h2>Readiness</h2>
+            <div id="readiness"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Episode context grounded in the same show data used across the product.
+      var episode = {
+        show: "The Long Build",
+        host: "Maya",
+        guests: ["Dev Anand", "Priya Chakraborty"],
+      };
+
+      // Pronunciation entries sourced from social context, transcript glossary,
+      // and guest profile. Each has the term, a suggested pronunciation guide,
+      // the source of the suggestion, the episode moment where it is spoken,
+      // and its review status.
+      var INITIAL_ENTRIES = [
+        {
+          id: "priya-chakraborty",
+          term: "Priya Chakraborty",
+          guide: "PREE-yah chuh-kruh-BOR-tee",
+          source: "Guest's own introduction at 00:42",
+          context: "00:42 — \"Hi, I'm Priya Chakraborty, and I lead platform at…\"",
+          status: "guest-preferred",
+          spokenInEpisode: true,
+        },
+        {
+          id: "dev-anand",
+          term: "Dev Anand",
+          guide: "DAYV ah-NUND",
+          source: "Social context profile link",
+          context: "01:15 — \"…and joining us is Dev Anand from the infra team.\"",
+          status: "suggested",
+          spokenInEpisode: true,
+        },
+        {
+          id: "turborepo",
+          term: "Turborepo",
+          guide: "TUR-bo-REP-oh",
+          source: "Transcript glossary approved spelling",
+          context: "14:22 — \"We switched everything over to Turborepo last quarter.\"",
+          status: "needs-review",
+          spokenInEpisode: true,
+        },
+        {
+          id: "vercel",
+          term: "Vercel",
+          guide: "vur-SELL",
+          source: "Social context profile link",
+          context: "14:30 — \"…the Vercel team helped us get it set up.\"",
+          status: "confirmed",
+          spokenInEpisode: true,
+        },
+        {
+          id: "supabase",
+          term: "Supabase",
+          guide: "SOO-pah-base",
+          source: "Guest profile reuse",
+          context: null,
+          status: "not-spoken",
+          spokenInEpisode: false,
+        },
+      ];
+
+      var entries = INITIAL_ENTRIES.map(function (e) { return Object.assign({}, e); });
+
+      // --- Pure logic (exported for tests) ---
+
+      function statusLabel(status) {
+        var labels = {
+          "confirmed": "Confirmed",
+          "suggested": "Suggested",
+          "needs-review": "Needs review",
+          "guest-preferred": "Guest preferred",
+          "not-spoken": "Not spoken in episode",
+        };
+        return labels[status] || status;
+      }
+
+      function entrySummary(list) {
+        var confirmed = 0;
+        var needsReview = 0;
+        var total = list.length;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].status === "confirmed" || list[i].status === "guest-preferred") confirmed++;
+          if (list[i].status === "needs-review" || list[i].status === "suggested") needsReview++;
+        }
+        return { confirmed: confirmed, needsReview: needsReview, total: total };
+      }
+
+      function isReadyForPublish(list) {
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].spokenInEpisode && list[i].status === "needs-review") return false;
+        }
+        return true;
+      }
+
+      // --- DOM rendering ---
+
+      var entriesEl = document.getElementById("entries");
+      var summaryEl = document.getElementById("summary");
+      var readinessEl = document.getElementById("readiness");
+
+      function renderEntry(entry) {
+        var card = document.createElement("div");
+        card.className = "entry";
+
+        var info = document.createElement("div");
+        var name = document.createElement("div");
+        name.className = "entry-name";
+        name.textContent = entry.term;
+        info.appendChild(name);
+
+        var guide = document.createElement("div");
+        guide.className = "entry-guide";
+        guide.textContent = "Sounds like: " + entry.guide;
+        info.appendChild(guide);
+
+        var src = document.createElement("div");
+        src.className = "entry-source";
+        src.textContent = "Source: " + entry.source;
+        info.appendChild(src);
+
+        if (entry.context) {
+          var ctx = document.createElement("div");
+          ctx.className = "entry-context";
+          ctx.textContent = entry.context;
+          info.appendChild(ctx);
+        }
+
+        // Correction input for editable guide
+        if (entry.status !== "confirmed" && entry.status !== "guest-preferred") {
+          var correction = document.createElement("div");
+          correction.className = "correction-input";
+          var input = document.createElement("input");
+          input.type = "text";
+          input.value = entry.guide;
+          input.setAttribute("aria-label", "Pronunciation guide for " + entry.term);
+          var updateBtn = document.createElement("button");
+          updateBtn.className = "secondary";
+          updateBtn.textContent = "Update";
+          updateBtn.addEventListener("click", function () {
+            entry.guide = input.value;
+            render();
+          });
+          correction.appendChild(input);
+          correction.appendChild(updateBtn);
+          info.appendChild(correction);
+        }
+
+        card.appendChild(info);
+
+        var actions = document.createElement("div");
+        actions.className = "entry-actions";
+
+        var badge = document.createElement("span");
+        badge.className = "badge " + entry.status;
+        badge.textContent = statusLabel(entry.status);
+        actions.appendChild(badge);
+
+        if (entry.status === "suggested" || entry.status === "needs-review") {
+          var confirmBtn = document.createElement("button");
+          confirmBtn.textContent = "Confirm";
+          confirmBtn.setAttribute("aria-label", "Confirm pronunciation of " + entry.term);
+          confirmBtn.addEventListener("click", function () {
+            entry.status = "confirmed";
+            render();
+          });
+          actions.appendChild(confirmBtn);
+
+          if (entry.spokenInEpisode) {
+            var guestBtn = document.createElement("button");
+            guestBtn.className = "secondary";
+            guestBtn.textContent = "Guest preferred";
+            guestBtn.setAttribute("aria-label", "Mark as guest preferred pronunciation for " + entry.term);
+            guestBtn.addEventListener("click", function () {
+              entry.status = "guest-preferred";
+              render();
+            });
+            actions.appendChild(guestBtn);
+          }
+        }
+
+        if (entry.status === "confirmed" && entry.spokenInEpisode) {
+          var applyLink = document.createElement("a");
+          applyLink.className = "routed-link";
+          applyLink.href = "transcript-glossary.html";
+          applyLink.textContent = "Apply across episode →";
+          actions.appendChild(applyLink);
+        }
+
+        if (entry.status === "guest-preferred") {
+          var profileLink = document.createElement("a");
+          profileLink.className = "routed-link";
+          profileLink.href = "guest-profile-reuse.html";
+          profileLink.textContent = "Saved to guest profile →";
+          actions.appendChild(profileLink);
+        }
+
+        card.appendChild(actions);
+        return card;
+      }
+
+      function renderSummary() {
+        var s = entrySummary(entries);
+        summaryEl.innerHTML = "";
+
+        var count = document.createElement("span");
+        count.className = "summary-count";
+        count.textContent = s.total + " names and terms";
+        summaryEl.appendChild(count);
+
+        if (s.needsReview > 0) {
+          var note = document.createElement("span");
+          note.className = "badge needs-review";
+          note.textContent = s.needsReview + " need review";
+          summaryEl.appendChild(note);
+        }
+
+        var confirmed = document.createElement("span");
+        confirmed.className = "badge confirmed";
+        confirmed.textContent = s.confirmed + " confirmed";
+        summaryEl.appendChild(confirmed);
+      }
+
+      function renderReadiness() {
+        readinessEl.innerHTML = "";
+        var ready = isReadyForPublish(entries);
+
+        var badge = document.createElement("div");
+        badge.className = ready ? "badge confirmed" : "badge needs-review";
+        badge.textContent = ready ? "Ready for publish" : "Review needed before publish";
+        badge.style.marginBottom = "8px";
+        readinessEl.appendChild(badge);
+
+        var note = document.createElement("p");
+        note.className = "summary-note";
+        note.textContent = ready
+          ? "All spoken names and terms have been confirmed. Pronunciation decisions carry forward for intros, outros, and review handoff."
+          : "One or more spoken names still need review. Confirming them does not block export but improves confidence before publishing.";
+        readinessEl.appendChild(note);
+
+        if (!ready) {
+          var link = document.createElement("a");
+          link.className = "routed-link";
+          link.href = "show-template-adaptation.html";
+          link.textContent = "Save confirmed names to show template →";
+          readinessEl.appendChild(link);
+        }
+      }
+
+      function render() {
+        entriesEl.innerHTML = "";
+        for (var i = 0; i < entries.length; i++) {
+          entriesEl.appendChild(renderEntry(entries[i]));
+        }
+        renderSummary();
+        renderReadiness();
+      }
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          episode: episode,
+          INITIAL_ENTRIES: INITIAL_ENTRIES,
+          entries: entries,
+          statusLabel: statusLabel,
+          entrySummary: entrySummary,
+          isReadyForPublish: isReadyForPublish,
+        };
+      }
+    </script>
+  </body>
+</html>
