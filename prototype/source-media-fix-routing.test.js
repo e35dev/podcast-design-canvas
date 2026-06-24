@@ -14,7 +14,9 @@ const root = path.join(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "prototype", "source-media-health.html"), "utf8");
 
 // Fix surfaces the source screen hands issues off to. Each is also a filename.
-const fixSurfaces = ["speaker-visual-match", "audio-cleanup-controls"];
+// A sideways (portrait) track that won't fill a widescreen layout is a framing
+// problem, so it routes to the speaker framing safety screen.
+const fixSurfaces = ["speaker-visual-match", "audio-cleanup-controls", "speaker-framing-safety"];
 
 for (const surface of fixSurfaces) {
   assert.ok(
@@ -45,6 +47,12 @@ assert.ok(
 assert.ok(
   source.includes("in audio cleanup") && source.includes("Open visual match"),
   "routed copy names the fix screen in creator-facing language",
+);
+
+// The sideways (portrait) track names the framing fix screen in its routed copy.
+assert.ok(
+  source.includes("Open speaker framing safety"),
+  "portrait routed copy names the speaker framing safety screen",
 );
 
 console.log("source media health: routed issues link to their fix screens");
