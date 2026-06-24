@@ -469,6 +469,9 @@
 
       .issue strong { display: block; margin-bottom: 4px; }
       .issue span { color: var(--muted); }
+      .issue a.routed-link { color: var(--accent); font-weight: 700; }
+      .issue a.routed-link:hover { text-decoration: underline; }
+      .issue a.routed-link:focus-visible { text-decoration: underline; outline: 2px solid var(--accent); outline-offset: 2px; }
 
       .summary-note {
         color: var(--muted);
@@ -731,6 +734,7 @@
                 ? `${repairSummaryCopy(track, issue)} Open attribution review for the affected span before marking captions ready.`
                 : "Open attribution review for the affected span before marking captions ready.",
               tone: "review",
+              fixSurface: "speaker-attribution-review",
             };
           } else if (track.resolution === "repaired") {
             state = "repaired";
@@ -1357,9 +1361,20 @@
         article.className = `issue ${issue.tone === "blocker" ? "blocker" : issue.tone === "info" ? "info" : ""}`;
         const strong = document.createElement("strong");
         strong.textContent = issue.title;
-        const span = document.createElement("span");
-        span.textContent = issue.action;
-        article.append(strong, span);
+        // When the summary hands off to a fix screen, the next step is a real
+        // link the creator can open — so "Open attribution review" actually
+        // navigates to the attribution screen.
+        let action;
+        if (issue.fixSurface) {
+          action = document.createElement("a");
+          action.className = "routed-link";
+          action.href = `${issue.fixSurface}.html`;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
+        article.append(strong, action);
         return article;
       }
 
