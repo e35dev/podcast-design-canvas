@@ -514,9 +514,16 @@
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
       const brollZone = zonesBySlot["broll"];
+      // The optional b-roll slot never gates Continue, but the readiness summary still has to
+      // match what the creator sees on the canvas. A b-roll that just REJECTED a file shows a red
+      // "Invalid file" badge and a rejection alert, so reporting "Optional b-roll can be added
+      // later" (identical to an untouched slot) contradicts the rejection — say the file wasn't a
+      // video instead, while still leaving b-roll optional.
       const brollNote = brollZone && brollZone.classList.contains("filled")
         ? "Optional b-roll is in place."
-        : "Optional b-roll can be added later.";
+        : brollZone && brollZone.classList.contains("is-invalid")
+          ? "That b-roll file wasn't a video — pick an MP4, MOV, or WebM, or leave it empty."
+          : "Optional b-roll can be added later.";
       if (duplicates.length > 0) {
         slotStatus.textContent =
           "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
