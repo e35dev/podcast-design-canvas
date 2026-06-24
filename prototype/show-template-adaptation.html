@@ -205,6 +205,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -319,6 +335,8 @@
           glyph: "R",
           desc: "Map this episode's tracks onto the template's host and guest roles.",
           choices: ["template", "adjust", "decide"],
+          fixScreen: "speaker-role-mapping.html",
+          fixLabel: "speaker role mapping",
         },
         "fallback-layout": {
           label: "Layout for the speaker count",
@@ -332,6 +350,8 @@
           glyph: "G",
           desc: "Confirm guest names and handles from social context.",
           choices: ["template", "adjust", "decide"],
+          fixScreen: "social-context-intake.html",
+          fixLabel: "social context intake",
         },
         "title-moments": {
           label: "Title moments",
@@ -364,7 +384,7 @@
       const sampleItems = [
         { id: "a1", area: "speaker-roles", choice: "adjust" },
         { id: "a2", area: "fallback-layout", choice: "decide" },
-        { id: "a3", area: "lower-thirds", choice: "template" },
+        { id: "a3", area: "lower-thirds", choice: "decide" },
         { id: "a4", area: "title-moments", choice: "template" },
         { id: "a5", area: "brand-sponsor", choice: "template" },
         { id: "a6", area: "export-destination", choice: "template" },
@@ -417,6 +437,8 @@
               title: `${area.label} needs your decision`,
               action: area.desc,
               tone: "review",
+              fixScreen: area.fixScreen,
+              fixLabel: area.fixLabel,
             };
           } else if (choice === "adjust") {
             state = "adjusted";
@@ -569,6 +591,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
