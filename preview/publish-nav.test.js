@@ -15,6 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "publish nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "publish nav links to the guided episode flow");
 assert.ok(navScript.includes("show-notes-assembly.html"), "publish nav includes show notes assembly");
+assert.ok(navScript.includes("export-readiness-review.html"), "publish nav links back to export readiness");
 assert.ok(!/innerHTML/.test(navScript), "publish nav builds the DOM without innerHTML");
 
 const publishScreens = [

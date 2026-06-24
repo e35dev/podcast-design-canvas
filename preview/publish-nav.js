@@ -114,6 +114,11 @@ function renderPublishNav() {
     prevLink.href = previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
+  } else {
+    const exportReady = document.createElement("a");
+    exportReady.href = "export-readiness-review.html";
+    exportReady.textContent = "Previous: Export readiness";
+    wrap.appendChild(exportReady);
   }
 
   if (next) {
