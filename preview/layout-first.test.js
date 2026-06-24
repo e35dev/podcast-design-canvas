@@ -382,4 +382,40 @@ assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "swit
 assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
 assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
 
+// Duplicate guard keyed on file identity (name + size + modified time), not display name.
+// The same recording in two speaker slots blocks Continue; two separate recordings that
+// merely share a filename (riverside-track.mp4) are allowed.
+controller.resetVideos();
+controller.applyLayout("interview");
+const sharedTake = { name: "riverside-track.mp4", type: "video/mp4", size: 12582912, lastModified: 1717000000000 };
+controller.placeVideoFile(controller.zonesBySlot.host, sharedTake);
+controller.placeVideoFile(controller.zonesBySlot.guest, sharedTake);
+assert.deepEqual(
+  controller.duplicateFileNames(),
+  ["riverside-track.mp4"],
+  "the same recording placed in two speaker slots is detected by file identity",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "Continue is blocked while two speaker slots share the same recording",
+);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /same video is in more than one speaker slot/i,
+  "duplicate guidance is creator-facing",
+);
+const separateGuestTake = { name: "riverside-track.mp4", type: "video/mp4", size: 20447232, lastModified: 1717000900000 };
+controller.placeVideoFile(controller.zonesBySlot.guest, separateGuestTake);
+assert.deepEqual(
+  controller.duplicateFileNames(),
+  [],
+  "two separate recordings that share a filename are not treated as duplicates",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "Continue is restored once each speaker has a separate recording",
+);
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");

@@ -55,6 +55,21 @@
     return Boolean(file && typeof file.type === "string" && file.type.indexOf("video/") === 0);
   }
 
+  // A stable identity for a dropped recording. Display name alone is not enough — separate
+  // speaker recordings are often exported with the same name (recording.mp4, riverside-track.mp4),
+  // so we key on name plus size and modified time. When neither size nor time is available we
+  // return "" and never claim a duplicate, avoiding a false block on valid separate tracks.
+  function fileSignature(file) {
+    if (!file) return "";
+    const hasSize = file.size !== undefined && file.size !== null;
+    const hasTime = file.lastModified !== undefined && file.lastModified !== null;
+    if (!hasSize && !hasTime) return "";
+    const parts = ["name:" + (file.name || "")];
+    if (hasSize) parts.push("size:" + file.size);
+    if (hasTime) parts.push("mtime:" + file.lastModified);
+    return parts.join("|");
+  }
+
   function createLayoutFirstController(doc, options = {}) {
     const urlApi = options.URL || global.URL || {};
     const storage = options.storage || global.sessionStorage;
@@ -102,10 +117,32 @@
       errorCard.hidden = !message;
     }
 
+    // The same recording placed in two visible speaker slots would put one person in two
+    // speaker frames. We compare file identity (see fileSignature), not display name, and
+    // return the creator-facing names of any slots that repeat the same recording.
+    function duplicateFileNames() {
+      const seen = Object.create(null);
+      const duplicates = [];
+      visibleSlots().forEach((zone) => {
+        if (!zone.classList.contains("filled")) return;
+        const sig = (zone.dataset.fileSig || "").trim();
+        if (!sig) return;
+        if (seen[sig]) {
+          const name = (zone.dataset.fileName || "").trim() || sig;
+          if (duplicates.indexOf(name) === -1) duplicates.push(name);
+        } else {
+          seen[sig] = true;
+        }
+      });
+      return duplicates;
+    }
+
     function updateContinueState() {
       if (!continueLink) return;
       const required = requiredSlots();
-      const ready = required.length > 0 && required.every((zone) => zone.classList.contains("filled"));
+      const ready = required.length > 0
+        && required.every((zone) => zone.classList.contains("filled"))
+        && duplicateFileNames().length === 0;
       continueLink.classList.toggle("is-disabled", !ready);
       continueLink.setAttribute("aria-disabled", ready ? "false" : "true");
       if (ready && continueLink.dataset.readyHref) {
@@ -129,9 +166,13 @@
         return;
       }
 
+      const duplicates = duplicateFileNames();
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
-      if (filled === total) {
+      if (duplicates.length > 0) {
+        slotStatus.textContent =
+          "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
+      } else if (filled === total) {
         slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
       } else {
         const missingNames = requiredSlots()
@@ -161,6 +202,7 @@
       const input = zone.querySelector("[data-file-input]");
       if (input) input.value = "";
       zone.dataset.fileName = "";
+      zone.dataset.fileSig = "";
     }
 
     function clearAllZones() {
@@ -182,6 +224,7 @@
       clearZone(zone);
       zone.classList.add("filled");
       zone.dataset.fileName = file.name || "";
+      zone.dataset.fileSig = fileSignature(file);
 
       const wrap = doc.createElement("div");
       wrap.className = "placed-video";
@@ -317,6 +360,7 @@
       requiredSlots,
       visibleSlots,
       filledRequiredSlots,
+      duplicateFileNames,
       zonesBySlot,
       updateSlotStatus,
     };
