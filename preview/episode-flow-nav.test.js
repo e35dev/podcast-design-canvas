@@ -301,6 +301,21 @@ assert.equal(
   "embedded caption quality layout fix links route through the preview app with episode context",
 );
 assert.equal(
+  normalizeEpisodeFlowFixLink("speaker-attribution-review.html", "?path=episode", false, "audio-caption-quality-review.html").href,
+  "speaker-attribution-review.html?path=episode",
+  "caption quality speaker label fix links keep episode path context",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("speaker-attribution-review.html", "?path=episode", true, "audio-caption-quality-review.html").href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded caption quality speaker label fix links route through the preview app",
+);
+assert.equal(
+  normalizeEpisodeFixLinkClickFor("speaker-attribution-review.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded episode flow nav normalizes dynamic speaker label fix links before navigation",
+);
+assert.equal(
   normalizeEpisodeFixLinkClickFor("transcript-glossary.html", "?path=episode", true).href,
   "../preview/app.html#transcript-glossary",
   "embedded episode flow nav normalizes dynamic caption quality fix links before navigation",

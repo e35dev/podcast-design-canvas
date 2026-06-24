@@ -41,6 +41,7 @@ const CAPTION_QUALITY_FIX_PATHS = {
   "transcript-glossary.html": null,
   "pause-crosstalk-cleanup.html": null,
   "layout-safe-areas.html": "episode",
+  "speaker-attribution-review.html": "episode",
 };
 
 const EPISODE_FLOW_FIX_PATHS = {
