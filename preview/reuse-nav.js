@@ -16,6 +16,7 @@ const REUSE_FLOW = [
 
 const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive moment review" };
 const REUSE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Episode watch-through" };
+const REUSE_HANDOFF_PATH = "publish";
 
 // Reuse screens hand off to these owning screens when a review item needs a fix.
 const REUSE_FIX_PATHS = {
@@ -105,9 +106,26 @@ function mergeRouteSearch(file, overrides = {}) {
   return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
+function isReuseHandoffTarget(file) {
+  return screenIdFromFile(file) === screenIdFromFile(REUSE_HANDOFF.file);
+}
+
+// Publish-path handoff: reuse flow ends on watch-through preview, which belongs on
+// the publish guided path (#583), matching episode-flow-nav handoff behavior.
+function reuseHandoffHref(file) {
+  if (!isReuseHandoffTarget(file)) {
+    return null;
+  }
+  const existing = pathFromQuery(queryWithoutHash(file));
+  if (existing === REUSE_HANDOFF_PATH) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: REUSE_HANDOFF_PATH });
+}
+
 function routeSearchFromFile(file) {
-  if (screenIdFromFile(file) === screenIdFromFile(REUSE_HANDOFF.file)) {
-    return "?path=publish";
+  if (isReuseHandoffTarget(file)) {
+    return `?path=${REUSE_HANDOFF_PATH}`;
   }
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
@@ -154,8 +172,9 @@ function linkBase(href) {
 
 function resolveReuseLink(file) {
   const base = linkBase(file);
-  if (screenIdFromFile(file) === screenIdFromFile(REUSE_HANDOFF.file)) {
-    return mergeRouteSearch(file, { path: "publish" });
+  const handoff = reuseHandoffHref(file);
+  if (handoff) {
+    return handoff;
   }
   if (Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, base)) {
     if (base === "speaker-role-mapping.html" && pathFromQuery(queryWithoutHash(file)) === "ingest") {
@@ -177,6 +196,7 @@ function isLocalScreenHref(href) {
 function shouldNormalizeReuseHref(href) {
   return isLocalScreenHref(href) && (
     isPreviewAppReuseTarget(href) ||
+    isReuseHandoffTarget(href) ||
     Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, linkBase(href))
   );
 }

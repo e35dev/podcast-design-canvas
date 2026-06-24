@@ -427,4 +427,35 @@ assert.equal(
   "embedded reuse nav routes ingest-path role fixes through the preview app",
 );
 
+assert.ok(navScript.includes("reuseHandoffHref"), "reuse nav centralizes publish-path handoff resolution");
+assert.ok(navScript.includes("REUSE_HANDOFF_PATH"), "reuse nav declares the publish handoff path constant");
+
+const inPageHandoff = renderNavWithInPageLinks(
+  "episode-runtime-shaping.html",
+  "episode-runtime-shaping",
+  false,
+  "?path=episode",
+  ["episode-watch-through-preview.html?path=episode"],
+);
+assert.equal(
+  linkWithText(inPageHandoff.nodes, "episode-watch-through-preview.html?path=episode").href,
+  "episode-watch-through-preview.html?path=publish",
+  "reuse nav normalizes in-page watch-through handoff links to the publish path",
+);
+
+const embeddedInPageHandoff = renderNavWithInPageLinks(
+  "episode-runtime-shaping.html",
+  "episode-runtime-shaping",
+  true,
+  "?path=reuse",
+  ["episode-watch-through-preview.html"],
+);
+const embeddedWatch = linkWithText(embeddedInPageHandoff.nodes, "episode-watch-through-preview.html");
+assert.equal(
+  embeddedWatch.href,
+  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "embedded reuse nav routes in-page watch-through handoff through the preview app",
+);
+assert.equal(embeddedWatch.target, "_top", "embedded in-page watch-through handoff targets the parent app");
+
 console.log("reuse nav: make-it-reusable screens connected into one path");
