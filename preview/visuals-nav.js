@@ -60,6 +60,10 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function currentPreviewAppHref(step) {
+  return previewAppHref(withVisualsContext(step.file));
+}
+
 function routeSearchFromFile(file) {
   const query = ((file || "").split("#")[0].split("?")[1] || "");
   const from = new URLSearchParams(query).get("from");
@@ -200,7 +204,7 @@ function renderVisualsNav() {
   wrap.appendChild(guided);
 
   const previewApp = document.createElement("a");
-  previewApp.href = "../preview/app.html";
+  previewApp.href = currentPreviewAppHref(step);
   setTopTargetWhenEmbedded(previewApp);
   previewApp.textContent = "Preview app";
   wrap.appendChild(previewApp);

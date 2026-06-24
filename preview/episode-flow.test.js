@@ -74,12 +74,12 @@ assert.ok(publishPrepBlock, "flow declares a post-export publish prep handoff");
 const publishPrepFile = publishPrepBlock[1].match(/file:\s*"([^"]+)"/)?.[1];
 assert.equal(
   publishPrepFile,
-  "../prototype/episode-watch-through-preview.html",
-  "post-export handoff opens the first publish prep screen",
+  "app.html#episode-watch-through-preview?path=publish",
+  "post-export handoff opens the first publish prep screen in the unified preview app",
 );
 assert.ok(
-  fs.existsSync(path.join(__dirname, publishPrepFile)),
-  "post-export publish prep target exists",
+  fs.existsSync(path.join(__dirname, "app.html")),
+  "post-export publish prep app target exists",
 );
 assert.ok(
   flow.includes("function renderPublishPrepHandoff()"),
@@ -177,6 +177,19 @@ function buttonWithText(root, text) {
   return button;
 }
 
+function selectWithLabel(root, label) {
+  const select = flatten(root).find(
+    (node) => node.tagName === "select" && node.attributes["aria-label"] === label,
+  );
+  assert.ok(select, `Missing select: ${label}`);
+  return select;
+}
+
+function changeSelect(select, value) {
+  select.value = value;
+  select.onchange({ target: select });
+}
+
 const flowUi = runFlow();
 assert.equal(
   linkWithText(flowUi["#panel"], "Open the full Episode readiness screen →").href,
@@ -198,6 +211,22 @@ assert.equal(
   linkWithText(flowUi["#panel"], "Open the full Source media health screen →").href,
   "../prototype/source-media-health.html",
   "rendered source-media full-screen link stays on the normal prototype URL",
+);
+
+changeSelect(selectWithLabel(flowUi["#panel"], "Marcus Lee source"), "ready");
+flowUi["#next"].click();
+flowUi["#next"].click();
+buttonWithText(flowUi["#panel"], "Apply audio cleanup").click();
+flowUi["#next"].click();
+for (const select of flatten(flowUi["#panel"]).filter((node) => node.tagName === "select")) {
+  changeSelect(select, "confirm");
+}
+flowUi["#next"].click();
+buttonWithText(flowUi["#panel"], "Export episode").click();
+assert.equal(
+  linkWithText(flowUi["#panel"], "Continue to watch-through preview").href,
+  "app.html#episode-watch-through-preview?path=publish",
+  "rendered post-export handoff opens publish prep in the unified preview app with publish context",
 );
 
 assert.ok(fs.existsSync(path.join(root, "preview", "episode-flow.html")), "flow page exists for routing");

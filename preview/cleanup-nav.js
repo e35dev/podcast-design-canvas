@@ -60,6 +60,10 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function currentPreviewAppHref(step) {
+  return `../preview/app.html#${step.id}`;
+}
+
 function supportedRouteSearch(params) {
   const from = params.get("from");
   if (CLEANUP_ENTRY_CONTEXTS.has(from)) {
@@ -204,7 +208,7 @@ function renderCleanupNav() {
   wrap.appendChild(guided);
 
   const previewApp = document.createElement("a");
-  previewApp.href = "../preview/app.html";
+  previewApp.href = currentPreviewAppHref(step);
   setTopTargetWhenEmbedded(previewApp);
   previewApp.textContent = "Preview app";
   wrap.appendChild(previewApp);

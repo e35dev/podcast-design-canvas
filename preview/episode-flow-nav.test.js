@@ -105,7 +105,11 @@ function linkWithText(nodes, text) {
 
 const firstNav = renderNavFor("source-media-health.html");
 const previewApp = linkWithText(firstNav, "Preview app");
-assert.equal(previewApp.href, "../preview/app.html", "episode flow nav links to the unified preview app");
+assert.equal(
+  previewApp.href,
+  "../preview/app.html#source-media-health",
+  "episode flow nav opens the current screen in the unified preview app",
+);
 assert.ok(
   linkWithText(firstNav, "Previous: Speaker roles"),
   "first episode flow screen links back to speaker roles",
@@ -125,7 +129,11 @@ assert.equal(
 
 const embeddedFirstNav = renderNavFor("source-media-health.html", true);
 const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
-assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded episode flow nav keeps the preview app href");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#source-media-health",
+  "embedded episode flow nav keeps the current screen in the preview app href",
+);
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedHome = linkWithText(embeddedFirstNav, "Episode flow home");
 assert.equal(embeddedHome.target, "_top", "embedded episode flow home targets the parent app");
@@ -147,6 +155,11 @@ assert.equal(
 assert.equal(embeddedHandoff.target, "_top", "embedded publish prep handoff targets the parent app");
 
 const episodePathNav = renderNavFor("speaker-sync-repair.html", true, "?path=episode");
+assert.equal(
+  linkWithText(episodePathNav, "Preview app").href,
+  "../preview/app.html#speaker-sync-repair?path=episode",
+  "embedded episode flow nav preserves episode path context on the current preview app link",
+);
 assert.equal(
   linkWithText(episodePathNav, "Previous: Source media health").href,
   "../preview/app.html#source-media-health?path=episode",

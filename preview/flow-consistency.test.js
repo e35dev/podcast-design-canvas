@@ -95,15 +95,23 @@ assert.ok(
 
 const publishPrepBlock = flowPage.match(/const publishPrepHandoff = \{([\s\S]*?)\};/);
 assert.ok(publishPrepBlock, "guided flow declares publish prep handoff");
-const flowHandoffFile = publishPrepBlock[1].match(/file:\s*"\.\.\/prototype\/([a-z0-9-]+\.html)"/)?.[1];
+const flowHandoffTarget = publishPrepBlock[1].match(/file:\s*"([^"]+)"/)?.[1];
+const flowHandoffScreen = flowHandoffTarget?.match(/#([a-z0-9-]+)\?path=publish/)?.[1];
+assert.ok(flowHandoffScreen, "guided flow publish handoff includes a publish-path app screen");
 assert.equal(
-  flowHandoffFile,
+  `${flowHandoffScreen}.html`,
   handoffFile,
-  "guided flow and nav script share the same publish prep target",
+  "guided flow and nav script share the same publish prep screen",
+);
+assert.equal(
+  flowHandoffTarget,
+  "app.html#episode-watch-through-preview?path=publish",
+  "guided flow opens publish prep through the unified preview app with publish context",
 );
 assert.ok(
   fs.existsSync(path.join(root, "prototype", handoffFile)),
   "publish prep handoff target exists",
 );
+assert.ok(fs.existsSync(path.join(__dirname, "app.html")), "guided publish prep app target exists");
 
 console.log(`flow consistency: ${navFlow.length} core steps aligned across shell, nav, and flow page`);

@@ -98,6 +98,10 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function currentPreviewAppHref(step) {
+  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+}
+
 function hrefWithPath(file) {
   if (hrefHasPublishPath(file)) {
     return file;
@@ -210,7 +214,7 @@ function renderPublishNav() {
   wrap.appendChild(guided);
 
   const app = document.createElement("a");
-  app.href = "../preview/app.html";
+  app.href = currentPreviewAppHref(step);
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);

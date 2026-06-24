@@ -176,6 +176,13 @@ assert.ok(
 );
 
 const embeddedFirstNav = renderNavFor("episode-watch-through-preview.html", true);
+const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#episode-watch-through-preview",
+  "embedded publish nav opens the current screen in the preview app",
+);
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedBackLink = linkWithText(embeddedFirstNav, "Previous: Export readiness");
 assert.equal(
   embeddedBackLink.href,
@@ -197,6 +204,11 @@ assert.equal(embeddedFinish.href, "../preview/", "embedded finish still returns 
 assert.equal(embeddedFinish.target, "_top", "embedded finish opens the preview shell at top level");
 
 const publishPathNav = renderNavFor("destination-crop-preview.html", true, "?path=publish");
+assert.equal(
+  linkWithText(publishPathNav, "Preview app").href,
+  "../preview/app.html#destination-crop-preview?path=publish",
+  "embedded publish nav preserves publish context on the current preview app link",
+);
 const publishPathPrevious = linkWithText(publishPathNav, "Previous: Watch-through preview");
 assert.equal(
   publishPathPrevious.href,

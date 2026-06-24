@@ -214,7 +214,11 @@ const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded visuals nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
 const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
-assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded visuals nav keeps the preview app href");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#contextual-broll-moments?from=cleanup",
+  "embedded visuals nav opens the current screen in the preview app with entry context",
+);
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedCleanupBack = linkWithText(embeddedFirstNav, "Previous: On-screen correction note");
 assert.equal(
@@ -232,6 +236,11 @@ assert.equal(
 assert.equal(embeddedNext.target, "_top", "embedded visuals next link targets the parent app");
 
 const embeddedStyleEntryNav = renderNavFor("contextual-broll-moments.html", "contextual-broll-moments", true, "?from=style");
+assert.equal(
+  linkWithText(embeddedStyleEntryNav, "Preview app").href,
+  "../preview/app.html#contextual-broll-moments?from=style",
+  "embedded style-entered visuals nav preserves style context on the current preview app link",
+);
 const embeddedStyleBack = linkWithText(embeddedStyleEntryNav, "Previous: Canvas layer controls");
 assert.equal(
   embeddedStyleBack.href,

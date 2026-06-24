@@ -73,6 +73,10 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function currentPreviewAppHref(step) {
+  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+}
+
 function hrefWithPath(file) {
   const base = (file || "").split("?")[0];
   if (pathFromQuery((file || "").split("?")[1] || "") === "episode") {
@@ -187,7 +191,7 @@ function renderSpeakerSetupNav() {
   wrap.appendChild(guided);
 
   const app = document.createElement("a");
-  app.href = "../preview/app.html";
+  app.href = currentPreviewAppHref(step);
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);

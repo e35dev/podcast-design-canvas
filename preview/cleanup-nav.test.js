@@ -182,7 +182,11 @@ const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded cleanup nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
 const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
-assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded cleanup nav keeps the preview app href");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#pause-crosstalk-cleanup",
+  "embedded cleanup nav opens the current screen in the preview app",
+);
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedPublishBack = linkWithText(embeddedFirstNav, "Previous: Publish checklist");
 assert.equal(
@@ -233,6 +237,11 @@ assert.equal(
 assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets the parent app");
 
 const cleanupContextNav = renderNavFor("transcript-glossary.html", "transcript-glossary", true, "?from=cleanup");
+assert.equal(
+  linkWithText(cleanupContextNav, "Preview app").href,
+  "../preview/app.html#transcript-glossary",
+  "embedded cleanup nav keeps the current preview app link on a supported shell route",
+);
 assert.equal(
   linkWithText(cleanupContextNav, "Previous: Pause & cross-talk cleanup").href,
   "../preview/app.html#pause-crosstalk-cleanup?from=cleanup",

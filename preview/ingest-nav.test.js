@@ -250,6 +250,13 @@ const embeddedFirstNav = renderNavFor("episode-readiness.html", "episode-readine
 const embeddedHome = linkWithText(embeddedFirstNav.nodes, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded ingest nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav.nodes, "Preview app");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#episode-readiness",
+  "embedded ingest nav opens the current screen in the preview app",
+);
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Speaker roles");
 assert.equal(
   embeddedNext.href,
@@ -259,6 +266,11 @@ assert.equal(
 assert.equal(embeddedNext.target, "_top", "embedded ingest next link targets the parent app");
 
 const embeddedMiddleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest", true);
+assert.equal(
+  linkWithText(embeddedMiddleNav.nodes, "Preview app").href,
+  "../preview/app.html#speaker-role-mapping?path=ingest",
+  "embedded ingest nav preserves ingest context on the current preview app link",
+);
 assert.equal(
   linkWithText(embeddedMiddleNav.nodes, "Previous: Episode readiness").href,
   "../preview/app.html#episode-readiness?path=ingest",

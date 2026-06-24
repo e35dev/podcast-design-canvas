@@ -148,7 +148,11 @@ assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the 
 const embeddedGuided = linkWithText(embeddedFirstNav.nodes, "Guided episode flow");
 assert.equal(embeddedGuided.target, "_top", "embedded guided-flow link targets the parent app");
 const embeddedPreviewApp = linkWithText(embeddedFirstNav.nodes, "Preview app");
-assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded speaker setup nav keeps the preview app href");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#speaker-attribution-review",
+  "embedded speaker setup nav opens the current screen in the preview app",
+);
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedRolesBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
 assert.equal(
@@ -187,6 +191,11 @@ assert.equal(
 assert.equal(embeddedHandoff.target, "_top", "embedded speaker setup handoff targets the parent app");
 
 const episodePathNav = renderNavFor("guest-profile-reuse.html", "guest-profile-reuse", true, "?path=episode");
+assert.equal(
+  linkWithText(episodePathNav.nodes, "Preview app").href,
+  "../preview/app.html#guest-profile-reuse?path=episode",
+  "embedded speaker setup nav preserves episode context on the current preview app link",
+);
 assert.equal(
   linkWithText(episodePathNav.nodes, "Previous: Speaker attribution review").href,
   "../preview/app.html#speaker-attribution-review?path=episode",
