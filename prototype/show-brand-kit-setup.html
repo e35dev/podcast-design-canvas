@@ -183,6 +183,7 @@
           id: "caption-contrast",
           description: "Primary color on dark backgrounds drops caption contrast below readable level at 04:12 and 31:40.",
           suggestedFix: "Lighten caption background opacity to 85%",
+          fixAction: { inputId: "caption-emphasis", newValue: "Moderate with 85% background opacity" },
           surface: "captions",
           status: "flagged",
         },
@@ -277,6 +278,55 @@
               info.appendChild(note);
             }
 
+            // Editable input control
+            var editRow = document.createElement("div");
+            editRow.style.cssText = "display:flex;gap:6px;margin-top:6px;align-items:center;";
+            if (def.id === "primary-color" || def.id === "secondary-color") {
+              var colorInput = document.createElement("input");
+              colorInput.type = "color";
+              colorInput.value = st.value;
+              colorInput.style.cssText = "width:36px;height:30px;border:1px solid var(--line);border-radius:4px;cursor:pointer;";
+              colorInput.setAttribute("aria-label", "Edit " + def.label);
+              colorInput.addEventListener("input", function () {
+                st.value = colorInput.value;
+                st.set = true;
+                state.savedToTemplate = false;
+                render();
+              });
+              editRow.appendChild(colorInput);
+            } else {
+              var textInput = document.createElement("input");
+              textInput.type = "text";
+              textInput.value = st.value;
+              textInput.style.cssText = "flex:1;min-height:30px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;font-size:13px;";
+              textInput.setAttribute("aria-label", "Edit " + def.label);
+              var applyBtn = document.createElement("button");
+              applyBtn.className = "secondary";
+              applyBtn.textContent = "Apply";
+              applyBtn.style.fontSize = "12px";
+              applyBtn.addEventListener("click", function () {
+                st.value = textInput.value;
+                st.set = true;
+                state.savedToTemplate = false;
+                render();
+              });
+              editRow.appendChild(textInput);
+              editRow.appendChild(applyBtn);
+            }
+            if (st.set) {
+              var clearBtn = document.createElement("button");
+              clearBtn.className = "secondary";
+              clearBtn.textContent = "Reset";
+              clearBtn.style.fontSize = "12px";
+              clearBtn.addEventListener("click", function () {
+                st.set = false;
+                state.savedToTemplate = false;
+                render();
+              });
+              editRow.appendChild(clearBtn);
+            }
+            info.appendChild(editRow);
+
             card.appendChild(info);
 
             var actions = document.createElement("div");
@@ -343,6 +393,14 @@
               fixBtn.textContent = "Accept fix";
               fixBtn.addEventListener("click", function () {
                 conflict.status = "adjusted";
+                if (conflict.fixAction) {
+                  for (var k = 0; k < state.inputs.length; k++) {
+                    if (state.inputs[k].id === conflict.fixAction.inputId) {
+                      state.inputs[k].value = conflict.fixAction.newValue;
+                      state.inputs[k].set = true;
+                    }
+                  }
+                }
                 state.savedToTemplate = false;
                 render();
               });
