@@ -38,11 +38,13 @@ const EXPORT_READINESS_FIX_PATHS = {
 // Glossary and cross-talk cleanup stay on the cleanup path; layout collisions
 // keep episode path context on the style screen.
 const CAPTION_QUALITY_FIX_PATHS = {
-  "transcript-glossary.html": null,
-  "pause-crosstalk-cleanup.html": null,
+  "transcript-glossary.html": { from: "cleanup" },
+  "pause-crosstalk-cleanup.html": { from: "cleanup" },
   "layout-safe-areas.html": "episode",
   "speaker-attribution-review.html": "episode",
 };
+
+const EPISODE_FIX_ENTRY_CONTEXTS = new Set(["cleanup"]);
 
 const EPISODE_FLOW_FIX_PATHS = {
   ...EXPORT_READINESS_FIX_PATHS,
@@ -111,12 +113,21 @@ function pathQuerySuffix() {
 }
 
 function routeSearchFromFile(file) {
-  const filePath = pathFromQuery(queryWithoutHash(file));
-  const path = filePath || shellPath();
-  if (path === "episode" || path === "publish") {
-    return `?path=${path}`;
+  const params = new URLSearchParams(queryWithoutHash(file));
+  const from = params.get("from");
+  const filePath = params.get("path");
+  const shell = shellPath();
+  const out = new URLSearchParams();
+  if (EPISODE_FIX_ENTRY_CONTEXTS.has(from)) {
+    out.set("from", from);
   }
-  return "";
+  if (filePath === "episode" || filePath === "publish") {
+    out.set("path", filePath);
+  } else if (shell === "episode" || shell === "publish") {
+    out.set("path", shell);
+  }
+  const search = out.toString();
+  return search ? `?${search}` : "";
 }
 
 function mergeRouteSearch(file, overrides = {}) {
@@ -244,19 +255,35 @@ function normalizeEpisodeLinkClick(event) {
   }
 }
 
+function episodeFlowFixOverrides(href) {
+  const fixContext = EPISODE_FLOW_FIX_PATHS[episodeFlowFixBase(href)];
+  if (fixContext == null) {
+    return null;
+  }
+  if (typeof fixContext === "string") {
+    return { path: fixContext };
+  }
+  return fixContext;
+}
+
+function resolveEpisodeFlowFixHref(href) {
+  const overrides = episodeFlowFixOverrides(href);
+  if (!overrides) {
+    return href;
+  }
+  return mergeRouteSearch(href, overrides);
+}
+
 function setEpisodeFlowFixLink(link) {
   const href = link.getAttribute("href") || "";
   if (!isEpisodeFlowFixHref(href)) {
     return;
   }
 
-  const path = EPISODE_FLOW_FIX_PATHS[episodeFlowFixBase(href)];
-  const resolved = path === null ? href : mergeRouteSearch(href, { path });
+  const resolved = resolveEpisodeFlowFixHref(href);
   if (isEmbeddedInPreviewApp() && PREVIEW_APP_FIX_TARGETS.has(screenIdFromFile(href))) {
     const screen = screenIdFromFile(href);
-    link.href = path === null
-      ? `../preview/app.html#${screen}`
-      : previewAppHref(resolved);
+    link.href = `../preview/app.html#${screen}${routeSearchFromFile(resolved)}`;
     link.target = "_top";
     return;
   }

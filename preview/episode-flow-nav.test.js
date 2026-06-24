@@ -272,13 +272,13 @@ assert.equal(
 
 assert.equal(
   normalizeEpisodeFlowFixLink("transcript-glossary.html", "?path=episode", false, "audio-caption-quality-review.html").href,
-  "transcript-glossary.html",
-  "caption quality glossary fix links stay on the cleanup screen without episode path",
+  "transcript-glossary.html?from=cleanup",
+  "caption quality glossary fix links carry cleanup entry context without episode path",
 );
 assert.equal(
   normalizeEpisodeFlowFixLink("pause-crosstalk-cleanup.html", "?path=episode", false, "audio-caption-quality-review.html").href,
-  "pause-crosstalk-cleanup.html",
-  "caption quality cross-talk fix links stay on the cleanup screen without episode path",
+  "pause-crosstalk-cleanup.html?from=cleanup",
+  "caption quality cross-talk fix links carry cleanup entry context without episode path",
 );
 assert.equal(
   normalizeEpisodeFlowFixLink("layout-safe-areas.html", "?path=episode", false, "audio-caption-quality-review.html").href,
@@ -287,13 +287,13 @@ assert.equal(
 );
 assert.equal(
   normalizeEpisodeFlowFixLink("transcript-glossary.html", "?path=episode", true, "audio-caption-quality-review.html").href,
-  "../preview/app.html#transcript-glossary",
-  "embedded caption quality glossary fix links route through the preview app",
+  "../preview/app.html#transcript-glossary?from=cleanup&path=episode",
+  "embedded caption quality glossary fix links preserve cleanup context and shell path in preview app hashes",
 );
 assert.equal(
   normalizeEpisodeFlowFixLink("pause-crosstalk-cleanup.html", "?path=episode", true, "audio-caption-quality-review.html").href,
-  "../preview/app.html#pause-crosstalk-cleanup",
-  "embedded caption quality cross-talk fix links route through the preview app",
+  "../preview/app.html#pause-crosstalk-cleanup?from=cleanup&path=episode",
+  "embedded caption quality cross-talk fix links preserve cleanup context and shell path in preview app hashes",
 );
 assert.equal(
   normalizeEpisodeFlowFixLink("layout-safe-areas.html", "?path=episode", true, "audio-caption-quality-review.html").href,
@@ -317,7 +317,7 @@ assert.equal(
 );
 assert.equal(
   normalizeEpisodeFixLinkClickFor("transcript-glossary.html", "?path=episode", true).href,
-  "../preview/app.html#transcript-glossary",
+  "../preview/app.html#transcript-glossary?from=cleanup&path=episode",
   "embedded episode flow nav normalizes dynamic caption quality fix links before navigation",
 );
 
