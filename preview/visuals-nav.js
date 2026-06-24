@@ -17,6 +17,8 @@ const VISUALS_ENTRY_BACKLINKS = {
   cleanup: { href: "on-screen-correction-note.html?from=cleanup", label: "On-screen correction note" },
   style: { href: "canvas-layer-controls.html", label: "Canvas layer controls" },
 };
+const VISUALS_HANDOFF_TARGET = "show-segment-system.html";
+const VISUALS_HANDOFF_REUSE_PATH = "reuse";
 
 const PREVIEW_APP_VISUALS_TARGETS = new Set([
   screenIdFromFile(VISUALS_ENTRY_BACKLINKS.cleanup.href),
@@ -109,7 +111,31 @@ function pathQuerySuffix() {
   return "";
 }
 
+function isVisualsHandoffTarget(file) {
+  return screenIdFromFile(file) === screenIdFromFile(VISUALS_HANDOFF_TARGET);
+}
+
+// Reuse-path handoff: contextual visuals finish on show-segment-system on the reuse
+// guided path (#583), matching reuse-nav entry expectations.
+function visualsReuseHandoffHref(file) {
+  if (!isVisualsHandoffTarget(file)) {
+    return null;
+  }
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== VISUALS_HANDOFF_REUSE_PATH) {
+    return null;
+  }
+  const existing = pathFromQuery(queryWithoutHash(file));
+  if (existing === VISUALS_HANDOFF_REUSE_PATH) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: VISUALS_HANDOFF_REUSE_PATH });
+}
+
 function routeSearchFromFile(file) {
+  if (isVisualsHandoffTarget(file) && pathFromQuery(queryWithoutHash(file)) === VISUALS_HANDOFF_REUSE_PATH) {
+    return `?path=${VISUALS_HANDOFF_REUSE_PATH}`;
+  }
   const params = new URLSearchParams(queryWithoutHash(file));
   const from = params.get("from");
   const filePath = params.get("path");
@@ -147,6 +173,10 @@ function linkBase(href) {
 }
 
 function resolveVisualsLink(file) {
+  const handoff = visualsReuseHandoffHref(file);
+  if (handoff) {
+    return handoff;
+  }
   const base = linkBase(file);
   if (Object.prototype.hasOwnProperty.call(VISUALS_FIX_PATHS, base)) {
     return mergeRouteSearch(file, { path: VISUALS_FIX_PATHS[base] });

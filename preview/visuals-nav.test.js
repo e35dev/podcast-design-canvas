@@ -490,4 +490,11 @@ assert.equal(
   "embedded visuals nav normalizes dynamic screen-share fix links before navigation",
 );
 
+const reusePathHandoff = renderNavFor("sensitive-moment-review.html", "sensitive-moment-review", false, "?path=reuse&from=style");
+assert.equal(
+  linkWithText(reusePathHandoff, "Continue: Show segment system").href,
+  "show-segment-system.html?path=reuse",
+  "visuals nav merges reuse path context onto the segment-system handoff",
+);
+
 console.log("visuals nav: contextual-visuals screens connected into one path");
