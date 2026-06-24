@@ -1075,5 +1075,7 @@ assert.equal(
 const guestZone = canvasCtl.zonesBySlot.guest;
 guestZone.listeners.dragenter({ preventDefault() {} });
 assert.equal(guestZone.classList.contains("drag-over"), true, "the destination slot still highlights while repositioning a placed video");
+const hostZone = canvasCtl.zonesBySlot.host;
+assert.equal(hostZone.classList.contains("drag-over"), false, "the source slot does not highlight while its video is being dragged away");
 
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

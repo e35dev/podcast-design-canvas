@@ -839,6 +839,11 @@
       // enter/leave depth and only clear the highlight once the cursor has truly left the slot.
       let dragDepth = 0;
       zone.addEventListener("dragenter", () => {
+        // During a placed-video move (#1233), only destination slots should highlight — not the
+        // slot the recording is being dragged from (#1244 fixed the canvas; this fixes the slot).
+        if (draggingFromSlot && draggingFromSlot === zone.dataset.slot) {
+          return;
+        }
         dragDepth += 1;
         zone.classList.add("drag-over");
       });
