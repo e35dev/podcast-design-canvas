@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Export Package Handoff Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .toolbar, .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .toolbar { margin-bottom: 18px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .summary-head strong { display: block; margin-bottom: 4px; font-size: 15px; }
+      .summary-head span, .package-item span, .warning span, .summary li, .meta span { color: var(--muted); }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+      .badge.optional { background: #eceeed; color: #55615d; }
+      .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+      .meta div, .package-item {
+        border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 12px;
+      }
+      .meta strong, .package-item strong { display: block; margin-bottom: 4px; }
+      .packages { display: grid; gap: 10px; }
+      .package-item { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 12px; align-items: center; }
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .warning.blocked { border-left-color: var(--blocked); }
+      .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .meta { grid-template-columns: 1fr 1fr; }
+        .package-item { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Export Package Handoff Prototype</h1>
+      <p class="lede">
+        Show the finished delivery package in creator language, keep optional items non-blocking, and preserve ignored warning consequences instead of hiding them after export.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Destination Package</h2>
+          <div class="toolbar" id="destinations"></div>
+
+          <div class="summary-head">
+            <div>
+              <strong id="title">YouTube full episode package</strong>
+              <span id="subtitle">Final delivery bundle with video, captions, thumbnail, metadata, and publish-ready notes.</span>
+            </div>
+            <span id="status" class="badge review">ready to share</span>
+          </div>
+
+          <div class="meta" id="meta"></div>
+
+          <h3 style="margin-bottom: 10px;">Package contents</h3>
+          <div class="packages" id="packages"></div>
+
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button">Download package</button>
+            <button type="button">Copy metadata</button>
+            <button type="button">Create review copy</button>
+            <button type="button">Start next episode</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Consequences</h2>
+          <div id="warnings" style="display:grid; gap:10px;"></div>
+
+          <h3 style="margin-top:20px;">What stays visible</h3>
+          <ul class="summary">
+            <li>ignored warning consequences remain attached to the exported package</li>
+            <li>missing optional items do not block unrelated destinations</li>
+            <li>missing required items point back to the owning checklist or review surface</li>
+            <li>delivery labels describe creator outcomes, not raw file types</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const destinations = {
+        youtube: {
+          title: "YouTube full episode package",
+          subtitle: "Final delivery bundle with video, captions, thumbnail, metadata, and publish-ready notes.",
+          status: ["review", "ready to share"],
+          meta: [
+            ["Duration", "58 min"],
+            ["File size", "3.8 GB"],
+            ["Template", "Interview split-screen"],
+            ["Export time", "11m 42s"],
+          ],
+          packages: [
+            ["Final video file", "1080p full episode ready to publish", "ready"],
+            ["Caption file", "Speaker-reviewed captions included", "ready"],
+            ["Thumbnail", "Selected cover frame included", "ready"],
+            ["Metadata summary", "Title, description, chapters, and guest links", "ready"],
+            ["Show notes text", "Omitted because this destination does not require it", "optional"],
+            ["Ignored warnings report", "One ignored sponsor overlay warning remains visible", "review"],
+          ],
+          warnings: [
+            ["review", "Ignored sponsor overlay warning", "The package records that the sponsor mark briefly sits close to captions at 19:42."],
+            ["review", "Show notes omitted", "This omission stays non-blocking because the selected destination does not require show notes."],
+          ],
+        },
+        archive: {
+          title: "Archive master package",
+          subtitle: "Long-term storage bundle with final video, captions, metadata summary, and preserved readiness context.",
+          status: ["ready", "complete"],
+          meta: [
+            ["Duration", "58 min"],
+            ["File size", "6.4 GB"],
+            ["Template", "Interview split-screen"],
+            ["Export time", "12m 05s"],
+          ],
+          packages: [
+            ["Final video file", "Archive master included", "ready"],
+            ["Caption file", "Saved with the export", "ready"],
+            ["Metadata summary", "Episode metadata snapshot included", "ready"],
+            ["Show notes text", "Included for later publishing reuse", "ready"],
+            ["Audio-only backup", "Optional backup included", "ready"],
+            ["Ignored warnings report", "No ignored warnings carried into this package", "optional"],
+          ],
+          warnings: [
+            ["review", "No blocking archive issues", "This package can ship even if thumbnail work continues for another destination."],
+          ],
+        },
+        review: {
+          title: "Client review copy package",
+          subtitle: "Reviewer-facing delivery with watermark, selected moments, and unresolved decisions still visible.",
+          status: ["blocked", "missing required item"],
+          meta: [
+            ["Duration", "58 min"],
+            ["File size", "1.7 GB"],
+            ["Template", "Interview split-screen"],
+            ["Export time", "8m 18s"],
+          ],
+          packages: [
+            ["Review copy video", "Watermarked file prepared", "ready"],
+            ["Decision summary", "Linked review notes included", "ready"],
+            ["Thumbnail", "Not required for this destination", "optional"],
+            ["Caption file", "Held back until speaker attribution is confirmed", "blocked"],
+            ["Ignored warnings report", "Caption omission consequence would stay visible if exported now", "review"],
+          ],
+          warnings: [
+            ["blocked", "Caption file still blocked", "Return to speaker attribution review before sharing this client review copy with captions."],
+            ["review", "If exported around the issue", "The handoff should keep the omitted-caption consequence visible instead of treating it as resolved."],
+          ],
+        },
+      };
+
+      let selected = "youtube";
+      const destinationsEl = document.querySelector("#destinations");
+      const titleEl = document.querySelector("#title");
+      const subtitleEl = document.querySelector("#subtitle");
+      const statusEl = document.querySelector("#status");
+      const metaEl = document.querySelector("#meta");
+      const packagesEl = document.querySelector("#packages");
+      const warningsEl = document.querySelector("#warnings");
+
+      function renderButtons() {
+        destinationsEl.innerHTML = "";
+        Object.entries(destinations).forEach(([key, value]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = key === selected ? "active" : "";
+          button.textContent = value.title.replace(" package", "");
+          button.addEventListener("click", () => {
+            selected = key;
+            render();
+          });
+          destinationsEl.appendChild(button);
+        });
+      }
+
+      function render() {
+        renderButtons();
+        const destination = destinations[selected];
+        titleEl.textContent = destination.title;
+        subtitleEl.textContent = destination.subtitle;
+        statusEl.className = `badge ${destination.status[0]}`;
+        statusEl.textContent = destination.status[1];
+
+        metaEl.innerHTML = "";
+        destination.meta.forEach(([label, value]) => {
+          const item = document.createElement("div");
+          item.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+          metaEl.appendChild(item);
+        });
+
+        packagesEl.innerHTML = "";
+        destination.packages.forEach(([label, detail, tone]) => {
+          const item = document.createElement("div");
+          item.className = "package-item";
+          item.innerHTML = `
+            <div>
+              <strong>${label}</strong>
+              <span>${detail}</span>
+            </div>
+            <span class="badge ${tone}">${tone === "ready" ? "complete" : tone === "optional" ? "missing optional item" : tone === "blocked" ? "missing required item" : "warning ignored"}</span>
+          `;
+          packagesEl.appendChild(item);
+        });
+
+        warningsEl.innerHTML = "";
+        destination.warnings.forEach(([tone, title, detail]) => {
+          const item = document.createElement("div");
+          item.className = `warning${tone === "blocked" ? " blocked" : ""}`;
+          item.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
+          warningsEl.appendChild(item);
+        });
+      }
+
+      render();
+    </script>
+  </body>
+</html>
