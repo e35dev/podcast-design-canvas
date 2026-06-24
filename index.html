@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Podcast Design Canvas — Preview</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .skip {
+        position: absolute;
+        left: -999px;
+      }
+
+      .skip:focus {
+        left: 12px;
+        top: 12px;
+        z-index: 10;
+        background: #fff;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px 12px;
+      }
+
+      header.hero {
+        background: linear-gradient(160deg, #1f7a6b, #0e3b34);
+        color: #ffffff;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .hero .wrap {
+        padding: 40px 20px 36px;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+        line-height: 1.1;
+        margin: 0 0 10px;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 720px;
+        color: #d7ece7;
+        font-size: 16px;
+      }
+
+      .hero .meta {
+        margin-top: 16px;
+        font-size: 13px;
+        color: #aed4cc;
+      }
+
+      nav.lanes {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #ffffff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      nav.lanes .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px 20px;
+      }
+
+      nav.lanes a {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+
+      nav.lanes a:hover,
+      nav.lanes a:focus {
+        color: var(--accent-ink);
+        background: #eef4f2;
+      }
+
+      main {
+        padding: 28px 0 56px;
+      }
+
+      .stage {
+        margin-bottom: 34px;
+        scroll-margin-top: 56px;
+      }
+
+      .stage-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+
+      .stage-num {
+        width: 28px;
+        height: 28px;
+        flex: none;
+        border-radius: 999px;
+        background: #eef4f2;
+        color: var(--accent-ink);
+        font-weight: 800;
+        font-size: 13px;
+        display: grid;
+        place-items: center;
+      }
+
+      .stage h2 {
+        font-size: 20px;
+        margin: 0;
+      }
+
+      .stage .tools-tag {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .stage > p {
+        color: var(--muted);
+        margin: 0 0 14px 40px;
+        max-width: 760px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 16px;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+      }
+
+      .card:hover,
+      .card:focus {
+        border-color: var(--accent);
+        box-shadow: 0 6px 18px rgba(16, 32, 29, 0.08);
+        transform: translateY(-1px);
+        outline: none;
+      }
+
+      .card h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .card .go {
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--accent-ink);
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      footer .wrap {
+        padding: 20px;
+      }
+
+      @media (max-width: 600px) {
+        .stage > p {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#flow">Skip to the workflow</a>
+
+    <header class="hero">
+      <div class="wrap">
+        <h1>Podcast Design Canvas</h1>
+        <p>A visual workspace that turns synced multi-speaker recordings into polished, personalized, publish-ready long-form episodes — without a traditional editor. This preview routes to every screen in the product, organized by the episode workflow.</p>
+        <div class="meta" id="meta"></div>
+      </div>
+    </header>
+
+    <nav class="lanes" aria-label="Workflow stages">
+      <div class="wrap" id="lanes"></div>
+    </nav>
+
+    <main id="flow">
+      <div class="wrap" id="stages"></div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Static preview — open <code>index.html</code> in a browser, or serve the folder (for example <code>python -m http.server</code>) and open the root URL. Every card links to a self-contained screen under <code>prototype/</code>.
+      </div>
+    </footer>
+
+    <script>
+      // The product organized as the primary episode workflow, followed by a secondary
+      // tools section. Each screen routes to its self-contained prototype under prototype/.
+      const stages = [
+        {
+          id: "ingest",
+          title: "Bring in the recording",
+          blurb: "Import synced speaker tracks, confirm they're healthy, and map every track to a clear role before styling.",
+          screens: [
+            ["source-media-health", "Source media health", "Check each speaker file is good enough for a polished episode."],
+            ["episode-readiness", "Episode readiness", "Confirm the episode is ready to style and edit."],
+            ["speaker-role-mapping", "Speaker role mapping", "Map each track to host, guest, or co-host roles."],
+            ["speaker-sync-repair", "Speaker sync repair", "Fix timing and alignment across speaker tracks."],
+            ["speaker-attribution-review", "Speaker attribution review", "Confirm who is speaking where."],
+            ["guest-profile-reuse", "Guest profile reuse", "Recognize returning guests and reuse approved details."],
+            ["social-context-intake", "Social context intake", "Use public links for accurate names, spellings, and references."],
+          ],
+        },
+        {
+          id: "style",
+          title: "Choose a visual direction",
+          blurb: "Start from a polished preset and keep speakers well framed across the destination crops.",
+          screens: [
+            ["preset-style-picker", "Preset style picker", "Pick a polished episode direction and apply it."],
+            ["preset-comparison-preview", "Preset comparison preview", "Compare directions side by side and choose one."],
+            ["layout-safe-areas", "Layout safe areas", "Keep captions, logos, and marks where viewers can read them."],
+            ["speaker-framing-safety", "Speaker framing safety", "Make sure no face is hidden or cropped out."],
+            ["speaker-visual-match", "Speaker visual match", "Match exposure and color across speaker tracks."],
+            ["speaker-eye-line-coherence", "Speaker eye-line coherence", "Keep speakers looking toward each other naturally."],
+          ],
+        },
+        {
+          id: "audio",
+          title: "Clean up audio & captions",
+          blurb: "Make speech clear and captions accurate as one creator-facing quality pass.",
+          screens: [
+            ["audio-cleanup-controls", "Audio cleanup controls", "Reduce noise, balance levels, and improve clarity."],
+            ["pause-crosstalk-cleanup", "Pause & cross-talk cleanup", "Smooth awkward pauses and heavy cross-talk."],
+            ["audio-caption-quality-review", "Audio & caption quality review", "Review only the caption lines that need you."],
+            ["transcript-glossary", "Transcript glossary", "Approve recurring spellings once, reuse everywhere."],
+            ["transcript-search-navigation", "Transcript search & navigation", "Find and jump to moments by what was said."],
+            ["accessibility-readability-checks", "Accessibility & readability", "Catch low-contrast or hard-to-read captions."],
+            ["line-pickup-insert", "Line pickup insert", "Drop in a re-recorded line cleanly."],
+            ["on-screen-correction-note", "On-screen correction note", "Add a tasteful correction without a reshoot."],
+          ],
+        },
+        {
+          id: "visuals",
+          title: "Add contextual visuals",
+          blurb: "Approve tasteful b-roll, callouts, and title moments at the right beats.",
+          screens: [
+            ["contextual-broll-moments", "Contextual b-roll moments", "Approve suggested visual moments that fit the show."],
+            ["contextual-title-cards", "Contextual title cards", "Review and approve title moments from the conversation."],
+            ["sensitive-moment-review", "Sensitive moment review", "Flag moments to keep tasteful before publish."],
+          ],
+        },
+        {
+          id: "templates",
+          title: "Make it reusable",
+          blurb: "Save the look and structure as a reusable show identity for future episodes.",
+          screens: [
+            ["show-segment-system", "Show segment system", "Arrange recurring segments into the episode."],
+            ["show-template-adaptation", "Show template adaptation", "Apply a saved template to a new episode."],
+            ["start-from-previous-episode", "Start from previous episode", "Begin a new episode from a past one's setup."],
+            ["episode-chapter-markers", "Episode chapter markers", "Give the episode a clear table of contents."],
+          ],
+        },
+        {
+          id: "export",
+          title: "Review & publish",
+          blurb: "Catch publishing problems, package the right files, and ship a publish-ready long-form episode.",
+          screens: [
+            ["export-readiness-review", "Export readiness review", "Catch obvious problems before rendering."],
+            ["episode-watch-through-preview", "Episode watch-through preview", "Watch the finished episode end to end."],
+            ["export-package-handoff", "Export package handoff", "Package the right files for the destination."],
+            ["publish-checklist", "Publish checklist", "Confirm every publish step is done."],
+            ["destination-crop-preview", "Destination crop preview", "See how the episode crops per surface."],
+            ["thumbnail-cover-frame", "Thumbnail & cover frame", "Pick a strong, on-brand cover frame."],
+            ["show-notes-assembly", "Show notes assembly", "Assemble notes, chapters, and links for publishing."],
+          ],
+        },
+      ];
+
+      const stagesElement = document.querySelector("#stages");
+      const lanesElement = document.querySelector("#lanes");
+      const metaElement = document.querySelector("#meta");
+
+      let screenCount = 0;
+      for (const stage of stages) {
+        screenCount += stage.screens.length;
+      }
+      metaElement.textContent = `${screenCount} screens across ${stages.length} workflow stages.`;
+
+      lanesElement.replaceChildren(
+        ...stages.map((stage) => {
+          const link = document.createElement("a");
+          link.href = `#${stage.id}`;
+          link.textContent = stage.title;
+          return link;
+        }),
+      );
+
+      stagesElement.replaceChildren(
+        ...stages.map((stage, index) => renderStage(stage, index + 1)),
+      );
+
+      function renderStage(stage, num) {
+        const section = document.createElement("section");
+        section.className = "stage";
+        section.id = stage.id;
+
+        const head = document.createElement("div");
+        head.className = "stage-head";
+        const badge = document.createElement("span");
+        badge.className = "stage-num";
+        badge.textContent = String(num);
+        const heading = document.createElement("h2");
+        heading.textContent = stage.title;
+        head.append(badge, heading);
+
+        const blurb = document.createElement("p");
+        blurb.textContent = stage.blurb;
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        grid.append(...stage.screens.map(([file, label, desc]) => {
+          // file/label/desc are fixed, controlled strings; href is built from the known
+          // file slug. The card is assembled with DOM APIs and textContent.
+          const card = document.createElement("a");
+          card.className = "card";
+          card.href = `prototype/${file}.html`;
+          const h3 = document.createElement("h3");
+          h3.textContent = label;
+          const p = document.createElement("p");
+          p.textContent = desc;
+          const go = document.createElement("span");
+          go.className = "go";
+          go.textContent = "Open screen →";
+          card.append(h3, p, go);
+          return card;
+        }));
+
+        section.append(head, blurb, grid);
+        return section;
+      }
+    </script>
+  </body>
+</html>
