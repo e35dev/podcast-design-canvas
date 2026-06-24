@@ -13,6 +13,15 @@ const STYLE_FLOW = [
   { id: "canvas-layer-controls", file: "canvas-layer-controls.html", label: "Canvas layer controls" },
 ];
 
+const STYLE_ENTRY = { file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" };
+const STYLE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Watch the finished episode" };
+
+const PREVIEW_APP_STYLE_TARGETS = new Set([
+  "speaker-eye-line-coherence",
+  "episode-watch-through-preview",
+  ...STYLE_FLOW.map((step) => step.id),
+]);
+
 function currentStyleIndex() {
   const fromBody = document.body.dataset.styleStep;
   if (fromBody) {
@@ -24,6 +33,44 @@ function currentStyleIndex() {
 
   const name = window.location.pathname.split("/").pop() || "";
   return STYLE_FLOW.findIndex((step) => step.file === name);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppStyleTarget(file) {
+  return PREVIEW_APP_STYLE_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setStyleScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppStyleTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = file;
 }
 
 function renderStyleNav() {
@@ -104,34 +151,37 @@ function renderStyleNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "← Preview shell";
   wrap.appendChild(home);
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
+    setStyleScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const setup = document.createElement("a");
-    setup.href = "speaker-eye-line-coherence.html";
-    setup.textContent = "Previous: Speaker eye-line coherence";
+    setStyleScreenLink(setup, STYLE_ENTRY.file);
+    setup.textContent = `Previous: ${STYLE_ENTRY.label}`;
     wrap.appendChild(setup);
   }
 
   if (next) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
+    setStyleScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
     start.href = "episode-watch-through-preview.html";
+    setStyleScreenLink(start, start.href);
     start.textContent = "Continue: Watch the finished episode";
     wrap.appendChild(start);
   }

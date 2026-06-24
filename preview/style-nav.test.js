@@ -42,6 +42,7 @@ function createElement(tagName) {
     className: "",
     href: "",
     id: "",
+    target: "",
     textContent: "",
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -68,7 +69,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName, styleStep) {
+function makeWindow(fileName, embedded = false) {
+  const window = { location: { pathname: `/prototype/${fileName}`, search: "" } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  return window;
+}
+
+function renderNavFor(fileName, styleStep, embedded = false) {
   const head = createElement("head");
   const body = createElement("body");
   if (styleStep) {
@@ -94,9 +102,15 @@ function renderNavFor(fileName, styleStep) {
   };
   vm.runInNewContext(navScript, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}`, search: "" } },
+    window: makeWindow(fileName, embedded),
   });
   return { nodes: [...flatten(head), ...flatten(body)] };
+}
+
+function linkWithText(nodes, text) {
+  const link = nodes.find((node) => node.tagName === "a" && node.textContent === text);
+  assert.ok(link, `Missing link: ${text}`);
+  return link;
 }
 
 const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
@@ -108,5 +122,45 @@ assert.ok(
   lastNav.nodes.some((node) => node.href === "episode-watch-through-preview.html"),
   "last visual direction screen links to watch-through preview",
 );
+
+const embeddedFirstNav = renderNavFor("preset-style-picker.html", "preset-style-picker", true);
+const embeddedHome = linkWithText(embeddedFirstNav.nodes, "← Preview shell");
+assert.equal(embeddedHome.href, "../preview/", "embedded style nav keeps the shell-home href");
+assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedSetupBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker eye-line coherence");
+assert.equal(
+  embeddedSetupBack.href,
+  "../preview/app.html#speaker-eye-line-coherence",
+  "embedded style nav routes the setup back-link through the preview app hash",
+);
+assert.equal(embeddedSetupBack.target, "_top", "embedded setup back-link targets the parent app");
+const embeddedStyleNext = linkWithText(embeddedFirstNav.nodes, "Next: Preset comparison");
+assert.equal(
+  embeddedStyleNext.href,
+  "../preview/app.html#preset-comparison-preview",
+  "embedded style nav routes next style steps through the preview app hash",
+);
+assert.equal(embeddedStyleNext.target, "_top", "embedded style next link targets the parent app");
+
+const embeddedMiddleNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", true);
+assert.equal(
+  linkWithText(embeddedMiddleNav.nodes, "Previous: Preset comparison").href,
+  "../preview/app.html#preset-comparison-preview",
+  "embedded style nav routes previous style steps through the preview app hash",
+);
+assert.equal(
+  linkWithText(embeddedMiddleNav.nodes, "Next: Speaker framing safety").href,
+  "../preview/app.html#speaker-framing-safety",
+  "embedded style nav routes middle next steps through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
+const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Watch the finished episode");
+assert.equal(
+  embeddedHandoff.href,
+  "../preview/app.html#episode-watch-through-preview",
+  "embedded style nav routes the publish handoff through the preview app hash",
+);
+assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
 
 console.log("style nav: visual direction screens connected back to the preview shell");
