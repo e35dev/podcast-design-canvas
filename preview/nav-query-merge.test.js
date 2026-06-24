@@ -53,6 +53,13 @@ assertCanonicalPathMerge(
   "episode-metadata-publishing.html?path=publish&draft=notes",
 );
 
+assertCanonicalPathMerge(
+  "speaker-setup-nav.js",
+  "?path=episode",
+  "speaker-role-mapping.html?path=ingest&draft=roles",
+  "speaker-role-mapping.html?path=episode&draft=roles",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -75,4 +82,29 @@ assert.equal(
   "ingest nav preserves unrelated flags and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest and publish path merges are canonical and non-ambiguous");
+const speakerSetupSource = fs.readFileSync(path.join(previewDir, "speaker-setup-nav.js"), "utf8");
+function speakerSetupHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/guest-profile-reuse.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${speakerSetupSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const setupWithHash = speakerSetupHrefWithPathFor(
+  "speaker-attribution-review.html?draft=attribution#review",
+  "?path=episode",
+);
+assert.equal(
+  setupWithHash,
+  "speaker-attribution-review.html?draft=attribution&path=episode#review",
+  "speaker setup nav preserves unrelated flags and hash segments when merging path context",
+);
+
+console.log("nav query merge: ingest, publish, and speaker setup path merges are canonical and non-ambiguous");

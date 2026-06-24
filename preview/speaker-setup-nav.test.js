@@ -214,4 +214,11 @@ assert.equal(
   "standalone speaker setup nav keeps episode path context between setup screens",
 );
 
+const conflictingPathNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review", false, "?path=episode");
+assert.equal(
+  linkWithText(conflictingPathNav.nodes, "Previous: Speaker roles").href,
+  "speaker-role-mapping.html?path=episode",
+  "speaker setup nav replaces conflicting path values when linking back to speaker roles",
+);
+
 console.log("speaker setup nav: speaker-setup screens connected back to the preview shell");
