@@ -23,6 +23,7 @@ assert.ok(!/innerHTML/.test(navScript), "style nav builds the DOM without innerH
 const styleScreens = [
   "preset-style-picker.html",
   "preset-comparison-preview.html",
+  "preset-pacing-controls.html",
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
@@ -143,10 +144,22 @@ assert.equal(
 );
 assert.equal(embeddedStyleNext.target, "_top", "embedded style next link targets the parent app");
 
+const embeddedPacingNav = renderNavFor("preset-pacing-controls.html", "preset-pacing-controls", true);
+assert.equal(
+  linkWithText(embeddedPacingNav.nodes, "Previous: Preset comparison").href,
+  "../preview/app.html#preset-comparison-preview",
+  "embedded style nav routes the pacing step's previous link through the preview app hash",
+);
+assert.equal(
+  linkWithText(embeddedPacingNav.nodes, "Next: Layout safe areas").href,
+  "../preview/app.html#layout-safe-areas",
+  "embedded style nav routes the pacing step's next link through the preview app hash",
+);
+
 const embeddedMiddleNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", true);
 assert.equal(
-  linkWithText(embeddedMiddleNav.nodes, "Previous: Preset comparison").href,
-  "../preview/app.html#preset-comparison-preview",
+  linkWithText(embeddedMiddleNav.nodes, "Previous: Preset pacing").href,
+  "../preview/app.html#preset-pacing-controls",
   "embedded style nav routes previous style steps through the preview app hash",
 );
 assert.equal(

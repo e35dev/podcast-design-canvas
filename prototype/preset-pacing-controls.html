@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Preset Pacing Controls Prototype</title>
+    <style>
+      :root {
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --surface: #f7faf8;
+        --accent: #136f63;
+        --review: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .panel + .panel { margin-top: 18px; }
+
+      .feels { display: grid; gap: 10px; }
+      .feel {
+        display: grid; gap: 4px; text-align: left; cursor: pointer;
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 12px 14px; font: inherit; color: inherit;
+      }
+      .feel:hover { border-color: #b9c8c3; }
+      .feel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .feel[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(19, 111, 99, 0.14); }
+      .feel strong { font-size: 15px; }
+      .feel span { color: var(--muted); font-size: 13px; }
+
+      .intensity { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+      .intensity .energy { font-weight: 700; color: var(--accent); }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      button {
+        min-height: 38px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent);
+        color: #fff; font: inherit; font-weight: 700; padding: 8px 12px; cursor: pointer;
+      }
+      button.secondary { background: #fff; color: var(--accent); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .effects { display: grid; gap: 8px; margin-top: 6px; }
+      .effect {
+        display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+        border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 9px 12px;
+      }
+      .effect .level { font-weight: 700; font-size: 13px; color: var(--muted); white-space: nowrap; }
+      .routed-link { font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; white-space: nowrap; }
+      .routed-link:hover { text-decoration: underline; }
+      .routed-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; text-decoration: underline; }
+      .effect.owned-here .level { color: var(--accent); }
+
+      .moments { display: grid; gap: 10px; }
+      .moment { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 12px 14px; }
+      .moment .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .moment strong { font-size: 14px; }
+      .moment p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+      .moment .hold { margin-top: 8px; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--muted); }
+      .moment .route { margin-top: 8px; }
+
+      .badge { display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px; padding: 0 10px; font-weight: 700; font-size: 12px; white-space: nowrap; }
+      .badge.fit { color: #075246; background: #dff5ef; }
+      .badge.warn { color: #7a4400; background: #fff1d6; }
+      .badge.held { color: #2a4c8a; background: #e2ebfb; }
+
+      .status { display: inline-flex; align-items: center; min-height: 32px; border-radius: 999px; padding: 0 12px; font-weight: 800; }
+      .status.previewing { color: #2a4c8a; background: #e2ebfb; }
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+      .status.applied { color: #075246; background: #dff5ef; }
+      .status-note { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+        .effect { grid-template-columns: 1fr auto; }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="preset-pacing-controls">
+    <main>
+      <h1>Preset pacing controls</h1>
+      <p class="lede">
+        Shape how energetic the whole episode feels with one creative choice &mdash; not a second editor.
+        Pick a pacing feel, preview it across real episode moments, and apply it. Each concrete change opens
+        on the surface that owns it, already attached to the right speakers and moments.
+      </p>
+
+      <section class="workspace" aria-label="Preset pacing workspace">
+        <div>
+          <div class="panel">
+            <h2>Pacing feel</h2>
+            <div class="feels" id="feels" role="group" aria-label="Choose a pacing feel"></div>
+            <div class="intensity">
+              <span>Nudge intensity:</span>
+              <button type="button" class="secondary" id="calmer">− Calmer</button>
+              <button type="button" class="secondary" id="punchier">+ Punchier</button>
+              <span class="energy" id="energyLabel" aria-live="polite"></span>
+            </div>
+            <div class="actions">
+              <button type="button" id="apply">Apply pacing to episode</button>
+              <button type="button" class="secondary" id="save" disabled>Save to show template</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>What this pacing changes</h2>
+            <p class="status-note">Pacing sets the intensity; the surface that owns each element renders and reviews it.</p>
+            <div class="effects" id="effects"></div>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Pacing preview summary">
+          <h2>Preview across moments</h2>
+          <p class="status-note" id="episodeContext"></p>
+          <div id="status" class="status previewing">Previewing</div>
+          <p class="status-note" id="statusNote"></p>
+          <div class="moments" id="moments"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Pacing feels are creative presets, not raw timing controls. `energy` is the
+      // baseline intensity (1 = calmest, 6 = punchiest); a creator can nudge it one step
+      // without leaving the preset. Each feel describes what changes visually/rhythmically.
+      const feels = [
+        { id: "calm-interview", label: "Calm interview", energy: 1, desc: "Long, settled takes. Few title moments, gentle transitions, light b-roll." },
+        { id: "teaching-focused", label: "Teaching focused", energy: 2, desc: "Clear and steady for explanation. Chapter-dense, restrained b-roll, readable captions." },
+        { id: "balanced-conversation", label: "Balanced conversation", energy: 3, desc: "Even rhythm for a two-way show. Moderate titles, b-roll, and frame changes." },
+        { id: "sponsor-friendly", label: "Sponsor-friendly", energy: 3, desc: "Protects read-throughs. Steady transitions and emphasis held on sponsor and metadata moments." },
+        { id: "panel-discussion", label: "Panel discussion", energy: 4, desc: "Tracks several speakers. More frame changes, moderate titles, careful pause trimming." },
+        { id: "punchy-commentary", label: "Punchy commentary", energy: 5, desc: "High energy. Frequent title moments, strong transitions, denser b-roll and emphasis." },
+      ];
+
+      // Each concrete change is owned by another spec's surface; pacing only sets intensity
+      // and links out. transition-strength + overall rhythm stay owned by pacing itself.
+      const effects = [
+        { id: "title", label: "Frequency of title moments", surface: "contextual-title-cards.html", surfaceLabel: "title moments" },
+        { id: "broll", label: "B-roll suggestion intensity", surface: "contextual-broll-moments.html", surfaceLabel: "b-roll moments" },
+        { id: "caption", label: "Caption emphasis", surface: "audio-caption-quality-review.html", surfaceLabel: "caption review" },
+        { id: "frame", label: "Speaker frame changes", surface: "speaker-framing-safety.html", surfaceLabel: "speaker framing" },
+        { id: "pause", label: "Pause trimming recommendations", surface: "pause-crosstalk-cleanup.html", surfaceLabel: "pause & cross-talk cleanup" },
+        { id: "chapter", label: "Chapter density", surface: "episode-chapter-markers.html", surfaceLabel: "chapter markers" },
+        { id: "transition", label: "Transition strength", surface: null, surfaceLabel: null },
+      ];
+
+      // The pacing preview runs against the imported episode's real speaker buckets and
+      // segments, the same Host/Guest context the ingest and speaker-setup screens assign —
+      // not abstract clips. A creator recognizes the moments from their own episode.
+      const episode = {
+        show: "The Long Build",
+        runtime: "1h 12m",
+        host: "Maya (Host)",
+        guests: ["Dev (Guest 1)", "Priya (Guest 2)"],
+      };
+
+      // Sampled moments drawn from this episode's timeline, each with the comfortable energy
+      // band the format wants. Outside the band the preview honestly reports "too aggressive"
+      // / "too calm" so a creator never applies a feel that only works for one segment.
+      const moments = [
+        { id: "opening", label: "Cold open — Maya's intro", at: "00:00", min: 2, max: 6, element: "title", calm: "Maya's intro feels flat without a title moment or lift.", hot: "Titles and motion stack up before Maya finishes the intro." },
+        { id: "high-energy", label: "Maya & Dev debate the rewrite", at: "14:30", min: 3, max: 6, element: "broll", calm: "The Maya/Dev debate feels underpowered — b-roll and frame changes barely move.", hot: "The Maya/Dev debate stays lively without overproducing it." },
+        { id: "quiet", label: "Priya explains the migration", at: "31:05", min: 1, max: 4, element: "caption", calm: "Priya's explanation reads clearly and calmly.", hot: "Title moments and emphasis interrupt Priya's explanation too often." },
+        { id: "chapter", label: "Chapter break into Q&A", at: "48:20", min: 2, max: 5, element: "chapter", calm: "The break into Q&A is gentle but easy to follow.", hot: "The chapter break hits hard enough to feel abrupt." },
+        { id: "sponsor", label: "Mid-roll sponsor read", at: "52:40", min: 1, max: 3, element: "caption", calm: "The sponsor read stays clear and unhurried.", hot: "Pause trimming and emphasis rush the sponsor read." },
+      ];
+
+      const LEVEL_WORDS = ["Off", "Light", "Low", "Moderate", "High", "Intense", "Max"];
+
+      let selected = "balanced-conversation";
+      let nudge = 0;            // -1, 0, +1, applied on top of the feel's base energy
+      let applied = false;
+      let saved = false;
+      const held = new Set();   // moment ids the creator pinned at current pacing
+
+      const feelsEl = document.querySelector("#feels");
+      const effectsEl = document.querySelector("#effects");
+      const momentsEl = document.querySelector("#moments");
+      const statusEl = document.querySelector("#status");
+      const statusNoteEl = document.querySelector("#statusNote");
+      const energyLabelEl = document.querySelector("#energyLabel");
+      const episodeContextEl = document.querySelector("#episodeContext");
+      const calmerBtn = document.querySelector("#calmer");
+      const punchierBtn = document.querySelector("#punchier");
+      const applyBtn = document.querySelector("#apply");
+      const saveBtn = document.querySelector("#save");
+
+      function currentFeel() {
+        return feels.find((f) => f.id === selected) || feels[0];
+      }
+
+      // Pure, DOM-free pacing logic (also exported for tests). A feel's base energy plus
+      // the creator's one-step nudge, clamped to 1..6.
+      function energyFor(feelId, nudgeSteps) {
+        const feel = feels.find((f) => f.id === feelId) || feels[0];
+        return Math.max(1, Math.min(6, feel.energy + nudgeSteps));
+      }
+
+      function stateFor(moment, energy, heldIds) {
+        if (heldIds.includes(moment.id)) return "held";
+        if (energy > moment.max) return "too-aggressive";
+        if (energy < moment.min) return "too-calm";
+        return "fit";
+      }
+
+      // Evaluate a pacing choice across all sampled moments. `ready` is true only when no
+      // moment is out of band (held moments don't count), so applying is always honest.
+      function evaluatePacing(feelId, nudgeSteps, heldIds = []) {
+        const energy = energyFor(feelId, nudgeSteps);
+        const states = moments.map((m) => ({ id: m.id, state: stateFor(m, energy, heldIds) }));
+        const flagged = states.filter((s) => s.state === "too-aggressive" || s.state === "too-calm");
+        return { energy, states, flagged: flagged.map((s) => s.id), ready: flagged.length === 0 };
+      }
+
+      function effectiveEnergy() {
+        return energyFor(selected, nudge);
+      }
+
+      // Effect intensity tracks the effective energy, with each effect offset so the mix
+      // still reads like the chosen feel (teaching leans on chapters, punchy on titles).
+      const EFFECT_OFFSET = {
+        title: 0, broll: 0, caption: -1, frame: 0, pause: -1, chapter: 1, transition: 0,
+      };
+
+      function effectLevel(effectId) {
+        const base = effectiveEnergy() + (EFFECT_OFFSET[effectId] || 0);
+        return Math.max(0, Math.min(6, base));
+      }
+
+      function momentState(moment) {
+        return stateFor(moment, effectiveEnergy(), [...held]);
+      }
+
+      function flaggedMoments() {
+        return moments.filter((m) => {
+          const state = momentState(m);
+          return state === "too-aggressive" || state === "too-calm";
+        });
+      }
+
+      function renderFeels() {
+        feelsEl.replaceChildren(
+          ...feels.map((feel) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "feel";
+            btn.setAttribute("aria-pressed", String(feel.id === selected));
+            const title = document.createElement("strong");
+            title.textContent = feel.label;
+            const desc = document.createElement("span");
+            desc.textContent = feel.desc;
+            btn.append(title, desc);
+            btn.addEventListener("click", () => {
+              selected = feel.id;
+              nudge = 0;
+              applied = false;
+              saved = false;
+              render();
+            });
+            return btn;
+          }),
+        );
+      }
+
+      function renderEffects() {
+        effectsEl.replaceChildren(
+          ...effects.map((effect) => {
+            const row = document.createElement("div");
+            row.className = effect.surface ? "effect" : "effect owned-here";
+
+            const label = document.createElement("span");
+            label.textContent = effect.label;
+
+            const level = document.createElement("span");
+            level.className = "level";
+            level.textContent = LEVEL_WORDS[effectLevel(effect.id)];
+
+            row.append(label, level);
+
+            if (effect.surface) {
+              const link = document.createElement("a");
+              link.className = "routed-link";
+              link.href = effect.surface;
+              link.textContent = applied ? `Review on ${effect.surfaceLabel} →` : `Open ${effect.surfaceLabel} →`;
+              row.appendChild(link);
+            } else {
+              const owned = document.createElement("span");
+              owned.className = "level";
+              owned.textContent = "owned by pacing";
+              row.appendChild(owned);
+            }
+            return row;
+          }),
+        );
+      }
+
+      function renderMoments() {
+        momentsEl.replaceChildren(
+          ...moments.map((moment) => {
+            const card = document.createElement("article");
+            card.className = "moment";
+
+            const head = document.createElement("div");
+            head.className = "head";
+            const title = document.createElement("strong");
+            title.textContent = `${moment.at} · ${moment.label}`;
+            const badge = document.createElement("span");
+            const state = momentState(moment);
+            badge.className =
+              state === "fit" ? "badge fit" : state === "held" ? "badge held" : "badge warn";
+            badge.textContent =
+              state === "fit" ? "fits the show"
+              : state === "held" ? "moment held"
+              : state === "too-aggressive" ? "too aggressive"
+              : "too calm";
+            head.append(title, badge);
+
+            const note = document.createElement("p");
+            const feelLabel = currentFeel().label;
+            if (state === "held") {
+              note.textContent = `Held at its current pacing while the rest of the episode changes.`;
+            } else if (state === "too-aggressive") {
+              note.textContent = `${feelLabel}: ${moment.hot}`;
+            } else if (state === "too-calm") {
+              note.textContent = `${feelLabel}: ${moment.calm}`;
+            } else {
+              note.textContent = `${feelLabel} fits this moment.`;
+            }
+
+            card.append(head, note);
+
+            // Hold control: pin a moment at its current pacing.
+            const holdLabel = document.createElement("label");
+            holdLabel.className = "hold";
+            const holdInput = document.createElement("input");
+            holdInput.type = "checkbox";
+            holdInput.checked = held.has(moment.id);
+            holdInput.addEventListener("change", () => {
+              if (holdInput.checked) held.add(moment.id);
+              else held.delete(moment.id);
+              render();
+            });
+            holdLabel.append(holdInput, document.createTextNode("Hold this moment at its current pacing"));
+            card.appendChild(holdLabel);
+
+            // When a flagged moment pushes an element past what the creator approved, route
+            // to the owning surface instead of resolving it here ("needs element review").
+            if (state === "too-aggressive" || state === "too-calm") {
+              const effect = effects.find((e) => e.id === moment.element);
+              if (effect && effect.surface) {
+                const route = document.createElement("div");
+                route.className = "route";
+                const link = document.createElement("a");
+                link.className = "routed-link";
+                link.href = effect.surface;
+                link.textContent = `Adjust on ${effect.surfaceLabel} →`;
+                route.appendChild(link);
+                card.appendChild(route);
+              }
+            }
+            return card;
+          }),
+        );
+      }
+
+      function renderStatus() {
+        const flagged = flaggedMoments();
+        // Invariant: the episode can't stay "applied" if a moment slips back out of band
+        // (e.g. the creator un-holds one), so the applied claim is always honest.
+        if (applied && flagged.length) applied = false;
+
+        episodeContextEl.textContent =
+          `${episode.show} · ${episode.runtime} · ${episode.host}, ${episode.guests.join(", ")}`;
+        energyLabelEl.textContent = `Energy ${effectiveEnergy()} of 6 · ${LEVEL_WORDS[effectiveEnergy()]}`;
+        calmerBtn.disabled = effectiveEnergy() <= 1;
+        punchierBtn.disabled = effectiveEnergy() >= 6;
+
+        // A creator can only apply once every sampled moment fits or is explicitly held —
+        // pacing never marks the episode "applied" while a moment still needs review.
+        const ready = flagged.length === 0;
+
+        let cls, text, note;
+        if (applied) {
+          cls = "applied";
+          text = "Applied";
+          note = "Pacing is set across the episode. Each concrete change appears on the surface that owns it, already attached to the right speakers and moments.";
+        } else if (!ready) {
+          cls = "review";
+          text = "Needs review before applying";
+          note = `${flagged.length} of ${moments.length} sampled moment${flagged.length === 1 ? "" : "s"} fall outside the format. Nudge intensity, hold a moment, or pick another feel before applying.`;
+        } else {
+          cls = "ready";
+          text = "Ready to apply";
+          note = "Every sampled moment fits the show. You can apply this pacing to the whole episode.";
+        }
+        statusEl.className = `status ${cls}`;
+        statusEl.textContent = saved ? "Saved to show template" : text;
+        statusNoteEl.textContent = saved
+          ? "This pacing feel is saved. Future episodes re-check it against new speakers, length, and chapter timing before treating it as ready."
+          : note;
+
+        applyBtn.disabled = applied || !ready;
+        saveBtn.disabled = !(applied && ready);
+      }
+
+      function render() {
+        renderFeels();
+        renderEffects();
+        renderMoments();
+        renderStatus();
+      }
+
+      calmerBtn.addEventListener("click", () => { nudge -= 1; applied = false; saved = false; render(); });
+      punchierBtn.addEventListener("click", () => { nudge += 1; applied = false; saved = false; render(); });
+      applyBtn.addEventListener("click", () => {
+        if (flaggedMoments().length) return;   // honest: never apply over a flagged moment
+        applied = true; saved = false; render();
+      });
+      saveBtn.addEventListener("click", () => { if (!saveBtn.disabled) { saved = true; render(); } });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { feels, effects, moments, energyFor, stateFor, evaluatePacing };
+      }
+    </script>
+  </body>
+</html>
