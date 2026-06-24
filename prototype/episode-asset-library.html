@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Asset Library Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 790px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .summary-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .summary-card strong {
+        display: block;
+        font-size: 25px;
+        line-height: 1;
+        margin-bottom: 6px;
+      }
+
+      .summary-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+      .status.archive { color: #5e6b67; background: #eceeed; }
+
+      .status-note {
+        color: var(--muted);
+        max-width: 650px;
+        font-size: 14px;
+      }
+
+      .assets {
+        display: grid;
+        gap: 14px;
+      }
+
+      .asset {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .asset-head {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .thumb {
+        width: 88px;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .thumb.photo { background: linear-gradient(160deg, #f5cda2, #8f5942); }
+      .thumb.sponsor { background: linear-gradient(160deg, #2b4f8f, #7197db); }
+      .thumb.title { background: linear-gradient(160deg, #603a92, #ba8eff); }
+      .thumb.archived {
+        background: repeating-linear-gradient(135deg, #d3d9d7, #d3d9d7 10px, #e6ebea 10px, #e6ebea 20px);
+        color: #5e6b67;
+      }
+
+      .asset-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .asset-title strong {
+        font-size: 15px;
+      }
+
+      .meta,
+      .detail {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.suggested { color: #2a4c8a; background: #e2ebfb; }
+      .badge.in-use { color: #075246; background: #dff5ef; }
+      .badge.archived { color: #5e6b67; background: #eceeed; }
+      .badge.warn { color: #7a4400; background: #fff1d6; }
+      .badge.block { color: #8a1f1f; background: #fde5e5; }
+      .badge.scope { color: #294b45; background: #edf4f2; }
+
+      .usage-row,
+      .flags,
+      .route-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #fcfdfd;
+        padding: 10px 12px;
+      }
+
+      .issue.block { border-left-color: var(--block); }
+      .issue.info { border-left-color: var(--info); }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .asset-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      button.primary {
+        border-color: var(--accent);
+        background: #def3ed;
+        color: var(--accent);
+      }
+
+      .sidebar-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .sidebar-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .sidebar-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .sidebar-item span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 940px) {
+        .workspace,
+        .toolbar,
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .asset-head {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Episode Asset Library Prototype</h1>
+      <p class="lede">
+        Review reusable logos, guest visuals, b-roll, and title art in one asset library that stays tied to podcast workflows, shows where each item is already used, and routes approval decisions back to the surface that owns them.
+      </p>
+
+      <section class="workspace" aria-label="Episode asset library workspace">
+        <div class="panel">
+          <h2>Library Overview</h2>
+
+          <div class="summary-grid">
+            <article class="summary-card">
+              <strong id="assetCount">4</strong>
+              <span>Visible assets in the current filtered view.</span>
+            </article>
+            <article class="summary-card">
+              <strong id="suggestedCount">1</strong>
+              <span>Assets still waiting for placement or review.</span>
+            </article>
+            <article class="summary-card">
+              <strong id="inUseCount">2</strong>
+              <span>Assets already placed in the episode or template.</span>
+            </article>
+            <article class="summary-card">
+              <strong id="archivedCount">1</strong>
+              <span>Retired assets kept visible for existing episode use.</span>
+            </article>
+          </div>
+
+          <div class="toolbar">
+            <label>
+              Search assets
+              <input id="searchInput" type="text" value="" placeholder="Search by asset, speaker, sponsor, or role">
+            </label>
+            <label>
+              Scope
+              <select id="scopeFilter">
+                <option value="all" selected>All scopes</option>
+                <option value="current episode">Current episode</option>
+                <option value="show template">Show template</option>
+                <option value="speaker profile">Speaker profile</option>
+                <option value="sponsor kit">Sponsor kit</option>
+              </select>
+            </label>
+            <label>
+              Lifecycle status
+              <select id="statusFilter">
+                <option value="all" selected>All statuses</option>
+                <option value="suggested">Suggested</option>
+                <option value="in use">In use</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="status-row">
+            <span class="status review" id="libraryStatus">review needed</span>
+            <span class="status-note" id="libraryNote">
+              The library keeps placement context visible so a creator can decide whether to approve, replace, or retire an asset without losing where it already appears.
+            </span>
+          </div>
+
+          <div class="assets" id="assets"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Asset Decisions</h2>
+          <p class="detail">
+            The library never becomes a generic media bin. Every approval, rejection, or replacement explains which podcast workflow owns the next decision.
+          </p>
+
+          <div class="sidebar-list">
+            <article class="sidebar-item">
+              <strong>Guest visuals stay with guest context</strong>
+              <span>Headshots and lower-third images route back to guest profile reuse when the creator needs to confirm the speaker association or save reuse details.</span>
+              <div class="chips">
+                <span class="badge scope">speaker profile</span>
+                <span class="badge in-use">guest context</span>
+              </div>
+            </article>
+
+            <article class="sidebar-item">
+              <strong>Sponsor marks stay with sponsor review</strong>
+              <span>Sponsor logos carry approval and disclosure context so a creator can fix unreadable or unapproved marks without searching the workspace.</span>
+              <div class="chips">
+                <span class="badge scope">sponsor kit</span>
+                <span class="badge warn">approval check</span>
+              </div>
+            </article>
+
+            <article class="sidebar-item">
+              <strong>B-roll stays tied to episode moments</strong>
+              <span>Approved visuals remain linked to the moments they support, so hiding a weak asset does not turn the library into a detached clip browser.</span>
+              <div class="chips">
+                <span class="badge scope">current episode</span>
+                <span class="badge suggested">moment-linked</span>
+              </div>
+            </article>
+
+            <article class="sidebar-item">
+              <strong>Archived assets still explain prior use</strong>
+              <span>Retired art stays visible anywhere a finished episode or template still depends on it, while staying out of new suggestions.</span>
+              <div class="chips">
+                <span class="badge archived">archived</span>
+                <span class="badge scope">reuse-safe</span>
+              </div>
+            </article>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const libraryState = {
+        review: {
+          label: "review needed",
+          className: "review",
+          note: "The library keeps placement context visible so a creator can decide whether to approve, replace, or retire an asset without losing where it already appears."
+        },
+        ready: {
+          label: "ready for reuse",
+          className: "ready",
+          note: "Every visible asset has a clear role and no unresolved approval concerns. The creator can keep reusing these assets with confidence."
+        },
+        archive: {
+          label: "archive view",
+          className: "archive",
+          note: "Archived assets stay visible only to explain prior usage and support careful restoration when a creator chooses to bring one back."
+        }
+      };
+
+      const assets = [
+        {
+          title: "Ari Kim headshot",
+          type: "guest headshot",
+          status: "in use",
+          scope: "speaker profile",
+          thumb: "AK",
+          thumbClass: "photo",
+          description: "Approved guest photo used in lower-third and guest intro context.",
+          usage: ["Lower-third image", "Guest profile", "Episode intro"],
+          flags: ["approved role", "speaker matched"],
+          routes: ["guest profile reuse", "show template adaptation"],
+          issues: [
+            {
+              tone: "info",
+              title: "Template reuse stays episode-aware",
+              detail: "Saving this headshot back to the show template keeps the recurring guest image available without freezing episode-specific lower-third copy."
+            }
+          ]
+        },
+        {
+          title: "Northstar sponsor logo",
+          type: "sponsor mark",
+          status: "suggested",
+          scope: "sponsor kit",
+          thumb: "NS",
+          thumbClass: "sponsor",
+          description: "Sponsor logo proposed for the mid-roll disclosure and closing acknowledgement.",
+          usage: ["Sponsor placement review"],
+          flags: ["missing approval", "readability check"],
+          routes: ["sponsor placement review", "thumbnail cover frame"],
+          issues: [
+            {
+              tone: "block",
+              title: "Usage approval still missing",
+              detail: "The creator needs to confirm sponsor usage before this mark can ship in the episode or appear in a final thumbnail package."
+            },
+            {
+              tone: "info",
+              title: "Unreadable on dark treatment",
+              detail: "The white-outline version disappears on the current sponsor card, so the next decision belongs in sponsor placement review rather than in the asset library."
+            }
+          ]
+        },
+        {
+          title: "Hiring dashboard screenshot",
+          type: "supporting visual",
+          status: "in use",
+          scope: "current episode",
+          thumb: "UI",
+          thumbClass: "",
+          description: "Episode-specific screenshot supporting the guest's product walkthrough moment.",
+          usage: ["B-roll moment 00:18:12", "Destination crop preview"],
+          flags: ["moment-linked", "approved visual"],
+          routes: ["contextual b-roll moments", "destination crop previews"],
+          issues: [
+            {
+              tone: "info",
+              title: "Already placed in a moment-linked visual",
+              detail: "Replacing this screenshot should reopen the b-roll moment rather than silently swapping a detached media file."
+            }
+          ]
+        },
+        {
+          title: "Spring launch title texture",
+          type: "title image",
+          status: "archived",
+          scope: "show template",
+          thumb: "TL",
+          thumbClass: "title archived",
+          description: "Retired title-card background from a prior season still referenced by one older show template.",
+          usage: ["Season 2 template", "Archived cover treatment"],
+          flags: ["retired from new use"],
+          routes: ["show brand kit setup", "show template adaptation"],
+          issues: [
+            {
+              tone: "info",
+              title: "Archived without breaking older exports",
+              detail: "This texture stays visible because finished episodes and one template still rely on it, but it should not appear in new suggestions."
+            }
+          ]
+        }
+      ];
+
+      const assetsEl = document.getElementById("assets");
+      const searchInput = document.getElementById("searchInput");
+      const scopeFilter = document.getElementById("scopeFilter");
+      const statusFilter = document.getElementById("statusFilter");
+      const assetCount = document.getElementById("assetCount");
+      const suggestedCount = document.getElementById("suggestedCount");
+      const inUseCount = document.getElementById("inUseCount");
+      const archivedCount = document.getElementById("archivedCount");
+      const libraryStatus = document.getElementById("libraryStatus");
+      const libraryNote = document.getElementById("libraryNote");
+
+      function filteredAssets() {
+        const search = searchInput.value.trim().toLowerCase();
+        return assets.filter((asset) => {
+          const matchesScope = scopeFilter.value === "all" || asset.scope === scopeFilter.value;
+          const matchesStatus = statusFilter.value === "all" || asset.status === statusFilter.value;
+          const haystack = [
+            asset.title,
+            asset.type,
+            asset.scope,
+            asset.description,
+            ...asset.usage,
+            ...asset.flags,
+            ...asset.routes
+          ].join(" ").toLowerCase();
+          const matchesSearch = !search || haystack.includes(search);
+          return matchesScope && matchesStatus && matchesSearch;
+        });
+      }
+
+      function updateSummary(items) {
+        assetCount.textContent = String(items.length);
+        suggestedCount.textContent = String(items.filter((asset) => asset.status === "suggested").length);
+        inUseCount.textContent = String(items.filter((asset) => asset.status === "in use").length);
+        archivedCount.textContent = String(items.filter((asset) => asset.status === "archived").length);
+      }
+
+      function updateStatus(items) {
+        let stateKey = "review";
+        if (items.length && items.every((asset) => asset.status === "archived")) {
+          stateKey = "archive";
+        } else if (items.length && items.every((asset) => asset.flags.every((flag) => !flag.includes("missing")))) {
+          stateKey = "ready";
+        }
+
+        const state = libraryState[stateKey];
+        libraryStatus.className = `status ${state.className}`;
+        libraryStatus.textContent = state.label;
+        libraryNote.textContent = state.note;
+      }
+
+      function renderAssets() {
+        const items = filteredAssets();
+        updateSummary(items);
+        updateStatus(items);
+        assetsEl.innerHTML = "";
+
+        items.forEach((asset) => {
+          const article = document.createElement("article");
+          article.className = "asset";
+
+          article.innerHTML = `
+            <div class="asset-head">
+              <div class="thumb ${asset.thumbClass}">${asset.thumb}</div>
+              <div>
+                <div class="asset-title">
+                  <strong>${asset.title}</strong>
+                  <span class="badge ${asset.status === "in use" ? "in-use" : asset.status}">${asset.status}</span>
+                  <span class="badge scope">${asset.type}</span>
+                </div>
+                <div class="meta">${asset.description}</div>
+              </div>
+            </div>
+
+            <div class="usage-row">
+              <span class="detail">Scope:</span>
+              <span class="badge scope">${asset.scope}</span>
+              ${asset.usage.map((item) => `<span class="badge scope">${item}</span>`).join("")}
+            </div>
+
+            <div class="flags">
+              ${asset.flags.map((flag) => `<span class="badge ${flag.includes("missing") ? "block" : flag.includes("readability") ? "warn" : asset.status === "archived" ? "archived" : "suggested"}">${flag}</span>`).join("")}
+            </div>
+
+            <div class="route-links">
+              ${asset.routes.map((route) => `<span class="badge scope">${route}</span>`).join("")}
+            </div>
+
+            <div class="issues">
+              ${asset.issues.map((issue) => `
+                <div class="issue ${issue.tone}">
+                  <strong>${issue.title}</strong>
+                  <span>${issue.detail}</span>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="asset-actions">
+              <button type="button" class="primary">${asset.status === "suggested" ? "Approve for role" : "Preview usage"}</button>
+              <button type="button">${asset.status === "archived" ? "Restore asset" : "Replace for episode"}</button>
+              <button type="button">${asset.status === "archived" ? "Open template use" : "Open owning workflow"}</button>
+            </div>
+          `;
+
+          assetsEl.appendChild(article);
+        });
+      }
+
+      searchInput.addEventListener("input", renderAssets);
+      scopeFilter.addEventListener("change", renderAssets);
+      statusFilter.addEventListener("change", renderAssets);
+
+      renderAssets();
+    </script>
+  </body>
+</html>
