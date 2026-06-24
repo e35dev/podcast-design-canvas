@@ -110,6 +110,11 @@ function renderVisualsNav() {
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
+  const previewApp = document.createElement("a");
+  previewApp.href = "../preview/app.html";
+  previewApp.textContent = "Preview app";
+  wrap.appendChild(previewApp);
+
   if (previous) {
     const prevLink = document.createElement("a");
     prevLink.href = previous.file;

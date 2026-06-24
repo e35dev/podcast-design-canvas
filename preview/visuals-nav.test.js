@@ -14,6 +14,7 @@ const navScript = fs.readFileSync(path.join(__dirname, "visuals-nav.js"), "utf8"
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "visuals nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "visuals nav links to the guided episode flow");
+assert.ok(navScript.includes("app.html"), "visuals nav links to the preview app");
 assert.ok(navScript.includes("show-segment-system.html"), "visuals nav hands off to the reuse path");
 assert.ok(navScript.includes("speaker-framing-safety.html"), "visuals nav links back to the style path");
 assert.ok(navScript.includes('document.querySelector(".visuals-nav")'), "visuals nav guards against double render");

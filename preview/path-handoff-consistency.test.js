@@ -26,8 +26,8 @@ const expectedHandoffs = [
   },
   {
     script: "style-nav.js",
-    href: 'start.href = "episode-watch-through-preview.html"',
-    text: "Continue: Watch the finished episode",
+    href: 'STYLE_HANDOFF = { file: "episode-watch-through-preview.html"',
+    text: 'label: "Watch the finished episode"',
     note: "visual direction hands off to publish prep",
   },
   {
