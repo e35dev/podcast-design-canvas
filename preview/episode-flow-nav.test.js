@@ -118,8 +118,8 @@ const lastNav = renderNavFor("export-readiness-review.html");
 const publishHandoff = linkWithText(lastNav, "Continue: Watch-through preview");
 assert.equal(
   publishHandoff.href,
-  "episode-watch-through-preview.html",
-  "last episode flow screen hands off to watch-through preview",
+  "episode-watch-through-preview.html?path=publish",
+  "last episode flow screen hands off to watch-through preview in the publish path context",
 );
 
 const embeddedFirstNav = renderNavFor("source-media-health.html", true);
@@ -140,8 +140,8 @@ const embeddedLastNav = renderNavFor("export-readiness-review.html", true);
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Watch-through preview");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#episode-watch-through-preview",
-  "embedded episode flow nav routes publish prep handoff through the preview app hash",
+  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "embedded episode flow nav routes publish prep handoff through the preview app hash with publish context",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded publish prep handoff targets the parent app");
 

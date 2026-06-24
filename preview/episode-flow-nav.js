@@ -50,7 +50,14 @@ function previewAppHref(file) {
 
 function routeSearchFromFile(file) {
   const query = (file || "").split("?")[1] || "";
-  return query.split("&").includes("path=episode") ? "?path=episode" : "";
+  const parts = query.split("&");
+  if (parts.includes("path=episode")) {
+    return "?path=episode";
+  }
+  if (parts.includes("path=publish")) {
+    return "?path=publish";
+  }
+  return "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -179,7 +186,7 @@ function renderEpisodeFlowNav() {
     wrap.appendChild(nextLink);
   } else {
     const handoff = document.createElement("a");
-    setEpisodeScreenLink(handoff, EPISODE_HANDOFF.file);
+    setEpisodeScreenLink(handoff, `${EPISODE_HANDOFF.file}?path=publish`);
     handoff.textContent = `Continue: ${EPISODE_HANDOFF.label}`;
     wrap.appendChild(handoff);
   }

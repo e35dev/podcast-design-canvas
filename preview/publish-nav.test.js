@@ -67,14 +67,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}` } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, embedded = false) {
+function renderNavFor(fileName, embedded = false, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   body.dataset = {};
@@ -95,7 +95,8 @@ function renderNavFor(fileName, embedded = false) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
+    URLSearchParams,
   });
 
   return flatten(body);
@@ -175,6 +176,28 @@ const embeddedFinish = linkWithText(embeddedLastNav, "Finish: back to the previe
 assert.equal(embeddedFinish.href, "../preview/", "embedded finish still returns to the preview shell");
 assert.equal(embeddedFinish.target, "_top", "embedded finish opens the preview shell at top level");
 
+const publishPathNav = renderNavFor("destination-crop-preview.html", true, "?path=publish");
+const publishPathPrevious = linkWithText(publishPathNav, "Previous: Watch-through preview");
+assert.equal(
+  publishPathPrevious.href,
+  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "embedded publish nav preserves publish path context on previous links",
+);
+const publishPathNext = linkWithText(publishPathNav, "Next: Thumbnail cover frame");
+assert.equal(
+  publishPathNext.href,
+  "../preview/app.html#thumbnail-cover-frame?path=publish",
+  "embedded publish nav preserves publish path context on next links",
+);
+
+const standalonePublishPath = renderNavFor("show-notes-assembly.html", false, "?path=publish");
+const standaloneNext = linkWithText(standalonePublishPath, "Next: Episode metadata publishing");
+assert.equal(
+  standaloneNext.href,
+  "episode-metadata-publishing.html?path=publish",
+  "standalone publish nav keeps publish path context between publish prep screens",
+);
+
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
 const body = createElement("body");
@@ -194,8 +217,8 @@ const ctx = {
   },
 };
 const win = makeWindow("destination-crop-preview.html");
-vm.runInNewContext(navScript, { document: ctx, window: win });
-vm.runInNewContext(navScript, { document: ctx, window: win });
+vm.runInNewContext(navScript, { document: ctx, window: win, URLSearchParams });
+vm.runInNewContext(navScript, { document: ctx, window: win, URLSearchParams });
 assert.equal(
   flatten(body).filter((node) => node.className === "publish-nav").length,
   1,

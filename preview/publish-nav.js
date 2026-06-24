@@ -62,8 +62,33 @@ function isEmbeddedInPreviewApp() {
   }
 }
 
+function pathFromQuery(query) {
+  const part = (query || "").split("&").find((item) => item.startsWith("path="));
+  return part ? part.split("=")[1] : "";
+}
+
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return path === "publish" ? "?path=publish" : "";
+}
+
+function routeSearchFromFile(file) {
+  const query = (file || "").split("?")[1] || "";
+  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  return path === "publish" ? "?path=publish" : "";
+}
+
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function hrefWithPath(file) {
+  const base = (file || "").split("?")[0];
+  if (pathFromQuery((file || "").split("?")[1] || "") === "publish") {
+    return file;
+  }
+  const suffix = pathQuerySuffix();
+  return suffix ? `${base}${suffix}` : file;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -79,7 +104,7 @@ function setPublishScreenLink(link, file) {
     return;
   }
 
-  link.href = file;
+  link.href = hrefWithPath(file);
 }
 
 function renderPublishNav() {

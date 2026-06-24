@@ -168,11 +168,11 @@ const publishHandoff = lastNav.nodes.find(
 assert.ok(publishHandoff, "last flow screen renders publish prep handoff link");
 assert.equal(
   publishHandoff.href,
-  "episode-watch-through-preview.html",
-  "last flow screen publish handoff opens watch-through preview",
+  "episode-watch-through-preview.html?path=publish",
+  "last flow screen publish handoff opens watch-through preview in publish path context",
 );
 assert.ok(
-  fs.existsSync(path.join(root, "prototype", publishHandoff.href)),
+  fs.existsSync(path.join(root, "prototype", publishHandoff.href.split("?")[0])),
   "publish prep handoff target exists",
 );
 
@@ -198,8 +198,8 @@ const embeddedLastNav = renderNavFor("export-readiness-review.html", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Watch-through preview");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#episode-watch-through-preview",
-  "embedded last flow screen routes publish prep handoff through the preview app hash",
+  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "embedded last flow screen routes publish prep handoff through the preview app hash with publish context",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded publish prep handoff targets the parent app");
 
