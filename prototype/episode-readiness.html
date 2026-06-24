@@ -334,6 +334,16 @@
           hasVideo: true,
           transcript: "ready",
         },
+        {
+          id: "guest-2",
+          name: "Guest 2",
+          speakerName: "",
+          role: "guest",
+          duration: 0,
+          audioKey: "",
+          hasVideo: false,
+          transcript: "not-started",
+        },
       ];
 
       const recordingOptions = [
@@ -406,6 +416,19 @@
 
         const longest = Math.max(...tracks.map((track) => Number(track.duration) || 0), 0);
         for (const track of tracks) {
+          if (!track.audioKey) {
+            // An empty speaker bucket has no recording to clean, name, or sync, so it
+            // hands off to source media health instead of stacking unrelated warnings.
+            issues.push({
+              key: `empty-bucket:${track.id}`,
+              severity: "review",
+              title: `${track.name} has no recording assigned`,
+              action: "Assign a recording to this speaker bucket, or check the import in source media health.",
+              fixSurface: "source-media-health",
+            });
+            continue;
+          }
+
           if (!(track.speakerName || "").trim()) {
             issues.push({
               key: `missing-name:${track.id}`,
@@ -568,11 +591,15 @@
       }
 
       function getRecordingOptions(track) {
+        // "(no recording yet)" keeps an empty speaker bucket representable in-page, so the
+        // creator can leave a bucket unassigned and see the source-media hand-off.
+        const noRecording = { value: "", label: "(no recording yet)" };
         if (!track.audioKey || recordingOptions.some((option) => option.key === track.audioKey)) {
-          return recordingOptions.map((option) => ({ value: option.key, label: option.label }));
+          return [noRecording, ...recordingOptions.map((option) => ({ value: option.key, label: option.label }))];
         }
 
         return [
+          noRecording,
           ...recordingOptions.map((option) => ({ value: option.key, label: option.label })),
           { value: track.audioKey, label: "Current speaker recording" },
         ];

@@ -66,6 +66,21 @@ assert.ok(
   "missing host routed copy names the role mapping screen",
 );
 
+// An empty speaker bucket (no recording) is a documented readiness issue that hands
+// off to source media health (docs/episode-ingest-readiness.md Issue Resolution Mapping).
+assert.ok(
+  source.includes("empty-bucket:"),
+  "an empty speaker bucket is evaluated as a readiness issue",
+);
+assert.ok(
+  /empty-bucket[\s\S]*?fixSurface: "source-media-health"/.test(source),
+  "an empty speaker bucket routes to source media health",
+);
+assert.ok(
+  source.includes("(no recording yet)"),
+  "a bucket can be left with no recording so the empty state is reachable in-page",
+);
+
 // The routed confirmation is a navigable link, not a dead status note.
 assert.ok(
   source.includes('action = document.createElement("a")'),
