@@ -124,6 +124,19 @@
       errorCard.hidden = !message;
     }
 
+    function slotName(zone) {
+      const slot = zone && zone.dataset && zone.dataset.slot;
+      return SLOT_LABELS[slot] || "selected";
+    }
+
+    // When a slot rejects a file, mark that slot (not just the shared error line) so the
+    // creator can see which assignment failed — #1131 asks for invalid slot assignments to
+    // be clearly indicated. The flag clears when a valid file lands or the slot is cleared.
+    function flagInvalidSlot(zone, message) {
+      if (zone && zone.classList) zone.classList.add("is-invalid");
+      setError(message);
+    }
+
     // The same recording placed in two visible speaker slots would put one person in two
     // speaker frames. We compare file identity (see fileSignature), not display name, and
     // return the creator-facing names of any slots that repeat the same recording.
@@ -241,6 +254,7 @@
     function clearZone(zone) {
       revokeZoneUrl(zone);
       zone.classList.remove("filled");
+      zone.classList.remove("is-invalid");
       const placed = zone.querySelector(".placed-video");
       if (placed) placed.remove();
       const input = zone.querySelector("[data-file-input]");
@@ -271,7 +285,7 @@
       }
 
       if (!isVideoFile(file)) {
-        setError("Drop an MP4, MOV, or WebM video into a visible slot.");
+        flagInvalidSlot(zone, "The " + slotName(zone) + " slot needs an MP4, MOV, or WebM video.");
         updateSlotStatus();
         return;
       }
@@ -280,12 +294,13 @@
       // it never fills a slot or counts toward the Continue gate. Guard on === 0 (not
       // falsy) so files whose size is unknown are still accepted.
       if (typeof file.size === "number" && file.size === 0) {
-        setError("That video file is empty. Re-export it and place the finished file.");
+        flagInvalidSlot(zone, "The " + slotName(zone) + " video file is empty. Re-export it and place the finished file.");
         updateSlotStatus();
         return;
       }
 
       setError("");
+      if (zone.classList) zone.classList.remove("is-invalid");
       clearMatchingSource(zone, file);
       clearZone(zone);
       zone.classList.add("filled");
