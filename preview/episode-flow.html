@@ -371,6 +371,21 @@
         display: none;
       }
 
+      .done-banner span {
+        display: block;
+      }
+
+      .done-banner a {
+        display: inline-block;
+        margin-top: 8px;
+        color: #075246;
+      }
+
+      .done-banner a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .nav {
         display: flex;
         justify-content: space-between;
@@ -655,6 +670,11 @@
         export: ["export-readiness-review", "Export readiness review"],
       };
 
+      const publishPrepHandoff = {
+        file: "../prototype/episode-watch-through-preview.html",
+        label: "watch-through preview",
+      };
+
       function renderPanel() {
         const id = steps[episode.step].id;
         const builders = {
@@ -687,6 +707,23 @@
         link.textContent = `Open the full ${label} screen →`;
         wrap.append(link);
         return wrap;
+      }
+
+      function renderPublishPrepHandoff() {
+        const banner = document.createElement("div");
+        banner.className = "done-banner";
+        banner.hidden = !episode.exported;
+        if (!episode.exported) {
+          return banner;
+        }
+
+        const message = document.createElement("span");
+        message.textContent = "Episode exported — episode-full.mp4 is ready to publish.";
+        const link = document.createElement("a");
+        link.href = publishPrepHandoff.file;
+        link.textContent = `Continue to ${publishPrepHandoff.label}`;
+        banner.append(message, link);
+        return banner;
       }
 
       function heading(title, hint) {
@@ -977,11 +1014,7 @@
       function stepExport() {
         const nodes = heading("Review export readiness", "Everything you did in the earlier steps rolls up here. Fix anything outstanding before you export.");
 
-        const banner = document.createElement("div");
-        banner.className = "done-banner";
-        banner.hidden = !episode.exported;
-        banner.textContent = "Episode exported — episode-full.mp4 is ready to publish.";
-        nodes.push(banner);
+        nodes.push(renderPublishPrepHandoff());
 
         const ready = episode.speakers.filter((s) => s.source === "ready").length;
         const audioOnly = episode.speakers.filter((s) => s.source === "audio-only").length;

@@ -67,6 +67,31 @@ for (const file of stepScreenFiles) {
   );
 }
 assert.ok(flow.includes("Open the full"), "each step offers a link into its full screen");
+
+const publishPrepBlock = flow.match(/const publishPrepHandoff = \{([\s\S]*?)\};/);
+assert.ok(publishPrepBlock, "flow declares a post-export publish prep handoff");
+const publishPrepFile = publishPrepBlock[1].match(/file:\s*"([^"]+)"/)?.[1];
+assert.equal(
+  publishPrepFile,
+  "../prototype/episode-watch-through-preview.html",
+  "post-export handoff opens the first publish prep screen",
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, publishPrepFile)),
+  "post-export publish prep target exists",
+);
+assert.ok(
+  flow.includes("function renderPublishPrepHandoff()"),
+  "flow renders a post-export publish prep handoff",
+);
+assert.ok(
+  flow.includes("link.href = publishPrepHandoff.file"),
+  "publish prep handoff uses the declared target",
+);
+assert.ok(
+  flow.includes("Continue to ${publishPrepHandoff.label}"),
+  "publish prep handoff exposes creator-facing continue copy",
+);
 assert.ok(flow.includes('speaker.bucket = "ready"'), "readiness step can resolve a speaker bucket");
 assert.ok(flow.includes("Add speaker name"), "readiness exposes a fix action for missing names");
 assert.ok(flow.includes("Confirm roles"), "roles step exposes a confirm action");
