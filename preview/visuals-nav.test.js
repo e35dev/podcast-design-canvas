@@ -400,4 +400,60 @@ assert.equal(
 );
 assert.equal(dynamicTitleLink.target, "_top", "dynamic embedded visuals links target the parent app");
 
+const screenShareFixLinks = renderNavFor(
+  "screen-share-moment-review.html",
+  "screen-share-moment-review",
+  false,
+  "?path=episode&from=style",
+  ["layout-safe-areas.html", "destination-crop-preview.html"],
+);
+assert.equal(
+  linkWithText(screenShareFixLinks, "layout-safe-areas.html").href,
+  "layout-safe-areas.html?path=episode",
+  "visuals nav keeps episode path context on screen-share layout fix links",
+);
+assert.equal(
+  linkWithText(screenShareFixLinks, "destination-crop-preview.html").href,
+  "destination-crop-preview.html?path=episode",
+  "visuals nav keeps episode path context on screen-share crop fix links",
+);
+
+const embeddedScreenShareFixLinks = renderNavFor(
+  "screen-share-moment-review.html",
+  "screen-share-moment-review",
+  true,
+  "?path=episode&from=style",
+  ["layout-safe-areas.html", "destination-crop-preview.html"],
+);
+const embeddedLayoutFix = linkWithText(embeddedScreenShareFixLinks, "layout-safe-areas.html");
+assert.equal(
+  embeddedLayoutFix.href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded visuals nav routes screen-share layout fix links through the preview app",
+);
+assert.equal(embeddedLayoutFix.target, "_top", "embedded layout fix links target the parent app");
+assert.equal(
+  linkWithText(embeddedScreenShareFixLinks, "destination-crop-preview.html").href,
+  "../preview/app.html#destination-crop-preview?path=episode",
+  "embedded visuals nav routes screen-share crop fix links through the preview app",
+);
+
+const dynamicScreenShareLinks = renderNavFor(
+  "screen-share-moment-review.html",
+  "screen-share-moment-review",
+  true,
+  "?path=episode&from=style",
+);
+const dynamicLayoutLink = appendStaticLink(
+  dynamicScreenShareLinks[0],
+  "layout-safe-areas.html",
+  "Open layout safe areas",
+);
+dynamicScreenShareLinks.listeners.click({ target: dynamicLayoutLink });
+assert.equal(
+  dynamicLayoutLink.href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded visuals nav normalizes dynamic screen-share fix links before navigation",
+);
+
 console.log("visuals nav: contextual-visuals screens connected into one path");

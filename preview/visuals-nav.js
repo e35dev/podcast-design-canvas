@@ -25,6 +25,17 @@ const PREVIEW_APP_VISUALS_TARGETS = new Set([
   "show-segment-system",
 ]);
 
+// Style and publish screens that contextual visuals prototypes hand off to when
+// screen-share review flags layout or crop problems.
+const VISUALS_FIX_PATHS = {
+  "layout-safe-areas.html": "episode",
+  "destination-crop-preview.html": "episode",
+};
+
+const PREVIEW_APP_VISUALS_CROSS_PATH_TARGETS = new Set(
+  Object.keys(VISUALS_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
+
 function currentVisualsIndex() {
   const fromBody = document.body.dataset.visualsStep;
   if (fromBody) {
@@ -130,12 +141,23 @@ function hrefWithPath(file) {
   return mergeRouteSearch(file, { path: shellPath });
 }
 
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
 function resolveVisualsLink(file) {
-  const base = screenIdFromFile(file);
-  if (VISUALS_SCREEN_IDS.has(base)) {
-    return withVisualsContext((file || "").split("?")[0].split("#")[0]);
+  const base = linkBase(file);
+  if (Object.prototype.hasOwnProperty.call(VISUALS_FIX_PATHS, base)) {
+    return mergeRouteSearch(file, { path: VISUALS_FIX_PATHS[base] });
+  }
+  if (VISUALS_SCREEN_IDS.has(screenIdFromFile(file))) {
+    return withVisualsContext(base);
   }
   return hrefWithPath(file);
+}
+
+function routesThroughPreviewApp(file) {
+  return isPreviewAppVisualsTarget(file) || PREVIEW_APP_VISUALS_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -146,7 +168,7 @@ function setTopTargetWhenEmbedded(link) {
 
 function setVisualsScreenLink(link, file) {
   const resolved = resolveVisualsLink(file);
-  if (isEmbeddedInPreviewApp() && isPreviewAppVisualsTarget(resolved)) {
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
     link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
@@ -160,7 +182,10 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeVisualsHref(href) {
-  return isLocalScreenHref(href) && isPreviewAppVisualsTarget(href);
+  return isLocalScreenHref(href) && (
+    isPreviewAppVisualsTarget(href) ||
+    Object.prototype.hasOwnProperty.call(VISUALS_FIX_PATHS, linkBase(href))
+  );
 }
 
 function normalizeVisualsScreenLink(link) {
