@@ -39,6 +39,7 @@
         display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 14px;
         border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
       }
+      .variant.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
       .frame {
         position: relative; width: 172px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
         background: linear-gradient(160deg, #567a72, #213734);
@@ -54,6 +55,11 @@
       }
       .speaker.host { left: 16%; }
       .speaker.guest { right: 16%; }
+      .frame.focus-guest .speaker.host { display: none; }
+      .frame.focus-guest .speaker.guest { right: 36%; width: 30%; }
+      .frame.focus-host .speaker.host { left: 34%; width: 30%; }
+      .frame.focus-host .speaker.guest { display: none; }
+      .frame.branded { background: linear-gradient(145deg, #183c46, #116a5d 58%, #d9a441); }
       .title {
         position: absolute; left: 10%; right: 10%; bottom: 10%; border-radius: 6px; background: rgba(255,255,255,0.92);
         color: #16211f; font-size: 13px; font-weight: 800; line-height: 1.15; padding: 6px 8px;
@@ -79,14 +85,24 @@
       .badge.blocked { background: #ffe0e0; color: var(--blocked); }
       .badge.optional { background: #eceeed; color: #55615d; }
       .actions { display: grid; gap: 10px; margin-top: 12px; }
+      .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .button-row button { min-height: 34px; font-size: 13px; }
       .action-row {
         display: grid; grid-template-columns: minmax(0, 1fr) 152px; gap: 12px; align-items: center;
         border: 1px solid var(--line); border-radius: 7px; background: #fcfdfd; padding: 12px;
       }
       .action-row strong { display: block; margin-bottom: 4px; }
+      .action-row button { justify-self: stretch; }
       .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
       .warning.blocked { border-left-color: var(--blocked); }
+      .warning.ready { border-left-color: var(--accent); }
+      .summary-card {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 12px; margin-bottom: 12px;
+      }
       .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      .package-note { color: var(--muted); margin: 10px 0 0; }
+      #saveCover { width: 100%; margin: 12px 0 16px; background: var(--accent); border-color: var(--accent); color: #fff; }
+      #saveCover:disabled { opacity: 0.55; cursor: not-allowed; }
       @media (max-width: 920px) {
         .workspace { grid-template-columns: 1fr; }
         .variant, .action-row { grid-template-columns: 1fr; }
@@ -112,124 +128,15 @@
           </div>
           <div class="surface-note" id="surfaceNote" aria-live="polite"></div>
 
-          <div class="variants" id="variants">
-            <article class="variant">
-              <div class="frame">
-                <span class="tag">active cover</span>
-                <div class="speaker host"></div>
-                <div class="speaker guest"></div>
-                <div class="title">Guest explains the launch story</div>
-              </div>
-              <div>
-                <div class="head">
-                  <div>
-                    <strong>Host + guest reaction frame</strong>
-                    <span>Balanced expression and readable text make this the current publishing cover.</span>
-                  </div>
-                  <span class="badge ready">selected</span>
-                </div>
-                <div class="actions">
-                  <div class="action-row">
-                    <div>
-                      <strong>Keep as active cover</strong>
-                      <span>This frame carries into export package, metadata, and checklist surfaces.</span>
-                    </div>
-                    <span class="badge ready">publishes</span>
-                  </div>
-                  <div class="action-row">
-                    <div>
-                      <strong>Check smallest preview</strong>
-                      <span>Confirm the title line still reads clearly in the recommendation-size surface.</span>
-                    </div>
-                    <span class="badge review">low confidence check</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article class="variant">
-              <div class="frame">
-                <span class="tag">alternate</span>
-                <div class="speaker guest" style="right: 36%; width: 30%;"></div>
-                <div class="grid"></div>
-                <div class="title">How the team fixed the launch</div>
-              </div>
-              <div>
-                <div class="head">
-                  <div>
-                    <strong>Guest close-up with stronger expression</strong>
-                    <span>The expression is compelling, but the overlaid text feels tighter in small-grid preview.</span>
-                  </div>
-                  <span class="badge review">needs review</span>
-                </div>
-                <div class="actions">
-                  <div class="action-row">
-                    <div>
-                      <strong>Promote to active cover</strong>
-                      <span>Making this active should resurface the text-readability concern before publish.</span>
-                    </div>
-                    <span class="badge review">compare first</span>
-                  </div>
-                  <div class="action-row">
-                    <div>
-                      <strong>Shorten title text</strong>
-                      <span>Swap to a shorter line if this frame wins the side-by-side comparison.</span>
-                    </div>
-                    <span class="badge review">edit text</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article class="variant">
-              <div class="frame">
-                <span class="tag">alternate</span>
-                <div class="speaker host" style="left: 34%; width: 30%;"></div>
-                <div class="title">Behind the redesign</div>
-              </div>
-              <div>
-                <div class="head">
-                  <div>
-                    <strong>Host solo frame</strong>
-                    <span>The crop stays clean, but it underplays the guest and feels less distinctive for the episode topic.</span>
-                  </div>
-                  <span class="badge optional">alternate</span>
-                </div>
-                <div class="actions">
-                  <div class="action-row">
-                    <div>
-                      <strong>Keep as saved alternate</strong>
-                      <span>Retain it one tap away without replacing the active publishing cover.</span>
-                    </div>
-                    <span class="badge optional">saved</span>
-                  </div>
-                  <div class="action-row">
-                    <div>
-                      <strong>Apply brand kit variant</strong>
-                      <span>Try the bolder show-color treatment if the creator wants a more branded option.</span>
-                    </div>
-                    <span class="badge review">optional edit</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
+          <div class="variants" id="variants"></div>
         </div>
 
         <aside class="panel">
           <h2>Export Consequences</h2>
-          <div class="warning">
-            <strong>Only one active cover</strong>
-            <span>Promoting a new frame automatically demotes the previous active cover to alternate instead of duplicating publish targets.</span>
-          </div>
-          <div class="warning">
-            <strong>Warnings stay attached to a frame</strong>
-            <span>An alternate can keep readability or crop concerns even while it stays out of the publish slot.</span>
-          </div>
-          <div class="warning blocked">
-            <strong>Missing still blocks required destinations</strong>
-            <span>If no active cover is chosen for a destination that requires one, export readiness should keep the thumbnail item blocked.</span>
-          </div>
+          <div id="exportSummary" class="summary-card" aria-live="polite"></div>
+          <button type="button" id="saveCover">Save active cover for export</button>
+          <div id="exportWarnings"></div>
+          <p class="package-note" id="packageNote" aria-live="polite"></p>
 
           <h3 style="margin-top:20px;">Connected workflow</h3>
           <ul class="summary">
@@ -241,67 +148,6 @@
         </aside>
       </section>
     </main>
-    <script>
-      const surfaces = {
-        large: {
-          title: "Large header preview",
-          detail: "Judge expression, guest presence, and title balance at the watch-page size.",
-          className: "variants preview-large",
-        },
-        small: {
-          title: "Small grid preview",
-          detail: "Check whether the title still reads when the frame appears beside other recommended episodes.",
-          className: "variants preview-small",
-        },
-        mobile: {
-          title: "Mobile feed preview",
-          detail: "Confirm the crop keeps both speakers and the title legible at phone-feed scale.",
-          className: "variants preview-mobile",
-        },
-        dark: {
-          title: "Dark surface preview",
-          detail: "Review whether the cover still separates from a dark destination background.",
-          className: "variants preview-dark",
-        },
-      };
-
-      let selectedSurface = "large";
-      const toolbarElement = document.querySelector("#surfaceToolbar");
-      const variantsElement = document.querySelector("#variants");
-      const surfaceNoteElement = document.querySelector("#surfaceNote");
-
-      function renderSurfaceNote(surface) {
-        surfaceNoteElement.replaceChildren();
-        const title = document.createElement("strong");
-        title.textContent = surface.title;
-        const detail = document.createElement("span");
-        detail.textContent = surface.detail;
-        surfaceNoteElement.append(title, detail);
-      }
-
-      function renderSurface() {
-        const surface = surfaces[selectedSurface];
-        variantsElement.className = surface.className;
-        renderSurfaceNote(surface);
-        toolbarElement.querySelectorAll("button").forEach((button) => {
-          const active = button.dataset.surface === selectedSurface;
-          button.className = active ? "active" : "";
-          button.setAttribute("aria-pressed", String(active));
-        });
-      }
-
-      toolbarElement.querySelectorAll("button").forEach((button) => {
-        button.addEventListener("click", () => {
-          selectedSurface = button.dataset.surface;
-          renderSurface();
-        });
-      });
-
-      renderSurface();
-
-      if (typeof module !== "undefined" && module.exports) {
-        module.exports = { surfaces };
-      }
-    </script>
+    <script src="./thumbnail-cover-frame.js" defer></script>
   </body>
 </html>
