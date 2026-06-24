@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Segment System Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .segments {
+        display: grid;
+        gap: 12px;
+      }
+
+      .segment {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .order {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        align-self: start;
+        margin-top: 2px;
+        border-radius: 999px;
+        background: #eef4f2;
+        color: #2f4a44;
+        font-weight: 800;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.skipped {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        background: #cfe0db;
+        border-color: #cfe0db;
+        color: #6f817b;
+        cursor: not-allowed;
+      }
+
+      .applied {
+        border: 1px solid #bfe3d7;
+        border-radius: 8px;
+        background: #eef9f4;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+
+      .applied strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #075246;
+      }
+
+      .applied ol {
+        margin: 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 3px;
+      }
+
+      .applied li {
+        font-size: 13px;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Show segment system</h1>
+      <p class="lede">Build your episode from the recurring segments your show already uses &mdash; cold open, intros, sponsor read, outro &mdash; and let the visual system adapt titles, pacing, and branding around them. Skip what this episode doesn't need; nothing here is a technical timeline.</p>
+
+      <section class="workspace" aria-label="Show segment system workspace">
+        <div class="panel">
+          <h2>Episode segments</h2>
+          <div class="segments" id="segments"></div>
+          <div class="actions">
+            <button type="button" id="add">Add a segment</button>
+            <button type="button" id="apply">Apply to this episode</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Segment summary">
+          <h2>Run of show</h2>
+          <div id="status" class="status ready">Ready to apply</div>
+          <div id="applied" class="applied" hidden></div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Save this order to your show template so future episodes keep the same structure, while each episode still adjusts its guests and topics.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Recurring, creator-facing podcast segments — not internal timeline markers.
+      const types = {
+        "cold-open": "Cold open",
+        "host-intro": "Host intro",
+        "guest-intro": "Guest introduction",
+        "main": "Main conversation",
+        "qa": "Recurring Q&A",
+        "sponsor": "Sponsor read",
+        "teaching": "Teaching section",
+        outro: "Outro",
+      };
+
+      // Whether the segment is part of this episode. "needs" means it's included but still
+      // missing the episode-specific detail it asks for (a guest, topic, or sponsor).
+      const plans = {
+        include: "In this episode",
+        needs: "Needs a topic or guest",
+        skip: "Skip this episode",
+      };
+
+      const sampleSegments = [
+        { id: "s1", type: "cold-open", plan: "include" },
+        { id: "s2", type: "host-intro", plan: "include" },
+        { id: "s3", type: "guest-intro", plan: "needs" },
+        { id: "s4", type: "main", plan: "include" },
+        { id: "s5", type: "sponsor", plan: "include" },
+        { id: "s6", type: "outro", plan: "include" },
+      ];
+
+      let segments = structuredClone(sampleSegments);
+      // Whether the run of show has been applied to the episode. Any edit clears it.
+      let applied = false;
+
+      const segmentsElement = document.querySelector("#segments");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const appliedElement = document.querySelector("#applied");
+      const applyButton = document.querySelector("#apply");
+
+      document.querySelector("#add").addEventListener("click", () => {
+        const next = segments.length + 1;
+        segments.push({ id: `s${next}-${segments.length}`, type: "teaching", plan: "needs" });
+        applied = false;
+        render();
+      });
+
+      applyButton.addEventListener("click", () => {
+        if (evaluate().overall !== "ready") {
+          return;
+        }
+        applied = true;
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        segments = structuredClone(sampleSegments);
+        applied = false;
+        render();
+      });
+
+      // Single source of truth: a segment is ready when it's in the episode with its
+      // detail set, settled when skipped, and needs review when it's included but still
+      // missing an episode-specific topic or guest.
+      function evaluate() {
+        const results = segments.map((segment) => {
+          let state;
+          let issue = null;
+          const label = types[segment.type] || "Segment";
+          if (segment.plan === "skip") {
+            state = "skipped";
+          } else if (segment.plan === "needs") {
+            state = "review";
+            issue = {
+              title: `${label} needs a topic or guest`,
+              action: "Add the episode-specific detail for this segment, or skip it this episode.",
+              tone: "review",
+            };
+          } else {
+            state = "ready";
+          }
+          return { id: segment.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      function render() {
+        const evaluation = evaluate();
+        // Only segments that are part of the episode get a running order number.
+        let order = 0;
+        segmentsElement.replaceChildren(
+          ...segments.map((segment, index) => {
+            const inEpisode = segment.plan !== "skip";
+            if (inEpisode) {
+              order += 1;
+            }
+            return renderSegment(segment, index, evaluation.results[index], inEpisode ? order : null);
+          }),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        const ready = evaluation.overall === "ready";
+        statusElement.className = `status ${applied ? "ready" : evaluation.overall}`;
+        statusElement.textContent = applied ? "Run of show applied" : ready ? "Ready to apply" : "Some segments need detail";
+
+        applyButton.disabled = !ready;
+        applyButton.textContent = applied ? "Re-apply with changes" : "Apply to this episode";
+
+        renderApplied();
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every segment is set. The run of show is ready to apply." })]),
+        );
+      }
+
+      // After applying, show the ordered run of show for this episode — the outcome of the
+      // arrangement, not just a cleared list.
+      function renderApplied() {
+        if (!applied) {
+          appliedElement.hidden = true;
+          appliedElement.replaceChildren();
+          return;
+        }
+        appliedElement.hidden = false;
+        const heading = document.createElement("strong");
+        heading.textContent = "Applied run of show";
+        const list = document.createElement("ol");
+        segments
+          .filter((segment) => segment.plan !== "skip")
+          .forEach((segment) => {
+            const li = document.createElement("li");
+            li.textContent = types[segment.type] || "Segment";
+            list.append(li);
+          });
+        appliedElement.replaceChildren(heading, list);
+      }
+
+      function badgeClass(state) {
+        if (state === "ready") {
+          return "ready";
+        }
+        if (state === "skipped") {
+          return "skipped";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "ready") {
+          return "in episode";
+        }
+        if (state === "skipped") {
+          return "skipped";
+        }
+        return "needs detail";
+      }
+
+      function renderSegment(segment, index, result, order) {
+        const article = document.createElement("article");
+        article.className = "segment";
+
+        const typeOptions = Object.entries(types)
+          .map(([value, label]) => `<option value="${value}" ${value === segment.type ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const planOptions = Object.entries(plans)
+          .map(([value, label]) => `<option value="${value}" ${value === segment.plan ? "selected" : ""}>${label}</option>`)
+          .join("");
+
+        // Every value here is a controlled key or its fixed label, and there is no
+        // user-editable free text in this prototype, so the scaffold is safe to build
+        // with innerHTML.
+        article.innerHTML = `
+          <div class="order">${order === null ? "&mdash;" : order}</div>
+          <div class="fields">
+            <div class="head">
+              <strong>${types[segment.type]}</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <div class="fields-row">
+              <label>Segment
+                <select data-field="type" aria-label="Segment type">${typeOptions}</select>
+              </label>
+              <label>This episode
+                <select data-field="plan" aria-label="Plan for this episode">${planOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        article.addEventListener("change", (event) => onChange(event, index));
+        return article;
+      }
+
+      function onChange(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        segments[index][field] = event.target.value;
+        applied = false;
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
