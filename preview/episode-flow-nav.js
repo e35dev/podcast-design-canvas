@@ -21,6 +21,23 @@ const PREVIEW_APP_EPISODE_TARGETS = new Set([
   screenIdFromFile(EPISODE_HANDOFF.file),
 ]);
 
+// Export readiness routes each blocked or needs-review area to the screen that owns
+// the fix. Thumbnail work lives on the publish path; the rest stay on episode context.
+const EXPORT_READINESS_FIX_PATHS = {
+  "speaker-framing-safety.html": "episode",
+  "audio-caption-quality-review.html": "episode",
+  "audio-cleanup-controls.html": "episode",
+  "contextual-broll-moments.html": "episode",
+  "layout-safe-areas.html": "episode",
+  "episode-chapter-markers.html": "episode",
+  "music-cue-setup.html": "episode",
+  "thumbnail-cover-frame.html": "publish",
+};
+
+const PREVIEW_APP_FIX_TARGETS = new Set(
+  Object.keys(EXPORT_READINESS_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
+
 function currentStepIndex() {
   const name = window.location.pathname.split("/").pop() || "";
   return EPISODE_FLOW.findIndex((step) => step.file === name);
@@ -45,25 +62,54 @@ function isEmbeddedInPreviewApp() {
 }
 
 function pathFromQuery(query) {
-  const part = (query || "").split("&").find((item) => item.startsWith("path="));
-  return part ? part.split("=")[1] : "";
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function shellPath() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  if (path === "episode" || path === "publish") {
+    return path;
+  }
+  return "";
 }
 
 function pathQuerySuffix() {
-  const path = new URLSearchParams(window.location.search).get("path");
-  return path === "episode" ? "?path=episode" : "";
+  const path = shellPath();
+  return path ? `?path=${path}` : "";
 }
 
 function routeSearchFromFile(file) {
-  const query = (file || "").split("?")[1] || "";
-  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  if (path === "episode") {
-    return "?path=episode";
-  }
-  if (path === "publish") {
-    return "?path=publish";
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  const path = filePath || shellPath();
+  if (path === "episode" || path === "publish") {
+    return `?path=${path}`;
   }
   return "";
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
 function previewAppHref(file) {
@@ -71,17 +117,33 @@ function previewAppHref(file) {
 }
 
 function currentPreviewAppHref(step) {
-  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+  return previewAppHref(mergeRouteSearch(step.file, shellPath() ? { path: shellPath() } : {}));
 }
 
 function hrefWithPath(file) {
-  const base = (file || "").split("?")[0];
-  const filePath = pathFromQuery((file || "").split("?")[1] || "");
-  if (filePath === "episode" || filePath === "publish") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  const suffix = pathQuerySuffix();
-  return suffix ? `${base}${suffix}` : file;
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path });
+}
+
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function exportReadinessFixBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function isExportReadinessFixHref(href) {
+  return isLocalScreenHref(href) && Object.prototype.hasOwnProperty.call(
+    EXPORT_READINESS_FIX_PATHS,
+    exportReadinessFixBase(href),
+  );
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -98,6 +160,31 @@ function setEpisodeScreenLink(link, file) {
   }
 
   link.href = hrefWithPath(file);
+}
+
+function setExportReadinessFixLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (!isExportReadinessFixHref(href)) {
+    return;
+  }
+
+  const path = EXPORT_READINESS_FIX_PATHS[exportReadinessFixBase(href)];
+  const resolved = mergeRouteSearch(href, { path });
+  if (isEmbeddedInPreviewApp() && PREVIEW_APP_FIX_TARGETS.has(screenIdFromFile(href))) {
+    link.href = previewAppHref(resolved);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = resolved;
+}
+
+function normalizeExportReadinessFixLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a.fix-link[href]").forEach(setExportReadinessFixLink);
 }
 
 function renderEpisodeFlowNav() {
@@ -225,8 +312,13 @@ function renderEpisodeFlowNav() {
   document.body.insertBefore(nav, document.body.firstChild);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", renderEpisodeFlowNav);
-} else {
+function initEpisodeFlowNav() {
   renderEpisodeFlowNav();
+  normalizeExportReadinessFixLinks(document);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initEpisodeFlowNav);
+} else {
+  initEpisodeFlowNav();
 }
