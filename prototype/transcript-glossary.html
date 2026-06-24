@@ -244,6 +244,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -421,6 +437,8 @@
           } else if (source.weak) {
             state = "review";
             issue = {
+              fixScreen: "audio-caption-quality-review.html",
+              fixLabel: "caption quality review",
               title: `Check the spelling of "${entry.term}"`,
               action: `We picked this up ${source.label.toLowerCase()}, so confirm "${entry.spelling}" before it spreads across the episode.`,
               tone: "review",
@@ -562,7 +580,22 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        const fixLink = renderFixLink(issue);
+        if (fixLink) {
+          article.append(fixLink);
+        }
         return article;
+      }
+
+      function renderFixLink(issue) {
+        if (!issue.fixScreen || !issue.fixLabel) {
+          return null;
+        }
+        const openLink = document.createElement("a");
+        openLink.className = "fix-link";
+        openLink.href = issue.fixScreen;
+        openLink.textContent = `Open ${issue.fixLabel}`;
+        return openLink;
       }
 
       render();
