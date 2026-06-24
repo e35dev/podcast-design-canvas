@@ -286,6 +286,93 @@
         margin: 14px 0 0;
       }
 
+      .moment-rollup {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        margin-bottom: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .moment-rollup.all-clear {
+        border-color: #b8ddd4;
+        background: #f3fbf8;
+      }
+
+      .rollup-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .rollup-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .rollup-status.all-clear { color: #075246; background: #dff5ef; }
+      .rollup-status.attention { color: #7a4400; background: #fff1d6; }
+      .rollup-status.action { color: #8b1e1e; background: #ffe0e0; }
+
+      .rollup-detail {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .rollup-kind-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-kind-tags .rollup-kind-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .rollup-kind-tags .rollup-kind-tag.caption {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .rollup-toolbar,
+      .rollup-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .rollup-links button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .moment.filtered-out {
+        display: none;
+      }
+
+      .moment.jump-highlight {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -313,6 +400,7 @@
       <section class="workspace" aria-label="Pause and cross-talk cleanup workspace">
         <div class="panel">
           <h2>Detected moments</h2>
+          <div class="moment-rollup" id="momentRollup" aria-live="polite"></div>
           <div class="moments" id="moments"></div>
           <div class="actions">
             <button type="button" id="addMoment">Add a moment</button>
@@ -400,8 +488,10 @@
       ];
 
       let moments = structuredClone(sampleMoments);
+      let showReviewOnly = false;
 
       const momentsElement = document.querySelector("#moments");
+      const rollupElement = document.querySelector("#momentRollup");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
 
@@ -413,6 +503,7 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         moments = structuredClone(sampleMoments);
+        showReviewOnly = false;
         render();
       });
 
@@ -459,12 +550,135 @@
             };
           }
 
-          return { id: moment.id, state, issue };
+          return { id: moment.id, state, issue, kindKey: moment.kind, at: moment.at };
         });
 
         const hasReview = results.some((result) => result.state === "review" || result.state === "caption");
         const overall = hasReview ? "review" : "ready";
         return { overall, results };
+      }
+
+      function needsReviewState(state) {
+        return state === "review" || state === "caption";
+      }
+
+      function kindDisplayLabel(kindKey) {
+        const label = kinds[kindKey]?.label;
+        return typeof label === "string" && label.length ? label : null;
+      }
+
+      function momentOpenLinkLabel(entry) {
+        const kindLabel = kindDisplayLabel(entry.kindKey);
+        const at = typeof entry.at === "string" && entry.at.length ? entry.at : null;
+        if (at && kindLabel) {
+          return `Open ${at} · ${kindLabel}`;
+        }
+        return at ? `Open ${at}` : "Open moment";
+      }
+
+      function buildMomentRollup(evaluation) {
+        const needsWork = evaluation.results.filter((result) => needsReviewState(result.state));
+        const clearCount = evaluation.results.length - needsWork.length;
+
+        if (needsWork.length) {
+          const captionCount = needsWork.filter((result) => result.state === "caption").length;
+          return {
+            statusClass: captionCount ? "action" : "attention",
+            status: captionCount ? "Captions at risk" : "Moments to review",
+            detail: `${needsWork.length} moment${needsWork.length === 1 ? "" : "s"} need a decision · ${clearCount} already settled`,
+            needsWork,
+          };
+        }
+
+        return {
+          statusClass: "all-clear",
+          status: "Conversation ready",
+          detail: `All ${evaluation.results.length} detected moments are settled`,
+          needsWork,
+        };
+      }
+
+      function renderRollupKindTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-kind-tags";
+        wrap.setAttribute("aria-label", "Detected moments needing a decision");
+
+        for (const entry of needsWork) {
+          const kindLabel = kindDisplayLabel(entry.kindKey);
+          if (!kindLabel) continue;
+          const tag = document.createElement("span");
+          tag.className = `rollup-kind-tag ${entry.state === "caption" ? "caption" : ""}`;
+          tag.textContent = `${entry.at} — ${kindLabel}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
+      function renderMomentRollup(evaluation) {
+        const rollup = buildMomentRollup(evaluation);
+        const reviewCount = rollup.needsWork.length;
+        rollupElement.className = `moment-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
+        rollupElement.replaceChildren();
+
+        const head = document.createElement("div");
+        head.className = "rollup-head";
+        const status = document.createElement("span");
+        status.className = `rollup-status ${rollup.statusClass}`;
+        status.textContent = rollup.status;
+        const detail = document.createElement("p");
+        detail.className = "rollup-detail";
+        detail.textContent = rollup.detail;
+        head.append(status, detail);
+        rollupElement.appendChild(head);
+
+        if (rollup.needsWork.length) {
+          const kindTags = renderRollupKindTags(rollup.needsWork);
+          if (kindTags.childElementCount) {
+            rollupElement.appendChild(kindTags);
+          }
+        }
+
+        if (reviewCount > 0) {
+          const toolbar = document.createElement("div");
+          toolbar.className = "rollup-toolbar";
+          const filterButton = document.createElement("button");
+          filterButton.type = "button";
+          filterButton.className = "secondary";
+          filterButton.textContent = showReviewOnly
+            ? `Show all ${evaluation.results.length} moments`
+            : `Show moments that need review (${reviewCount})`;
+          filterButton.addEventListener("click", () => {
+            showReviewOnly = !showReviewOnly;
+            render();
+          });
+          toolbar.appendChild(filterButton);
+          rollupElement.appendChild(toolbar);
+        }
+
+        if (rollup.needsWork.length) {
+          const links = document.createElement("div");
+          links.className = "rollup-links";
+          for (const entry of rollup.needsWork) {
+            const jump = document.createElement("button");
+            jump.type = "button";
+            jump.className = "secondary";
+            jump.textContent = momentOpenLinkLabel(entry);
+            jump.addEventListener("click", () => focusMoment(entry.id));
+            links.appendChild(jump);
+          }
+          rollupElement.appendChild(links);
+        }
+      }
+
+      function focusMoment(momentId) {
+        showReviewOnly = false;
+        render();
+        const target = document.querySelector(`#moment-${momentId}`);
+        if (!target) return;
+        target.classList.add("jump-highlight");
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        window.setTimeout(() => target.classList.remove("jump-highlight"), 1600);
       }
 
       // Long episodes flag the same kind of moment over and over, so a creator can
@@ -504,8 +718,18 @@
       // a caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(moments);
+        const reviewCount = evaluation.results.filter((result) => needsReviewState(result.state)).length;
+
+        if (showReviewOnly && reviewCount === 0) {
+          showReviewOnly = false;
+        }
+
+        renderMomentRollup(evaluation);
         momentsElement.replaceChildren(
-          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
+          ...moments.map((moment, index) => {
+            const filteredOut = showReviewOnly && !needsReviewState(evaluation.results[index].state);
+            return renderMoment(moment, index, evaluation.results[index], filteredOut);
+          }),
         );
         updateSummary(evaluation);
       }
@@ -533,12 +757,12 @@
             badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
             badge.textContent = badgeLabel(evaluation.results[index].state);
           }
-          // Keep the waveform timestamp tag in sync while typing (textContent, not HTML).
           const tag = card.querySelector("[data-tag]");
           if (tag && moments[index]) {
             tag.textContent = moments[index].at;
           }
         });
+        renderMomentRollup(evaluation);
         updateSummary(evaluation);
       }
 
@@ -579,10 +803,11 @@
           .join("");
       }
 
-      function renderMoment(moment, index, result) {
+      function renderMoment(moment, index, result, filteredOut = false) {
         const kind = kinds[moment.kind];
         const article = document.createElement("article");
-        article.className = "moment";
+        article.className = filteredOut ? "moment filtered-out" : "moment";
+        article.id = `moment-${moment.id}`;
 
         const kindOptions = Object.entries(kinds)
           .map(([value, item]) => `<option value="${value}" ${value === moment.kind ? "selected" : ""}>${item.label}</option>`)
