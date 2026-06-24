@@ -193,6 +193,24 @@
         font-weight: 700;
       }
 
+      .item.filtered-out {
+        display: none;
+      }
+
+      .blockers-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .blockers-rollup {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       @media (max-width: 820px) {
         .grid {
           grid-template-columns: 1fr;
@@ -220,6 +238,7 @@
         <aside class="panel summary" aria-live="polite">
           <h2>Export status</h2>
           <div id="status" class="badge ready">Ready</div>
+          <div id="blockersFilter" class="blockers-filter"></div>
           <div id="nextAction"></div>
           <div id="warnings"></div>
         </aside>
@@ -307,6 +326,7 @@
       };
       let reopenedItemIds = [];
       let destinationNotice = null;
+      let showBlockersOnly = false;
 
       const destinationsElement = document.querySelector("#destinations");
       const destinationNoticeElement = document.querySelector("#destinationNotice");
@@ -314,6 +334,7 @@
       const statusElement = document.querySelector("#status");
       const warningsElement = document.querySelector("#warnings");
       const nextActionElement = document.querySelector("#nextAction");
+      const blockersFilterElement = document.querySelector("#blockersFilter");
 
       function itemStates() {
         return statesByDestination[selectedDestination];
@@ -401,11 +422,20 @@
         );
 
         renderDestinationNotice();
-        checklistElement.replaceChildren(...items.map(renderItem));
 
         const result = evaluateChecklist();
+
+        // Drop the blockers filter when no blockers remain so the list isn't left
+        // empty with no way to show all items.
+        if (showBlockersOnly && !result.warnings.some(({ state }) => state === "blocked")) {
+          showBlockersOnly = false;
+        }
+
+        checklistElement.replaceChildren(...items.map((item) => renderItem(item, result)));
+
         statusElement.className = `badge ${result.status}`;
         statusElement.textContent = result.status === "ready" ? "Ready to export" : result.status === "blocked" ? "Blocked" : "Needs review";
+        renderBlockersFilter(result);
         nextActionElement.textContent = result.nextAction;
         warningsElement.replaceChildren(
           ...(result.warnings.length
@@ -416,13 +446,40 @@
         reopenedItemIds = [];
       }
 
-      function renderItem(item) {
+      function renderBlockersFilter(result) {
+        const blockerCount = result.warnings.filter(({ state }) => state === "blocked").length;
+        const total = items.filter((item) => item.requiredFor.includes(selectedDestination)).length;
+
+        blockersFilterElement.replaceChildren();
+        const rollup = document.createElement("p");
+        rollup.className = "blockers-rollup";
+        rollup.textContent = blockerCount === 0
+          ? "No blockers — ready to export."
+          : `${blockerCount} ${blockerCount === 1 ? "blocker" : "blockers"} ${blockerCount === 1 ? "remains" : "remain"} before export.`;
+        blockersFilterElement.append(rollup);
+
+        if (blockerCount > 0) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = showBlockersOnly
+            ? `Show all ${total} checklist items`
+            : `Show only ${blockerCount} blocking`;
+          button.addEventListener("click", () => {
+            showBlockersOnly = !showBlockersOnly;
+            render();
+          });
+          blockersFilterElement.append(button);
+        }
+      }
+
+      function renderItem(item, result) {
         const required = item.requiredFor.includes(selectedDestination);
         const states = itemStates();
         const state = required ? states[item.id] : "not-needed";
         const reopened = reopenedItemIds.includes(item.id);
+        const filteredOut = showBlockersOnly && state !== "blocked";
         const article = document.createElement("article");
-        article.className = reopened ? "item reopened" : "item";
+        article.className = (reopened ? "item reopened" : "item") + (filteredOut ? " filtered-out" : "");
         article.innerHTML = `
           <div>
             <strong>${item.label}</strong>
