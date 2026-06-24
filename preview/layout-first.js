@@ -114,6 +114,7 @@
     const continueLink = doc.getElementById("layout-continue");
     const errorCard = doc.getElementById("layout-error-card");
     const errorText = doc.getElementById("layout-error");
+    const layoutCanvas = doc.getElementById("layout-canvas");
 
     let currentLayout = "interview";
     let objectUrls = [];
@@ -556,6 +557,24 @@
       }
     }
 
+    function firstOpenVisibleSlot() {
+      return visibleSlots().find((zone) => {
+        return !zone.classList.contains("filled") && !zone.classList.contains("is-invalid");
+      }) || null;
+    }
+
+    // Recordings dropped anywhere on the layout — not precisely onto a slot — should still
+    // land. Route them to the next empty slot so a creator can drop their files onto the
+    // layout and let the product place them in order. A drop that hits a specific slot is
+    // handled by that slot (its drop handler stops propagation), so this only runs for
+    // drops on the canvas gaps around the slots.
+    function placeDroppedFiles(fileList) {
+      const target = firstOpenVisibleSlot();
+      if (target) {
+        placeVideoFiles(target, fileList);
+      }
+    }
+
     // Clear a single placed video without disturbing the other slots, so a creator who
     // picks the wrong file can fix just that slot instead of resetting the whole layout.
     function removeVideo(zone) {
@@ -694,6 +713,9 @@
       });
       zone.addEventListener("drop", (event) => {
         event.preventDefault();
+        // A drop aimed at a specific slot is owned by that slot — stop it from also
+        // bubbling to the layout-wide drop handler, which would re-route the files.
+        event.stopPropagation();
         zone.classList.remove("drag-over");
         placeVideoFiles(zone, event.dataTransfer && event.dataTransfer.files);
       });
@@ -703,6 +725,16 @@
         });
       }
     });
+
+    if (layoutCanvas) {
+      layoutCanvas.addEventListener("dragover", (event) => {
+        event.preventDefault();
+      });
+      layoutCanvas.addEventListener("drop", (event) => {
+        event.preventDefault();
+        placeDroppedFiles(event.dataTransfer && event.dataTransfer.files);
+      });
+    }
 
     if (resetButton) {
       resetButton.addEventListener("click", () => {
@@ -728,6 +760,7 @@
       applyLayout,
       placeVideoFile,
       placeVideoFiles,
+      placeDroppedFiles,
       removeVideo,
       resetVideos: clearAllZones,
       requiredSlots,

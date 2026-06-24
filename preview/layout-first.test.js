@@ -743,4 +743,27 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), true, "the drop still fills every available slot before overflowing");
 
+// Drop anywhere on the layout: recordings dropped on the canvas (not aimed at a specific
+// slot) route to the next empty slot, so a creator can drop their files onto the layout
+// and let the product place them in order (#1026).
+assert.match(html, /id="layout-canvas"/, "the layout canvas is present as a drop target");
+assert.ok(jsSource.includes('getElementById("layout-canvas")'), "the controller wires a layout-wide drop target");
+assert.ok(jsSource.includes("event.stopPropagation()"), "a drop on a specific slot does not also bubble to the layout-wide handler");
+
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeDroppedFiles([
+  { name: "first.mp4", type: "video/mp4", size: 1, lastModified: 1 },
+  { name: "second.mp4", type: "video/mp4", size: 2, lastModified: 2 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a layout drop fills the first empty slot");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "extra layout-dropped videos fill the next empty slots");
+
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "host.mp4", type: "video/mp4", size: 7, lastModified: 7 });
+controller.placeDroppedFiles([{ name: "guest.mp4", type: "video/mp4", size: 8, lastModified: 8 }]);
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "drop-anywhere targets the next empty slot when the first is taken");
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "host.mp4", "drop-anywhere leaves an already-filled slot untouched");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
