@@ -1342,15 +1342,27 @@
         }
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
-          zone.addEventListener("dragover", function (event) {
-            event.preventDefault();
+          // Keep the drop-target highlight steady while a file is dragged over the slot.
+          // dragenter/dragleave fire as the cursor crosses the slot's children (the label, the
+          // status badge, the file input), so add-on-dragover/remove-on-dragleave flickers the
+          // highlight. Track enter/leave depth and only clear once the cursor truly leaves.
+          var dragDepth = 0;
+          zone.addEventListener("dragenter", function () {
+            dragDepth += 1;
             zone.classList.add("drag-over");
           });
+          zone.addEventListener("dragover", function (event) {
+            event.preventDefault();
+          });
           zone.addEventListener("dragleave", function () {
-            zone.classList.remove("drag-over");
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (dragDepth === 0) {
+              zone.classList.remove("drag-over");
+            }
           });
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
+            dragDepth = 0;
             zone.classList.remove("drag-over");
             // A real dropped video file takes priority; fall back to a dragged sample track.
             var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];

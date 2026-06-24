@@ -333,4 +333,19 @@ assert.strictEqual(
   "re-tapping does not re-gate Continue",
 );
 
+// Drag-over highlight stays steady while a file is dragged across the slot's contents.
+// dragenter/dragleave fire for each child (label, badge, input), so the highlight is tracked by
+// enter/leave depth rather than toggled on every crossing (which flickered), and a drop clears it.
+const dragZone = zones.find((zone) => zone.dataset.slot === "host");
+dragZone.listeners.dragenter({ preventDefault() {} });
+assert.equal(dragZone.classList.contains("drag-over"), true, "entering the slot highlights it as a drop target");
+dragZone.listeners.dragenter({ preventDefault() {} }); // cursor crosses into a child element
+dragZone.listeners.dragleave({ preventDefault() {} }); // ...and back out of that child
+assert.equal(dragZone.classList.contains("drag-over"), true, "crossing the slot's contents keeps the highlight");
+dragZone.listeners.dragleave({ preventDefault() {} }); // cursor truly leaves the slot
+assert.equal(dragZone.classList.contains("drag-over"), false, "leaving the slot clears the highlight");
+dragZone.listeners.dragenter({ preventDefault() {} });
+dragZone.listeners.drop({ preventDefault() {}, dataTransfer: { files: [], getData() { return ""; } } });
+assert.equal(dragZone.classList.contains("drag-over"), false, "a drop clears the highlight even mid-drag");
+
 console.log("layout-first canvas handoff: per-slot status, continue unlock, and b-roll readiness verified");
