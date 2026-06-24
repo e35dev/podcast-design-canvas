@@ -128,6 +128,9 @@
 
     let currentLayout = "interview";
     let objectUrls = [];
+    // The slot a placed video is being dragged from, so a drop on another slot moves or
+    // swaps the recording instead of being read as a new file drop.
+    let draggingFromSlot = null;
     // Videos set aside when their slot leaves the current layout, keyed by slot, so
     // switching back to a compatible layout restores the placement instead of discarding it.
     const setAside = Object.create(null);
@@ -475,6 +478,26 @@
 
       const wrap = doc.createElement("div");
       wrap.className = "placed-video";
+      // Let the creator drag a placed recording onto another slot to move or swap it,
+      // so a mixed-up Host/Guest can be fixed without removing and re-adding both videos.
+      wrap.draggable = true;
+      if (typeof wrap.setAttribute === "function") {
+        wrap.setAttribute("draggable", "true");
+      }
+      wrap.addEventListener("dragstart", (event) => {
+        draggingFromSlot = zone.dataset.slot || null;
+        if (event && event.dataTransfer) {
+          try {
+            event.dataTransfer.setData("application/x-pdc-slot", zone.dataset.slot || "");
+          } catch (error) {
+            // Some browsers restrict custom drag types; draggingFromSlot still tracks the source.
+          }
+          event.dataTransfer.effectAllowed = "move";
+        }
+      });
+      wrap.addEventListener("dragend", () => {
+        draggingFromSlot = null;
+      });
 
       const video = doc.createElement("video");
       video.controls = true;
@@ -591,6 +614,32 @@
       const target = firstOpenVisibleSlot();
       if (target) {
         placeVideoFiles(target, fileList);
+      }
+    }
+
+    // Move a placed recording from one slot to another by dragging it. Dropping it on an
+    // empty slot moves it there; dropping it on a filled slot swaps the two recordings, so a
+    // creator can correct a mixed-up Host/Guest without removing and re-adding both videos.
+    function moveSlotVideo(fromZone, toZone) {
+      if (!fromZone || !toZone || fromZone === toZone) {
+        return;
+      }
+      if (!fromZone.classList.contains("filled") || toZone.classList.contains("is-hidden")) {
+        return;
+      }
+      const fromFile = fromZone.placedFile;
+      if (!fromFile) {
+        return;
+      }
+      // Read the target's current file before any placement clears it; if it has one we are
+      // swapping, otherwise we are moving into an empty slot.
+      const toFile = toZone.classList.contains("filled") ? toZone.placedFile : null;
+      placeVideoFile(toZone, fromFile);
+      if (toFile) {
+        placeVideoFile(fromZone, toFile);
+      } else {
+        clearZone(fromZone);
+        updateSlotStatus();
       }
     }
 
@@ -736,6 +785,17 @@
         // bubbling to the layout-wide drop handler, which would re-route the files.
         event.stopPropagation();
         zone.classList.remove("drag-over");
+        const internalSlot = draggingFromSlot
+          || (event.dataTransfer && typeof event.dataTransfer.getData === "function"
+            ? event.dataTransfer.getData("application/x-pdc-slot")
+            : "");
+        if (internalSlot) {
+          // A placed video was dragged here from another slot — move or swap it instead of
+          // treating the drop as a new file.
+          moveSlotVideo(zonesBySlot[internalSlot], zone);
+          draggingFromSlot = null;
+          return;
+        }
         placeVideoFiles(zone, event.dataTransfer && event.dataTransfer.files);
       });
       if (input) {
@@ -751,6 +811,12 @@
       });
       layoutCanvas.addEventListener("drop", (event) => {
         event.preventDefault();
+        // A placed-video being dragged between slots is handled by the target slot; the
+        // layout-wide handler only routes real file drops to the next empty slot.
+        if (draggingFromSlot) {
+          draggingFromSlot = null;
+          return;
+        }
         placeDroppedFiles(event.dataTransfer && event.dataTransfer.files);
       });
     }
@@ -780,6 +846,7 @@
       placeVideoFile,
       placeVideoFiles,
       placeDroppedFiles,
+      moveSlotVideo,
       removeVideo,
       resetVideos: clearAllZones,
       requiredSlots,

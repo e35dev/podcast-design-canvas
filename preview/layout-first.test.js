@@ -798,4 +798,23 @@ controller.placeDroppedFiles([{ name: "guest.mp4", type: "video/mp4", size: 8, l
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "drop-anywhere targets the next empty slot when the first is taken");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "host.mp4", "drop-anywhere leaves an already-filled slot untouched");
 
+// Drag a placed recording between slots: dropping it on an empty slot moves it, and onto a
+// filled slot swaps the two — so a mixed-up Host/Guest is fixed without re-adding both (#1026).
+assert.ok(jsSource.includes("wrap.draggable = true"), "a placed video is draggable to another slot");
+assert.ok(jsSource.includes("function moveSlotVideo"), "the controller can move a placed video between slots");
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "a.mp4", type: "video/mp4", size: 1, lastModified: 1 });
+controller.moveSlotVideo(controller.zonesBySlot.host, controller.zonesBySlot.guest);
+assert.equal(controller.zonesBySlot.guest.dataset.fileName, "a.mp4", "dragging a video onto an empty slot moves it there");
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "the source slot is emptied after a move");
+
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "b.mp4", type: "video/mp4", size: 2, lastModified: 2 });
+controller.moveSlotVideo(controller.zonesBySlot.host, controller.zonesBySlot.guest);
+assert.equal(controller.zonesBySlot.guest.dataset.fileName, "b.mp4", "dragging onto a filled slot puts the dragged video there");
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "a.mp4", "and swaps the other recording back to the source slot");
+
+controller.moveSlotVideo(controller.zonesBySlot.host, controller.zonesBySlot.host);
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "a.mp4", "dragging a slot onto itself changes nothing");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
