@@ -69,14 +69,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}`, search: "" } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, setupStep, embedded = false) {
+function renderNavFor(fileName, setupStep, embedded = false, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   if (setupStep) {
@@ -103,7 +103,8 @@ function renderNavFor(fileName, setupStep, embedded = false) {
   };
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
+    URLSearchParams,
   });
   return { nodes: [...flatten(head), ...flatten(body)] };
 }
@@ -184,5 +185,24 @@ assert.equal(
   "embedded speaker setup nav routes the style handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded speaker setup handoff targets the parent app");
+
+const episodePathNav = renderNavFor("guest-profile-reuse.html", "guest-profile-reuse", true, "?path=episode");
+assert.equal(
+  linkWithText(episodePathNav.nodes, "Previous: Speaker attribution review").href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded speaker setup nav preserves episode path context on previous links",
+);
+assert.equal(
+  linkWithText(episodePathNav.nodes, "Next: Speaker visual match").href,
+  "../preview/app.html#speaker-visual-match?path=episode",
+  "embedded speaker setup nav preserves episode path context on next links",
+);
+
+const standaloneEpisodePath = renderNavFor("speaker-visual-match.html", "speaker-visual-match", false, "?path=episode");
+assert.equal(
+  linkWithText(standaloneEpisodePath.nodes, "Next: Speaker eye-line coherence").href,
+  "speaker-eye-line-coherence.html?path=episode",
+  "standalone speaker setup nav keeps episode path context between setup screens",
+);
 
 console.log("speaker setup nav: speaker-setup screens connected back to the preview shell");

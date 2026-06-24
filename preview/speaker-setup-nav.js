@@ -53,13 +53,33 @@ function isEmbeddedInPreviewApp() {
   }
 }
 
-function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+function pathFromQuery(query) {
+  const part = (query || "").split("&").find((item) => item.startsWith("path="));
+  return part ? part.split("=")[1] : "";
+}
+
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return path === "episode" ? "?path=episode" : "";
 }
 
 function routeSearchFromFile(file) {
   const query = (file || "").split("?")[1] || "";
-  return query.split("&").includes("path=episode") ? "?path=episode" : "";
+  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  return path === "episode" ? "?path=episode" : "";
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function hrefWithPath(file) {
+  const base = (file || "").split("?")[0];
+  if (pathFromQuery((file || "").split("?")[1] || "") === "episode") {
+    return file;
+  }
+  const suffix = pathQuerySuffix();
+  return suffix ? `${base}${suffix}` : file;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -75,7 +95,7 @@ function setSetupScreenLink(link, file) {
     return;
   }
 
-  link.href = file;
+  link.href = hrefWithPath(file);
 }
 
 function renderSpeakerSetupNav() {
