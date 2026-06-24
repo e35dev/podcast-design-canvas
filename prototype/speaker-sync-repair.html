@@ -69,6 +69,58 @@
         gap: 14px;
       }
 
+      .track-rollup {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        margin-bottom: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .track-rollup.all-clear {
+        border-color: #b8ddd4;
+        background: #f3fbf8;
+      }
+
+      .rollup-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .rollup-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .rollup-status.all-clear { color: #075246; background: #dff5ef; }
+      .rollup-status.attention { color: #7a4400; background: #fff1d6; }
+      .rollup-status.action { color: #8b1e1e; background: #ffe0e0; }
+
+      .rollup-detail {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .rollup-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .track.jump-highlight {
+        box-shadow: 0 0 0 2px #136f63;
+      }
+
       .track {
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -342,6 +394,7 @@
       <section class="workspace" aria-label="Speaker sync repair workspace">
         <div class="panel">
           <h2>Speaker tracks</h2>
+          <div class="track-rollup" id="trackRollup" aria-live="polite"></div>
           <div class="tracks" id="tracks"></div>
           <div class="actions" style="margin-top: 18px;">
             <button type="button" class="secondary" id="reset">Reset sample</button>
@@ -510,6 +563,7 @@
       let tracks = structuredClone(sampleTracks);
 
       const tracksElement = document.querySelector("#tracks");
+      const rollupElement = document.querySelector("#trackRollup");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
 
@@ -603,6 +657,7 @@
         const evaluation = evaluate(tracks);
 
         tracksElement.replaceChildren(...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])));
+        renderRollup(evaluation);
 
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready"
@@ -619,6 +674,77 @@
         );
       }
 
+      function buildRollup(evaluation) {
+        const needsWork = evaluation.results.filter((result) =>
+          ["flagged", "needs attribution review", "blocked for export"].includes(result.state),
+        );
+        const clearCount = evaluation.results.length - needsWork.length;
+
+        if (evaluation.overall === "blocked") {
+          return {
+            statusClass: "action",
+            status: "Action needed",
+            detail: `${needsWork.length} track${needsWork.length === 1 ? "" : "s"} would affect export · ${clearCount} in sync`,
+            needsWork,
+          };
+        }
+
+        if (evaluation.overall === "review") {
+          return {
+            statusClass: "attention",
+            status: "Review suggested",
+            detail: `${needsWork.length} track${needsWork.length === 1 ? "" : "s"} need sync review · ${clearCount} in sync`,
+            needsWork,
+          };
+        }
+
+        return {
+          statusClass: "all-clear",
+          status: "All in sync",
+          detail: `All ${evaluation.results.length} speaker tracks are in sync`,
+          needsWork,
+        };
+      }
+
+      function renderRollup(evaluation) {
+        const rollup = buildRollup(evaluation);
+        rollupElement.className = `track-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
+        rollupElement.replaceChildren();
+
+        const head = document.createElement("div");
+        head.className = "rollup-head";
+        const status = document.createElement("span");
+        status.className = `rollup-status ${rollup.statusClass}`;
+        status.textContent = rollup.status;
+        const detail = document.createElement("p");
+        detail.className = "rollup-detail";
+        detail.textContent = rollup.detail;
+        head.append(status, detail);
+        rollupElement.appendChild(head);
+
+        if (rollup.needsWork.length) {
+          const links = document.createElement("div");
+          links.className = "rollup-links";
+          for (const result of rollup.needsWork) {
+            const jump = document.createElement("button");
+            jump.type = "button";
+            jump.className = "secondary";
+            jump.textContent = `Open ${result.name.split(" — ")[0]}`;
+            jump.addEventListener("click", () => focusTrack(result.id));
+            links.appendChild(jump);
+          }
+          rollupElement.appendChild(links);
+        }
+      }
+
+      function focusTrack(trackId) {
+        const target = document.querySelector(`#track-${trackId}`);
+        if (!target) return;
+        target.classList.add("jump-highlight");
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        window.setTimeout(() => target.classList.remove("jump-highlight"), 1600);
+      }
+
       function renderTrack(track, index, result) {
         const issue = issues[track.issue];
         if (!track.previewMoment) {
@@ -626,6 +752,7 @@
         }
         const article = document.createElement("article");
         article.className = "track";
+        article.id = `track-${track.id}`;
 
         const head = document.createElement("div");
         head.className = "head";
