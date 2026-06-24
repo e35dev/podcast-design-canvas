@@ -84,9 +84,7 @@
       }
 
       .review-filter {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+        display: grid;
         gap: 10px;
         margin: 12px 0;
       }
@@ -95,6 +93,41 @@
         margin: 0;
         color: var(--muted);
         font-size: 13px;
+      }
+
+      .frame-issue-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .frame-issue-tags .frame-issue-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .frame-jump-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .frame-jump-links button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .frame-row.jump-highlight {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .fields {
@@ -460,6 +493,7 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         frames = structuredClone(sampleFrames);
+        showReviewOnly = false;
         render();
       });
 
@@ -501,12 +535,43 @@
             };
           }
 
-          return { id: frame.id, state, issue };
+          return {
+            id: frame.id,
+            name: frame.name,
+            state,
+            issue,
+            checkKey: frame.check,
+          };
         });
 
         const hasReview = results.some((result) => result.state === "review");
         const overall = hasReview ? "review" : "ready";
         return { overall, results };
+      }
+
+      function frameBucketLabel(name) {
+        return (name || "Speaker").split(" — ")[0];
+      }
+
+      function checkDisplayLabel(checkKey) {
+        const label = checks[checkKey]?.label;
+        return typeof label === "string" && label.length ? label : null;
+      }
+
+      function frameOpenLinkLabel(entry) {
+        const bucket = frameBucketLabel(entry.name);
+        const issueLabel = checkDisplayLabel(entry.checkKey);
+        return issueLabel ? `Open ${bucket} · ${issueLabel}` : `Open ${bucket}`;
+      }
+
+      function focusFrame(frameId) {
+        showReviewOnly = false;
+        render();
+        const target = document.querySelector(`#frame-${frameId}`);
+        if (!target) return;
+        target.classList.add("jump-highlight");
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        window.setTimeout(() => target.classList.remove("jump-highlight"), 1600);
       }
 
       // Full rebuild: used on load, add, reset, and select changes (selects don't hold
@@ -550,7 +615,8 @@
       // remain. The toggle only hides resolved frames; it never relabels a flagged one.
       function renderReviewFilter(evaluation) {
         const total = evaluation.results.length;
-        const reviewCount = evaluation.results.filter((result) => result.state === "review").length;
+        const needsWork = evaluation.results.filter((result) => result.state === "review");
+        const reviewCount = needsWork.length;
 
         reviewFilterElement.replaceChildren();
         const rollup = document.createElement("p");
@@ -559,6 +625,35 @@
           ? "No speaker frames need review."
           : `${reviewCount} of ${total} speaker ${total === 1 ? "frame" : "frames"} still ${reviewCount === 1 ? "needs" : "need"} review.`;
         reviewFilterElement.append(rollup);
+
+        if (needsWork.length) {
+          const tags = document.createElement("div");
+          tags.className = "frame-issue-tags";
+          tags.setAttribute("aria-label", "Framing issues needing review");
+          for (const entry of needsWork) {
+            const issueLabel = checkDisplayLabel(entry.checkKey);
+            if (!issueLabel) continue;
+            const tag = document.createElement("span");
+            tag.className = "frame-issue-tag";
+            tag.textContent = `${frameBucketLabel(entry.name)} — ${issueLabel}`;
+            tags.appendChild(tag);
+          }
+          if (tags.childElementCount) {
+            reviewFilterElement.append(tags);
+          }
+
+          const links = document.createElement("div");
+          links.className = "frame-jump-links";
+          for (const entry of needsWork) {
+            const jump = document.createElement("button");
+            jump.type = "button";
+            jump.className = "secondary";
+            jump.textContent = frameOpenLinkLabel(entry);
+            jump.addEventListener("click", () => focusFrame(entry.id));
+            links.appendChild(jump);
+          }
+          reviewFilterElement.append(links);
+        }
 
         if (reviewCount > 0) {
           const button = document.createElement("button");
@@ -610,6 +705,7 @@
         const check = checks[frame.check];
         const article = document.createElement("article");
         article.className = filteredOut ? "frame-row filtered-out" : "frame-row";
+        article.id = `frame-${frame.id}`;
 
         const checkOptions = Object.entries(checks)
           .map(([value, item]) => `<option value="${value}" ${value === frame.check ? "selected" : ""}>${item.label}</option>`)
