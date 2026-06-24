@@ -165,6 +165,26 @@
         line-height: 1.4;
       }
 
+      .slot-state {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        padding: 0 10px;
+      }
+
+      .slot-state[hidden] { display: none; }
+      .slot-state.is-missing { background: #fbe4d2; color: var(--warn); }
+      .slot-state.is-ready { background: #d6f3ea; color: var(--accent-ink); }
+      .slot-state.is-optional { background: rgba(246, 251, 249, 0.92); color: var(--muted); }
+
       .slot-file {
         position: relative;
         z-index: 2;
