@@ -184,6 +184,14 @@ function video(name) {
 const controller = createLayoutFirstController(documentStub, { URL: urlApi, handoff: layoutHandoff, storage });
 elementsById["layout-continue"].dataset.readyHref = "./app.html#speaker-role-mapping?path=episode";
 
+// Continue is described by the live placement status, so a screen-reader user who focuses the
+// gated Continue control hears which required videos are still missing instead of only "dimmed".
+assert.equal(
+  elementsById["layout-continue"].getAttribute("aria-describedby"),
+  "layout-slot-status",
+  "the Continue control is described by the live placement status",
+);
+
 assert.match(html, /Start with a podcast layout/, "layout-first landing opens with layout selection");
 assert.match(html, /data-layout="interview"/, "layout-first offers an interview layout");
 assert.match(html, /data-layout="solo"/, "layout-first offers a solo layout");

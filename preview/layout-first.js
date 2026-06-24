@@ -139,6 +139,14 @@
     const errorText = doc.getElementById("layout-error");
     const layoutCanvas = doc.getElementById("layout-canvas");
 
+    // When Continue is gated, a screen-reader user focusing it should hear WHY, not just that
+    // it is dimmed. The live placement status names which required videos are still missing
+    // (and reads "Required speaker videos ready." once they are all placed), so describe the
+    // Continue control with that status in both states.
+    if (continueLink && slotStatus && typeof continueLink.setAttribute === "function") {
+      continueLink.setAttribute("aria-describedby", "layout-slot-status");
+    }
+
     let currentLayout = "interview";
     let objectUrls = [];
     // The slot a placed video is being dragged from, so a drop on another slot moves or
