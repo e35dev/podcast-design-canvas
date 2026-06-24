@@ -52,6 +52,7 @@ assert.ok(flow.includes("nextStatus"), "flow renders next-action status text");
 assert.ok(flow.includes("Continue to"), "flow explains the next step when ready");
 assert.ok(flow.includes("steps ready"), "flow summarizes progress in creator-facing copy");
 assert.ok(flow.includes('href="index.html"') || flow.includes('href="./index.html"'), "guided flow links back to the preview shell");
+assert.ok(flow.includes('href="app.html"'), "guided flow links to the unified preview app");
 assert.ok(flow.includes('href="../index.html"'), "guided flow links to the full screen catalog");
 
 // Each guided step routes into the full prototype screen it summarizes, and every
