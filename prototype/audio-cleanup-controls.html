@@ -792,12 +792,15 @@
           return;
         }
 
-        const labels = active.map((choice) => {
+        const labels = active.flatMap((choice) => {
           const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
-          return `${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`;
+          if (!moment?.label) return [];
+          return [`${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`];
         });
 
-        momentHintElement.textContent = `Suggested previews highlighted for ${labels.join("; ")}.`;
+        momentHintElement.textContent = labels.length
+          ? `Suggested previews highlighted for ${labels.join("; ")}.`
+          : "";
       }
 
       function applyChoice(bars, choiceId, momentId) {
