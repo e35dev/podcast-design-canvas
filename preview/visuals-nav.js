@@ -38,9 +38,18 @@ function currentVisualsIndex() {
 }
 
 function screenIdFromFile(file) {
-  const clean = (file || "").split("#")[0].split("?")[0];
+  const clean = prototypePathFrom(file);
   const name = clean.split("/").pop() || "";
   return name.replace(/\.html$/, "");
+}
+
+function prototypePathFrom(file) {
+  return (file || "").split("#")[0].split("?")[0];
+}
+
+function querySuffixFrom(file) {
+  const queryIndex = (file || "").indexOf("?");
+  return queryIndex >= 0 ? file.slice(queryIndex) : "";
 }
 
 function isPreviewAppVisualsTarget(file) {
@@ -56,7 +65,7 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${querySuffixFrom(file)}`;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -66,10 +75,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setVisualsScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppVisualsTarget(file)) {
+  const path = prototypePathFrom(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppVisualsTarget(path)) {
     link.href = previewAppHref(file);
     link.target = "_top";
+    return;
   }
+
+  link.href = file;
 }
 
 function renderVisualsNav() {

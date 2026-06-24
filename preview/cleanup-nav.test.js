@@ -173,8 +173,8 @@ const embeddedLastNav = renderNavFor("on-screen-correction-note.html", "on-scree
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#contextual-broll-moments",
-  "embedded cleanup nav routes the contextual visuals handoff through the preview app hash",
+  "../preview/app.html#contextual-broll-moments?from=cleanup",
+  "embedded cleanup nav keeps the cleanup entry context in the preview app handoff",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets the parent app");
 

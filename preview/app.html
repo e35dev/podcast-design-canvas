@@ -366,21 +366,32 @@
 
       const firstScreen = STAGES[0][1][0];
 
+      function parseRouteHash() {
+        const raw = (window.location.hash || "").replace(/^#/, "");
+        const queryIndex = raw.indexOf("?");
+        if (queryIndex < 0) {
+          return { screen: raw, query: "" };
+        }
+        return { screen: raw.slice(0, queryIndex), query: raw.slice(queryIndex) };
+      }
+
       function currentScreen() {
-        const hash = (window.location.hash || "").replace(/^#/, "");
-        return KNOWN.has(hash) ? hash : firstScreen;
+        const { screen } = parseRouteHash();
+        return KNOWN.has(screen) ? screen : firstScreen;
       }
 
       function route() {
-        const screen = currentScreen();
+        const { screen, query } = parseRouteHash();
+        const resolved = KNOWN.has(screen) ? screen : firstScreen;
+        const resolvedQuery = KNOWN.has(screen) ? query : "";
         // Only ever load a known screen file — never an arbitrary hash value.
-        frame.src = `../prototype/${screen}.html`;
-        const label = titleCase(screen);
+        frame.src = `../prototype/${resolved}.html${resolvedQuery}`;
+        const label = titleCase(resolved);
         crumbLabel.textContent = label;
         frame.title = `${label} screen`;
-        openDirect.href = `../prototype/${screen}.html`;
+        openDirect.href = `../prototype/${resolved}.html${resolvedQuery}`;
         for (const [name, link] of Object.entries(linkFor)) {
-          if (name === screen) {
+          if (name === resolved) {
             link.setAttribute("aria-current", "page");
           } else {
             link.removeAttribute("aria-current");
@@ -388,13 +399,13 @@
         }
 
         // Step through the product in workflow order.
-        const index = ORDER.indexOf(screen);
+        const index = ORDER.indexOf(resolved);
         stepCount.textContent = `Screen ${index + 1} of ${ORDER.length}`;
         setStep(prevStep, ORDER[index - 1]);
         setStep(nextStep, ORDER[index + 1]);
 
         // Record progress through the product and reflect it in the rail.
-        markVisited(screen);
+        markVisited(resolved);
         renderProgress();
       }
 

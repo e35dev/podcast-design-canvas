@@ -159,8 +159,8 @@ const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#contextual-broll-moments",
-  "embedded style nav routes the contextual visuals handoff through the preview app hash",
+  "../preview/app.html#contextual-broll-moments?from=style",
+  "embedded style nav keeps the style entry context in the preview app handoff",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
 

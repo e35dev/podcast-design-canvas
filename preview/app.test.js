@@ -16,8 +16,9 @@ const app = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
 // Structural shell: it hosts screens in an iframe and routes via the URL hash.
 assert.match(app, /<iframe id="screen"/, "app hosts screens in an iframe");
 assert.ok(app.includes('window.addEventListener("hashchange"'), "app routes on URL hash changes");
-assert.ok(app.includes("KNOWN.has(hash)"), "app only loads a known screen from the hash (no arbitrary URL)");
-assert.ok(app.includes('frame.src = `../prototype/${screen}.html`'), "the frame loads the routed screen through the shell");
+assert.ok(app.includes("KNOWN.has(screen)"), "app only loads a known screen from the hash (no arbitrary URL)");
+assert.ok(app.includes("parseRouteHash"), "app strips handoff query strings from the hash before screen lookup");
+assert.ok(app.includes('frame.src = `../prototype/${resolved}.html${resolvedQuery}`'), "the frame keeps handoff query strings when loading a routed screen");
 assert.match(app, /aria-current", "page"/, "the active screen is marked in the nav");
 assert.ok(!/innerHTML/.test(app), "app builds the nav without innerHTML");
 
@@ -40,7 +41,7 @@ for (const proto of all) {
 
 // The app steps through the product in workflow order (one guided product, prev/next).
 assert.ok(app.includes("const ORDER = []"), "app builds a workflow order for stepping");
-assert.ok(app.includes("ORDER.indexOf(screen)"), "app locates the current screen in the workflow order");
+assert.ok(app.includes("ORDER.indexOf(resolved)"), "app locates the current screen in the workflow order");
 assert.ok(app.includes("Screen ${index + 1} of ${ORDER.length}"), "app shows progress through the workflow");
 assert.match(app, /id="prev-step"/, "app has a previous-screen control");
 assert.match(app, /id="next-step"/, "app has a next-screen control");

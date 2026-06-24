@@ -36,9 +36,18 @@ function currentStyleIndex() {
 }
 
 function screenIdFromFile(file) {
-  const clean = (file || "").split("#")[0].split("?")[0];
+  const clean = prototypePathFrom(file);
   const name = clean.split("/").pop() || "";
   return name.replace(/\.html$/, "");
+}
+
+function prototypePathFrom(file) {
+  return (file || "").split("#")[0].split("?")[0];
+}
+
+function querySuffixFrom(file) {
+  const queryIndex = (file || "").indexOf("?");
+  return queryIndex >= 0 ? file.slice(queryIndex) : "";
 }
 
 function isPreviewAppStyleTarget(file) {
@@ -54,7 +63,7 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${querySuffixFrom(file)}`;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -64,7 +73,8 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setStyleScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppStyleTarget(file)) {
+  const path = prototypePathFrom(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppStyleTarget(path)) {
     link.href = previewAppHref(file);
     link.target = "_top";
     return;

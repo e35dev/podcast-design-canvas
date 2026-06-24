@@ -38,7 +38,7 @@ const expectedHandoffs = [
   },
   {
     script: "cleanup-nav.js",
-    href: 'start.href = "contextual-broll-moments.html?from=cleanup"',
+    href: 'setCleanupScreenLink(start, "contextual-broll-moments.html?from=cleanup")',
     text: "Continue: Contextual b-roll moments",
     note: "cleanup helpers hand off to contextual visuals",
   },

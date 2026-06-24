@@ -35,9 +35,18 @@ function currentCleanupIndex() {
 }
 
 function screenIdFromFile(file) {
-  const clean = (file || "").split("#")[0].split("?")[0];
+  const clean = prototypePathFrom(file);
   const name = clean.split("/").pop() || "";
   return name.replace(/\.html$/, "");
+}
+
+function prototypePathFrom(file) {
+  return (file || "").split("#")[0].split("?")[0];
+}
+
+function querySuffixFrom(file) {
+  const queryIndex = (file || "").indexOf("?");
+  return queryIndex >= 0 ? file.slice(queryIndex) : "";
 }
 
 function isPreviewAppCleanupTarget(file) {
@@ -53,7 +62,7 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${querySuffixFrom(file)}`;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -63,10 +72,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setCleanupScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(file)) {
+  const path = prototypePathFrom(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(path)) {
     link.href = previewAppHref(file);
     link.target = "_top";
+    return;
   }
+
+  link.href = file;
 }
 
 function renderCleanupNav() {
@@ -184,7 +197,6 @@ function renderCleanupNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "contextual-broll-moments.html?from=cleanup";
     setCleanupScreenLink(start, "contextual-broll-moments.html?from=cleanup");
     start.textContent = "Continue: Contextual b-roll moments";
     wrap.appendChild(start);
