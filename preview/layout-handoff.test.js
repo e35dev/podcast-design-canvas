@@ -30,12 +30,13 @@ assert.deepEqual(
     ["host", "host-cam.mp4", "host"],
     ["guest", "guest-cam.mp4", "guest"],
   ],
-  "interview handoff keeps required speaker slots and ignores optional b-roll",
+  "interview handoff keeps required speaker slots in slots; b-roll is carried separately",
 );
+assert.equal(interview.optionalBroll.name, "intro-card.mp4", "placed b-roll is carried in optionalBroll with its file name");
 assert.equal(
   handoff.hrefWithState("./app.html#speaker-role-mapping?path=episode", interview),
-  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
-  "handoff href carries the chosen layout and required slots through the app hash",
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
+  "handoff href carries the chosen layout, required slots, and placed b-roll flag through the app hash",
 );
 assert.equal(
   handoff.completeSlotQueryForLayout("interview", "host,guest,broll"),
@@ -109,8 +110,8 @@ assert.equal(handoff.stateFromSlots("unknown", [{ slot: "host" }]), null);
 
 assert.equal(
   handoff.placementList(interview),
-  "Host (host-cam.mp4), Guest (guest-cam.mp4)",
-  "placement list shows the carried file name next to each placed slot",
+  "Host (host-cam.mp4), Guest (guest-cam.mp4), B-roll (intro-card.mp4)",
+  "placement list shows the carried file name for each placed slot including optional b-roll",
 );
 assert.equal(
   handoff.placementList(handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }, { slot: "guest-b" }])),
@@ -118,5 +119,22 @@ assert.equal(
   "placement list falls back to slot labels when no real file name carried over",
 );
 assert.equal(handoff.placementList(null), "", "placement list is empty without handoff state");
+
+// b-roll storage and URL round-trip: save the interview state (with b-roll) and load it back.
+const brollStorage = {};
+const brollStore = {
+  setItem(k, v) { brollStorage[k] = v; },
+  getItem(k) { return brollStorage[k] || null; },
+  removeItem(k) { delete brollStorage[k]; },
+};
+handoff.save(brollStore, interview);
+const restoredWithBroll = handoff.load(brollStore, "?layout=interview&slots=host,guest&broll=placed");
+assert.equal(restoredWithBroll.optionalBroll.name, "intro-card.mp4", "storage round-trip restores b-roll file name");
+
+const restoredNoBroll = handoff.load(brollStore, "?layout=interview&slots=host,guest");
+assert.ok(!restoredNoBroll.optionalBroll, "b-roll is not restored when URL does not carry broll=placed");
+
+const urlOnlyBroll = handoff.load(null, "?layout=interview&slots=host,guest&broll=placed");
+assert.ok(urlOnlyBroll.optionalBroll, "broll=placed URL param marks b-roll as placed even without storage");
 
 console.log("layout handoff: state, URL, storage, and role-track mapping verified");

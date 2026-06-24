@@ -101,14 +101,23 @@
   }
 
   function stateFromZones(layout, zones) {
-    const entries = Array.prototype.slice.call(zones || [])
+    const zoneArray = Array.prototype.slice.call(zones || []);
+    const brollZone = zoneArray.find((z) => z && z.dataset && z.dataset.slot === "broll");
+    const optionalBroll = brollZone && brollZone.classList && brollZone.classList.contains("filled")
+      ? { name: (brollZone.dataset && brollZone.dataset.fileName) || "", sig: (brollZone.dataset && brollZone.dataset.fileSig) || "" }
+      : null;
+    const entries = zoneArray
       .filter((zone) => zone && zone.classList && zone.classList.contains("filled"))
       .map((zone) => ({
         slot: zone.dataset && zone.dataset.slot,
         name: zone.dataset && zone.dataset.fileName,
         sig: zone.dataset && zone.dataset.fileSig,
       }));
-    return stateFromSlots(layout, entries);
+    const state = stateFromSlots(layout, entries);
+    if (state && optionalBroll) {
+      state.optionalBroll = optionalBroll;
+    }
+    return state;
   }
 
   function queryForState(state) {
@@ -122,6 +131,9 @@
     const params = new URLSearchParams();
     params.set("layout", state.layout);
     params.set("slots", slots.join(","));
+    if (state.optionalBroll) {
+      params.set("broll", "placed");
+    }
     return params.toString();
   }
 
@@ -181,6 +193,9 @@
     if (!queryState) {
       return null;
     }
+    if (params.get("broll") === "placed") {
+      queryState.optionalBroll = { name: "", sig: "" };
+    }
     if (!storage) {
       return queryState;
     }
@@ -189,9 +204,13 @@
       const storedState = stateFromSlots(stored && stored.layout, stored && stored.slots);
       const storedSlots = storedState ? storedState.slots.map((slot) => slot.slot).join(",") : "";
       const querySlots = queryState.slots.map((slot) => slot.slot).join(",");
-      return storedState && storedState.layout === queryState.layout && storedSlots === querySlots
-        ? storedState
-        : queryState;
+      if (storedState && storedState.layout === queryState.layout && storedSlots === querySlots) {
+        if (params.get("broll") === "placed" && stored.optionalBroll) {
+          storedState.optionalBroll = stored.optionalBroll;
+        }
+        return storedState;
+      }
+      return queryState;
     } catch (error) {
       return queryState;
     }
@@ -218,12 +237,14 @@
     if (!state || !state.slots || !state.slots.length) {
       return "";
     }
-    return state.slots
-      .map((slot) => {
-        const generic = `${slot.label} video`;
-        return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
-      })
-      .join(", ");
+    const parts = state.slots.map((slot) => {
+      const generic = `${slot.label} video`;
+      return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
+    });
+    if (state.optionalBroll) {
+      parts.push(state.optionalBroll.name ? `B-roll (${state.optionalBroll.name})` : "B-roll");
+    }
+    return parts.join(", ");
   }
 
   const api = {
