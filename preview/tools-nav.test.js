@@ -64,6 +64,11 @@ const reuseFlow = new Set([
   "episode-chapter-markers.html",
 ]);
 
+const audioFlow = new Set([
+  "pause-crosstalk-cleanup.html",
+  "transcript-glossary.html",
+]);
+
 const prototypes = fs
   .readdirSync(path.join(root, "prototype"))
   .filter((name) => name.endsWith(".html"));
@@ -124,6 +129,15 @@ for (const file of prototypes) {
     assert.ok(
       !html.includes("../preview/tools-nav.js"),
       `reuse screen does not double up with tools nav: ${file}`,
+    );
+  } else if (audioFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/audio-nav.js"),
+      `audio screen uses audio navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `audio screen does not double up with tools nav: ${file}`,
     );
   } else {
     // Every secondary screen links back to the shell.
