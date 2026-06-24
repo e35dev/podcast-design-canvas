@@ -279,6 +279,8 @@
             title: hiddenSpeakers + " speaker frame" + (hiddenSpeakers === 1 ? "" : "s") + " hidden",
             action: "A hidden speaker will not appear in this layout. Show the frame or confirm they are audio-only.",
             tone: "info",
+            fixScreen: "speaker-framing-safety.html",
+            fixLabel: "speaker framing safety",
           });
         }
         const hasReview = checks.some(function (c) { return c.tone === "review"; });

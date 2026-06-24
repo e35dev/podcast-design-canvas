@@ -32,7 +32,25 @@ assert.ok(
   fs.existsSync(path.join(__dirname, "layout-safe-areas.html")),
   "layout safe areas exists as a real screen",
 );
+
+assert.ok(
+  shell.includes("../prototype/speaker-framing-safety.html"),
+  "speaker framing safety is reachable from the preview shell",
+);
+assert.ok(
+  html.includes('fixScreen: "speaker-framing-safety.html"'),
+  "hidden-speaker checks route to speaker framing safety, where speaker visibility is owned",
+);
+assert.ok(
+  html.includes('fixLabel: "speaker framing safety"'),
+  "hidden-speaker checks name the fix screen in creator-facing copy",
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, "speaker-framing-safety.html")),
+  "speaker framing safety exists as a real screen",
+);
+
 assert.ok(html.includes('class: "fix-link"'), "canvas layer controls renders fix links with shared styling");
 assert.ok(html.includes("c.fixScreen && c.fixLabel"), "fix link rendering requires target and label");
 
-console.log("canvas layer controls: caption overlap reviews open layout safe areas");
+console.log("canvas layer controls: caption overlap opens layout safe areas; hidden speakers open speaker framing safety");
