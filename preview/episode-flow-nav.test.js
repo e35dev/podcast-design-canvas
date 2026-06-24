@@ -178,4 +178,76 @@ assert.equal(
   "standalone episode flow nav keeps episode path context between core flow screens",
 );
 
+
+function episodeFlowHrefWithPath(file, search) {
+  const window = makeWindow("export-readiness-review.html", false, search);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  episodeFlowHrefWithPath("audio-caption-quality-review.html?path=ingest&draft=notes", "?path=episode"),
+  "audio-caption-quality-review.html?path=episode&draft=notes",
+  "episode flow nav replaces conflicting path values with the shell episode context",
+);
+assert.equal(
+  episodeFlowHrefWithPath("export-readiness-review.html?draft=final#checks", "?path=publish"),
+  "export-readiness-review.html?draft=final&path=publish#checks",
+  "episode flow nav preserves unrelated flags and hash segments when merging publish context",
+);
+
+function normalizeExportReadinessFixLink(href, search, embedded = false) {
+  const window = makeWindow("export-readiness-review.html", embedded, search);
+  const link = createElement("a");
+  link.className = "fix-link";
+  link.setAttribute("href", href);
+  link.getAttribute = function(name) {
+    return this.attributes[name];
+  };
+  const root = createElement("div");
+  root.querySelectorAll = function(selector) {
+    return selector === "a.fix-link[href]" ? [link] : [];
+  };
+  const navDefinitions = navScript.replace(/\nif \(document\.readyState[\s\S]*$/m, "");
+  vm.runInNewContext(
+    `${navDefinitions}\nnormalizeExportReadinessFixLinks(rootNode);`,
+    {
+      document: { readyState: "complete", addEventListener() {} },
+      window,
+      URLSearchParams,
+      rootNode: root,
+    },
+  );
+  return link;
+}
+
+assert.equal(
+  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode").href,
+  "music-cue-setup.html?path=episode",
+  "export readiness music cue fix links keep episode path context",
+);
+assert.equal(
+  normalizeExportReadinessFixLink("thumbnail-cover-frame.html", "?path=episode").href,
+  "thumbnail-cover-frame.html?path=publish",
+  "export readiness thumbnail fix links use publish path context",
+);
+assert.equal(
+  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode", true).href,
+  "../preview/app.html#music-cue-setup?path=episode",
+  "embedded export readiness fix links route through the preview app",
+);
+assert.equal(
+  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode", true).target,
+  "_top",
+  "embedded export readiness fix links target the parent app",
+);
+
 console.log("episode flow nav: core episode screens connected to the preview shell and app");

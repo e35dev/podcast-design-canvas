@@ -88,6 +88,13 @@ assertCanonicalPathMerge(
   "transcript-glossary.html?path=publish&draft=terms",
 );
 
+assertCanonicalPathMerge(
+  "episode-flow-nav.js",
+  "?path=episode",
+  "audio-caption-quality-review.html?path=ingest&draft=notes",
+  "audio-caption-quality-review.html?path=episode&draft=notes",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -259,4 +266,29 @@ assert.equal(
   "cleanup nav preserves unrelated flags and hash segments when merging cleanup flow context",
 );
 
-console.log("nav query merge: ingest, publish, speaker setup, reuse, style, visuals, and cleanup path merges are canonical and non-ambiguous");
+const episodeFlowSource = fs.readFileSync(path.join(previewDir, "episode-flow-nav.js"), "utf8");
+function episodeFlowHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/export-readiness-review.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${episodeFlowSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const episodeFlowWithHash = episodeFlowHrefWithPathFor(
+  "music-cue-setup.html?draft=intro#review",
+  "?path=episode",
+);
+assert.equal(
+  episodeFlowWithHash,
+  "music-cue-setup.html?draft=intro&path=episode#review",
+  "episode flow nav preserves unrelated flags and hash segments when merging path context",
+);
+
+console.log("nav query merge: ingest, publish, speaker setup, reuse, style, visuals, cleanup, and episode flow path merges are canonical and non-ambiguous");
