@@ -193,6 +193,7 @@ assert.doesNotMatch(html, /id="layout-continue"[^>]* href=/, "disabled Continue 
 assert.match(html, /type="file" accept="video\/\*"/, "layout-first supports choosing video files");
 assert.match(html, /script src=".\/layout-handoff.js"/, "layout-first loads shared handoff state");
 assert.match(html, /script src=".\/layout-first.js"/, "layout-first uses source-backed behavior");
+assert.match(html, /id="layout-error-card"[^>]*role="alert"/, "placement error card has alert role so screen readers announce rejections");
 assert.ok(app.includes("layout-first.html"), "preview app links back to the layout-first start");
 assert.ok(root.includes("preview/layout-first.html"), "root catalog leads with the layout-first landing");
 assert.equal(isVideoFile(video("host.mp4")), true, "video files are accepted");
