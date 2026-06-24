@@ -63,14 +63,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}` } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, embedded = false) {
+function renderNavFor(fileName, embedded = false, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   const document = {
@@ -90,7 +90,8 @@ function renderNavFor(fileName, embedded = false) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
+    URLSearchParams,
   });
 
   return flatten(body);
@@ -144,5 +145,24 @@ assert.equal(
   "embedded episode flow nav routes publish prep handoff through the preview app hash with publish context",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded publish prep handoff targets the parent app");
+
+const episodePathNav = renderNavFor("speaker-sync-repair.html", true, "?path=episode");
+assert.equal(
+  linkWithText(episodePathNav, "Previous: Source media health").href,
+  "../preview/app.html#source-media-health?path=episode",
+  "embedded episode flow nav preserves episode path context on previous links",
+);
+assert.equal(
+  linkWithText(episodePathNav, "Next: Audio cleanup").href,
+  "../preview/app.html#audio-cleanup-controls?path=episode",
+  "embedded episode flow nav preserves episode path context on next links",
+);
+
+const standaloneEpisodePath = renderNavFor("audio-cleanup-controls.html", false, "?path=episode");
+assert.equal(
+  linkWithText(standaloneEpisodePath, "Next: Caption quality review").href,
+  "audio-caption-quality-review.html?path=episode",
+  "standalone episode flow nav keeps episode path context between core flow screens",
+);
 
 console.log("episode flow nav: core episode screens connected to the preview shell and app");

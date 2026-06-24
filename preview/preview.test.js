@@ -107,6 +107,7 @@ function renderNavFor(fileName, embedded = false) {
   vm.runInNewContext(navSource, {
     document,
     window: makeWindow(fileName, embedded),
+    URLSearchParams,
   });
 
   return { head, body, nodes: [...flatten(head), ...flatten(body)] };
@@ -219,7 +220,8 @@ vm.runInNewContext(navSource, {
       return duplicateNav.nodes.find((node) => node.className.split(" ").includes(className)) || null;
     },
   },
-  window: { location: { pathname: "/prototype/speaker-sync-repair.html" } },
+  window: { location: { pathname: "/prototype/speaker-sync-repair.html", search: "" } },
+  URLSearchParams,
 });
 assert.equal(
   flatten(duplicateNav.body).filter((node) => node.className === "episode-flow-nav").length,

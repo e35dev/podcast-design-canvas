@@ -44,20 +44,40 @@ function isEmbeddedInPreviewApp() {
   }
 }
 
-function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+function pathFromQuery(query) {
+  const part = (query || "").split("&").find((item) => item.startsWith("path="));
+  return part ? part.split("=")[1] : "";
+}
+
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return path === "episode" ? "?path=episode" : "";
 }
 
 function routeSearchFromFile(file) {
   const query = (file || "").split("?")[1] || "";
-  const parts = query.split("&");
-  if (parts.includes("path=episode")) {
+  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  if (path === "episode") {
     return "?path=episode";
   }
-  if (parts.includes("path=publish")) {
+  if (path === "publish") {
     return "?path=publish";
   }
   return "";
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function hrefWithPath(file) {
+  const base = (file || "").split("?")[0];
+  const filePath = pathFromQuery((file || "").split("?")[1] || "");
+  if (filePath === "episode" || filePath === "publish") {
+    return file;
+  }
+  const suffix = pathQuerySuffix();
+  return suffix ? `${base}${suffix}` : file;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -73,7 +93,7 @@ function setEpisodeScreenLink(link, file) {
     return;
   }
 
-  link.href = file;
+  link.href = hrefWithPath(file);
 }
 
 function renderEpisodeFlowNav() {
