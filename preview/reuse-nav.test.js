@@ -35,4 +35,86 @@ for (const file of reuseScreens) {
   assert.ok(html.includes("data-reuse-step="), `${file} declares its reuse step`);
 }
 
+function createElement(tagName) {
+  return {
+    tagName,
+    attributes: {},
+    children: [],
+    className: "",
+    href: "",
+    id: "",
+    textContent: "",
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+      if (name === "id") this.id = value;
+      if (name === "class") this.className = value;
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    insertBefore(child, before) {
+      const index = this.children.indexOf(before);
+      this.children.splice(index === -1 ? 0 : index, 0, child);
+      return child;
+    },
+  };
+}
+
+function flatten(node) {
+  return [node, ...node.children.flatMap(flatten)];
+}
+
+function renderNavFor(fileName, reuseStep) {
+  const head = createElement("head");
+  const body = createElement("body");
+  if (reuseStep) {
+    body.dataset = { reuseStep };
+  }
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) {
+      return [...flatten(head), ...flatten(body)].find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
+    },
+  };
+
+  vm.runInNewContext(navScript, {
+    document,
+    window: { location: { pathname: `/prototype/${fileName}` } },
+  });
+
+  return flatten(body);
+}
+
+function linkWithText(nodes, text) {
+  return nodes.find((node) => node.tagName === "a" && node.textContent === text);
+}
+
+const firstNav = renderNavFor("show-segment-system.html", "show-segment-system");
+const visualsBackLink = linkWithText(firstNav, "Previous: Sensitive moment review");
+assert.ok(visualsBackLink, "first reuse screen renders sensitive moment review as its previous step");
+assert.equal(
+  visualsBackLink.href,
+  "sensitive-moment-review.html",
+  "first reuse screen previous link returns to sensitive moment review",
+);
+
+const middleNav = renderNavFor("show-template-adaptation.html", "show-template-adaptation");
+assert.ok(
+  linkWithText(middleNav, "Previous: Show segment system"),
+  "middle reuse screen renders the previous reuse step",
+);
+assert.ok(
+  !linkWithText(middleNav, "Previous: Sensitive moment review"),
+  "middle reuse screen does not reuse the sensitive moment review back link",
+);
+
 console.log("reuse nav: make-it-reusable screens connected into one path");
