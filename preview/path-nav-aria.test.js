@@ -17,6 +17,7 @@ const pathNavScripts = [
   "publish-nav.js",
   "visuals-nav.js",
   "reuse-nav.js",
+  "cleanup-nav.js",
 ];
 
 for (const file of pathNavScripts) {

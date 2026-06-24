@@ -14,6 +14,7 @@ const subpaths = [
   { section: "Episode ingest setup", script: "ingest-nav.js", flowName: "INGEST_FLOW" },
   { section: "Speaker setup", script: "speaker-setup-nav.js", flowName: "SPEAKER_SETUP_FLOW" },
   { section: "Choose a visual direction", script: "style-nav.js", flowName: "STYLE_FLOW" },
+  { section: "Clean up audio &amp; captions", script: "cleanup-nav.js", flowName: "CLEANUP_FLOW" },
   { section: "Add contextual visuals", script: "visuals-nav.js", flowName: "VISUALS_FLOW" },
   { section: "Make it reusable", script: "reuse-nav.js", flowName: "REUSE_FLOW" },
 ];

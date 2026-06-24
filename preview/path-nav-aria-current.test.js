@@ -13,6 +13,7 @@ const navScripts = [
   "style-nav.js",
   "visuals-nav.js",
   "reuse-nav.js",
+  "cleanup-nav.js",
   "publish-nav.js",
   "episode-flow-nav.js",
 ];
