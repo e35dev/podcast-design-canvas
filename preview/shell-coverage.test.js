@@ -53,7 +53,13 @@ assert.ok(shell.includes("speaker-attribution-review.html"), "shell links to spe
 assert.ok(shell.includes("preset-style-picker.html"), "shell links to preset style picker in visual path");
 assert.ok(shell.includes("speaker-framing-safety.html"), "shell links to speaker framing in visual path");
 assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to watch-through in publish path");
+assert.ok(shell.includes("destination-crop-preview.html"), "shell links to destination crop in publish path");
+assert.ok(shell.includes("show-notes-assembly.html"), "shell links to show notes assembly in publish path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
+assert.match(shell, /Add contextual visuals/, "shell documents the contextual visuals path");
+assert.match(shell, /Make it reusable/, "shell documents the reuse path");
+assert.ok(shell.includes("contextual-broll-moments.html"), "shell links to b-roll in visuals path");
+assert.ok(shell.includes("show-segment-system.html"), "shell links to show segments in reuse path");
 
 console.log(
   `preview shell coverage: ${prototypes.length} prototypes, all reachable, no dead links`,
