@@ -68,6 +68,14 @@ for (const file of stepScreenFiles) {
   );
 }
 assert.ok(flow.includes("Open the full"), "each step offers a link into its full screen");
+assert.ok(
+  flow.includes("file === \"episode-readiness\"") || flow.includes("episode-readiness.html?path=episode"),
+  "flow routes episode-readiness into the episode path context",
+);
+assert.ok(
+  flow.includes("file === \"speaker-role-mapping\"") || flow.includes("speaker-role-mapping.html?path=episode"),
+  "flow routes speaker-role-mapping into the episode path context",
+);
 
 const publishPrepBlock = flow.match(/const publishPrepHandoff = \{([\s\S]*?)\};/);
 assert.ok(publishPrepBlock, "flow declares a post-export publish prep handoff");

@@ -701,10 +701,11 @@
           return null;
         }
         const [file, label] = entry;
+        const needsEpisodePath = file === "episode-readiness" || file === "speaker-role-mapping";
         const wrap = document.createElement("p");
         wrap.className = "step-screen";
         const link = document.createElement("a");
-        link.href = `../prototype/${file}.html`;
+        link.href = needsEpisodePath ? `../prototype/${file}.html?path=episode` : `../prototype/${file}.html`;
         link.textContent = `Open the full ${label} screen →`;
         wrap.append(link);
         return wrap;
