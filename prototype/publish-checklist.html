@@ -164,6 +164,35 @@
         border-left-color: var(--blocked);
       }
 
+      .destination-notice {
+        border-left: 4px solid var(--review);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .destination-notice strong {
+        display: block;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+
+      .item.reopened {
+        border-color: #e8c88a;
+        background: #fffbf3;
+      }
+
+      .item.reopened .reopen-tag {
+        display: inline-block;
+        margin-top: 6px;
+        color: var(--review);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
       @media (max-width: 820px) {
         .grid {
           grid-template-columns: 1fr;
@@ -178,12 +207,13 @@
   <body>
     <main>
       <h1>Publish checklist</h1>
-      <p class="lede">Confirm the visible episode package before export. The checklist changes based on the destination and keeps optional items from blocking every show.</p>
+      <p class="lede">Confirm the visible episode package before export. The checklist changes based on the destination and reopens affected items when you switch destinations late in the workflow.</p>
 
       <section class="grid">
         <div class="panel">
           <h2>Destination</h2>
           <div class="destination" id="destinations"></div>
+          <div id="destinationNotice" hidden></div>
           <div class="checklist" id="checklist"></div>
         </div>
 
@@ -221,24 +251,28 @@
           label: "Thumbnail",
           detail: "A publish-ready cover frame is selected.",
           requiredFor: ["youtube"],
+          reopenOnDestinationChange: true,
         },
         {
           id: "metadata",
           label: "Metadata",
           detail: "Title, description, chapters, and guest links are complete.",
           requiredFor: ["youtube"],
+          reopenOnDestinationChange: true,
         },
         {
           id: "watermark",
           label: "Review watermark",
           detail: "Review copy is clearly labeled.",
           requiredFor: ["review"],
+          reopenOnDestinationChange: true,
         },
         {
           id: "master",
           label: "Archive quality",
           detail: "Master export settings are preserved.",
           requiredFor: ["archive"],
+          reopenOnDestinationChange: true,
         },
       ];
 
@@ -250,16 +284,109 @@
         "not-needed": "Not needed",
       };
 
+      function defaultStatesFor(destination) {
+        const states = Object.fromEntries(items.map((item) => [item.id, "ready"]));
+        if (destination === "youtube") {
+          states.thumbnail = "review";
+          states.metadata = "blocked";
+        }
+        if (destination === "review") {
+          states.watermark = "review";
+        }
+        if (destination === "archive") {
+          states.master = "review";
+        }
+        return states;
+      }
+
       let selectedDestination = "youtube";
-      let itemStates = Object.fromEntries(items.map((item) => [item.id, "ready"]));
-      itemStates.thumbnail = "review";
-      itemStates.metadata = "blocked";
+      let statesByDestination = {
+        youtube: defaultStatesFor("youtube"),
+        review: defaultStatesFor("review"),
+        archive: defaultStatesFor("archive"),
+      };
+      let reopenedItemIds = [];
+      let destinationNotice = null;
 
       const destinationsElement = document.querySelector("#destinations");
+      const destinationNoticeElement = document.querySelector("#destinationNotice");
       const checklistElement = document.querySelector("#checklist");
       const statusElement = document.querySelector("#status");
       const warningsElement = document.querySelector("#warnings");
       const nextActionElement = document.querySelector("#nextAction");
+
+      function itemStates() {
+        return statesByDestination[selectedDestination];
+      }
+
+      // When the destination changes, reopen items whose publishing rules changed
+      // instead of leaving a ready state from the previous destination in place.
+      function reopenAffectedItems(fromDestination, toDestination) {
+        const states = statesByDestination[toDestination];
+        const reopened = [];
+
+        for (const item of items) {
+          const wasRequired = item.requiredFor.includes(fromDestination);
+          const nowRequired = item.requiredFor.includes(toDestination);
+          if (!nowRequired) {
+            continue;
+          }
+
+          const newlyRequired = !wasRequired;
+          const destinationSpecific = item.reopenOnDestinationChange === true;
+          const shouldReopen = newlyRequired || (destinationSpecific && fromDestination !== toDestination);
+
+          if (!shouldReopen) {
+            continue;
+          }
+
+          if (states[item.id] === "ready" || states[item.id] === "ignored") {
+            states[item.id] = "review";
+            reopened.push(item);
+          }
+        }
+
+        return reopened;
+      }
+
+      function changeDestination(nextDestination) {
+        if (nextDestination === selectedDestination) {
+          return;
+        }
+
+        const reopened = reopenAffectedItems(selectedDestination, nextDestination);
+        selectedDestination = nextDestination;
+        reopenedItemIds = reopened.map((item) => item.id);
+
+        if (reopened.length) {
+          const names = reopened.map((item) => item.label).join(", ");
+          destinationNotice = {
+            title: `${reopened.length} checklist ${reopened.length === 1 ? "item reopened" : "items reopened"}`,
+            detail: `Switching to ${destinations[nextDestination]} changed publishing requirements. Review ${names} for this destination.`,
+          };
+        } else {
+          destinationNotice = null;
+        }
+
+        render();
+      }
+
+      function renderDestinationNotice() {
+        if (!destinationNotice) {
+          destinationNoticeElement.hidden = true;
+          destinationNoticeElement.replaceChildren();
+          return;
+        }
+
+        destinationNoticeElement.hidden = false;
+        destinationNoticeElement.className = "destination-notice";
+        destinationNoticeElement.replaceChildren();
+        const strong = document.createElement("strong");
+        strong.textContent = destinationNotice.title;
+        const detail = document.createElement("span");
+        detail.textContent = destinationNotice.detail;
+        destinationNoticeElement.append(strong, detail);
+      }
 
       function render() {
         destinationsElement.replaceChildren(
@@ -268,14 +395,12 @@
             button.type = "button";
             button.textContent = label;
             button.setAttribute("aria-pressed", String(id === selectedDestination));
-            button.addEventListener("click", () => {
-              selectedDestination = id;
-              render();
-            });
+            button.addEventListener("click", () => changeDestination(id));
             return button;
           }),
         );
 
+        renderDestinationNotice();
         checklistElement.replaceChildren(...items.map(renderItem));
 
         const result = evaluateChecklist();
@@ -287,19 +412,30 @@
             ? result.warnings.map(renderWarning)
             : [Object.assign(document.createElement("p"), { textContent: "No destination warnings." })]),
         );
+
+        reopenedItemIds = [];
       }
 
       function renderItem(item) {
         const required = item.requiredFor.includes(selectedDestination);
-        const state = required ? itemStates[item.id] : "not-needed";
+        const states = itemStates();
+        const state = required ? states[item.id] : "not-needed";
+        const reopened = reopenedItemIds.includes(item.id);
         const article = document.createElement("article");
-        article.className = "item";
+        article.className = reopened ? "item reopened" : "item";
         article.innerHTML = `
           <div>
             <strong>${item.label}</strong>
             <span>${item.detail}${required ? "" : " Not required for this destination."}</span>
           </div>
         `;
+
+        if (reopened) {
+          const tag = document.createElement("span");
+          tag.className = "reopen-tag";
+          tag.textContent = "Reopened for this destination";
+          article.querySelector("div").append(tag);
+        }
 
         const select = document.createElement("select");
         select.disabled = !required;
@@ -314,7 +450,8 @@
           select.append(option);
         }
         select.addEventListener("change", () => {
-          itemStates[item.id] = select.value;
+          itemStates()[item.id] = select.value;
+          destinationNotice = null;
           render();
         });
         article.append(select);
@@ -322,9 +459,10 @@
       }
 
       function evaluateChecklist() {
+        const states = itemStates();
         const relevantItems = items.filter((item) => item.requiredFor.includes(selectedDestination));
         const warnings = relevantItems
-          .map((item) => ({ item, state: itemStates[item.id] }))
+          .map((item) => ({ item, state: states[item.id] }))
           .filter(({ state }) => state !== "ready" && state !== "not-needed");
 
         const status = warnings.some(({ state }) => state === "blocked")
