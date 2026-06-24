@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Guest Profile Reuse Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .guests {
+        display: grid;
+        gap: 14px;
+      }
+
+      .guest {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.reused {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.new {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .avatar {
+        position: relative;
+        width: 72px;
+        aspect-ratio: 1;
+        flex: none;
+        align-self: start;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 22px;
+      }
+
+      .avatar.new {
+        background: repeating-linear-gradient(135deg, #c9d2cf, #c9d2cf 8px, #dde3e1 8px, #dde3e1 16px);
+        color: #5e6b67;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .guest {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .avatar {
+          width: 56px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Guest profile reuse</h1>
+      <p class="lede">Recognize a returning guest and reuse their approved name, spelling, title, and lower-third &mdash; while reviewing anything that changed since they were last on. New guests start fresh, and you confirm every match.</p>
+
+      <section class="workspace" aria-label="Guest profile reuse workspace">
+        <div class="panel">
+          <h2>Episode guests</h2>
+          <div class="guests" id="guests"></div>
+          <div class="actions">
+            <button type="button" id="addGuest">Add a guest</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Guest reuse summary">
+          <h2>Reuse summary</h2>
+          <div id="status" class="status ready">Guests confirmed</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Durable details reuse across episodes; episode-specific context stays with this episode. Updates never change already-exported episodes.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // How confident we are that this person matches a saved guest profile.
+      const matches = {
+        strong: { label: "Returning — strong match", returning: true },
+        possible: { label: "Returning — possible match", returning: true },
+        new: { label: "New guest", returning: false },
+      };
+
+      // What changed since the guest last appeared (only meaningful for a returning guest).
+      const changes = {
+        none: "Nothing changed",
+        title: "Title or role changed",
+        link: "A public link changed",
+        spelling: "New spelling suggestion",
+        headshot: "Headshot is missing",
+      };
+
+      // What to do with a returning guest's saved profile.
+      const decisions = {
+        reuse: "Reuse saved profile",
+        update: "Update the profile",
+        episode: "Apply to this episode only",
+      };
+
+      const sampleGuests = [
+        { id: "g1", name: "Marcus Lee", match: "strong", change: "none", decision: "reuse" },
+        { id: "g2", name: "Priya Anand", match: "strong", change: "title", decision: "reuse" },
+        { id: "g3", name: "Sam Rivera", match: "possible", change: "none", decision: "reuse" },
+        { id: "g4", name: "Jordan Kim", match: "new", change: "none", decision: "reuse" },
+      ];
+
+      let guests = structuredClone(sampleGuests);
+
+      const guestsElement = document.querySelector("#guests");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addGuest").addEventListener("click", () => {
+        const next = guests.length + 1;
+        guests.push({ id: `g${next}-${guests.length}`, name: "", match: "new", change: "none", decision: "reuse" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        guests = structuredClone(sampleGuests);
+        render();
+      });
+
+      // Single source of truth: map each guest's match + what changed + decision to a
+      // review state and a plain-language issue. A possible match or an unreviewed change
+      // needs the creator before durable details are reused.
+      function evaluate(list) {
+        const results = list.map((guest) => {
+          const match = matches[guest.match] || matches.new;
+          const name = guest.name.trim() || "This guest";
+          let state;
+          let issue = null;
+
+          if (!match.returning) {
+            state = "new";
+            issue = {
+              title: `${name}: new guest`,
+              action: "No saved profile yet — details come from this episode and can be saved for next time.",
+              tone: "info",
+            };
+          } else if (guest.match === "possible") {
+            state = "review";
+            issue = {
+              title: `Confirm this is the returning ${name}`,
+              action: "We found a possible match. Confirm it before reusing their saved name and lower-third.",
+              tone: "review",
+            };
+          } else if (guest.change !== "none" && guest.decision === "reuse") {
+            state = "review";
+            issue = {
+              title: `${name}: ${changes[guest.change].toLowerCase()}`,
+              action: "Something changed since last time. Update the profile or apply the change to this episode only.",
+              tone: "review",
+            };
+          } else if (guest.decision === "update") {
+            state = "reused";
+            issue = {
+              title: `${name}: profile updated`,
+              action: "The saved profile now carries this change forward to future episodes.",
+              tone: "info",
+            };
+          } else if (guest.decision === "episode") {
+            state = "reused";
+            issue = {
+              title: `${name}: applied to this episode only`,
+              action: "The change stays with this episode; the saved profile is unchanged.",
+              tone: "info",
+            };
+          } else {
+            state = "reused";
+          }
+
+          return { id: guest.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
+      // a caret, so replacing them is safe).
+      function render() {
+        const evaluation = evaluate(guests);
+        guestsElement.replaceChildren(
+          ...guests.map((guest, index) => renderGuest(guest, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Guests confirmed" : "Guests to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every guest is confirmed. Saved details are ready to reuse." })]),
+        );
+      }
+
+      // Light update: used while typing a guest name. Refreshes each card's badge, avatar
+      // initial, and the summary in place, without replacing the input.
+      function refreshStates() {
+        const evaluation = evaluate(guests);
+        Array.from(guestsElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+          const avatar = card.querySelector("[data-initial]");
+          if (avatar && guests[index]) {
+            avatar.textContent = initial(guests[index].name);
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function badgeClass(state) {
+        if (state === "reused") {
+          return "reused";
+        }
+        if (state === "new") {
+          return "new";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "reused") {
+          return "reused";
+        }
+        if (state === "new") {
+          return "new guest";
+        }
+        return "needs review";
+      }
+
+      function initial(name) {
+        const text = (name || "").trim();
+        return text ? text[0].toUpperCase() : "?";
+      }
+
+      function renderGuest(guest, index, result) {
+        const match = matches[guest.match] || matches.new;
+        const article = document.createElement("article");
+        article.className = "guest";
+
+        const matchOptions = Object.entries(matches)
+          .map(([value, item]) => `<option value="${value}" ${value === guest.match ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const changeOptions = Object.entries(changes)
+          .map(([value, label]) => `<option value="${value}" ${value === guest.change ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const decisionOptions = Object.entries(decisions)
+          .map(([value, label]) => `<option value="${value}" ${value === guest.decision ? "selected" : ""}>${label}</option>`)
+          .join("");
+        // The "what changed" and "decision" controls only apply to a returning guest.
+        const returning = match.returning;
+
+        // The scaffold holds only controlled values (match/change/decision keys and their
+        // fixed labels, fixed states). The editable guest name is written via .value and
+        // textContent below, so a typed name can never inject markup into the page.
+        article.innerHTML = `
+          <div class="avatar ${returning ? "" : "new"}" data-initial></div>
+          <div class="fields">
+            <div class="head">
+              <strong>Guest profile</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <label>Guest name<input data-field="name" aria-label="Guest name"></label>
+            <div class="fields-row">
+              <label>Match
+                <select data-field="match" aria-label="Profile match">${matchOptions}</select>
+              </label>
+              <label>Since last time
+                <select data-field="change" aria-label="What changed" ${returning ? "" : "disabled"}>${changeOptions}</select>
+              </label>
+            </div>
+            <label>What to do
+              <select data-field="decision" aria-label="What to do with the profile" ${returning ? "" : "disabled"}>${decisionOptions}</select>
+            </label>
+          </div>
+        `;
+
+        article.querySelector('[data-field="name"]').value = guest.name;
+        article.querySelector("[data-initial]").textContent = initial(guest.name);
+
+        // Text fields update live on input but only refresh badges/summary, so the field
+        // keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so a text field's input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        const guest = guests[index];
+        guest[field] = event.target.value;
+
+        // A new guest has no saved profile, so reset the returning-only fields to their
+        // defaults rather than keeping a stale change/decision.
+        if (field === "match" && !matches[guest.match].returning) {
+          guest.change = "none";
+          guest.decision = "reuse";
+        }
+
+        if (full) {
+          render();
+        } else {
+          const card = guestsElement.children[index];
+          if (card) {
+            card.querySelector("[data-initial]").textContent = initial(guest.name);
+          }
+          refreshStates();
+        }
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title embeds the editable guest name, so build it with textContent.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
