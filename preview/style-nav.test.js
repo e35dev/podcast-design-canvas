@@ -15,7 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "style nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "style nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "style nav links to the preview app");
-assert.ok(navScript.includes("episode-watch-through-preview.html"), "style nav hands off to the publish prep path");
+assert.ok(navScript.includes("contextual-broll-moments.html"), "style nav hands off to the contextual visuals path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "style nav builds the DOM without innerHTML");
@@ -116,12 +116,12 @@ function linkWithText(nodes, text) {
 
 const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
 assert.ok(
-  lastNav.nodes.some((node) => node.textContent === "Continue: Watch the finished episode"),
-  "last visual direction screen hands off to the publish prep path",
+  lastNav.nodes.some((node) => node.textContent === "Continue: Contextual b-roll moments"),
+  "last visual direction screen hands off to the contextual visuals path",
 );
 assert.ok(
-  lastNav.nodes.some((node) => node.href === "episode-watch-through-preview.html"),
-  "last visual direction screen links to watch-through preview",
+  lastNav.nodes.some((node) => node.href === "contextual-broll-moments.html"),
+  "last visual direction screen links to contextual b-roll moments",
 );
 
 const embeddedFirstNav = renderNavFor("preset-style-picker.html", "preset-style-picker", true);
@@ -156,11 +156,11 @@ assert.equal(
 );
 
 const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
-const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Watch the finished episode");
+const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#episode-watch-through-preview",
-  "embedded style nav routes the publish handoff through the preview app hash",
+  "../preview/app.html#contextual-broll-moments",
+  "embedded style nav routes the contextual visuals handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
 

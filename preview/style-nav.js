@@ -14,7 +14,7 @@ const STYLE_FLOW = [
 ];
 
 const STYLE_ENTRY = { file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" };
-const STYLE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Watch the finished episode" };
+const STYLE_HANDOFF = { file: "contextual-broll-moments.html", label: "Contextual b-roll moments" };
 
 const PREVIEW_APP_STYLE_TARGETS = new Set([
   screenIdFromFile(STYLE_ENTRY.file),

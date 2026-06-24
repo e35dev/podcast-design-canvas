@@ -26,9 +26,9 @@ const expectedHandoffs = [
   },
   {
     script: "style-nav.js",
-    href: 'STYLE_HANDOFF = { file: "episode-watch-through-preview.html"',
-    text: 'label: "Watch the finished episode"',
-    note: "visual direction hands off to publish prep",
+    href: 'STYLE_HANDOFF = { file: "contextual-broll-moments.html"',
+    text: 'label: "Contextual b-roll moments"',
+    note: "visual direction hands off to contextual visuals",
   },
   {
     script: "publish-nav.js",
