@@ -15,6 +15,7 @@ const navSource = fs.readFileSync(navPath, "utf8");
 new vm.Script(navSource);
 assert.ok(navSource.includes('home.href = "../preview/"'), "ingest nav links back to the preview shell");
 assert.ok(navSource.includes("episode-flow.html"), "ingest nav links to the guided episode flow");
+assert.ok(navSource.includes("app.html"), "ingest nav links to the preview app");
 assert.ok(navSource.includes("source-media-health.html"), "ingest nav hands off to source media health");
 assert.ok(navSource.includes('document.querySelector(".ingest-nav")'), "ingest nav guards against double render");
 assert.ok(!/innerHTML/.test(navSource), "ingest nav builds the DOM without innerHTML");

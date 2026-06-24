@@ -131,6 +131,11 @@ function renderIngestNav() {
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
+  const app = document.createElement("a");
+  app.href = "../preview/app.html";
+  app.textContent = "Preview app";
+  wrap.appendChild(app);
+
   if (previous) {
     const prevLink = document.createElement("a");
     prevLink.href = hrefWithPath(previous.file);
