@@ -1,7 +1,7 @@
 "use strict";
 
-// Guards the layout-first example canvas handoff: the creator can continue into
-// speaker roles after placing the required host and guest tracks, while b-roll stays optional.
+// Guards the layout-first example canvas handoff: the selected layout changes
+// which slots are required before the creator can continue into speaker roles.
 // Run with: `node preview/layout-first-canvas-handoff.test.js`
 
 const fs = require("fs");
@@ -105,6 +105,13 @@ const chips = ["host", "guest", "broll"].map((track) => {
   return chip;
 });
 
+const layoutButtons = ["interview", "solo"].map((layout, index) => {
+  const button = new Element("button", "", "layout-chip");
+  button.dataset.layout = layout;
+  button.attributes["aria-pressed"] = index === 0 ? "true" : "false";
+  return button;
+});
+
 const zones = ["host", "guest", "broll"].map((slot) => {
   const zone = new Element("div", "", `drop-zone ${slot}`);
   zone.dataset.slot = slot;
@@ -122,6 +129,13 @@ continueLink.attributes["aria-disabled"] = "true";
 continueLink.textContent = "Fill required speaker slots to continue";
 const continueNote = new Element("p", "canvas-continue-note");
 continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.";
+const sceneChip = new Element("span", "canvas-scene-chip");
+const runtimeChip = new Element("span", "canvas-runtime-chip");
+const hostSlotLabel = new Element("span", "host-slot-label");
+const hostSlotNote = new Element("span", "host-slot-note");
+const guestSlotLabel = new Element("span", "guest-slot-label");
+const guestSlotNote = new Element("span", "guest-slot-note");
+const brollSlotNote = new Element("span", "broll-slot-note");
 
 const document = {
   querySelector(selector) {
@@ -133,6 +147,7 @@ const document = {
   },
   querySelectorAll(selector) {
     if (selector === ".drag-chip") return chips;
+    if (selector === ".layout-chip") return layoutButtons;
     if (selector === ".drop-zone[data-slot]") return zones;
     if (selector === ".drop-zone.filled") {
       return zones.filter((zone) => zone.classList.contains("filled"));
@@ -145,6 +160,13 @@ const document = {
       "canvas-reset": resetButton,
       "canvas-continue": continueLink,
       "canvas-continue-note": continueNote,
+      "canvas-scene-chip": sceneChip,
+      "canvas-runtime-chip": runtimeChip,
+      "host-slot-label": hostSlotLabel,
+      "host-slot-note": hostSlotNote,
+      "guest-slot-label": guestSlotLabel,
+      "guest-slot-note": guestSlotNote,
+      "broll-slot-note": brollSlotNote,
     }[id] || null;
   },
   createElement(tagName) {
@@ -187,9 +209,26 @@ drop("broll", "broll");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
 assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
 
+layoutButtons.find((button) => button.dataset.layout === "solo").click();
+assert.strictEqual(layoutButtons.find((button) => button.dataset.layout === "solo").attributes["aria-pressed"], "true");
+assert.strictEqual(layoutButtons.find((button) => button.dataset.layout === "interview").attributes["aria-pressed"], "false");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
+assert.strictEqual(continueLink.textContent, "Fill the host slot to continue");
+assert.strictEqual(slotStatus.textContent, "0 of 1 required host video ready. Optional companion visual and b-roll can be added later.");
+assert.strictEqual(sceneChip.textContent, "Solo spotlight · teaching beat");
+assert.strictEqual(runtimeChip.textContent, "Host only · 42 min cut");
+assert.strictEqual(guestSlotLabel.textContent, "Optional companion visual slot");
+assert.match(guestSlotNote.textContent, /optional/i);
+
+drop("host", "host");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
+assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
+assert.match(slotStatus.textContent, /Required host video ready/);
+assert.match(continueNote.textContent, /Required host video is ready/);
+
 resetButton.click();
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
 assert.strictEqual(continueLink.href, "");
-assert.strictEqual(slotStatus.textContent, "0 of 2 required speaker videos ready. Optional b-roll can be added later.");
+assert.strictEqual(slotStatus.textContent, "0 of 1 required host video ready. Optional companion visual and b-roll can be added later.");
 
-console.log("layout-first canvas handoff: continue unlocks after required speaker videos while b-roll stays optional");
+console.log("layout-first canvas handoff: selected layout changes required slots before continue unlocks");

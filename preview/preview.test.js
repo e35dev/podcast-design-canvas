@@ -25,6 +25,9 @@ const flowSteps = [
 assert.match(html, /<title>Podcast Design Canvas — Preview<\/title>/, "preview shell has product title");
 assert.match(html, /aria-label="Podcast Design Canvas preview shell"/, "preview shell exposes landmark label");
 assert.match(html, /Example podcast layout canvas/, "preview shell leads with an example podcast layout canvas");
+assert.match(html, /Choose a starting layout/, "preview shell lets creators choose a starting layout");
+assert.match(html, /Interview split/, "preview shell offers an interview layout");
+assert.match(html, /Solo spotlight/, "preview shell offers a solo layout");
 assert.match(html, /Host video slot/, "preview shell shows a host video drop zone");
 assert.match(html, /Guest video slot/, "preview shell shows a guest video drop zone");
 assert.match(html, /Caption area/, "preview shell reserves a caption area on the example canvas");
@@ -50,6 +53,10 @@ assert.ok(
 assert.ok(
   html.includes("Fill required speaker slots to continue"),
   "preview shell keeps the continue handoff gated until required speaker slots are placed",
+);
+assert.ok(
+  html.includes("Fill the host slot to continue"),
+  "preview shell adapts the gated handoff to a solo layout requirement",
 );
 assert.ok(
   html.includes("Optional b-roll can be added later"),

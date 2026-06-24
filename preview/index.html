@@ -135,6 +135,36 @@
         max-width: 760px;
       }
 
+      .layout-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 0 0 16px;
+      }
+
+      .layout-picker button {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+      }
+
+      .layout-picker button[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #def3ed;
+        color: var(--accent-ink);
+      }
+
+      .layout-picker button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .canvas-stage {
         margin: 0 0 30px;
         padding: 18px;
@@ -477,6 +507,10 @@
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
             <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
+            <div class="layout-picker" aria-label="Choose a starting layout">
+              <button type="button" class="layout-chip" data-layout="interview" aria-pressed="true">Interview split</button>
+              <button type="button" class="layout-chip" data-layout="solo" aria-pressed="false">Solo spotlight</button>
+            </div>
             <div class="track-palette" aria-label="Drag speaker tracks onto the layout">
               <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
               <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
@@ -487,16 +521,16 @@
               <button type="button" class="canvas-reset" id="canvas-reset">Reset layout</button>
             </div>
             <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
-              <span class="canvas-chip scene">Interview scene · intro beat</span>
-              <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
+              <span class="canvas-chip scene" id="canvas-scene-chip">Interview scene · intro beat</span>
+              <span class="canvas-chip runtime" id="canvas-runtime-chip">Host + guest · 58 min cut</span>
               <div class="speaker-row">
                 <div class="drop-zone host" data-slot="host">
-                  <span class="slot-label">Host video slot</span>
-                  <span class="slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
+                  <span class="slot-label" id="host-slot-label">Host video slot</span>
+                  <span class="slot-note" id="host-slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
                 </div>
                 <div class="drop-zone guest" data-slot="guest">
-                  <span class="slot-label">Guest video slot</span>
-                  <span class="slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
+                  <span class="slot-label" id="guest-slot-label">Guest video slot</span>
+                  <span class="slot-note" id="guest-slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
                 </div>
               </div>
               <div class="canvas-footer">
@@ -506,7 +540,7 @@
                 </div>
                 <div class="title-slot drop-zone broll" data-slot="broll">
                   <span class="slot-label">B-roll drop zone</span>
-                  <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
+                  <div class="slot-note" id="broll-slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
                 </div>
               </div>
             </div>
@@ -952,6 +986,43 @@
     </main>
     <script>
       (function () {
+        var layouts = {
+          interview: {
+            sceneChip: "Interview scene · intro beat",
+            runtimeChip: "Host + guest · 58 min cut",
+            requiredSlots: ["host", "guest"],
+            lockedText: "Fill required speaker slots to continue",
+            readyStatus: "Required speaker videos ready. Optional b-roll can be added later.",
+            countStatus: function (filled) {
+              return filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
+            },
+            continueNote: "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.",
+            readyNote: "Required speaker videos are ready. Continue into speaker roles. Optional b-roll can be added later.",
+            hostLabel: "Host video slot",
+            hostNote: "Drop the host Riverside track here. Keep room for captions and chapter callouts.",
+            guestLabel: "Guest video slot",
+            guestNote: "Drop the guest track here, matched to framing and safe-area rules.",
+            brollNote: "Place contextual visuals, title cards, or screen shares without hiding the conversation."
+          },
+          solo: {
+            sceneChip: "Solo spotlight · teaching beat",
+            runtimeChip: "Host only · 42 min cut",
+            requiredSlots: ["host"],
+            lockedText: "Fill the host slot to continue",
+            readyStatus: "Required host video ready. Optional companion visual and b-roll can be added later.",
+            countStatus: function (filled) {
+              return filled + " of 1 required host video ready. Optional companion visual and b-roll can be added later.";
+            },
+            continueNote: "Place the host into the layout before continuing into speaker roles. Optional companion visual and b-roll can be added later.",
+            readyNote: "Required host video is ready. Continue into speaker roles. Optional companion visual and b-roll can be added later.",
+            hostLabel: "Host spotlight slot",
+            hostNote: "Drop the main host track here so the layout leads with one clear speaker.",
+            guestLabel: "Optional companion visual slot",
+            guestNote: "Drop an optional guest reaction or supporting video here only if this solo episode needs it.",
+            brollNote: "Use b-roll for occasional proof, examples, or title cards without crowding the solo host."
+          }
+        };
+
         var trackLabels = {
           host: "Host track · Dana Brooks",
           guest: "Guest track · Marcus Lee",
@@ -972,10 +1043,17 @@
         var resetButton = document.getElementById("canvas-reset");
         var continueLink = document.getElementById("canvas-continue");
         var continueNote = document.getElementById("canvas-continue-note");
+        var sceneChip = document.getElementById("canvas-scene-chip");
+        var runtimeChip = document.getElementById("canvas-runtime-chip");
+        var hostSlotLabel = document.getElementById("host-slot-label");
+        var hostSlotNote = document.getElementById("host-slot-note");
+        var guestSlotLabel = document.getElementById("guest-slot-label");
+        var guestSlotNote = document.getElementById("guest-slot-note");
+        var brollSlotNote = document.getElementById("broll-slot-note");
+        var activeLayout = "interview";
 
         function requiredFilledCount() {
-          var required = ["host", "guest"];
-          return required.filter(function (slot) {
+          return layouts[activeLayout].requiredSlots.filter(function (slot) {
             var zone = document.querySelector('.drop-zone[data-slot="' + slot + '"]');
             return zone && zone.classList.contains("filled");
           }).length;
@@ -983,22 +1061,45 @@
 
         function updateContinueLink(filled) {
           if (!continueLink) return;
-          if (filled === 2) {
+          var layout = layouts[activeLayout];
+          if (filled === layout.requiredSlots.length) {
             continueLink.href = "./app.html#speaker-role-mapping?path=episode";
             continueLink.setAttribute("aria-disabled", "false");
             continueLink.textContent = "Continue to speaker roles →";
             if (continueNote) {
-              continueNote.textContent = "Required speaker videos are ready. Continue into speaker roles. Optional b-roll can be added later.";
+              continueNote.textContent = layout.readyNote;
             }
             return;
           }
 
           continueLink.removeAttribute("href");
           continueLink.setAttribute("aria-disabled", "true");
-          continueLink.textContent = "Fill required speaker slots to continue";
+          continueLink.textContent = layout.lockedText;
           if (continueNote) {
-            continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.";
+            continueNote.textContent = layout.continueNote;
           }
+        }
+
+        function clearPlacedTracks() {
+          document.querySelectorAll(".drop-zone.filled").forEach(function (zone) {
+            zone.classList.remove("filled");
+            var placed = zone.querySelector(".placed-track");
+            if (placed) placed.remove();
+          });
+        }
+
+        function renderLayout() {
+          var layout = layouts[activeLayout];
+          if (sceneChip) sceneChip.textContent = layout.sceneChip;
+          if (runtimeChip) runtimeChip.textContent = layout.runtimeChip;
+          if (hostSlotLabel) hostSlotLabel.textContent = layout.hostLabel;
+          if (hostSlotNote) hostSlotNote.textContent = layout.hostNote;
+          if (guestSlotLabel) guestSlotLabel.textContent = layout.guestLabel;
+          if (guestSlotNote) guestSlotNote.textContent = layout.guestNote;
+          if (brollSlotNote) brollSlotNote.textContent = layout.brollNote;
+          document.querySelectorAll(".layout-chip").forEach(function (button) {
+            button.setAttribute("aria-pressed", String(button.dataset.layout === activeLayout));
+          });
         }
 
         function updateSlotStatus(message) {
@@ -1009,12 +1110,25 @@
             return;
           }
           var filled = requiredFilledCount();
-          if (filled === 2) {
-            slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
+          var layout = layouts[activeLayout];
+          if (filled === layout.requiredSlots.length) {
+            slotStatus.textContent = layout.readyStatus;
             return;
           }
-          slotStatus.textContent = filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
+          slotStatus.textContent = layout.countStatus(filled);
         }
+
+        document.querySelectorAll(".layout-chip").forEach(function (button) {
+          button.addEventListener("click", function () {
+            if (button.dataset.layout === activeLayout) {
+              return;
+            }
+            activeLayout = button.dataset.layout;
+            clearPlacedTracks();
+            renderLayout();
+            updateSlotStatus(layouts[activeLayout].countStatus(0));
+          });
+        });
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
           zone.addEventListener("dragover", function (event) {
@@ -1046,15 +1160,12 @@
 
         if (resetButton) {
           resetButton.addEventListener("click", function () {
-            document.querySelectorAll(".drop-zone.filled").forEach(function (zone) {
-              zone.classList.remove("filled");
-              var placed = zone.querySelector(".placed-track");
-              if (placed) placed.remove();
-            });
-            updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
+            clearPlacedTracks();
+            updateSlotStatus(layouts[activeLayout].countStatus(0));
           });
         }
 
+        renderLayout();
         updateContinueLink(requiredFilledCount());
       }());
     </script>
