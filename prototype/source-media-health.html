@@ -729,6 +729,21 @@
         return name.split(" — ")[0];
       }
 
+      function conditionDisplayLabel(conditionKey) {
+        const condition = conditions[conditionKey];
+        if (!condition) return null;
+        const chip = condition.chip;
+        if (typeof chip === "string" && chip.length) return chip;
+        const label = condition.label;
+        return typeof label === "string" && label.length ? label : null;
+      }
+
+      function batchOpenLinkLabel(result) {
+        const bucket = bucketLabel(result.name);
+        const detail = conditionDisplayLabel(result.conditionKey);
+        return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
+      }
+
       function renderBatchConditionTags(flagged) {
         batchConditionTagsElement.replaceChildren();
         batchConditionTagsElement.hidden = true;
@@ -802,7 +817,7 @@
                 const jump = document.createElement("button");
                 jump.type = "button";
                 jump.className = "secondary";
-                jump.textContent = "Open track";
+                jump.textContent = batchOpenLinkLabel(result);
                 jump.addEventListener("click", () => jumpToSpeaker(result.id));
                 row.append(copy, jump);
                 return row;
