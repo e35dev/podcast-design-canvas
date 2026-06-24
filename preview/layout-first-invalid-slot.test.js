@@ -145,6 +145,8 @@ function emptyVideo(name) { return { name, type: "video/mp4", size: 0 }; }
 const ctl = createLayoutFirstController(documentStub, { URL: urlApi });
 const host = ctl.zonesBySlot.host;
 const errorText = elementsById["layout-error"];
+const errorCard = elementsById["layout-error-card"];
+const slotStatus = elementsById["layout-slot-status"];
 
 function slotState(slot) {
   const zone = ctl.zonesBySlot[slot];
@@ -158,6 +160,11 @@ assert.ok(!host.classList.contains("filled"), "a rejected file does not fill the
 assert.match(errorText.textContent, /Host/, "the error names the slot that rejected the file");
 assert.equal(slotState("host").textContent, "Invalid file", "a rejected slot badge does not read Needs video");
 assert.ok(slotState("host").classList.contains("is-invalid"), "the rejected slot badge carries the invalid state");
+assert.doesNotMatch(
+  slotStatus.textContent,
+  /Still need the Host/,
+  "the side-panel summary does not treat a rejected slot as still needing a video",
+);
 
 // Placing a valid video in that slot clears the invalid flag.
 ctl.placeVideoFile(host, video("host-cam.mp4"));
@@ -176,6 +183,18 @@ ctl.placeVideoFile(host, notVideo("poster-again.png"));
 assert.ok(!guest.classList.contains("is-invalid"), "a new rejection clears the prior slot's invalid flag");
 assert.ok(host.classList.contains("is-invalid"), "only the slot named in the error stays flagged");
 assert.match(errorText.textContent, /Host/, "the error follows the latest rejection");
+
+// Placing a valid video in another slot keeps the invalid slot's error visible.
+ctl.placeVideoFile(guest, video("guest-cam.mp4"));
+assert.ok(host.classList.contains("is-invalid"), "host stays flagged while guest is filled");
+assert.ok(guest.classList.contains("filled"), "guest accepts a valid video");
+assert.match(errorText.textContent, /Host/, "the invalid-slot error stays visible after another slot is filled");
+assert.ok(errorCard.hidden === false, "the error card stays open while a slot remains invalid");
+assert.doesNotMatch(
+  slotStatus.textContent,
+  /Still need the Host/,
+  "a filled guest plus invalid host does not list host in Still need",
+);
 
 // Removing/clearing the slot clears the flag (reset path goes through clearZone).
 ctl.placeVideoFile(guest, notVideo("guest.png"));

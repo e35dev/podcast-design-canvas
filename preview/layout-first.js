@@ -138,10 +138,24 @@
       zones.forEach((candidate) => {
         if (candidate !== zone && candidate.classList) {
           candidate.classList.remove("is-invalid");
+          candidate.dataset.invalidMessage = "";
         }
       });
       if (zone && zone.classList) zone.classList.add("is-invalid");
+      if (zone && zone.dataset) zone.dataset.invalidMessage = message;
       setError(message);
+    }
+
+    function firstInvalidZone() {
+      return zones.find((zone) => {
+        return zone.classList.contains("is-invalid") && !zone.classList.contains("is-hidden");
+      });
+    }
+
+    function syncInvalidError() {
+      const invalid = firstInvalidZone();
+      const message = invalid && invalid.dataset && invalid.dataset.invalidMessage;
+      setError(message || "");
     }
 
     // The same recording placed in two visible speaker slots would put one person in two
@@ -243,11 +257,18 @@
         slotStatus.textContent = `Required speaker videos ready. ${brollNote}`;
       } else {
         const missingNames = requiredSlots()
-          .filter((zone) => !zone.classList.contains("filled"))
+          .filter((zone) => {
+            return !zone.classList.contains("filled") && !zone.classList.contains("is-invalid");
+          })
           .map((zone) => SLOT_LABELS[zone.dataset.slot] || zone.dataset.slot);
-        const noun = missingNames.length > 1 ? "videos" : "video";
-        slotStatus.textContent =
-          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. ${brollNote}`;
+        if (missingNames.length > 0) {
+          const noun = missingNames.length > 1 ? "videos" : "video";
+          slotStatus.textContent =
+            `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. ${brollNote}`;
+        } else {
+          slotStatus.textContent =
+            `${filled} of ${total} required speaker videos ready. ${brollNote}`;
+        }
       }
       updateContinueState();
     }
@@ -265,6 +286,7 @@
       revokeZoneUrl(zone);
       zone.classList.remove("filled");
       zone.classList.remove("is-invalid");
+      zone.dataset.invalidMessage = "";
       const placed = zone.querySelector(".placed-video");
       if (placed) placed.remove();
       const input = zone.querySelector("[data-file-input]");
@@ -309,8 +331,10 @@
         return;
       }
 
-      setError("");
-      if (zone.classList) zone.classList.remove("is-invalid");
+      if (zone.classList) {
+        zone.classList.remove("is-invalid");
+        zone.dataset.invalidMessage = "";
+      }
       clearMatchingSource(zone, file);
       clearZone(zone);
       zone.classList.add("filled");
@@ -350,6 +374,7 @@
       wrap.appendChild(remove);
       zone.insertBefore(wrap, zone.firstChild);
       updateSlotStatus();
+      syncInvalidError();
     }
 
     // Clear a single placed video without disturbing the other slots, so a creator who
@@ -359,7 +384,7 @@
         return;
       }
       clearZone(zone);
-      setError("");
+      syncInvalidError();
       updateSlotStatus();
       // The Remove button lived inside the cleared video, so keyboard/screen-reader focus
       // would otherwise fall to the page body. Return it to this slot's file input — the
