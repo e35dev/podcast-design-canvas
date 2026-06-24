@@ -25,6 +25,10 @@ function currentPublishIndex() {
 }
 
 function renderPublishNav() {
+  if (document.querySelector(".publish-nav")) {
+    return;
+  }
+
   const index = currentPublishIndex();
   if (index < 0) {
     return;
