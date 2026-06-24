@@ -279,6 +279,25 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent, #136f63);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover {
+        text-decoration: underline;
+      }
+
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent, #136f63);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -388,6 +407,9 @@
           fixes: ["review", "move", "switch", "accept"],
           title: (el) => `${el} falls outside the destination crop`,
           suggest: "Pull it inside the safe area, switch the crop layout, or accept it.",
+          // The destination crop is owned by the destination crop preview screen, so a
+          // crop-driven problem can open the screen that fixes it (#583).
+          owner: { fixScreen: "destination-crop-preview.html", fixLabel: "destination crop preview" },
         },
         watermark: {
           label: "Sits under the review watermark",
@@ -474,6 +496,7 @@
               title: check.title(elementLabel),
               action: check.suggest,
               tone: "review",
+              ...(check.owner ? { fixScreen: check.owner.fixScreen, fixLabel: check.owner.fixLabel } : {}),
             };
           }
 
@@ -596,6 +619,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
