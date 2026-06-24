@@ -202,11 +202,14 @@
 
       // The real fix screen each search result hands off to, so "Open <review>"
       // actually navigates to that screen instead of only marking the result handed.
+      // "clip" is reached from "Pin as clip candidate" so pinned moments carry into
+      // clip-candidate review instead of dead-ending on a status change.
       const ownerScreens = {
         glossary: "transcript-glossary.html",
         attribution: "speaker-attribution-review.html",
         chapter: "episode-chapter-markers.html",
         caption: "audio-caption-quality-review.html",
+        clip: "clip-candidate-review.html",
       };
 
       const sampleResults = [
@@ -462,14 +465,17 @@
           }
         }
 
-        const pinButton = document.createElement("button");
-        pinButton.type = "button";
-        pinButton.textContent = "Pin as clip candidate";
-        pinButton.addEventListener("click", () => {
+        // Pinning carries the moment into clip-candidate review as a real link,
+        // and still marks the searched line pinned (not publish-ready) on the way out.
+        const pinLink = document.createElement("a");
+        pinLink.className = "handoff-link";
+        pinLink.href = ownerScreens.clip;
+        pinLink.textContent = "Pin as clip candidate";
+        pinLink.addEventListener("click", () => {
           result.issue = "clip";
           setStatus(result.id, "pinned");
         });
-        actions.append(pinButton);
+        actions.append(pinLink);
 
         const dismissButton = document.createElement("button");
         dismissButton.type = "button";

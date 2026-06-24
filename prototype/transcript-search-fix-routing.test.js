@@ -18,6 +18,7 @@ const ownerScreens = {
   attribution: "speaker-attribution-review.html",
   chapter: "episode-chapter-markers.html",
   caption: "audio-caption-quality-review.html",
+  clip: "clip-candidate-review.html",
 };
 
 for (const [owner, file] of Object.entries(ownerScreens)) {
@@ -40,6 +41,17 @@ assert.ok(
 assert.ok(
   source.includes('handOffLink.className = "handoff-link"'),
   "hand-off link is class-tagged for styling",
+);
+
+// Pinning carries the moment into clip-candidate review as a navigable link,
+// not a dead-end status change.
+assert.ok(
+  source.includes('pinLink = document.createElement("a")'),
+  "pin action renders as an anchor",
+);
+assert.ok(
+  source.includes("pinLink.href = ownerScreens.clip"),
+  "pin action links to the clip-candidate review screen",
 );
 
 // Internal "owning surface" language stays out of the creator-facing detail copy.
