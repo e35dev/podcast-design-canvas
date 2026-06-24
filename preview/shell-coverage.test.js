@@ -43,6 +43,10 @@ assert.match(shell, /Host video slot/, "shell shows a host drop zone in the exam
 assert.match(shell, /Guest video slot/, "shell shows a guest drop zone in the example canvas");
 assert.match(shell, /Caption area/, "shell shows a caption slot in the example canvas");
 assert.match(shell, /B-roll drop zone/, "shell shows a contextual visuals drop zone in the example canvas");
+assert.match(shell, /Drag speaker tracks onto the layout/, "shell exposes draggable tracks for the example canvas");
+assert.match(shell, /data-slot="host"/, "shell labels the host slot for drag-in placement");
+assert.match(shell, /data-slot="guest"/, "shell labels the guest slot for drag-in placement");
+assert.match(shell, /data-slot="broll"/, "shell labels the b-roll slot for drag-in placement");
 assert.ok(
   shell.indexOf("Example podcast layout canvas") < shell.indexOf("Episode path"),
   "the example canvas leads the shell before the workflow lists",

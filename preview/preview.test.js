@@ -29,6 +29,12 @@ assert.match(html, /Host video slot/, "preview shell shows a host video drop zon
 assert.match(html, /Guest video slot/, "preview shell shows a guest video drop zone");
 assert.match(html, /Caption area/, "preview shell reserves a caption area on the example canvas");
 assert.match(html, /B-roll drop zone/, "preview shell shows a contextual visuals drop zone");
+assert.match(html, /Drag speaker tracks onto the layout/, "preview shell exposes draggable speaker tracks for the example canvas");
+assert.match(html, /draggable="true"/, "preview shell marks example canvas tracks as draggable");
+assert.match(html, /data-slot="host"/, "preview shell labels the host video slot for drag-in placement");
+assert.match(html, /data-slot="guest"/, "preview shell labels the guest video slot for drag-in placement");
+assert.match(html, /data-slot="broll"/, "preview shell labels the b-roll slot for drag-in placement");
+assert.ok(html.includes("dragover"), "preview shell handles drag-over on example canvas slots");
 assert.ok(
   html.includes("./app.html#canvas-layer-controls?path=episode"),
   "preview shell links the example canvas to canvas layer controls",

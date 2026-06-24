@@ -265,6 +265,65 @@
         line-height: 1.4;
       }
 
+      .track-palette {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .drag-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        border: 1px solid #bfd0ca;
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 12px;
+        cursor: grab;
+      }
+
+      .drag-chip.dragging {
+        opacity: 0.72;
+        cursor: grabbing;
+      }
+
+      .drag-chip:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .drop-zone.drag-over {
+        border-color: #ffffff;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .drop-zone.filled {
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .placed-track {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        min-height: 28px;
+        margin-bottom: 8px;
+        border-radius: 999px;
+        background: rgba(223, 245, 239, 0.96);
+        color: #075246;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 0 10px;
+      }
+
       .canvas-footer {
         position: absolute;
         right: 18px;
@@ -380,15 +439,20 @@
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
             <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
+            <div class="track-palette" aria-label="Drag speaker tracks onto the layout">
+              <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
+              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
+              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
+            </div>
             <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
               <span class="canvas-chip scene">Interview scene · intro beat</span>
               <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
               <div class="speaker-row">
-                <div class="drop-zone host">
+                <div class="drop-zone host" data-slot="host">
                   <span class="slot-label">Host video slot</span>
                   <span class="slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
                 </div>
-                <div class="drop-zone guest">
+                <div class="drop-zone guest" data-slot="guest">
                   <span class="slot-label">Guest video slot</span>
                   <span class="slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
                 </div>
@@ -398,7 +462,7 @@
                   <span class="slot-label">Caption area</span>
                   <div class="slot-note">Reserved for readable long-form captions and lower-thirds that never cover a speaker.</div>
                 </div>
-                <div class="title-slot drop-zone broll">
+                <div class="title-slot drop-zone broll" data-slot="broll">
                   <span class="slot-label">B-roll drop zone</span>
                   <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
                 </div>
@@ -842,5 +906,50 @@
 
       <p class="note">Start a local server from the repo root, then open <code>/preview/</code>. Example: <code>python3 -m http.server 8080</code></p>
     </main>
+    <script>
+      (function () {
+        var trackLabels = {
+          host: "Host track · Dana Brooks",
+          guest: "Guest track · Marcus Lee",
+          broll: "B-roll clip · intro beat",
+        };
+
+        document.querySelectorAll(".drag-chip").forEach(function (chip) {
+          chip.addEventListener("dragstart", function (event) {
+            event.dataTransfer.setData("text/plain", chip.dataset.track);
+            chip.classList.add("dragging");
+          });
+          chip.addEventListener("dragend", function () {
+            chip.classList.remove("dragging");
+          });
+        });
+
+        document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+          zone.addEventListener("dragover", function (event) {
+            event.preventDefault();
+            zone.classList.add("drag-over");
+          });
+          zone.addEventListener("dragleave", function () {
+            zone.classList.remove("drag-over");
+          });
+          zone.addEventListener("drop", function (event) {
+            event.preventDefault();
+            zone.classList.remove("drag-over");
+            var track = event.dataTransfer.getData("text/plain");
+            if (track !== zone.dataset.slot) {
+              return;
+            }
+            zone.classList.add("filled");
+            var placed = zone.querySelector(".placed-track");
+            if (!placed) {
+              placed = document.createElement("span");
+              placed.className = "placed-track";
+              zone.insertBefore(placed, zone.firstChild);
+            }
+            placed.textContent = trackLabels[track];
+          });
+        });
+      }());
+    </script>
   </body>
 </html>
