@@ -193,6 +193,18 @@ assert.equal(
   "layout-first handoff does not leak layout params into later episode screens",
 );
 
+const layoutBrollRoles = runApp("#speaker-role-mapping?path=episode&layout=interview&slots=host,guest&broll=placed");
+assert.equal(
+  layoutBrollRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
+  "layout-first optional b-roll flag reaches role mapping in the preview app",
+);
+assert.equal(
+  layoutBrollRoles.nodes.nextStep.href,
+  "#source-media-health?path=episode",
+  "optional b-roll flag does not leak into later episode screens",
+);
+
 const invalidLayoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest");
 assert.equal(
   invalidLayoutStartRoles.nodes.frame.src,

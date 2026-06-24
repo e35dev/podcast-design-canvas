@@ -101,6 +101,22 @@ function createPreviewAppRouting(order) {
     return layoutHandoff.completeSlotQueryForLayout(layout, value);
   }
 
+  function applyLayoutHandoffSearch(screen, params, out) {
+    const path = params.get("path");
+    const layout = params.get("layout");
+    const layoutSlots = normalizedLayoutSlots(layout, params.get("slots"));
+    if (screen !== "speaker-role-mapping" || path !== "episode") {
+      return;
+    }
+    if (layoutSlots) {
+      out.set("layout", layout);
+      out.set("slots", layoutSlots);
+    }
+    if (params.get("broll") === "placed") {
+      out.set("broll", "placed");
+    }
+  }
+
   function routeSearchFor(screen, rawSearch) {
     const params = new URLSearchParams(rawSearch || "");
     const out = new URLSearchParams();
@@ -131,10 +147,7 @@ function createPreviewAppRouting(order) {
     if (path === "publish" && pathedPublishScreens.has(screen)) {
       out.set("path", "publish");
     }
-    if (screen === "speaker-role-mapping" && path === "episode" && layoutSlots) {
-      out.set("layout", layout);
-      out.set("slots", layoutSlots);
-    }
+    applyLayoutHandoffSearch(screen, params, out);
     const search = out.toString();
     return search ? `?${search}` : "";
   }
@@ -181,7 +194,8 @@ function createPreviewAppRouting(order) {
         return {};
       }
       if (screen === "episode-readiness" && offset > 0) {
-        return { screen: "speaker-role-mapping", search };
+        const handoffSearch = routeSearchFor("speaker-role-mapping", search);
+        return { screen: "speaker-role-mapping", search: handoffSearch || search };
       }
       if (screen === "speaker-role-mapping" && offset < 0) {
         return { screen: "episode-readiness", search };
