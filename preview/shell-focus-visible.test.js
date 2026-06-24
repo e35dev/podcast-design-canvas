@@ -1,8 +1,7 @@
 "use strict";
 
-// Keyboard focus-visibility guard for the preview shell (#581) and shared
-// path navigation scripts (#583). Every focusable rule that styles
-// :focus-visible must keep a visible focus ring.
+// Keyboard focus-visibility guard for the preview shell (#581), screen
+// catalog entry (linked from the shell), and shared path navigation scripts.
 // Run with: `node preview/shell-focus-visible.test.js`
 
 const fs = require("fs");
@@ -10,10 +9,13 @@ const path = require("path");
 const assert = require("assert");
 
 const previewDir = __dirname;
-const shellFiles = fs
-  .readdirSync(previewDir)
-  .filter((name) => name.endsWith(".html") || name.endsWith("-nav.js"))
-  .map((name) => path.join(previewDir, name));
+const shellFiles = [
+  path.join(previewDir, "..", "index.html"),
+  ...fs
+    .readdirSync(previewDir)
+    .filter((name) => name.endsWith(".html") || name.endsWith("-nav.js"))
+    .map((name) => path.join(previewDir, name)),
+];
 
 assert.ok(shellFiles.length > 0, "preview shell and path-nav files exist for focus guard");
 
@@ -23,7 +25,7 @@ let checkedFocusRules = 0;
 
 for (const filePath of shellFiles) {
   const css = fs.readFileSync(filePath, "utf8");
-  const name = path.basename(filePath);
+  const name = path.relative(path.join(previewDir, ".."), filePath);
   let match;
   while ((match = ruleBlock.exec(css)) !== null) {
     const selector = match[1];
@@ -49,4 +51,4 @@ for (const filePath of shellFiles) {
 
 assert.ok(checkedFocusRules > 0, "found :focus-visible rules to verify in the shell and path nav");
 
-console.log(`shell focus-visible guard: ${checkedFocusRules} focus rules verified across shell and path nav`);
+console.log(`shell focus-visible guard: ${checkedFocusRules} focus rules verified across catalog, shell, and path nav`);

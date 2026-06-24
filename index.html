@@ -135,10 +135,16 @@
         border-radius: 999px;
       }
 
-      nav.lanes a:hover,
-      nav.lanes a:focus {
+      nav.lanes a:hover {
         color: var(--accent-ink);
         background: #eef4f2;
+      }
+
+      nav.lanes a:focus-visible {
+        color: var(--accent-ink);
+        background: #eef4f2;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       main {
@@ -205,12 +211,18 @@
         transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
       }
 
-      .card:hover,
-      .card:focus {
+      .card:hover {
         border-color: var(--accent);
         box-shadow: 0 6px 18px rgba(16, 32, 29, 0.08);
         transform: translateY(-1px);
-        outline: none;
+      }
+
+      .card:focus-visible {
+        border-color: var(--accent);
+        box-shadow: 0 6px 18px rgba(16, 32, 29, 0.08);
+        transform: translateY(-1px);
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .card h3 {
