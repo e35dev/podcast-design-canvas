@@ -15,6 +15,12 @@ const CLEANUP_FLOW = [
   { id: "on-screen-correction-note", file: "on-screen-correction-note.html", label: "On-screen correction note" },
 ];
 
+const PREVIEW_APP_CLEANUP_TARGETS = new Set([
+  "publish-checklist",
+  ...CLEANUP_FLOW.map((step) => step.id),
+  "contextual-broll-moments",
+]);
+
 function currentCleanupIndex() {
   const fromBody = document.body.dataset.cleanupStep;
   if (fromBody) {
@@ -26,6 +32,41 @@ function currentCleanupIndex() {
 
   const name = window.location.pathname.split("/").pop() || "";
   return CLEANUP_FLOW.findIndex((step) => step.file === name);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppCleanupTarget(file) {
+  return PREVIEW_APP_CLEANUP_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setCleanupScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+  }
 }
 
 function renderCleanupNav() {
@@ -106,11 +147,13 @@ function renderCleanupNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "← Preview shell";
   wrap.appendChild(home);
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
@@ -122,11 +165,13 @@ function renderCleanupNav() {
   if (previous) {
     const prevLink = document.createElement("a");
     prevLink.href = previous.file;
+    setCleanupScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const prep = document.createElement("a");
     prep.href = "publish-checklist.html";
+    setCleanupScreenLink(prep, "publish-checklist.html");
     prep.textContent = "Previous: Publish checklist";
     wrap.appendChild(prep);
   }
@@ -134,11 +179,13 @@ function renderCleanupNav() {
   if (next) {
     const nextLink = document.createElement("a");
     nextLink.href = next.file;
+    setCleanupScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
     start.href = "contextual-broll-moments.html";
+    setCleanupScreenLink(start, "contextual-broll-moments.html");
     start.textContent = "Continue: Contextual b-roll moments";
     wrap.appendChild(start);
   }

@@ -46,6 +46,7 @@ function createElement(tagName) {
     className: "",
     href: "",
     id: "",
+    target: "",
     textContent: "",
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -68,7 +69,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName, cleanupStep) {
+function makeWindow(fileName, embedded = false) {
+  const window = { location: { pathname: `/prototype/${fileName}` } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  return window;
+}
+
+function renderNavFor(fileName, cleanupStep, embedded = false) {
   const head = createElement("head");
   const body = createElement("body");
   if (cleanupStep) {
@@ -91,14 +99,16 @@ function renderNavFor(fileName, cleanupStep) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}` } },
+    window: makeWindow(fileName, embedded),
   });
 
   return flatten(body);
 }
 
 function linkWithText(nodes, text) {
-  return nodes.find((node) => node.tagName === "a" && node.textContent === text);
+  const link = nodes.find((node) => node.tagName === "a" && node.textContent === text);
+  assert.ok(link, `Missing link: ${text}`);
+  return link;
 }
 
 const firstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-crosstalk-cleanup");
@@ -116,8 +126,56 @@ assert.ok(
   "middle cleanup screen renders the previous cleanup step",
 );
 assert.ok(
-  !linkWithText(middleNav, "Previous: Publish checklist"),
+  !middleNav.some((node) => node.tagName === "a" && node.textContent === "Previous: Publish checklist"),
   "middle cleanup screen does not reuse the publish checklist back link",
 );
+
+const lastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correction-note");
+const visualsHandoff = linkWithText(lastNav, "Continue: Contextual b-roll moments");
+assert.equal(
+  visualsHandoff.href,
+  "contextual-broll-moments.html",
+  "last cleanup screen hands off to contextual visuals",
+);
+
+const embeddedFirstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-crosstalk-cleanup", true);
+const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
+assert.equal(embeddedHome.href, "../preview/", "embedded cleanup nav keeps the shell-home href");
+assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPublishBack = linkWithText(embeddedFirstNav, "Previous: Publish checklist");
+assert.equal(
+  embeddedPublishBack.href,
+  "../preview/app.html#publish-checklist",
+  "embedded cleanup nav routes the publish back-link through the preview app hash",
+);
+assert.equal(embeddedPublishBack.target, "_top", "embedded publish back-link targets the parent app");
+const embeddedNext = linkWithText(embeddedFirstNav, "Next: Transcript glossary");
+assert.equal(
+  embeddedNext.href,
+  "../preview/app.html#transcript-glossary",
+  "embedded cleanup nav routes next cleanup steps through the preview app hash",
+);
+assert.equal(embeddedNext.target, "_top", "embedded cleanup next link targets the parent app");
+
+const embeddedMiddleNav = renderNavFor("line-pickup-insert.html", "line-pickup-insert", true);
+assert.equal(
+  linkWithText(embeddedMiddleNav, "Previous: Accessibility & readability").href,
+  "../preview/app.html#accessibility-readability-checks",
+  "embedded cleanup nav routes previous cleanup steps through the preview app hash",
+);
+assert.equal(
+  linkWithText(embeddedMiddleNav, "Next: On-screen correction note").href,
+  "../preview/app.html#on-screen-correction-note",
+  "embedded cleanup nav routes middle next steps through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correction-note", true);
+const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Contextual b-roll moments");
+assert.equal(
+  embeddedHandoff.href,
+  "../preview/app.html#contextual-broll-moments",
+  "embedded cleanup nav routes the contextual visuals handoff through the preview app hash",
+);
+assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets the parent app");
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");
