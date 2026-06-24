@@ -183,7 +183,6 @@
 
           <div class="track-list" id="trackList"></div>
           <div class="actions" style="margin-top: 16px;">
-            <button type="button" id="autoMatch">Preview automatic match</button>
             <button type="button" id="resetSample">Reset sample</button>
           </div>
         </div>
@@ -268,7 +267,6 @@
       const presetPreview = document.querySelector("#presetPreview");
       const summaryGrid = document.querySelector("#summaryGrid");
       const issuesElement = document.querySelector("#issues");
-      const autoMatchButton = document.querySelector("#autoMatch");
       const resetSampleButton = document.querySelector("#resetSample");
       const continuePresetButton = document.querySelector("#continuePreset");
 
@@ -491,7 +489,6 @@
         renderStatus();
       }
 
-      autoMatchButton.addEventListener("click", () => setGuestDecision("auto", "needs review"));
       resetSampleButton.addEventListener("click", () => {
         state = freshState();
         render();
