@@ -22,6 +22,11 @@ const PREVIEW_APP_SETUP_TARGETS = new Set([
   screenIdFromFile(SPEAKER_SETUP_HANDOFF.file),
   ...SPEAKER_SETUP_FLOW.map((step) => step.id),
 ]);
+const PREVIEW_APP_SETUP_HANDOFFS = new Map([
+  ["speaker-sync-repair", ""],
+  ["social-context-intake", "?path=ingest"],
+  ["preset-comparison-preview", ""],
+]);
 const SETUP_IN_PAGE_TARGETS = new Set([
   screenIdFromFile(SPEAKER_SETUP_ENTRY.file),
   ...SPEAKER_SETUP_FLOW.map((step) => step.id),
@@ -48,6 +53,27 @@ function screenIdFromFile(file) {
 
 function isPreviewAppSetupTarget(file) {
   return PREVIEW_APP_SETUP_TARGETS.has(screenIdFromFile(file));
+}
+
+function isSetupInPageTarget(file) {
+  return SETUP_IN_PAGE_TARGETS.has(screenIdFromFile(file));
+}
+
+function setupHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_SETUP_HANDOFFS.has(screen) ? PREVIEW_APP_SETUP_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppSetupHandoff(file) {
+  return setupHandoffSearch(file) !== null;
+}
+
+function isPreviewAppSetupRoute(file) {
+  return isPreviewAppSetupTarget(file) || isPreviewAppSetupHandoff(file);
+}
+
+function shouldRouteSetupHandoffInPreviewApp(file) {
+  return isEmbeddedInPreviewApp() && isPreviewAppSetupHandoff(file);
 }
 
 function isEmbeddedInPreviewApp() {
@@ -100,7 +126,12 @@ function routeSearchFromFile(file) {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = setupHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
@@ -125,7 +156,7 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setSetupScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppSetupTarget(file)) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppSetupRoute(file)) {
     link.href = previewAppHref(file);
     link.target = "_top";
     return;
@@ -139,7 +170,13 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeSetupHref(href) {
-  return isLocalScreenHref(href) && SETUP_IN_PAGE_TARGETS.has(screenIdFromFile(href));
+  if (!isLocalScreenHref(href)) {
+    return false;
+  }
+  if (isSetupInPageTarget(href)) {
+    return true;
+  }
+  return shouldRouteSetupHandoffInPreviewApp(href);
 }
 
 function normalizeSetupScreenLink(link) {

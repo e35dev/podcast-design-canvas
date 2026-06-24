@@ -176,13 +176,52 @@ assert.equal(
 );
 assert.equal(embeddedRoleLink.target, "_top", "embedded speaker role link targets the parent app");
 
-const syncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode", true);
+const standaloneSyncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode");
 assert.equal(
-  syncRepairLink.href,
+  standaloneSyncRepairLink.href,
   "speaker-sync-repair.html",
-  "speaker setup nav leaves non-setup in-page fix links unchanged",
+  "standalone speaker setup nav leaves sync repair fix links direct",
 );
-assert.equal(syncRepairLink.target, "", "speaker setup nav does not retarget non-setup fix links");
+assert.equal(standaloneSyncRepairLink.target, "", "standalone sync repair links do not force a top target");
+
+const embeddedSyncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode", true);
+assert.equal(
+  embeddedSyncRepairLink.href,
+  "../preview/app.html#speaker-sync-repair",
+  "embedded speaker setup nav routes sync repair fix links through the preview app",
+);
+assert.equal(embeddedSyncRepairLink.target, "_top", "embedded sync repair links target the parent app");
+
+const standaloneSocialLink = normalizeSetupHrefFor("social-context-intake.html", "?path=episode");
+assert.equal(
+  standaloneSocialLink.href,
+  "social-context-intake.html",
+  "standalone speaker setup nav leaves social context fix links direct",
+);
+
+const embeddedSocialLink = normalizeSetupHrefFor("social-context-intake.html", "?path=episode", true);
+assert.equal(
+  embeddedSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded speaker setup nav routes social context fix links through the ingest preview app path",
+);
+assert.equal(embeddedSocialLink.target, "_top", "embedded social context links target the parent app");
+
+const embeddedPresetComparisonLink = normalizeSetupHrefFor("preset-comparison-preview.html", "?path=episode", true);
+assert.equal(
+  embeddedPresetComparisonLink.href,
+  "../preview/app.html#preset-comparison-preview",
+  "embedded speaker setup nav routes preset comparison handoffs through the preview app",
+);
+assert.equal(embeddedPresetComparisonLink.target, "_top", "embedded preset comparison links target the parent app");
+
+const externalSetupLink = normalizeSetupHrefFor("https://example.com/speaker-sync-repair.html", "?path=episode", true);
+assert.equal(
+  externalSetupLink.href,
+  "https://example.com/speaker-sync-repair.html",
+  "speaker setup nav leaves external links unchanged",
+);
+assert.equal(externalSetupLink.target, "", "speaker setup nav does not retarget external links");
 
 const dynamicRoleLink = normalizeSetupClickFor("speaker-role-mapping.html", "?path=episode", true);
 assert.equal(
@@ -191,6 +230,14 @@ assert.equal(
   "speaker setup nav normalizes dynamically rendered setup links before navigation",
 );
 assert.equal(dynamicRoleLink.target, "_top", "dynamic embedded setup links target the parent app");
+
+const dynamicSocialLink = normalizeSetupClickFor("social-context-intake.html", "?path=episode", true);
+assert.equal(
+  dynamicSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "speaker setup nav normalizes dynamically rendered social context links before navigation",
+);
+assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded social context links target the parent app");
 
 const firstNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review");
 assert.equal(
