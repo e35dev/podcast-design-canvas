@@ -1078,4 +1078,29 @@ assert.equal(guestZone.classList.contains("drag-over"), true, "the destination s
 const hostZone = canvasCtl.zonesBySlot.host;
 assert.equal(hostZone.classList.contains("drag-over"), false, "the source slot does not highlight while its video is being dragged away");
 
+// A cancelled placed-video drag must clear any destination highlight that lit up mid-drag.
+placedWrap.listeners.dragend();
+assert.equal(guestZone.classList.contains("drag-over"), false, "dragend clears a destination highlight after a cancelled move");
+assert.equal(hostZone.classList.contains("drag-over"), false, "dragend clears any lingering slot highlights");
+
+// Dropping a placed video on the canvas gap (not a slot) is a no-op and must not leave the
+// destination slot glowing as if the move succeeded.
+canvasCtl.placeVideoFile(canvasCtl.zonesBySlot.host, { name: "host.mp4", type: "video/mp4", size: 4, lastModified: 4 });
+const moveWrap = canvasCtl.zonesBySlot.host.querySelector(".placed-video");
+moveWrap.listeners.dragstart({
+  dataTransfer: {
+    setData() {},
+    effectAllowed: "move",
+  },
+});
+guestZone.listeners.dragenter({ preventDefault() {} });
+assert.equal(guestZone.classList.contains("drag-over"), true, "the destination slot highlights while a placed video passes over it");
+canvas.listeners.drop({
+  preventDefault() {},
+  stopPropagation() {},
+  dataTransfer: { files: [] },
+});
+assert.equal(guestZone.classList.contains("drag-over"), false, "a canvas-gap drop clears the destination highlight");
+assert.equal(canvasCtl.zonesBySlot.host.classList.contains("filled"), true, "a canvas-gap drop leaves the video in its source slot");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
