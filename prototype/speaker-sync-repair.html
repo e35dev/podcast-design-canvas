@@ -240,6 +240,30 @@
         font-size: 14px;
       }
 
+      .preview-moments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      button.moment-choice {
+        min-height: 36px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      button.moment-choice[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #e0f3ee;
+        color: var(--accent);
+      }
+
       @media (max-width: 640px) {
         .compare { grid-template-columns: 1fr; }
       }
@@ -400,6 +424,31 @@
         "audio-only": "Guest stays in the episode without video here",
       };
 
+      const previewMoments = [
+        { id: "episode-start", label: "Episode start" },
+        { id: "first-guest", label: "First guest response" },
+        { id: "midpoint", label: "Midpoint" },
+        { id: "final-exchange", label: "Final exchange" },
+        { id: "drift-point", label: "Detected drift point" },
+      ];
+
+      const issueDefaultPreviewMoment = {
+        "video-late": "episode-start",
+        "audio-early": "first-guest",
+        drift: "midpoint",
+        "ends-early": "final-exchange",
+        duplicate: "midpoint",
+        attribution: "drift-point",
+      };
+
+      const momentSeverity = {
+        "episode-start": 1,
+        "first-guest": 0.82,
+        midpoint: 0.64,
+        "final-exchange": 0.46,
+        "drift-point": 0.88,
+      };
+
       const syncProfiles = {
         "video-late": {
           before: { guestAudio: 0, guestVideo: 24 },
@@ -445,8 +494,8 @@
       };
 
       const sampleTracks = [
-        { id: "host", name: "Host — Dana Brooks", issue: "none", proposedRepair: "", resolution: "accepted" },
-        { id: "guest", name: "Guest 1 — Marcus Lee", issue: "video-late", proposedRepair: "align-host", resolution: null },
+        { id: "host", name: "Host — Dana Brooks", issue: "none", proposedRepair: "", resolution: "accepted", previewMoment: "episode-start" },
+        { id: "guest-1", name: "Guest 1 — Marcus Lee", issue: "video-late", proposedRepair: "align-host", resolution: null, previewMoment: "episode-start" },
       ];
 
       let tracks = structuredClone(sampleTracks);
@@ -552,6 +601,9 @@
 
       function renderTrack(track, index, result) {
         const issue = issues[track.issue];
+        if (!track.previewMoment) {
+          track.previewMoment = issueDefaultPreviewMoment[track.issue] || "episode-start";
+        }
         const article = document.createElement("article");
         article.className = "track";
 
@@ -567,7 +619,8 @@
         const moment = document.createElement("div");
         moment.className = "moment";
         const momentTitle = document.createElement("strong");
-        momentTitle.textContent = `Preview: ${issue.moment}`;
+        const selectedMoment = previewMoments.find((entry) => entry.id === track.previewMoment);
+        momentTitle.textContent = `Preview: ${selectedMoment?.label ?? issue.moment}`;
         const momentCopy = document.createElement("span");
         momentCopy.className = "moment-note";
         momentCopy.textContent = issue.description(track.name);
@@ -605,6 +658,7 @@
           repairLabel.appendChild(repairSelect);
           article.appendChild(repairLabel);
 
+          article.appendChild(renderPreviewMomentPicker(track, index));
           article.appendChild(renderCompare(track));
 
           const actions = document.createElement("div");
@@ -667,6 +721,7 @@
           const choices = repairChoices(tracks[index].issue);
           tracks[index].proposedRepair = choices[0] || "";
           tracks[index].resolution = null;
+          tracks[index].previewMoment = issueDefaultPreviewMoment[tracks[index].issue] || "episode-start";
         }
 
         if (field === "proposedRepair") {
@@ -674,6 +729,61 @@
         }
 
         render();
+      }
+
+      function bucketLabel(track) {
+        return track.name.split(" — ")[0];
+      }
+
+      function renderPreviewMomentPicker(track, index) {
+        const label = document.createElement("label");
+        label.textContent = "Preview moment";
+        const group = document.createElement("div");
+        group.className = "preview-moments";
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", "Preview moment");
+
+        for (const moment of previewMoments) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "secondary moment-choice";
+          button.textContent = moment.label;
+          button.setAttribute("aria-pressed", track.previewMoment === moment.id ? "true" : "false");
+          button.addEventListener("click", () => {
+            tracks[index].previewMoment = moment.id;
+            render();
+          });
+          group.appendChild(button);
+        }
+
+        label.appendChild(group);
+        return label;
+      }
+
+      function scaleLayout(layout, severity) {
+        if (!layout) return layout;
+
+        return {
+          guestAudio: layout.guestAudio ? Math.round(layout.guestAudio * severity) : layout.guestAudio,
+          guestVideo: layout.guestVideo ? Math.round(layout.guestVideo * severity) : layout.guestVideo,
+          guestTail: layout.guestTail ? Math.round(layout.guestTail * severity) : layout.guestTail,
+          guestWidth: layout.guestWidth ? Math.round(40 + (layout.guestWidth - 40) * severity) : layout.guestWidth,
+          duplicate: layout.duplicate,
+          wrongCaption: layout.wrongCaption,
+          fresh: layout.fresh,
+        };
+      }
+
+      function layoutForMoment(base, issueKey, momentId, repairKey) {
+        const primary = issueDefaultPreviewMoment[issueKey];
+        const severity = momentId === primary ? 1 : momentSeverity[momentId] ?? 0.6;
+        const scaled = scaleLayout(base, severity);
+
+        if (repairKey === "align-host") {
+          return { guestAudio: 0, guestVideo: 0, guestWidth: scaled?.guestWidth ?? 72, fresh: scaled?.fresh };
+        }
+
+        return scaled;
       }
 
       function renderCompare(track) {
@@ -685,21 +795,28 @@
         compare.className = "compare";
 
         const profile = syncProfiles[track.issue];
-        const before = profile?.before ?? { guestAudio: 0, guestVideo: 0 };
-        const after = profile?.repairs?.[track.proposedRepair] ?? before;
+        const before = layoutForMoment(profile?.before, track.issue, track.previewMoment);
+        const after = layoutForMoment(
+          profile?.repairs?.[track.proposedRepair] ?? profile?.before,
+          track.issue,
+          track.previewMoment,
+          track.proposedRepair,
+        );
         const effect = repairEffects[track.proposedRepair];
         const issue = issues[track.issue];
+        const selectedMoment = previewMoments.find((entry) => entry.id === track.previewMoment);
 
         compare.append(
-          renderPreviewCard("Before repair", before, false, issue.description(track.name)),
+          renderPreviewCard("Before repair", before, false, issue.description(track.name), [], track),
           renderPreviewCard(
             track.resolution === "repaired" ? "Repair confirmed" : "With repair",
             after,
             true,
             track.proposedRepair
-              ? `Preview after ${repairs[track.proposedRepair].toLowerCase()} at ${issue.moment.toLowerCase()}.`
+              ? `Preview after ${repairs[track.proposedRepair].toLowerCase()} at ${selectedMoment.label.toLowerCase()}.`
               : "Choose a repair to preview the difference.",
             effect ? [effect] : [],
+            track,
           ),
         );
 
@@ -707,12 +824,12 @@
         return wrap;
       }
 
-      function renderPreviewCard(title, layout, repaired, note, effects = []) {
+      function renderPreviewCard(title, layout, repaired, note, effects, track) {
         const card = document.createElement("article");
         card.className = "preview-card";
         const cardTitle = document.createElement("strong");
         cardTitle.textContent = title;
-        card.append(cardTitle, renderAlignment(layout, repaired));
+        card.append(cardTitle, renderAlignment(layout, repaired, track));
 
         const copy = document.createElement("p");
         copy.className = "preview-note";
@@ -735,12 +852,12 @@
         return card;
       }
 
-      function renderAlignment(layout, repaired) {
+      function renderAlignment(layout, repaired, track) {
         const alignment = document.createElement("div");
         alignment.className = "alignment";
         alignment.append(
           renderLane("Host", { guestAudio: 0, guestVideo: 0, guestWidth: 72 }, repaired),
-          renderLane("Guest", layout, repaired),
+          renderLane(bucketLabel(track), layout, repaired),
         );
 
         if (layout.wrongCaption) {
