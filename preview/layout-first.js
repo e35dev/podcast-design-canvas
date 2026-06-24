@@ -118,6 +118,9 @@
         }
       } else {
         continueLink.removeAttribute("href");
+        if (handoff && typeof handoff.clear === "function") {
+          handoff.clear(storage);
+        }
       }
     }
 

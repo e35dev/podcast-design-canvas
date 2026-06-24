@@ -160,6 +160,17 @@
     }
   }
 
+  function clear(storage) {
+    if (!storage) {
+      return;
+    }
+    try {
+      storage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      // Clearing is best-effort; the URL handoff still reflects the visible slots.
+    }
+  }
+
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
     const queryState = stateFromSlots(params.get("layout"), slotsFromQuery(params.get("slots")).map((slot) => ({ slot })));
@@ -213,6 +224,7 @@
   const api = {
     STORAGE_KEY,
     completeSlotQueryForLayout,
+    clear,
     hrefWithState,
     load,
     normalizeLayout,

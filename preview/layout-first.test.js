@@ -167,6 +167,9 @@ const storage = {
   getItem(key) {
     return stored[key] || null;
   },
+  removeItem(key) {
+    delete stored[key];
+  },
 };
 
 function video(name) {
@@ -307,6 +310,7 @@ assert.equal(
   "Continue re-gates after a required video is removed",
 );
 assert.ok(revokedUrls.includes("blob:guest.mp4"), "removing a slot revokes its object URL");
+assert.equal(stored[layoutHandoff.STORAGE_KEY], undefined, "removing a required video clears stale layout handoff storage");
 // Re-filling the cleared slot restores readiness.
 controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
 assert.equal(
@@ -336,6 +340,7 @@ assert.equal(elementsById["layout-error-card"].hidden, false, "non-video drops s
 assert.match(elementsById["layout-error"].textContent, /video/, "non-video error stays creator-facing");
 elementsById["layout-reset"].listeners.click();
 assert.equal(controller.filledRequiredSlots().length, 0, "reset clears filled required slots");
+assert.equal(stored[layoutHandoff.STORAGE_KEY], undefined, "reset clears stale layout handoff storage");
 assert.ok(revokedUrls.length > 0 && createdUrls.length > 0, "reset revokes created object URLs");
 
 // Switching layout preserves videos placed in slots that stay visible (#1026), and only
