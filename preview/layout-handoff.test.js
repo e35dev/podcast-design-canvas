@@ -142,6 +142,25 @@ assert.deepEqual(
   ],
   "role mapping can seed tracks from the selected layout slots",
 );
+assert.deepEqual(
+  handoff.assignedSourceCounts([
+    { name: "Host", role: "host", sig: "same" },
+    { name: "Unmapped", role: "", sig: "same" },
+    { name: "Mystery", role: "unknown", sig: "same" },
+    { name: "Guest", role: "guest", sig: "other" },
+  ], (track) => ["host", "guest"].includes(track.role)),
+  { same: 1, other: 1 },
+  "source counting can ignore unassigned or invalid role rows before duplicate checks",
+);
+assert.deepEqual(
+  handoff.assignedSourceNames([
+    { name: "Host", role: "host", sig: "same" },
+    { name: "Unmapped", role: "", sig: "same" },
+    { name: "Guest", role: "guest", sig: "same" },
+  ], "same", (track) => ["host", "guest"].includes(track.role)),
+  ["Host", "Guest"],
+  "source name rollups only list assigned speaker rows that share the recording",
+);
 
 assert.equal(handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }]), null);
 assert.equal(handoff.stateFromSlots("unknown", [{ slot: "host" }]), null);

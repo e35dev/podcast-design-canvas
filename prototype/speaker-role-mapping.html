@@ -454,6 +454,22 @@
         return `${clean.slice(0, -1).join(", ")} and ${clean[clean.length - 1]}`;
       }
 
+      function hasAssignedRole(track) {
+        return Boolean(track && track.role && roles[track.role]);
+      }
+
+      function assignedSourceCounts(list) {
+        return layoutHandoffApi && layoutHandoffApi.assignedSourceCounts
+          ? layoutHandoffApi.assignedSourceCounts(list, hasAssignedRole)
+          : {};
+      }
+
+      function assignedSourceNames(list, sig) {
+        return layoutHandoffApi && layoutHandoffApi.assignedSourceNames
+          ? layoutHandoffApi.assignedSourceNames(list, sig, hasAssignedRole)
+          : [];
+      }
+
       function evaluate(list) {
         // Count single-seat roles so two Hosts (or two Co-hosts) surface as a conflict
         // rather than silently letting whoever spoke first own the seat.
@@ -468,12 +484,7 @@
         // handoff). The same recording in two speaker slots means one person would fill
         // two frames — flag it here so the production gate reflects it, not just the start
         // page. Tracks without a carried identity (empty sig) are never flagged.
-        const sigCount = {};
-        for (const track of list) {
-          if (track.sig) {
-            sigCount[track.sig] = (sigCount[track.sig] || 0) + 1;
-          }
-        }
+        const sigCount = assignedSourceCounts(list);
 
         const results = list.map((track) => {
           const role = roles[track.role] ? track.role : "";
@@ -538,7 +549,7 @@
             const key = `sig:${track.sig}`;
             if (seenGroup.has(key)) return;
             seenGroup.add(key);
-            const names = list.filter((item) => item.sig === track.sig && roles[item.role]).map((item) => item.name);
+            const names = assignedSourceNames(list, track.sig);
             issues.push({
               title: `${joinNames(names)} use the same recording`,
               action: `Give each speaker their own video — one recording can't fill ${names.length} speaker frames.`,

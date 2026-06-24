@@ -106,6 +106,19 @@ assert.ok(
   !emptySigEval.results.some((result) => result.issue && /same recording/i.test(result.issue.title)),
   "tracks without a carried identity never trigger the same-recording flag",
 );
+const missingRoleSameRecording = evaluate([
+  { id: "h", name: "Host", role: "host", sig: SIG, signal: "file-name", decision: "confirmed" },
+  { id: "u", name: "Unmapped track", role: "", sig: SIG, signal: "file-name", decision: "suggested" },
+]);
+assert.strictEqual(missingRoleSameRecording.overall, "blocked", "a shared source with an unassigned track keeps the missing-role blocker");
+assert.ok(
+  missingRoleSameRecording.issues.some((issue) => /has no role yet/i.test(issue.title)),
+  "the unassigned track remains the creator-facing problem",
+);
+assert.ok(
+  !missingRoleSameRecording.issues.some((issue) => /same recording/i.test(issue.title)),
+  "one assigned speaker plus one unassigned track is not reported as a duplicate speaker recording",
+);
 
 // A cross-track conflict is one problem: the summary reports it ONCE and names the speakers
 // involved, instead of repeating an identical card for each participant.

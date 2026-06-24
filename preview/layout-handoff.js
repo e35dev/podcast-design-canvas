@@ -264,6 +264,33 @@
     }));
   }
 
+  function acceptsAssignedTrack(track, predicate) {
+    if (!track || !track.sig) {
+      return false;
+    }
+    if (typeof predicate === "function") {
+      return Boolean(predicate(track));
+    }
+    return Boolean(track.role);
+  }
+
+  function assignedSourceCounts(tracks, predicate) {
+    const counts = {};
+    (tracks || []).forEach((track) => {
+      if (!acceptsAssignedTrack(track, predicate)) {
+        return;
+      }
+      counts[track.sig] = (counts[track.sig] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function assignedSourceNames(tracks, sig, predicate) {
+    return (tracks || [])
+      .filter((track) => acceptsAssignedTrack(track, predicate) && track.sig === sig)
+      .map((track) => track.name);
+  }
+
   // A creator-facing list of placed slots for the role-mapping summary. When a real
   // file name carried over, show it next to the slot ("Host (host-cam.mp4)") so the
   // creator can confirm the right upload landed; otherwise fall back to the slot label.
@@ -283,6 +310,8 @@
 
   const api = {
     STORAGE_KEY,
+    assignedSourceCounts,
+    assignedSourceNames,
     completeSlotQueryForLayout,
     clear,
     hrefWithState,
