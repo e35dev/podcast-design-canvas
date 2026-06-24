@@ -40,6 +40,10 @@ assert.doesNotMatch(
   /layoutHandoffElement\.innerHTML/,
   "layout handoff summary is not rendered with innerHTML",
 );
+assert.ok(
+  html.includes("layoutHandoffApi.placementList(layoutHandoff)"),
+  "speaker role mapping summarizes placed videos with their carried file names",
+);
 
 const handoffState = handoff.stateFromSlots("interview", [{ slot: "host" }, { slot: "guest" }]);
 const seeded = handoff.tracksFromState(handoffState, []);

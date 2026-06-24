@@ -185,11 +185,27 @@
     }));
   }
 
+  // A creator-facing list of placed slots for the role-mapping summary. When a real
+  // file name carried over, show it next to the slot ("Host (host-cam.mp4)") so the
+  // creator can confirm the right upload landed; otherwise fall back to the slot label.
+  function placementList(state) {
+    if (!state || !state.slots || !state.slots.length) {
+      return "";
+    }
+    return state.slots
+      .map((slot) => {
+        const generic = `${slot.label} video`;
+        return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
+      })
+      .join(", ");
+  }
+
   const api = {
     STORAGE_KEY,
     hrefWithState,
     load,
     normalizeLayout,
+    placementList,
     queryForState,
     requiredSlotsFor,
     save,

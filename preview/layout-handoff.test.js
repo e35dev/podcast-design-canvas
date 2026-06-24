@@ -86,4 +86,16 @@ assert.deepEqual(
 assert.equal(handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }]), null);
 assert.equal(handoff.stateFromSlots("unknown", [{ slot: "host" }]), null);
 
+assert.equal(
+  handoff.placementList(interview),
+  "Host (host-cam.mp4), Guest (guest-cam.mp4)",
+  "placement list shows the carried file name next to each placed slot",
+);
+assert.equal(
+  handoff.placementList(handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }, { slot: "guest-b" }])),
+  "Host, Guest, Guest 2",
+  "placement list falls back to slot labels when no real file name carried over",
+);
+assert.equal(handoff.placementList(null), "", "placement list is empty without handoff state");
+
 console.log("layout handoff: state, URL, storage, and role-track mapping verified");
