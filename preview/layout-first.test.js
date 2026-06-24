@@ -382,4 +382,46 @@ assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "swit
 assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
 assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
 
-console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");
+// Readiness copy reflects whether optional b-roll has actually been placed (#1026), instead
+// of always saying it "can be added later". Uses a fresh controller to isolate state.
+const brollZones = [makeZone("host"), makeZone("guest"), makeZone("guest-b", "drop-zone is-hidden"), makeZone("broll")];
+const brollButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const brollById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const brollDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return brollById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return brollButtons;
+    if (selector === ".drop-zone[data-slot]") return brollZones;
+    return [];
+  },
+};
+const brollCtl = createLayoutFirstController(brollDoc, { URL: urlApi });
+brollCtl.placeVideoFile(brollCtl.zonesBySlot.host, video("h.mp4"));
+brollCtl.placeVideoFile(brollCtl.zonesBySlot.guest, video("g.mp4"));
+assert.match(brollById["layout-slot-status"].textContent, /Optional b-roll can be added later\./, "without b-roll the copy invites adding it later");
+brollCtl.placeVideoFile(brollCtl.zonesBySlot.broll, video("b.mp4"));
+assert.match(brollById["layout-slot-status"].textContent, /Optional b-roll is in place\./, "placing b-roll is acknowledged in the readiness copy");
+assert.doesNotMatch(brollById["layout-slot-status"].textContent, /can be added later/, "placed b-roll no longer says it can be added later");
+brollCtl.removeVideo(brollCtl.zonesBySlot.broll);
+assert.match(brollById["layout-slot-status"].textContent, /Optional b-roll can be added later\./, "removing b-roll reverts the readiness copy");
+// The acknowledgement also shows while required videos are still missing.
+brollCtl.resetVideos();
+brollCtl.placeVideoFile(brollCtl.zonesBySlot.broll, video("b2.mp4"));
+brollCtl.updateSlotStatus();
+assert.match(brollById["layout-slot-status"].textContent, /Still need the .*Optional b-roll is in place\./, "b-roll is acknowledged even before required videos are placed");
+
+console.log("layout-first landing: required speaker readiness, optional b-roll state, handoff, and layout-switch preservation verified");

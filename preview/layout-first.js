@@ -121,6 +121,14 @@
       }
     }
 
+    // The optional b-roll line should reflect reality: once a creator has placed b-roll it is
+    // misleading to keep telling them it "can be added later", so acknowledge it instead.
+    function brollNote() {
+      const broll = zonesBySlot.broll;
+      const placed = broll && broll.classList.contains("filled") && !broll.classList.contains("is-hidden");
+      return placed ? "Optional b-roll is in place." : "Optional b-roll can be added later.";
+    }
+
     function updateSlotStatus(message) {
       if (!slotStatus) return;
       if (message) {
@@ -132,14 +140,14 @@
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
       if (filled === total) {
-        slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
+        slotStatus.textContent = `Required speaker videos ready. ${brollNote()}`;
       } else {
         const missingNames = requiredSlots()
           .filter((zone) => !zone.classList.contains("filled"))
           .map((zone) => SLOT_LABELS[zone.dataset.slot] || zone.dataset.slot);
         const noun = missingNames.length > 1 ? "videos" : "video";
         slotStatus.textContent =
-          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. Optional b-roll can be added later.`;
+          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. ${brollNote()}`;
       }
       updateContinueState();
     }
