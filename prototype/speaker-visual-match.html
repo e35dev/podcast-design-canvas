@@ -158,6 +158,22 @@
       .issue.limit { border-left-color: var(--limit); }
       .issue.route { border-left-color: var(--info); }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       @media (max-width: 920px) {
         .workspace, .compare { grid-template-columns: 1fr; }
         .preset-preview { min-height: 300px; }
@@ -452,24 +468,53 @@
         const guest = currentAdjustment();
         const issues = [];
         if (state.guestState === "needs review") {
-          issues.push(["route", "Review only this mismatched track", "The automatic match is previewed because the guest would look noticeably different in the selected preset."]);
+          issues.push({
+            tone: "route",
+            title: "Review only this mismatched track",
+            detail: "The automatic match is previewed because the guest would look noticeably different in the selected preset.",
+            fixScreen: "source-media-health.html",
+            fixLabel: "source media health",
+          });
         } else if (state.guestState === "skipped") {
-          issues.push(["ready", "Matching skipped for this episode", "Preset setup will keep the imported guest frame and show the difference in preview."]);
+          issues.push({
+            tone: "ready",
+            title: "Matching skipped for this episode",
+            detail: "Preset setup will keep the imported guest frame and show the difference in preview.",
+          });
         } else {
-          issues.push(["ready", "Speaker match settled", "The selected preset now previews Host and Guest with the chosen match decision."]);
+          issues.push({
+            tone: "ready",
+            title: "Speaker match settled",
+            detail: "The selected preset now previews Host and Guest with the chosen match decision.",
+          });
         }
         if (state.guestState === "matched" && (guest.strength === "heavy" || guest.strength === "at the limit")) {
-          issues.push(["limit", "Check that the guest still looks natural", guest.note]);
+          issues.push({
+            tone: "limit",
+            title: "Check that the guest still looks natural",
+            detail: guest.note,
+          });
         }
         if (state.presetReady) {
-          issues.push(["ready", "Preset setup ready", "The selected preset can continue using this speaker look."]);
+          issues.push({
+            tone: "ready",
+            title: "Preset setup ready",
+            detail: "The selected preset can continue using this speaker look.",
+          });
         }
         issuesElement.replaceChildren(
-          ...issues.map(([tone, title, detail]) => {
-            const issue = document.createElement("article");
-            issue.className = `issue ${tone}`;
-            issue.append(createText("strong", title), createText("span", detail));
-            return issue;
+          ...issues.map((issue) => {
+            const article = document.createElement("article");
+            article.className = `issue ${issue.tone}`;
+            article.append(createText("strong", issue.title), createText("span", issue.detail));
+            if (issue.fixScreen) {
+              const openLink = document.createElement("a");
+              openLink.className = "fix-link";
+              openLink.href = issue.fixScreen;
+              openLink.textContent = `Open ${issue.fixLabel} →`;
+              article.append(openLink);
+            }
+            return article;
           }),
         );
       }
