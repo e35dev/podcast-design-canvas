@@ -149,4 +149,15 @@ assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "a valid first file
 assert.ok(ctl.zonesBySlot.guest.classList.contains("filled"), "spill still runs after a successful first placement");
 assert.ok(ctl.zonesBySlot["guest-b"].classList.contains("filled"), "spill fills following empty slots in order");
 
-console.log("layout-first multi-file spill: no spill when the target slot rejects the first file");
+// Spill must skip slots that already rejected a file, so a batch drop on another slot
+// does not silently clear an Invalid file badge the creator still needs to fix.
+ctl.resetVideos();
+ctl.applyLayout("interview");
+ctl.placeVideoFile(ctl.zonesBySlot.guest, { name: "bad.png", type: "image/png", size: 100 });
+assert.ok(ctl.zonesBySlot.guest.classList.contains("is-invalid"), "guest starts rejected");
+ctl.placeVideoFiles(ctl.zonesBySlot.host, [video("host.mp4"), video("guest.mp4")]);
+assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "the target slot still fills from the batch");
+assert.ok(ctl.zonesBySlot.guest.classList.contains("is-invalid"), "spill does not overwrite a slot that already rejected a file");
+assert.ok(!ctl.zonesBySlot.guest.classList.contains("filled"), "the rejected guest slot stays empty until the creator places there");
+
+console.log("layout-first multi-file spill: no spill on reject; spill skips invalid slots");

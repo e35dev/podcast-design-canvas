@@ -522,9 +522,11 @@
       if (extras.length === 0) {
         return;
       }
-      const openSlots = visibleSlots().filter(
-        (candidate) => candidate !== zone && !candidate.classList.contains("filled"),
-      );
+      const openSlots = visibleSlots().filter((candidate) => {
+        return candidate !== zone
+          && !candidate.classList.contains("filled")
+          && !candidate.classList.contains("is-invalid");
+      });
       extras.forEach((file, index) => {
         if (openSlots[index]) {
           placeVideoFile(openSlots[index], file);
