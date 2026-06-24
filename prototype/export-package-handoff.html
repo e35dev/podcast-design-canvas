@@ -30,6 +30,7 @@
         min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
         color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
       }
+      button:disabled { opacity: 0.52; cursor: not-allowed; }
       button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
       .summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
       .summary-head strong { display: block; margin-bottom: 4px; font-size: 15px; }
@@ -51,6 +52,11 @@
       .package-item { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 12px; align-items: center; }
       .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
       .warning.blocked { border-left-color: var(--blocked); }
+      .handoff-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        padding: 11px 12px; color: var(--muted);
+      }
+      .handoff-note strong { display: block; margin-bottom: 4px; color: var(--ink); }
       .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
       @media (max-width: 920px) {
         .workspace { grid-template-columns: 1fr; }
@@ -85,11 +91,12 @@
           <div class="packages" id="packages"></div>
 
           <div class="actions" style="margin-top: 18px;">
-            <button type="button">Download package</button>
-            <button type="button">Copy metadata</button>
-            <button type="button">Create review copy</button>
-            <button type="button">Start next episode</button>
+            <button type="button" id="downloadPackage">Download package</button>
+            <button type="button" id="copyMetadata">Copy metadata</button>
+            <button type="button" id="createReviewCopy">Create review copy</button>
+            <button type="button" id="startNextEpisode">Start next episode</button>
           </div>
+          <div class="handoff-note" id="handoffNote" aria-live="polite"></div>
         </div>
 
         <aside class="panel">
@@ -179,6 +186,7 @@
       };
 
       let selected = "youtube";
+      let handoffAction = "ready";
       const destinationsEl = document.querySelector("#destinations");
       const titleEl = document.querySelector("#title");
       const subtitleEl = document.querySelector("#subtitle");
@@ -186,16 +194,99 @@
       const metaEl = document.querySelector("#meta");
       const packagesEl = document.querySelector("#packages");
       const warningsEl = document.querySelector("#warnings");
+      const handoffNoteEl = document.querySelector("#handoffNote");
+      const downloadButton = document.querySelector("#downloadPackage");
+      const metadataButton = document.querySelector("#copyMetadata");
+      const reviewCopyButton = document.querySelector("#createReviewCopy");
+      const nextEpisodeButton = document.querySelector("#startNextEpisode");
+
+      function destinationHasRequiredBlock(destination) {
+        return destination.packages.some(([, , tone]) => tone === "blocked");
+      }
+
+      function completePackageCount(destination) {
+        return destination.packages.filter(([, , tone]) => tone === "ready").length;
+      }
+
+      function ignoredWarningCount(destination) {
+        return destination.packages.filter(([, , tone]) => tone === "review").length;
+      }
+
+      function actionMessage(action, destination) {
+        const blocked = destinationHasRequiredBlock(destination);
+        const completeCount = completePackageCount(destination);
+        const warningCount = ignoredWarningCount(destination);
+
+        if (action === "download") {
+          return {
+            title: "Package download prepared",
+            detail: `${destination.title} is ready with ${completeCount} completed item${completeCount === 1 ? "" : "s"}${warningCount ? ` and ${warningCount} visible warning report${warningCount === 1 ? "" : "s"}` : ""}.`,
+          };
+        }
+
+        if (action === "metadata") {
+          return {
+            title: "Metadata copied",
+            detail: `${destination.meta[2][1]} metadata, duration, export time, and package status are ready for publishing notes.`,
+          };
+        }
+
+        if (action === "review") {
+          return blocked
+            ? {
+                title: "Review copy still blocked",
+                detail: "Finish the required caption item before creating a shareable review copy.",
+              }
+            : {
+                title: "Review copy created",
+                detail: `${destination.title} now has a reviewer-facing copy with destination context and ignored warning consequences attached.`,
+              };
+        }
+
+        if (action === "next") {
+          return {
+            title: "Next episode started",
+            detail: "The finished package stays archived while the next draft opens with this show template ready to reuse.",
+          };
+        }
+
+        return blocked
+          ? {
+              title: "Resolve required item first",
+              detail: "This package keeps the missing required item visible so it is not shared as complete by mistake.",
+            }
+          : {
+              title: "Package ready",
+              detail: "Choose a handoff action to download, copy metadata, create a review copy, or start the next episode.",
+            };
+      }
+
+      function appendTextBlock(parent, label, value) {
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        const span = document.createElement("span");
+        span.textContent = value;
+        parent.append(strong, span);
+      }
+
+      function packageStatusText(tone) {
+        if (tone === "ready") return "complete";
+        if (tone === "optional") return "missing optional item";
+        if (tone === "blocked") return "missing required item";
+        return "warning ignored";
+      }
 
       function renderButtons() {
-        destinationsEl.innerHTML = "";
+        destinationsEl.replaceChildren();
         Object.entries(destinations).forEach(([key, value]) => {
           const button = document.createElement("button");
           button.type = "button";
           button.className = key === selected ? "active" : "";
+          button.setAttribute("aria-pressed", String(key === selected));
           button.textContent = value.title.replace(" package", "");
           button.addEventListener("click", () => {
             selected = key;
+            handoffAction = "ready";
             render();
           });
           destinationsEl.appendChild(button);
@@ -210,37 +301,74 @@
         statusEl.className = `badge ${destination.status[0]}`;
         statusEl.textContent = destination.status[1];
 
-        metaEl.innerHTML = "";
+        metaEl.replaceChildren();
         destination.meta.forEach(([label, value]) => {
           const item = document.createElement("div");
-          item.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+          appendTextBlock(item, label, value);
           metaEl.appendChild(item);
         });
 
-        packagesEl.innerHTML = "";
+        packagesEl.replaceChildren();
         destination.packages.forEach(([label, detail, tone]) => {
           const item = document.createElement("div");
           item.className = "package-item";
-          item.innerHTML = `
-            <div>
-              <strong>${label}</strong>
-              <span>${detail}</span>
-            </div>
-            <span class="badge ${tone}">${tone === "ready" ? "complete" : tone === "optional" ? "missing optional item" : tone === "blocked" ? "missing required item" : "warning ignored"}</span>
-          `;
+          const copy = document.createElement("div");
+          appendTextBlock(copy, label, detail);
+          const badge = document.createElement("span");
+          badge.className = `badge ${tone}`;
+          badge.textContent = packageStatusText(tone);
+          item.append(copy, badge);
           packagesEl.appendChild(item);
         });
 
-        warningsEl.innerHTML = "";
+        warningsEl.replaceChildren();
         destination.warnings.forEach(([tone, title, detail]) => {
           const item = document.createElement("div");
           item.className = `warning${tone === "blocked" ? " blocked" : ""}`;
-          item.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
+          appendTextBlock(item, title, detail);
           warningsEl.appendChild(item);
         });
+
+        const blocked = destinationHasRequiredBlock(destination);
+        downloadButton.disabled = blocked;
+        reviewCopyButton.disabled = blocked;
+        const message = actionMessage(handoffAction, destination);
+        handoffNoteEl.replaceChildren();
+        appendTextBlock(handoffNoteEl, message.title, message.detail);
       }
 
+      downloadButton.addEventListener("click", () => {
+        handoffAction = "download";
+        render();
+      });
+
+      metadataButton.addEventListener("click", () => {
+        handoffAction = "metadata";
+        render();
+      });
+
+      reviewCopyButton.addEventListener("click", () => {
+        handoffAction = "review";
+        render();
+      });
+
+      nextEpisodeButton.addEventListener("click", () => {
+        handoffAction = "next";
+        render();
+      });
+
       render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          destinations,
+          destinationHasRequiredBlock,
+          completePackageCount,
+          ignoredWarningCount,
+          actionMessage,
+          packageStatusText,
+        };
+      }
     </script>
   </body>
 </html>
