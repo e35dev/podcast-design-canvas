@@ -14,7 +14,9 @@ const html = fs.readFileSync(shellPath, "utf8");
 const navSource = fs.readFileSync(navPath, "utf8");
 
 const flowSteps = [
+  "prototype/episode-readiness.html",
   "prototype/source-media-health.html",
+  "prototype/speaker-role-mapping.html",
   "prototype/speaker-sync-repair.html",
   "prototype/audio-cleanup-controls.html",
   "prototype/audio-caption-quality-review.html",

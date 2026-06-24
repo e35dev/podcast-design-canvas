@@ -5,7 +5,9 @@
 //   <script src="../preview/episode-flow-nav.js" defer></script>
 
 const EPISODE_FLOW = [
+  { file: "episode-readiness.html", label: "Episode readiness" },
   { file: "source-media-health.html", label: "Source media health" },
+  { file: "speaker-role-mapping.html", label: "Speaker role mapping" },
   { file: "speaker-sync-repair.html", label: "Speaker sync repair" },
   { file: "audio-cleanup-controls.html", label: "Audio cleanup" },
   { file: "audio-caption-quality-review.html", label: "Caption quality review" },
