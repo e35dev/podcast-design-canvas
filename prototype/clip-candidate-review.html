@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clip Candidate Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .clips { display: grid; gap: 14px; }
+
+      .clip {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .frame {
+        position: relative;
+        width: 92px;
+        aspect-ratio: 9 / 16;
+        flex: none;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame .speaker {
+        position: absolute;
+        top: 12%;
+        left: 50%;
+        width: 42%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .frame .caption {
+        position: absolute;
+        right: 8%;
+        bottom: 10%;
+        left: 8%;
+        border-radius: 4px;
+        background: rgba(16, 24, 22, 0.82);
+        color: #ffffff;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 4px 5px;
+        text-align: center;
+      }
+
+      .frame .crop-tag {
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        border-radius: 4px;
+        background: rgba(16, 24, 22, 0.8);
+        color: #ffffff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 5px;
+      }
+
+      .fields { display: grid; gap: 10px; align-content: start; }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .meta { color: var(--muted); font-size: 13px; }
+
+      .hook {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #f4faf8;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        min-height: 38px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary { background: #ffffff; color: var(--accent); }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .badge.suggested { color: #7a4400; background: #fff1d6; }
+      .badge.approved { color: #075246; background: #dff5ef; }
+      .badge.adjusted { color: #3f4d66; background: #e8edf5; }
+      .badge.dismissed { color: #5e6b67; background: #eef2f0; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+
+      .issue {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      .note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .clip { grid-template-columns: 1fr; }
+        .frame { width: 100%; max-width: 160px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Clip candidate review</h1>
+      <p class="lede">Pick strong short moments from a finished long-form episode &mdash; after the full edit is under control. Each card shows the vertical crop, hook, and caption readiness without changing the source episode.</p>
+
+      <section class="workspace" aria-label="Clip candidate review workspace">
+        <div class="panel">
+          <h2>Suggested clips</h2>
+          <div class="clips" id="clips"></div>
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Clip package</h2>
+          <div id="status" class="status review">Clips waiting on you</div>
+          <div class="issues" id="issues"></div>
+          <p class="note">Approving a clip never changes the long-form edit. Dismissed clips stay hidden unless you ask to see them again.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const hooks = {
+        answer: "Strong guest answer",
+        teach: "Clear teaching moment",
+        energy: "High-energy exchange",
+        summary: "Host summary",
+      };
+
+      const sampleClips = [
+        {
+          id: "c1",
+          range: "18:02–18:38",
+          speaker: "Guest 1 — Marcus Lee",
+          excerpt: "The rollout took six weeks because we had to retrain every support team",
+          reason: "Strong guest answer",
+          hook: "answer",
+          crop: "Vertical guest",
+          captions: "Ready",
+          choice: null,
+        },
+        {
+          id: "c2",
+          range: "09:14–09:41",
+          speaker: "Host — Dana Brooks",
+          excerpt: "Here's the one thing most teams miss about remote recording",
+          reason: "Clear teaching moment",
+          hook: "teach",
+          crop: "Vertical host",
+          captions: "Needs a look",
+          choice: null,
+        },
+        {
+          id: "c3",
+          range: "33:55–34:12",
+          speaker: "Host + Guest",
+          excerpt: "Wait — say that again about the dashboard load time",
+          reason: "High-energy exchange",
+          hook: "energy",
+          crop: "Vertical two-shot",
+          captions: "Ready",
+          choice: null,
+        },
+      ];
+
+      let clips = structuredClone(sampleClips);
+
+      const clipsElement = document.querySelector("#clips");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        clips = structuredClone(sampleClips);
+        render();
+      });
+
+      function stateFor(clip) {
+        if (clip.choice === "approved") return "approved";
+        if (clip.choice === "adjusted") return "adjusted";
+        if (clip.choice === "dismissed") return "dismissed";
+        return "suggested";
+      }
+
+      function badgeClass(state) {
+        if (state === "approved") return "approved";
+        if (state === "adjusted") return "adjusted";
+        if (state === "dismissed") return "dismissed";
+        return "suggested";
+      }
+
+      function badgeLabel(state) {
+        if (state === "suggested") return "needs approval";
+        return state;
+      }
+
+      function evaluate(list) {
+        return list.map((clip) => ({ ...clip, state: stateFor(clip) }));
+      }
+
+      function renderFrame(clip) {
+        const frame = document.createElement("div");
+        frame.className = "frame";
+        const tag = document.createElement("span");
+        tag.className = "crop-tag";
+        tag.textContent = clip.crop;
+        const speaker = document.createElement("div");
+        speaker.className = "speaker";
+        const caption = document.createElement("div");
+        caption.className = "caption";
+        caption.textContent = clip.excerpt.slice(0, 42) + (clip.excerpt.length > 42 ? "…" : "");
+        frame.append(tag, speaker, caption);
+        return frame;
+      }
+
+      function renderClip(clip, result) {
+        const article = document.createElement("article");
+        article.className = "clip";
+        article.dataset.id = clip.id;
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const head = document.createElement("div");
+        head.className = "head";
+        const title = document.createElement("strong");
+        title.textContent = clip.range;
+        const badge = document.createElement("span");
+        badge.className = `badge ${badgeClass(result.state)}`;
+        badge.textContent = badgeLabel(result.state);
+        head.append(title, badge);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `${clip.speaker} · Suggested because: ${clip.reason}`;
+
+        const excerpt = document.createElement("div");
+        excerpt.className = "meta";
+        excerpt.textContent = `"${clip.excerpt}"`;
+
+        const hookBox = document.createElement("div");
+        hookBox.className = "hook";
+        hookBox.textContent = `Hook: ${hooks[clip.hook]}`;
+
+        const label = document.createElement("label");
+        label.textContent = "Hook emphasis";
+        const select = document.createElement("select");
+        for (const [value, copy] of Object.entries(hooks)) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = copy;
+          option.selected = value === clip.hook;
+          select.appendChild(option);
+        }
+        select.addEventListener("change", () => {
+          const item = clips.find((entry) => entry.id === clip.id);
+          item.hook = select.value;
+          if (item.choice === "approved") item.choice = "adjusted";
+          else item.choice = null;
+          syncClip(clip.id);
+        });
+        label.appendChild(select);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const approveButton = document.createElement("button");
+        approveButton.type = "button";
+        approveButton.textContent = "Approve clip";
+        approveButton.addEventListener("click", () => {
+          const item = clips.find((entry) => entry.id === clip.id);
+          item.choice = item.choice === "adjusted" ? "adjusted" : "approved";
+          render();
+        });
+
+        const dismissButton = document.createElement("button");
+        dismissButton.type = "button";
+        dismissButton.className = "secondary";
+        dismissButton.textContent = "Dismiss";
+        dismissButton.addEventListener("click", () => {
+          clips.find((entry) => entry.id === clip.id).choice = "dismissed";
+          render();
+        });
+
+        actions.append(approveButton, dismissButton);
+        fields.append(head, meta, excerpt, hookBox, label, actions);
+        article.append(renderFrame(clip), fields);
+        return article;
+      }
+
+      function syncClip(id) {
+        const result = evaluate(clips).find((entry) => entry.id === id);
+        const card = document.querySelector(`.clip[data-id="${id}"]`);
+        if (!card) return;
+        const badge = card.querySelector(".badge");
+        badge.className = `badge ${badgeClass(result.state)}`;
+        badge.textContent = badgeLabel(result.state);
+        const hookBox = card.querySelector(".hook");
+        hookBox.textContent = `Hook: ${hooks[result.hook]}`;
+        renderSummary();
+      }
+
+      function renderSummary() {
+        const results = evaluate(clips);
+        const kept = results.filter((result) => ["approved", "adjusted"].includes(result.state));
+        const waiting = results.filter((result) => result.state === "suggested");
+
+        statusElement.className = `status ${waiting.length ? "review" : "ready"}`;
+        statusElement.textContent = waiting.length
+          ? `${waiting.length} clip${waiting.length === 1 ? "" : "s"} waiting on you`
+          : `${kept.length} clip${kept.length === 1 ? "" : "s"} ready for short-form export`;
+
+        issuesElement.replaceChildren(...results.filter((result) => result.state !== "dismissed").map((result) => {
+          const article = document.createElement("article");
+          article.className = "issue";
+          const strong = document.createElement("strong");
+          const span = document.createElement("span");
+          strong.textContent = `${result.range}: ${badgeLabel(result.state)}`;
+          span.textContent = result.state === "suggested"
+            ? `Captions ${result.captions.toLowerCase()} — approve to keep this moment for short-form export.`
+            : result.state === "approved"
+              ? "Kept for short-form export without changing the long-form episode."
+              : "Saved with your hook change as a downstream copy linked to the source moment.";
+          article.append(strong, span);
+          return article;
+        }));
+      }
+
+      function render() {
+        const results = evaluate(clips);
+        clipsElement.replaceChildren(...clips.filter((clip) => clip.choice !== "dismissed").map((clip, index) => {
+          const result = results.find((entry) => entry.id === clip.id);
+          return renderClip(clip, result);
+        }));
+        renderSummary();
+      }
+
+      render();
+    </script>
+  </body>
+</html>
