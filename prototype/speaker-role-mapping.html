@@ -454,14 +454,15 @@
           }
         }
 
-        // Count how many tracks carry each source recording identity (from the layout
-        // handoff). The same recording in two speaker slots means one person would fill
-        // two frames — flag it here so the production gate reflects it, not just the start
-        // page. Tracks without a carried identity (empty sig) are never flagged.
-        const sigCount = {};
+        // Group tracks by source recording identity (from the layout handoff). The same
+        // recording in two speaker slots means one person would fill two frames — flag it
+        // here so the production gate reflects it, not just the start page, and name the
+        // other speaker so the fix is obvious. Tracks without a carried identity (empty
+        // sig) are never grouped or flagged.
+        const sigGroups = {};
         for (const track of list) {
           if (track.sig) {
-            sigCount[track.sig] = (sigCount[track.sig] || 0) + 1;
+            (sigGroups[track.sig] = sigGroups[track.sig] || []).push(track);
           }
         }
 
@@ -478,11 +479,16 @@
               action: "Pick a podcast role so this speaker is placed and labelled correctly.",
               tone: "blocker",
             };
-          } else if (track.sig && sigCount[track.sig] > 1) {
+          } else if (track.sig && sigGroups[track.sig].length > 1) {
+            const sharedWith = sigGroups[track.sig]
+              .filter((other) => other !== track)
+              .map((other) => (roles[other.role] ? roles[other.role].label : (other.name || "another speaker")))
+              .filter((label, index, all) => all.indexOf(label) === index);
+            const sharedList = sharedWith.length ? sharedWith.join(", ") : "another speaker";
             state = "review";
             issue = {
               title: `Two speakers use the same recording`,
-              action: `${roles[role].label} shares one recording with another speaker. Give each speaker a separate video — one recording can't fill two speaker frames.`,
+              action: `${roles[role].label} shares one recording with ${sharedList}. Give each speaker a separate video — one recording can't fill two speaker frames.`,
               tone: "review",
             };
           } else if (roles[role].single && seatCount[role] > 1) {

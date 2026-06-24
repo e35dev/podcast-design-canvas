@@ -90,6 +90,16 @@ assert.ok(
   dupEval.results.some((result) => result.issue && /same recording/i.test(result.issue.title)),
   "role mapping surfaces a same-recording issue",
 );
+const dupHostIssue = dupEval.results.find((result) => result.id === "h").issue;
+const dupGuestIssue = dupEval.results.find((result) => result.id === "g").issue;
+assert.ok(
+  /shares one recording with Guest\b/.test(dupHostIssue.action),
+  "same-recording warning names the other speaker (Host shares with Guest)",
+);
+assert.ok(
+  /shares one recording with Host\b/.test(dupGuestIssue.action),
+  "same-recording warning names the other speaker (Guest shares with Host)",
+);
 const okEval = evaluate([
   { id: "h", name: "a.mp4", role: "host", sig: "name:a.mp4|size:1|mtime:1", signal: "file-name", decision: "confirmed" },
   { id: "g", name: "b.mp4", role: "guest", sig: "name:b.mp4|size:2|mtime:2", signal: "file-name", decision: "confirmed" },
