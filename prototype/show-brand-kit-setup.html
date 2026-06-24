@@ -433,7 +433,18 @@
       function evaluateConflicts() {
         var conflicts = [];
 
-        // Caption text color is auto-chosen by textColorOn(primaryColor) rendered on primaryColor.
+        // Preset card renders show name on the secondary color background
+        var presetFg = textColorOn(state.secondaryColor);
+        var presetContrast = contrastRatio(presetFg, state.secondaryColor);
+        if (presetContrast < 3) {
+          conflicts.push({
+            id: "preset-card-contrast",
+            text: "Show name text has low contrast against the secondary color background.",
+            where: "Preset card previews",
+            fix: "Choose a secondary color with more contrast against text.",
+          });
+        }
+
         // Check that the logo text is readable on its actual background in the preview cards.
         if (state.logoText) {
           var logoFg = textColorOn(state.primaryColor);
@@ -466,7 +477,20 @@
           }
         }
 
-        // Accent color used in bold-active and color-highlight captions
+        // Bold-active captions render accent-colored text on the primary caption background
+        if (state.captionEmphasis === "bold-active") {
+          var boldActiveContrast = contrastRatio(state.accentColor, state.primaryColor);
+          if (boldActiveContrast < 3) {
+            conflicts.push({
+              id: "bold-active-contrast",
+              text: "Bold active word color has low contrast against the caption background.",
+              where: "Active word emphasis in captions",
+              fix: "Choose an accent color that stands out against the primary color.",
+            });
+          }
+        }
+
+        // Color-highlight captions render text on accent-colored background
         if (state.captionEmphasis === "color-highlight") {
           var highlightFg = textColorOn(state.accentColor);
           var highlightContrast = contrastRatio(highlightFg, state.accentColor);
@@ -490,12 +514,16 @@
         var ltStyle = LOWER_THIRD_STYLES[state.lowerThird] || LOWER_THIRD_STYLES.bar;
         var fg = textColorOn(state.primaryColor);
 
-        // 1. Preset card preview
-        var presetCard = makePreviewCard("Preset card", state.primaryColor);
+        // 1. Preset card preview — secondary color as the card background
+        var presetCard = makePreviewCard("Preset card", state.secondaryColor);
         var presetTitle = document.createElement("div");
-        presetTitle.style.cssText = "font-family:" + font + ";font-size:14px;font-weight:700;";
+        presetTitle.style.cssText = "font-family:" + font + ";font-size:14px;font-weight:700;color:" + textColorOn(state.secondaryColor) + ";";
         presetTitle.textContent = state.showName;
+        var presetSubtitle = document.createElement("div");
+        presetSubtitle.style.cssText = "font-size:11px;margin-top:2px;color:" + state.primaryColor + ";";
+        presetSubtitle.textContent = "Episode 47";
         presetCard.querySelector(".preview-card-content").appendChild(presetTitle);
+        presetCard.querySelector(".preview-card-content").appendChild(presetSubtitle);
         previewGrid.appendChild(presetCard);
 
         // 2. Speaker frame with lower-third
