@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Client Review Copy Flow Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        --blue: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        max-width: 780px;
+        color: var(--muted);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .preview {
+        position: relative;
+        min-height: 290px;
+        border: 1px solid #b9c8c4;
+        border-radius: 8px;
+        overflow: hidden;
+        background:
+          linear-gradient(135deg, rgba(19, 111, 99, 0.24), rgba(42, 76, 138, 0.28)),
+          linear-gradient(160deg, #213430, #0e1816);
+        color: #ffffff;
+      }
+
+      .speaker {
+        position: absolute;
+        top: 58px;
+        bottom: 54px;
+        width: 36%;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+      }
+
+      .speaker.host { left: 7%; }
+      .speaker.guest { right: 7%; }
+
+      .watermark,
+      .timecode,
+      .warnings {
+        position: absolute;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.86);
+        color: #16211f;
+        font-weight: 800;
+      }
+
+      .watermark {
+        top: 16px;
+        left: 16px;
+        padding: 6px 10px;
+      }
+
+      .timecode {
+        right: 16px;
+        bottom: 16px;
+        padding: 6px 10px;
+      }
+
+      .warnings {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        padding: 8px 10px;
+      }
+
+      .package-list,
+      .feedback-list,
+      .summary-list {
+        display: grid;
+        gap: 10px;
+        margin: 14px 0 0;
+      }
+
+      .package-item,
+      .feedback,
+      .summary-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .feedback {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.draft { color: var(--blue); background: #e2ebfb; }
+      .badge.awaiting { color: #075246; background: #dff5ef; }
+      .badge.blocked { color: var(--block); background: #fae1de; }
+      .badge.ready { color: #075246; background: #dff5ef; }
+      .badge.superseded { color: #5e6b67; background: #e8eeeb; }
+      .badge.review { color: var(--warn); background: #fff1d6; }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+      }
+
+      .check-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button,
+      .fix-link {
+        min-height: 38px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      button.secondary,
+      .fix-link {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      button:hover:not(:disabled),
+      button:focus-visible,
+      .fix-link:hover,
+      .fix-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 860px) {
+        .workspace { grid-template-columns: 1fr; }
+        .speaker { position: static; width: auto; min-height: 110px; margin: 14px; }
+        .preview { display: grid; gap: 10px; padding-top: 44px; }
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="client-review-copy-flow">
+    <main>
+      <h1>Client review copy flow</h1>
+      <p class="lede">Prepare a clearly marked review copy, collect episode-moment feedback, and keep final publishing clean until the blocking review notes are resolved.</p>
+
+      <section class="workspace" aria-label="Client review copy workspace">
+        <div class="panel">
+          <h2>Review copy</h2>
+          <div id="preview" class="preview" aria-label="Review copy preview"></div>
+          <div id="package" class="package-list" aria-label="Review copy package"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Review copy summary">
+          <h2>Review status</h2>
+          <div id="summary" class="summary-list"></div>
+          <div id="controls" class="controls"></div>
+        </aside>
+      </section>
+
+      <section class="panel" aria-label="Feedback anchored to episode moments">
+        <h2>Feedback anchors</h2>
+        <p class="note">Feedback stays attached to the visible episode moment it changes, not a detached task list.</p>
+        <div id="feedback" class="feedback-list"></div>
+      </section>
+    </main>
+
+    <script>
+      const originalFeedback = [
+        {
+          id: "caption",
+          moment: "12:44",
+          area: "Captions",
+          title: "Caption covers the guest name",
+          detail: "The reviewer cannot read the lower-third while the caption is on screen.",
+          owner: "audio-caption-quality-review.html",
+          ownerLabel: "caption quality review",
+          blocking: true,
+          state: "open",
+        },
+        {
+          id: "broll",
+          moment: "28:10",
+          area: "B-roll",
+          title: "Client logo appears during a sensitive story",
+          detail: "Move or remove this visual before the final client approval checkpoint.",
+          owner: "contextual-broll-moments.html",
+          ownerLabel: "contextual b-roll moments",
+          blocking: true,
+          state: "accepted",
+        },
+        {
+          id: "thumbnail",
+          moment: "Cover",
+          area: "Thumbnail",
+          title: "Cover frame needs client approval",
+          detail: "The selected cover works for review, but final publishing waits on approval.",
+          owner: "thumbnail-cover-frame.html",
+          ownerLabel: "thumbnail cover frame",
+          blocking: false,
+          state: "open",
+        },
+      ];
+
+      let review = {
+        sent: true,
+        superseded: false,
+        includeWatermark: true,
+        includeTimecode: true,
+        includeWarnings: true,
+        feedback: cloneFeedback(originalFeedback),
+      };
+
+      const previewElement = document.querySelector("#preview");
+      const packageElement = document.querySelector("#package");
+      const summaryElement = document.querySelector("#summary");
+      const controlsElement = document.querySelector("#controls");
+      const feedbackElement = document.querySelector("#feedback");
+
+      function cloneFeedback(items) {
+        return items.map((item) => ({ ...item }));
+      }
+
+      function evaluateReviewCopy(model) {
+        const active = model.feedback.filter((item) => item.state === "open" || item.state === "accepted");
+        const blocking = active.filter((item) => item.blocking);
+        const resolved = model.feedback.filter((item) =>
+          item.state === "fixed" || item.state === "rejected" || item.state === "not relevant"
+        );
+
+        let status = "draft";
+        if (model.superseded) {
+          status = "superseded";
+        } else if (!model.sent) {
+          status = "draft";
+        } else if (model.feedback.length === 0 || (active.length === 0 && resolved.length === 0)) {
+          status = "awaiting feedback";
+        } else if (blocking.length > 0) {
+          status = "changes requested";
+        } else {
+          status = "ready to publish";
+        }
+
+        return {
+          status,
+          activeCount: active.length,
+          blockingCount: blocking.length,
+          resolvedCount: resolved.length,
+          packageCopy: packageCopy(model, status, blocking.length),
+        };
+      }
+
+      function packageCopy(model, status, blockingCount) {
+        if (status === "draft") {
+          return ["Review link not sent yet", "Watermark and warning summary are ready to include"];
+        }
+        if (status === "superseded") {
+          return ["Older review copy kept for context", "Newer round owns current reviewer decisions"];
+        }
+        if (status === "awaiting feedback") {
+          return ["Review link sent", "Waiting on reviewer decisions"];
+        }
+        const copy = ["Private review link", "Current captions and audio mix"];
+        if (model.includeWatermark) copy.push("Visible REVIEW COPY watermark");
+        if (model.includeTimecode) copy.push("Timecode overlay for moment notes");
+        if (model.includeWarnings) copy.push(`${blockingCount} blocking notes in warning summary`);
+        return copy;
+      }
+
+      function sendReviewCopy() {
+        review.sent = true;
+        review.superseded = false;
+        render();
+      }
+
+      function prepareDraftCopy() {
+        review.sent = false;
+        review.superseded = false;
+        render();
+      }
+
+      function sendNewReviewRound() {
+        review.sent = true;
+        review.superseded = false;
+        review.feedback = [];
+        render();
+      }
+
+      function supersedeReviewCopy() {
+        review.superseded = true;
+        render();
+      }
+
+      function resetReviewCopy() {
+        review = {
+          sent: true,
+          superseded: false,
+          includeWatermark: true,
+          includeTimecode: true,
+          includeWarnings: true,
+          feedback: cloneFeedback(originalFeedback),
+        };
+        render();
+      }
+
+      function toggleOption(name, checked) {
+        review[name] = checked;
+        render();
+      }
+
+      function setFeedbackState(id, nextState) {
+        const item = review.feedback.find((entry) => entry.id === id);
+        if (item) {
+          item.state = nextState;
+          render();
+        }
+      }
+
+      function createElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text) element.textContent = text;
+        return element;
+      }
+
+      function render() {
+        const evaluation = evaluateReviewCopy(review);
+        renderPreview(evaluation);
+        renderPackage(evaluation);
+        renderSummary(evaluation);
+        renderControls();
+        renderFeedbackList();
+      }
+
+      function renderPreview(evaluation) {
+        previewElement.replaceChildren();
+
+        const host = createElement("div", "speaker host", "Host");
+        const guest = createElement("div", "speaker guest", "Guest");
+        previewElement.append(host, guest);
+
+        if (review.includeWatermark) {
+          previewElement.append(createElement("div", "watermark", "REVIEW COPY"));
+        }
+        if (review.includeTimecode) {
+          previewElement.append(createElement("div", "timecode", "12:44"));
+        }
+        if (review.includeWarnings) {
+          const warningCopy = evaluation.blockingCount
+            ? `${evaluation.blockingCount} blocking review notes before final publish`
+            : "No blocking review notes";
+          previewElement.append(createElement("div", "warnings", warningCopy));
+        }
+      }
+
+      function renderPackage(evaluation) {
+        packageElement.replaceChildren(
+          ...evaluation.packageCopy.map((item) => createElement("div", "package-item", item)),
+        );
+      }
+
+      function renderSummary(evaluation) {
+        const status = createElement("div", `summary-item badge ${badgeClass(evaluation.status)}`, evaluation.status);
+        const active = createElement("div", "summary-item", `${evaluation.activeCount} active review notes`);
+        const blocking = createElement("div", "summary-item", `${evaluation.blockingCount} block final publish`);
+        const resolved = createElement("div", "summary-item", `${evaluation.resolvedCount} resolved decisions kept for context`);
+        summaryElement.replaceChildren(status, active, blocking, resolved);
+      }
+
+      function renderControls() {
+        const optionRows = [
+          ["includeWatermark", "Show review watermark"],
+          ["includeTimecode", "Show timecode overlay"],
+          ["includeWarnings", "Include unresolved warnings summary"],
+        ].map(([name, label]) => optionRow(name, label));
+
+        const actions = createElement("div", "actions");
+        actions.append(
+          actionButton("Prepare draft", prepareDraftCopy, !review.sent && !review.superseded, "secondary"),
+          actionButton("Send review copy", sendReviewCopy, review.sent && !review.superseded),
+          actionButton("Send newer round", sendNewReviewRound, false),
+          actionButton("Mark current round superseded", supersedeReviewCopy, review.superseded),
+          actionButton("Reset sample", resetReviewCopy, false, "secondary"),
+        );
+
+        controlsElement.replaceChildren(...optionRows, actions);
+      }
+
+      function optionRow(name, label) {
+        const row = createElement("label", "check-row");
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = review[name];
+        box.addEventListener("change", () => toggleOption(name, box.checked));
+        row.append(box, document.createTextNode(label));
+        return row;
+      }
+
+      function actionButton(label, handler, disabled, variant) {
+        const button = createElement("button", variant || "", label);
+        button.type = "button";
+        button.disabled = disabled;
+        button.addEventListener("click", handler);
+        return button;
+      }
+
+      function renderFeedbackList() {
+        feedbackElement.replaceChildren(
+          ...(review.feedback.length
+            ? review.feedback.map(renderFeedback)
+            : [createElement("p", "note", "No reviewer notes yet. The review copy is waiting on decisions.")]),
+        );
+      }
+
+      function renderFeedback(item) {
+        const article = createElement("article", "feedback");
+        const title = createElement("h3", "", item.title);
+        const meta = createElement("div", "meta");
+        meta.append(
+          createElement("span", "badge review", item.area),
+          createElement("span", "", item.moment),
+          createElement("span", `badge ${item.blocking ? "blocked" : "awaiting"}`, item.blocking ? "blocks publish" : "approval note"),
+          createElement("span", `badge ${stateBadge(item.state)}`, stateCopy(item.state)),
+        );
+        const detail = createElement("p", "note", item.detail);
+        const actions = createElement("div", "actions");
+        actions.append(
+          stateButton(item, "accepted", "Accept"),
+          stateButton(item, "fixed", "Mark fixed"),
+          stateButton(item, "rejected", "Reject"),
+          stateButton(item, "not relevant", "Not relevant"),
+          fixLink(item),
+        );
+        article.append(title, meta, detail, actions);
+        return article;
+      }
+
+      function stateButton(item, state, label) {
+        return actionButton(label, () => setFeedbackState(item.id, state), item.state === state, "secondary");
+      }
+
+      function fixLink(item) {
+        const link = createElement("a", "fix-link", `Open ${item.ownerLabel}`);
+        link.href = item.owner;
+        return link;
+      }
+
+      function badgeClass(status) {
+        if (status === "draft") return "draft";
+        if (status === "changes requested") return "blocked";
+        if (status === "ready to publish") return "ready";
+        if (status === "superseded") return "superseded";
+        return "awaiting";
+      }
+
+      function stateBadge(state) {
+        if (state === "fixed" || state === "rejected" || state === "not relevant") return "ready";
+        if (state === "accepted") return "blocked";
+        return "review";
+      }
+
+      function stateCopy(state) {
+        if (state === "not relevant") return "not relevant";
+        return state;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
