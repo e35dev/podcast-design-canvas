@@ -398,7 +398,7 @@
       <div class="top">
         <div>
           <h1>Guided episode flow</h1>
-          <p class="lede">One connected path from imported speaker files to a publish-ready episode. Each step builds on the last, and the final readiness reflects every choice you made.</p>
+          <p class="lede">One connected path from confirming your files and speaker roles to a publish-ready episode. Each step builds on the last, and the final readiness reflects every choice you made.</p>
         </div>
         <a class="back" href="./index.html">← All screens</a>
       </div>
@@ -433,12 +433,17 @@
       // One shared episode model that every step reads and writes, so the flow behaves
       // like a single product rather than separate demos.
       const steps = [
+        { id: "readiness", title: "Episode readiness" },
+        { id: "roles", title: "Speaker roles" },
         { id: "source", title: "Source media health" },
         { id: "sync", title: "Speaker sync" },
         { id: "audio", title: "Audio cleanup" },
         { id: "captions", title: "Caption review" },
         { id: "export", title: "Export readiness" },
       ];
+
+      const bucketStates = { ready: "Ready to continue", "needs-file": "Needs a file", "needs-name": "Needs a speaker name" };
+      const roleOptions = ["Host", "Guest 1", "Guest 2", "Co-host"];
 
       const sourceStates = { ready: "Looks good", review: "Needs review", "audio-only": "Audio-only" };
       const syncStates = { aligned: "Aligned", nudge: "Needs a small nudge" };
@@ -447,10 +452,11 @@
       const episode = {
         step: 0,
         speakers: [
-          { id: "host", role: "Host", name: "Dana Brooks", source: "ready", sync: "aligned" },
-          { id: "g1", role: "Guest 1", name: "Marcus Lee", source: "review", sync: "nudge" },
-          { id: "g2", role: "Guest 2", name: "Priya Anand", source: "audio-only", sync: "aligned" },
+          { id: "host", role: "Host", name: "Dana Brooks", bucket: "ready", source: "ready", sync: "aligned" },
+          { id: "g1", role: "Guest 1", name: "Marcus Lee", bucket: "needs-name", source: "review", sync: "nudge" },
+          { id: "g2", role: "Guest 2", name: "Priya Anand", bucket: "ready", source: "audio-only", sync: "aligned" },
         ],
+        rolesConfirmed: false,
         audio: { noise: true, levels: true, clarity: false, applied: false },
         captions: [
           { id: "c1", text: "Today we're joined by Marcus Lee.", flag: "Uncertain name", decision: "review" },
@@ -491,6 +497,12 @@
       // reachable; it just reflects the state.
       function stepComplete(index) {
         const id = steps[index].id;
+        if (id === "readiness") {
+          return episode.speakers.every((s) => s.bucket === "ready");
+        }
+        if (id === "roles") {
+          return episode.rolesConfirmed;
+        }
         if (id === "source") {
           return episode.speakers.every((s) => s.source !== "review");
         }
@@ -558,6 +570,12 @@
 
       function gateMessage(index) {
         const id = steps[index].id;
+        if (id === "readiness") {
+          return "Assign every speaker file and confirm each name before continuing.";
+        }
+        if (id === "roles") {
+          return "Confirm host and guest roles before continuing.";
+        }
         if (id === "source") {
           return "Resolve each speaker file to continue.";
         }
@@ -590,7 +608,15 @@
 
       function renderPanel() {
         const id = steps[episode.step].id;
-        const builders = { source: stepSource, sync: stepSync, audio: stepAudio, captions: stepCaptions, export: stepExport };
+        const builders = {
+          readiness: stepReadiness,
+          roles: stepRoles,
+          source: stepSource,
+          sync: stepSync,
+          audio: stepAudio,
+          captions: stepCaptions,
+          export: stepExport,
+        };
         panelEl.replaceChildren(...builders[id]());
       }
 
@@ -632,6 +658,66 @@
         });
         row.append(avatar, who, select);
         return row;
+      }
+
+      function stepReadiness() {
+        const nodes = heading(
+          "Check episode readiness",
+          "Confirm files, speakers, and transcripts are ready before editing. Fix any missing file or name before you move on.",
+        );
+        for (const speaker of episode.speakers) {
+          nodes.push(speakerRow(speaker, "bucket", bucketStates, () => {}));
+        }
+        return nodes;
+      }
+
+      function stepRoles() {
+        const nodes = heading(
+          "Map speaker roles",
+          "Choose who is hosting and who is joining as a guest so captions and layouts stay accurate.",
+        );
+        for (const speaker of episode.speakers) {
+          const row = document.createElement("div");
+          row.className = "row";
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent = initial(speaker.name);
+          const who = document.createElement("div");
+          who.className = "who";
+          const name = document.createElement("strong");
+          name.textContent = speaker.name;
+          const role = document.createElement("span");
+          role.textContent = "Podcast role";
+          who.append(name, role);
+          const select = document.createElement("select");
+          select.setAttribute("aria-label", `${speaker.name} podcast role`);
+          for (const optionRole of roleOptions) {
+            const option = document.createElement("option");
+            option.value = optionRole;
+            option.textContent = optionRole;
+            option.selected = optionRole === speaker.role;
+            select.append(option);
+          }
+          select.addEventListener("change", (event) => {
+            speaker.role = event.target.value;
+            episode.rolesConfirmed = false;
+            render();
+          });
+          row.append(avatar, who, select);
+          nodes.push(row);
+        }
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.className = "btn";
+        confirm.style.marginTop = "14px";
+        confirm.textContent = episode.rolesConfirmed ? "Roles confirmed ✓" : "Confirm roles";
+        confirm.disabled = episode.rolesConfirmed;
+        confirm.addEventListener("click", () => {
+          episode.rolesConfirmed = true;
+          render();
+        });
+        nodes.push(confirm);
+        return nodes;
       }
 
       function stepSource() {
@@ -789,6 +875,8 @@
         const summary = document.createElement("div");
         summary.className = "review-summary";
         const items = [
+          ["Episode setup", episode.speakers.every((s) => s.bucket === "ready") ? "Files and names confirmed" : "Still needs setup", episode.speakers.every((s) => s.bucket === "ready")],
+          ["Speaker roles", episode.rolesConfirmed ? episode.speakers.map((s) => s.role).join(", ") : "Not confirmed yet", episode.rolesConfirmed],
           ["Speakers", `${ready} on camera, ${audioOnly} audio-only — all confirmed`, true],
           ["Sync", "All speaker tracks aligned", true],
           ["Audio", episode.audio.applied ? `Cleaned (${audioBits.join(", ") || "no changes"})` : "Not cleaned yet", episode.audio.applied],
