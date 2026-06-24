@@ -14,7 +14,7 @@ function parsePublishFlow(source) {
   const match = source.match(/const PUBLISH_FLOW = \[([\s\S]*?)\];/);
   assert.ok(match, "PUBLISH_FLOW must be declared");
   const files = [];
-  const filePattern = /file:\s*"([^"]+)"/g;
+  const filePattern = /\{\s*id:\s*"[^"]+",\s*file:\s*"([^"]+)"/g;
   let entry;
   while ((entry = filePattern.exec(match[1])) !== null) {
     files.push(entry[1]);
