@@ -14,6 +14,11 @@ const html = fs.readFileSync(
 
 const match = html.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(match, "prototype contains an inline script block");
+assert.ok(html.includes("Screen moments need attention"), "blocked readiness copy covers all review states");
+assert.ok(
+  html.includes("still need focus, a readable view, or a speaker-safe layout"),
+  "blocked readiness guidance names each unresolved screen-share review path",
+);
 
 const mockEl = {
   addEventListener: function () {},
@@ -68,6 +73,7 @@ assert.strictEqual(statusLabel("needs-focus"), "Needs focus");
 assert.strictEqual(statusLabel("unreadable"), "Screen unreadable");
 assert.strictEqual(statusLabel("hidden"), "Private frame hidden");
 assert.strictEqual(statusLabel("skipped"), "Skipped");
+assert.strictEqual(statusLabel("speaker-small"), "Speaker too small");
 
 // 5. momentSummary counts correctly.
 var summary = momentSummary(INITIAL_MOMENTS);
@@ -75,8 +81,21 @@ assert.strictEqual(summary.total, INITIAL_MOMENTS.length);
 assert.ok(summary.ready >= 1, "at least one resolved moment");
 assert.ok(summary.issues >= 1, "at least one issue moment");
 
-// 6. isReadyForExport gates on unreadable moments.
-assert.strictEqual(isReadyForExport(INITIAL_MOMENTS), false, "not ready when unreadable moments exist");
+// 6. isReadyForExport gates on any unresolved review moment.
+assert.strictEqual(
+  isReadyForExport(INITIAL_MOMENTS),
+  false,
+  "not ready when unresolved screen-share moments exist",
+);
+
+var needsFocusOnly = [{ id: "x", status: "needs-focus" }];
+assert.strictEqual(isReadyForExport(needsFocusOnly), false, "needs-focus moments block export");
+
+var speakerSmallOnly = [{ id: "x", status: "speaker-small" }];
+assert.strictEqual(isReadyForExport(speakerSmallOnly), false, "speaker-small moments block export");
+
+var unreadableOnly = [{ id: "x", status: "unreadable" }];
+assert.strictEqual(isReadyForExport(unreadableOnly), false, "unreadable moments block export");
 
 var allReady = INITIAL_MOMENTS.map(function (m) {
   return Object.assign({}, m, { status: "ready" });

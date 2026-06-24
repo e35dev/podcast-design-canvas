@@ -251,7 +251,8 @@
 
       function isReadyForExport(list) {
         for (var i = 0; i < list.length; i++) {
-          if (list[i].status === "unreadable") return false;
+          var status = list[i].status;
+          if (status !== "ready" && status !== "hidden" && status !== "skipped") return false;
         }
         return true;
       }
@@ -392,7 +393,7 @@
 
         var badge = document.createElement("div");
         badge.className = ready ? "badge ready" : "badge unreadable";
-        badge.textContent = ready ? "Ready for export" : "Unreadable moments block export";
+        badge.textContent = ready ? "Ready for export" : "Screen moments need attention";
         badge.style.marginBottom = "8px";
         readinessEl.appendChild(badge);
 
@@ -400,7 +401,7 @@
         note.className = "summary-note";
         note.textContent = ready
           ? "All screen share moments are resolved. Skipped moments stay out of export without clearing unrelated warnings."
-          : "One or more screen moments are marked unreadable. Choose a readable focus area, switch to speaker-only, or skip the moment.";
+          : "Resolve the screen moments that still need focus, a readable view, or a speaker-safe layout before export.";
         readinessEl.appendChild(note);
       }
 
