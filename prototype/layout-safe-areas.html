@@ -404,6 +404,8 @@
           fixes: ["review", "move", "switch", "accept"],
           title: (el) => `${el} falls outside the destination crop`,
           suggest: "Pull it inside the safe area, switch the crop layout, or accept it.",
+          fixScreen: "destination-crop-preview.html",
+          fixLabel: "destination crop preview",
         },
         watermark: {
           label: "Sits under the review watermark",
@@ -500,7 +502,12 @@
                     fixScreen: "speaker-framing-safety.html",
                     fixLabel: "speaker framing safety",
                   }
-                  : row.check === "unreadable"
+                  : check.fixScreen && check.fixLabel
+                    ? {
+                      fixScreen: check.fixScreen,
+                      fixLabel: check.fixLabel,
+                    }
+                    : row.check === "unreadable"
                     ? {
                       // "Too small to read" is a readability problem owned by the
                       // accessibility & readability checks screen.

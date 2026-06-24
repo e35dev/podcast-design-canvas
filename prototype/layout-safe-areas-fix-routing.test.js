@@ -1,7 +1,8 @@
 "use strict";
 
 // Guards layout safe areas hand-off links (#583): review-watermark overlap reviews
-// open the client review copy flow; face-area overlap reviews open speaker framing safety.
+// open the client review copy flow; face-area overlap reviews open speaker framing
+// safety; destination-crop conflicts open the crop preview.
 // Run with: `node prototype/layout-safe-areas-fix-routing.test.js`
 
 const fs = require("fs");
@@ -30,6 +31,14 @@ assert.ok(
   publishNav.includes('id: "client-review-copy-flow"'),
   "client review copy flow is part of the connected publish prep path",
 );
+assert.ok(
+  shell.includes("../prototype/destination-crop-preview.html"),
+  "destination crop preview is reachable from the preview shell",
+);
+assert.ok(
+  publishNav.includes('id: "destination-crop-preview"'),
+  "destination crop preview is part of the connected publish prep path",
+);
 
 assert.ok(
   html.includes('fixScreen: "client-review-copy-flow.html"'),
@@ -56,12 +65,36 @@ assert.ok(
   "face-area overlap names the fix screen in creator-facing copy",
 );
 assert.ok(
+  html.includes('fixScreen: "destination-crop-preview.html"'),
+  "outside-crop reviews route to the destination crop preview",
+);
+assert.ok(
+  html.includes('fixLabel: "destination crop preview"'),
+  "outside-crop route names the fix screen in creator-facing copy",
+);
+assert.ok(
+  html.includes("fixScreen: check.fixScreen"),
+  "check-owned fix surfaces are copied onto review issues",
+);
+assert.ok(
+  html.includes("openLink.href = issue.fixScreen"),
+  "layout safe areas fix links use the declared fix screen href",
+);
+assert.ok(
+  html.includes("openLink.textContent = `Open ${issue.fixLabel}`"),
+  "layout safe areas fix links name the destination screen",
+);
+assert.ok(
   fs.existsSync(path.join(__dirname, "client-review-copy-flow.html")),
   "client review copy flow exists as a real screen",
 );
 assert.ok(
   fs.existsSync(path.join(__dirname, "speaker-framing-safety.html")),
   "speaker framing safety exists as a real screen",
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, "destination-crop-preview.html")),
+  "destination crop preview exists as a real screen",
 );
 assert.ok(
   html.includes('fixScreen: "accessibility-readability-checks.html"'),
@@ -85,4 +118,5 @@ assert.ok(html.includes("issue.fixScreen && issue.fixLabel"), "fix link renderin
 
 console.log("layout safe areas: review watermark overlap opens the review copy flow");
 console.log("layout safe areas: face-area overlap opens speaker framing safety");
+console.log("layout safe areas: outside-crop reviews open destination crop preview");
 console.log("layout safe areas: too-small elements open accessibility & readability checks");
