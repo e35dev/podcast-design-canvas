@@ -6,6 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
+const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 const shellPath = path.join(__dirname, "index.html");
@@ -39,5 +40,129 @@ for (const step of flowSteps) {
   const fileName = path.basename(step);
   assert.ok(navSource.includes(`"${fileName}"`), `episode flow nav lists ${fileName}`);
 }
+
+function createElement(tagName) {
+  return {
+    tagName,
+    attributes: {},
+    children: [],
+    className: "",
+    href: "",
+    id: "",
+    textContent: "",
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+      if (name === "id") this.id = value;
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    insertBefore(child, before) {
+      const index = this.children.indexOf(before);
+      if (index === -1) {
+        this.children.unshift(child);
+      } else {
+        this.children.splice(index, 0, child);
+      }
+      return child;
+    },
+  };
+}
+
+function flatten(node) {
+  return [node, ...node.children.flatMap(flatten)];
+}
+
+function renderNavFor(fileName) {
+  const head = createElement("head");
+  const body = createElement("body");
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) {
+      return [...flatten(head), ...flatten(body)].find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return (
+        [...flatten(head), ...flatten(body)].find((node) =>
+          node.className.split(" ").includes(className)
+        ) || null
+      );
+    },
+  };
+
+  vm.runInNewContext(navSource, {
+    document,
+    window: { location: { pathname: `/prototype/${fileName}` } },
+  });
+
+  return { head, body, nodes: [...flatten(head), ...flatten(body)] };
+}
+
+const firstNav = renderNavFor("source-media-health.html");
+assert.ok(firstNav.nodes.some((node) => node.id === "episode-flow-nav-styles"), "flow nav injects styles once");
+assert.ok(firstNav.nodes.some((node) => node.textContent === "Episode flow home"), "flow nav renders home link");
+assert.ok(
+  firstNav.nodes.some((node) => node.textContent === "Next: Speaker sync repair"),
+  "first flow screen renders next link",
+);
+assert.ok(
+  !firstNav.nodes.some((node) => node.textContent.startsWith("Previous:")),
+  "first flow screen does not render a previous link",
+);
+
+const middleNav = renderNavFor("audio-cleanup-controls.html");
+assert.ok(
+  middleNav.nodes.some((node) => node.textContent === "Previous: Speaker sync repair"),
+  "middle flow screen renders previous link",
+);
+assert.ok(
+  middleNav.nodes.some((node) => node.textContent === "Next: Caption quality review"),
+  "middle flow screen renders next link",
+);
+const currentStep = middleNav.nodes.find((node) =>
+  node.textContent === "Current step: 3 of 5 · Audio cleanup"
+);
+assert.ok(currentStep, "middle flow screen renders visible current-step label");
+assert.equal(currentStep.attributes["aria-current"], "step", "current step exposes aria-current");
+
+const lastNav = renderNavFor("export-readiness-review.html");
+assert.ok(
+  lastNav.nodes.some((node) => node.textContent === "Previous: Caption quality review"),
+  "last flow screen renders previous link",
+);
+assert.ok(
+  !lastNav.nodes.some((node) => node.textContent.startsWith("Next:")),
+  "last flow screen does not render a next link",
+);
+
+const duplicateNav = renderNavFor("speaker-sync-repair.html");
+vm.runInNewContext(navSource, {
+  document: {
+    readyState: "complete",
+    head: duplicateNav.head,
+    body: duplicateNav.body,
+    createElement,
+    getElementById(id) {
+      return duplicateNav.nodes.find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return duplicateNav.nodes.find((node) => node.className.split(" ").includes(className)) || null;
+    },
+  },
+  window: { location: { pathname: "/prototype/speaker-sync-repair.html" } },
+});
+assert.equal(
+  flatten(duplicateNav.body).filter((node) => node.className === "episode-flow-nav").length,
+  1,
+  "flow nav renders once if the script runs twice",
+);
 
 console.log("preview shell (episode flow smoke): all assertions passed");

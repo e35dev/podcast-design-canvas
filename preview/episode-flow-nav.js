@@ -23,6 +23,10 @@ function renderEpisodeFlowNav() {
     return;
   }
 
+  if (document.querySelector(".episode-flow-nav")) {
+    return;
+  }
+
   const step = EPISODE_FLOW[index];
   const total = EPISODE_FLOW.length;
   const previous = index > 0 ? EPISODE_FLOW[index - 1] : null;
@@ -108,7 +112,8 @@ function renderEpisodeFlowNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
-  stepLabel.textContent = `Step ${index + 1} of ${total} · ${step.label}`;
+  stepLabel.setAttribute("aria-current", "step");
+  stepLabel.textContent = `Current step: ${index + 1} of ${total} · ${step.label}`;
   wrap.appendChild(stepLabel);
 
   nav.appendChild(wrap);
