@@ -84,6 +84,11 @@ const speakerSetupFlow = new Set([
   "off-camera-speaker-presence.html",
 ]);
 
+const musicFlow = new Set([
+  "music-cue-setup.html",
+  "music-ducking-under-speech.html",
+]);
+
 const cleanupFlow = new Set([
   "pause-crosstalk-cleanup.html",
   "transcript-glossary.html",
@@ -172,6 +177,15 @@ for (const file of prototypes) {
     assert.ok(
       !html.includes("../preview/tools-nav.js"),
       `cleanup screen does not double up with tools nav: ${file}`,
+    );
+  } else if (musicFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/music-nav.js"),
+      `music screen uses music navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `music screen does not double up with tools nav: ${file}`,
     );
   } else {
     // Every secondary screen links back to the shell.

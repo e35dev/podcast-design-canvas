@@ -16,6 +16,7 @@ const pathNavs = [
   { script: "publish-nav.js", attr: "data-publish-step", flowName: "PUBLISH_FLOW" },
   { script: "style-nav.js", attr: "data-style-step", flowName: "STYLE_FLOW" },
   { script: "cleanup-nav.js", attr: "data-cleanup-step", flowName: "CLEANUP_FLOW" },
+  { script: "music-nav.js", attr: "data-music-step", flowName: "MUSIC_FLOW" },
   { script: "visuals-nav.js", attr: "data-visuals-step", flowName: "VISUALS_FLOW" },
   { script: "reuse-nav.js", attr: "data-reuse-step", flowName: "REUSE_FLOW" },
 ];

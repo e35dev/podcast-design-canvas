@@ -55,4 +55,12 @@ assert.strictEqual(evaluateSequence(sampleSequence.map((item) => ({ ...item, sta
 assert.match(issuesFor("approved", sampleSequence)[0].title, /Ready for final watch-through/);
 assert.match(issuesFor("skipped", sampleSequence)[0].detail, /episode/i);
 
+const reviewIssues = issuesFor("review", sampleSequence);
+const musicIssue = reviewIssues.find((issue) => issue.title.includes("Intro cue"));
+assert.ok(musicIssue, "review state surfaces the music cue issue");
+assert.equal(musicIssue.fixScreen, "music-cue-setup.html");
+assert.equal(musicIssue.fixLabel, "music cue setup");
+
+assert.ok(html.includes('link.className = "fix-link"'), "intro/outro fix links are class-tagged");
+
 console.log("intro-outro-builder: review states evaluate cleanly");

@@ -70,6 +70,17 @@ assert.ok(shell.includes("show-notes-assembly.html"), "shell links to show notes
 assert.ok(shell.includes("thumbnail-cover-frame.html"), "shell links to thumbnail frame in publish path");
 assert.ok(shell.includes("publish-checklist.html"), "shell links to publish checklist in publish path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
+assert.ok(
+  shell.indexOf("Publish prep after export") < shell.indexOf("Place music cues"),
+  "publish prep section precedes music cue path in shell workflow order",
+);
+assert.match(shell, /Place music cues/, "shell documents the music cue path");
+assert.ok(
+  shell.indexOf("Place music cues") < shell.indexOf("Clean up audio &amp; captions"),
+  "music cue section precedes cleanup helper path in shell workflow order",
+);
+assert.ok(shell.includes("music-cue-setup.html"), "shell links to music cue setup in music path");
+assert.ok(shell.includes("music-ducking-under-speech.html"), "shell links to music ducking in music path");
 assert.match(shell, /Clean up audio &amp; captions/, "shell documents the cleanup helper path");
 assert.ok(
   shell.indexOf("Clean up audio &amp; captions") < shell.indexOf("Add contextual visuals"),
