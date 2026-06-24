@@ -211,9 +211,14 @@
         margin-top: 14px;
       }
 
-      button:disabled {
+      button:disabled,
+      .continue-link[aria-disabled="true"] {
         opacity: 0.55;
         cursor: not-allowed;
+      }
+
+      .continue-link[aria-disabled="true"] {
+        pointer-events: none;
       }
 
       .actions {
@@ -223,7 +228,11 @@
         margin-top: 18px;
       }
 
-      button {
+      button,
+      .continue-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-height: 40px;
         border: 1px solid #0f5d53;
         border-radius: 6px;
@@ -233,6 +242,7 @@
         font-weight: 700;
         padding: 8px 12px;
         cursor: pointer;
+        text-decoration: none;
       }
 
       button.secondary {
@@ -272,12 +282,14 @@
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
           <p class="continue-note" id="continueNote"></p>
-          <button type="button" id="continue" disabled>Continue to preset styling</button>
+          <a class="continue-link" id="continue" aria-disabled="true">Continue to preset styling</a>
         </aside>
       </section>
     </main>
 
     <script>
+      const nextSetupSurface = "speaker-role-mapping.html";
+
       const fixSurfaces = {
         "source-media-health": {
           label: "Replace or check the file",
@@ -328,7 +340,7 @@
       const tracksElement = document.querySelector("#tracks");
       const issuesElement = document.querySelector("#issues");
       const statusElement = document.querySelector("#status");
-      const continueButton = document.querySelector("#continue");
+      const continueLink = document.querySelector("#continue");
       const continueNoteElement = document.querySelector("#continueNote");
 
       document.querySelector("#addGuest").addEventListener("click", () => {
@@ -461,8 +473,20 @@
             : [Object.assign(document.createElement("p"), { textContent: "All speaker tracks are ready for preset selection." })]),
         );
 
-        continueButton.disabled = readiness.status !== "ready";
-        continueNoteElement.textContent = readiness.status === "ready"
+        updateContinueLink(readiness);
+      }
+
+      function updateContinueLink(readiness) {
+        const ready = readiness.status === "ready";
+        continueLink.setAttribute("aria-disabled", String(!ready));
+
+        if (ready) {
+          continueLink.href = nextSetupSurface;
+        } else {
+          continueLink.removeAttribute("href");
+        }
+
+        continueNoteElement.textContent = ready
           ? "Required buckets are assigned. Open issues that still affect the finished episode will carry forward to export review."
           : readiness.status === "blocked"
             ? "Add a host recording before continuing."
