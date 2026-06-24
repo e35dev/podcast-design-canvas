@@ -60,16 +60,21 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function splitHref(file) {
+  const [beforeHash, hash = ""] = (file || "").split("#");
+  const [base, query = ""] = beforeHash.split("?");
+  return { base, query, hash };
+}
+
+function visualsContextFromQuery(query) {
+  const from = new URLSearchParams(query || "").get("from");
+  return from === "style" || from === "cleanup" ? from : "";
+}
+
 function routeSearchFromFile(file) {
-  const query = ((file || "").split("#")[0].split("?")[1] || "");
-  const from = new URLSearchParams(query).get("from");
-  if (from === "style") {
-    return "?from=style";
-  }
-  if (from === "cleanup") {
-    return "?from=cleanup";
-  }
-  return "";
+  const { query } = splitHref(file);
+  const from = visualsContextFromQuery(query);
+  return from ? `?from=${from}` : "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -89,14 +94,7 @@ function setVisualsScreenLink(link, file) {
 }
 
 function visualsEntryContext() {
-  const from = new URLSearchParams((window.location.search || "").replace(/^\?/, "")).get("from");
-  if (from === "style") {
-    return "style";
-  }
-  if (from === "cleanup") {
-    return "cleanup";
-  }
-  return "cleanup";
+  return visualsContextFromQuery((window.location.search || "").replace(/^\?/, "")) || "cleanup";
 }
 
 function entryBacklink() {
@@ -108,7 +106,11 @@ function withVisualsContext(file) {
   if (!VISUALS_SCREEN_IDS.has(screenIdFromFile(file))) {
     return file;
   }
-  return `${file}?from=${context}`;
+  const { base, query, hash } = splitHref(file);
+  const params = new URLSearchParams(query);
+  params.set("from", context);
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash ? `#${hash}` : ""}`;
 }
 
 function renderVisualsNav() {

@@ -107,6 +107,26 @@ function renderNavFor(fileName, visualsStep, embedded = false, search = "") {
   return flatten(body);
 }
 
+function visualsNavApi(fileName, search = "") {
+  const context = {
+    document: {
+      readyState: "complete",
+      body: { dataset: {} },
+      createElement,
+      getElementById() {
+        return createElement("style");
+      },
+      querySelector() {
+        return createElement("div");
+      },
+    },
+    window: makeWindow(fileName, false, search),
+    URLSearchParams,
+  };
+  vm.runInNewContext(navScript, context);
+  return context;
+}
+
 function linkWithText(nodes, text) {
   const link = nodes.find((node) => node.tagName === "a" && node.textContent === text);
   assert.ok(link, `Missing link: ${text}`);
@@ -243,6 +263,18 @@ assert.equal(
   embeddedStyleNext.href,
   "../preview/app.html#contextual-title-cards?from=style",
   "embedded style-entered visuals preserve style context on next",
+);
+
+const visualsApi = visualsNavApi("contextual-title-cards.html", "?from=style");
+assert.equal(
+  visualsApi.withVisualsContext("screen-share-moment-review.html?moment=demo"),
+  "screen-share-moment-review.html?moment=demo&from=style",
+  "visuals nav preserves an existing file query while carrying entry context",
+);
+assert.equal(
+  visualsApi.withVisualsContext("screen-share-moment-review.html?moment=demo#details"),
+  "screen-share-moment-review.html?moment=demo&from=style#details",
+  "visuals nav preserves hash fragments while carrying entry context",
 );
 
 const embeddedMiddleNav = renderNavFor("contextual-title-cards.html", "contextual-title-cards", true, "?from=cleanup");
