@@ -7,10 +7,15 @@
 
 const PUBLISH_FLOW = [
   {
+    id: "episode-runtime-shaping",
+    file: "episode-runtime-shaping.html",
+    label: "Episode runtime shaping",
+    previous: { file: "export-readiness-review.html", label: "Export readiness" },
+  },
+  {
     id: "episode-watch-through-preview",
     file: "episode-watch-through-preview.html",
     label: "Watch-through preview",
-    previous: { file: "export-readiness-review.html", label: "Export readiness" },
   },
   { id: "destination-crop-preview", file: "destination-crop-preview.html", label: "Destination crop preview" },
   { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
