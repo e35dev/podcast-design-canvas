@@ -380,6 +380,12 @@
             setEntryStatus(entry.id, "guest-preferred");
           });
           actions.append(confirm, guest);
+
+          if (entry.source === "Transcript glossary") {
+            var glossarySource = el("a", "routed-link", "Open transcript glossary");
+            glossarySource.href = "transcript-glossary.html";
+            actions.append(glossarySource);
+          }
         }
 
         if (entry.status === "confirmed" && entry.spokenInEpisode) {
