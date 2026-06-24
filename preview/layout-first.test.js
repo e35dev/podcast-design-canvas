@@ -387,9 +387,9 @@ assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "swit
 assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
 assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
 
-// Duplicate guard keyed on file identity (name + size + modified time), not display name.
-// The same recording in two speaker slots blocks Continue; two separate recordings that
-// merely share a filename (riverside-track.mp4) are allowed.
+// Source movement is keyed on file identity (name + size + modified time), not display
+// name. The same recording moves out of its old slot before filling the new one, while
+// two separate recordings that merely share a filename (riverside-track.mp4) are allowed.
 controller.resetVideos();
 controller.applyLayout("interview");
 const sharedTake = { name: "riverside-track.mp4", type: "video/mp4", size: 12582912, lastModified: 1717000000000 };
@@ -397,25 +397,41 @@ controller.placeVideoFile(controller.zonesBySlot.host, sharedTake);
 controller.placeVideoFile(controller.zonesBySlot.guest, sharedTake);
 assert.deepEqual(
   controller.duplicateFileNames(),
-  ["riverside-track.mp4"],
-  "the same recording placed in two speaker slots is detected by file identity",
+  [],
+  "moving the same recording prevents duplicate speaker-slot identity",
+);
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  false,
+  "placing the same source in a new slot clears the previous slot",
+);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  true,
+  "placing the same source fills the new target slot",
 );
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
   "true",
-  "Continue is blocked while two speaker slots share the same recording",
+  "Continue re-gates because moving the source leaves the host slot empty",
 );
 assert.match(
   elementsById["layout-slot-status"].textContent,
-  /same video is in more than one speaker slot/i,
-  "duplicate guidance is creator-facing",
+  /Still need the Host video/i,
+  "move guidance returns to the missing-slot readiness copy",
 );
 const separateGuestTake = { name: "riverside-track.mp4", type: "video/mp4", size: 20447232, lastModified: 1717000900000 };
+controller.placeVideoFile(controller.zonesBySlot.host, sharedTake);
 controller.placeVideoFile(controller.zonesBySlot.guest, separateGuestTake);
 assert.deepEqual(
   controller.duplicateFileNames(),
   [],
   "two separate recordings that share a filename are not treated as duplicates",
+);
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "same filename with different source metadata does not clear the host slot",
 );
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],

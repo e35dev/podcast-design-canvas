@@ -212,6 +212,18 @@
       zones.forEach(clearZone);
     }
 
+    function clearMatchingSource(zone, file) {
+      const incomingSig = fileSignature(file);
+      if (!incomingSig) {
+        return;
+      }
+      zones.forEach((other) => {
+        if (other !== zone && other.dataset.fileSig === incomingSig) {
+          clearZone(other);
+        }
+      });
+    }
+
     function placeVideoFile(zone, file) {
       if (!zone || zone.classList.contains("is-hidden")) {
         return;
@@ -224,6 +236,7 @@
       }
 
       setError("");
+      clearMatchingSource(zone, file);
       clearZone(zone);
       zone.classList.add("filled");
       zone.dataset.fileName = file.name || "";
