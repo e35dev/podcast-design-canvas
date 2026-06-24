@@ -10,6 +10,7 @@ const STYLE_FLOW = [
   { id: "preset-comparison-preview", file: "preset-comparison-preview.html", label: "Preset comparison" },
   { id: "layout-safe-areas", file: "layout-safe-areas.html", label: "Layout safe areas" },
   { id: "speaker-framing-safety", file: "speaker-framing-safety.html", label: "Speaker framing safety" },
+  { id: "canvas-layer-controls", file: "canvas-layer-controls.html", label: "Canvas layer controls" },
 ];
 
 function currentStyleIndex() {
