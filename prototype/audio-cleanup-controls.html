@@ -374,6 +374,12 @@
         margin: -6px 0 10px;
       }
 
+      .preview-tradeoff {
+        color: var(--muted);
+        font-size: 12px;
+        margin: -8px 0 10px;
+      }
+
       button.primary {
         border-color: #0f5d53;
         background: var(--accent);
@@ -433,6 +439,7 @@
           <h2>Preview moment</h2>
           <div class="moments" id="moments" role="group" aria-label="Preview moment"></div>
           <p class="preview-now" id="preview-now" aria-live="polite"></p>
+          <p class="preview-tradeoff" id="preview-tradeoff" aria-live="polite"></p>
           <p class="moment-hint" id="moment-hint" aria-live="polite"></p>
 
           <h2>Compare on this moment</h2>
@@ -499,6 +506,7 @@
       const summaryElement = document.querySelector("#summary");
       const momentHintElement = document.querySelector("#moment-hint");
       const previewNowElement = document.querySelector("#preview-now");
+      const previewTradeoffElement = document.querySelector("#preview-tradeoff");
 
       document.querySelector("#apply").addEventListener("click", () => {
         applied = true;
@@ -531,6 +539,7 @@
         );
         renderRollup(reviewCount);
         renderPreviewNow();
+        renderPreviewTradeoff();
         renderMomentHint();
 
         statusElement.textContent = speakers.some((speaker) => speaker.state === "suggested")
@@ -787,6 +796,11 @@
         previewNowElement.textContent = moment?.label ? `Previewing: ${moment.label}` : "";
       }
 
+      function renderPreviewTradeoff() {
+        const moment = previewMoments.find((entry) => entry.id === preview);
+        previewTradeoffElement.textContent = enabled.size && moment?.note ? moment.note : "";
+      }
+
       function renderMomentHint() {
         const active = choices.filter((choice) => enabled.has(choice.id));
         if (!active.length) {
@@ -871,7 +885,7 @@
             "With cleanup",
             enabled.size ? cleaned : original,
             true,
-            enabled.size ? moment.note : "Turn on a cleanup choice to preview the difference.",
+            enabled.size ? "How cleanup changes this moment." : "Turn on a cleanup choice to preview the difference.",
             effects,
           ),
         );
