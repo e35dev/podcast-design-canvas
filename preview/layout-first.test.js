@@ -880,6 +880,16 @@ assert.match(
 assert.equal(elementsById["layout-error-card"].hidden, false, "the no-room message is shown to the creator");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "a full-layout drop leaves existing placements untouched");
 
+// If the full-layout drop is a recording that is already placed, name the duplicate-source
+// problem instead of only saying there is no room.
+controller.placeDroppedFiles([{ name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 }]);
+assert.match(
+  elementsById["layout-error"].textContent,
+  /1 recording is already in the layout/,
+  "dropping an already-placed recording on a full layout reports the duplicate source",
+);
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "an already-placed full-layout drop leaves placements untouched");
+
 // A full-layout drop of only a 0-byte export must explain the empty file was skipped — not
 // mislabel it as "no open slot left" just because the filename ends in .mp4 (#1231 gap).
 controller.resetVideos();

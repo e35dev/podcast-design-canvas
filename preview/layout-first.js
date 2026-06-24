@@ -101,6 +101,21 @@
     return parts.join("|");
   }
 
+  function duplicateBatchCount(files) {
+    const seen = new Set();
+    let duplicates = 0;
+    (files || []).forEach((file) => {
+      const sig = fileSignature(file);
+      if (!sig) return;
+      if (seen.has(sig)) {
+        duplicates += 1;
+        return;
+      }
+      seen.add(sig);
+    });
+    return duplicates;
+  }
+
   function createLayoutFirstController(doc, options = {}) {
     const urlApi = options.URL || global.URL || {};
     const storage = options.storage || global.sessionStorage;
@@ -275,6 +290,25 @@
         }
       });
       return blocked;
+    }
+
+    function placedSourceSignatures() {
+      const signatures = new Set();
+      visibleSlots().forEach((zone) => {
+        const sig = (zone.dataset.fileSig || "").trim();
+        if (zone.classList.contains("filled") && sig) {
+          signatures.add(sig);
+        }
+      });
+      return signatures;
+    }
+
+    function alreadyPlacedDropCount(files) {
+      const placed = placedSourceSignatures();
+      return (files || []).filter((file) => {
+        const sig = fileSignature(file);
+        return sig && placed.has(sig);
+      }).length;
     }
 
     function focusSlotInput(zone) {
@@ -622,6 +656,7 @@
       // (clearMatchingSource moves a source to its newest slot), leaving the target empty.
       // Files without an identity signature (no size/mtime) are kept — we can't tell them apart.
       const seenSig = new Set();
+      const skippedDuplicate = duplicateBatchCount(all);
       const files = all.filter((file) => {
         const sig = fileSignature(file);
         if (!sig) return true;
@@ -649,7 +684,7 @@
       const extras = rest.filter(isPlaceableVideo);
       const skippedNonVideo = rest.filter((file) => !isVideoFile(file)).length;
       const skippedEmpty = rest.filter((file) => isVideoFile(file) && isEmptyExport(file)).length;
-      if (extras.length === 0 && skippedNonVideo === 0 && skippedEmpty === 0) {
+      if (extras.length === 0 && skippedNonVideo === 0 && skippedEmpty === 0 && skippedDuplicate === 0) {
         return;
       }
       const openSlots = visibleSlots().filter((candidate) => {
@@ -680,6 +715,10 @@
         const noun = skippedNonVideo === 1 ? "file" : "files";
         const wasWere = skippedNonVideo === 1 ? "wasn't a video, so it was" : "weren't videos, so they were";
         setError(`${skippedNonVideo} ${noun} in that drop ${wasWere} skipped. Only video files can fill a slot.`);
+      } else if (skippedDuplicate > 0) {
+        const noun = skippedDuplicate === 1 ? "duplicate recording" : "duplicate recordings";
+        const wasWere = skippedDuplicate === 1 ? "was" : "were";
+        setError(`${skippedDuplicate} ${noun} in that drop ${wasWere} skipped. Give each speaker a separate video file.`);
       }
     }
 
@@ -714,8 +753,14 @@
       // exports, then non-video files (#1231 extended this path for non-video only).
       const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
       const placeableCount = files.filter(isPlaceableVideo).length;
+      const alreadyPlacedCount = alreadyPlacedDropCount(files);
       const skippedEmpty = files.filter((file) => isVideoFile(file) && isEmptyExport(file)).length;
       const skippedNonVideo = files.filter((file) => !isVideoFile(file)).length;
+      if (placeableCount > 0 && alreadyPlacedCount === placeableCount) {
+        const noun = placeableCount === 1 ? "recording is" : "recordings are";
+        setError(`${placeableCount} ${noun} already in the layout. Drop a separate video file for another speaker, or remove a slot first.`);
+        return;
+      }
       if (placeableCount > 0) {
         setError("There's no open slot left. Remove a video to make room for another.");
         return;

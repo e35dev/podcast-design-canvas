@@ -170,6 +170,12 @@ ctl.placeVideoFiles(ctl.zonesBySlot.host, [video("dupe.mp4"), video("dupe.mp4")]
 assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "a duplicate batch keeps the recording in the slot it landed on");
 assert.ok(!ctl.zonesBySlot.guest.classList.contains("filled"), "a duplicate of the same recording does not spill into another slot");
 assert.ok(!ctl.zonesBySlot["guest-b"].classList.contains("filled"), "no further slot is filled by a duplicate");
+assert.equal(elementsById["layout-error-card"].hidden, false, "a skipped duplicate recording surfaces a message");
+assert.match(
+  elementsById["layout-error"].textContent,
+  /1 duplicate recording in that drop was skipped/,
+  "the message tells creators the duplicate recording was skipped",
+);
 
 // An empty (0-byte) export in the MIDDLE of a batch must be skipped, not consume an open slot.
 // It passes the video-type check but is rejected on placement, so if it took the next open slot
