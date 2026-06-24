@@ -18,6 +18,9 @@ assert.ok(navSource.includes("episode-flow.html"), "ingest nav links to the guid
 assert.ok(navSource.includes("app.html"), "ingest nav links to the preview app");
 assert.ok(navSource.includes("isEmbeddedInPreviewApp"), "ingest nav routes through the preview app when embedded");
 assert.ok(navSource.includes("source-media-health.html"), "ingest nav hands off to source media health");
+assert.ok(navSource.includes("layout-first.html"), "ingest nav links to layout-first video placement");
+assert.ok(navSource.includes("layoutFirstPlacementSearch"), "ingest nav builds layout-first placement query with URLSearchParams");
+assert.ok(navSource.includes("Place videos in layout"), "ingest nav offers layout-first placement on speaker roles");
 assert.ok(navSource.includes('document.querySelector(".ingest-nav")'), "ingest nav guards against double render");
 assert.ok(!/innerHTML/.test(navSource), "ingest nav builds the DOM without innerHTML");
 
@@ -293,6 +296,10 @@ assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links ta
 const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
 assert.ok(
+  !firstNav.nodes.some((node) => node.textContent === "Place videos in layout"),
+  "first ingest screen does not offer layout-first placement before roles are mapped",
+);
+assert.ok(
   !firstNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Previous:")),
   "first ingest screen does not render a previous link",
 );
@@ -302,6 +309,12 @@ assert.ok(
 );
 
 const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest");
+const layoutPlacementLink = linkWithText(middleNav.nodes, "Place videos in layout");
+assert.equal(
+  layoutPlacementLink.href,
+  "../preview/layout-first.html?path=ingest&from=ingest",
+  "ingest path at speaker roles links to layout-first placement with ingest context",
+);
 assert.ok(
   middleNav.nodes.some((node) => node.textContent === "Previous: Episode readiness"),
   "middle ingest screen renders previous link",
@@ -317,6 +330,12 @@ assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
 
 const episodeRoleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=episode");
+const episodePlacementLink = linkWithText(episodeRoleNav.nodes, "Place videos in layout");
+assert.equal(
+  episodePlacementLink.href,
+  "../preview/layout-first.html?path=episode&from=ingest",
+  "episode shell path at speaker roles links to layout-first placement with episode context",
+);
 assert.ok(
   episodeRoleNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
   "episode shell path at speaker roles skips social context",
@@ -364,6 +383,13 @@ assert.equal(
 assert.equal(embeddedNext.target, "_top", "embedded ingest next link targets the parent app");
 
 const embeddedMiddleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest", true);
+const embeddedPlacement = linkWithText(embeddedMiddleNav.nodes, "Place videos in layout");
+assert.equal(
+  embeddedPlacement.href,
+  "../preview/layout-first.html?path=ingest&from=ingest",
+  "embedded ingest nav opens layout-first placement from the speaker-role step",
+);
+assert.equal(embeddedPlacement.target, "_top", "embedded layout-first placement link targets the parent app");
 assert.equal(
   linkWithText(embeddedMiddleNav.nodes, "Preview app").href,
   "../preview/app.html#speaker-role-mapping?path=ingest",

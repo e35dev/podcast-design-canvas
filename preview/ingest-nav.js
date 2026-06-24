@@ -23,6 +23,33 @@ const PREVIEW_APP_INGEST_HANDOFFS = new Map([
   ["speaker-sync-repair", "?path=episode"],
 ]);
 
+const LAYOUT_FIRST_PLACEMENT_STEP = "speaker-role-mapping";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "episode" || shellPath === "ingest") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "ingest");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  setTopTargetWhenEmbedded(link);
+}
+
 function screenIdFromFile(file) {
   const clean = (file || "").split("#")[0].split("?")[0];
   const name = clean.split("/").pop() || "";
@@ -349,6 +376,13 @@ function renderIngestNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
