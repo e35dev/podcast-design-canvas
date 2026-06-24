@@ -9,10 +9,10 @@
 const CLEANUP_FLOW = [
   { id: "pause-crosstalk-cleanup", file: "pause-crosstalk-cleanup.html", label: "Pause & cross-talk cleanup" },
   { id: "transcript-glossary", file: "transcript-glossary.html", label: "Transcript glossary" },
+  { id: "pronunciation-name-review", file: "pronunciation-name-review.html", label: "Pronunciation & name review" },
   { id: "transcript-search-navigation", file: "transcript-search-navigation.html", label: "Transcript search" },
   { id: "accessibility-readability-checks", file: "accessibility-readability-checks.html", label: "Accessibility & readability" },
   { id: "line-pickup-insert", file: "line-pickup-insert.html", label: "Line pickup insert" },
-  { id: "pronunciation-name-review", file: "pronunciation-name-review.html", label: "Pronunciation & name review" },
   { id: "on-screen-correction-note", file: "on-screen-correction-note.html", label: "On-screen correction note" },
 ];
 

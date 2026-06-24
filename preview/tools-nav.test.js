@@ -84,6 +84,7 @@ const speakerSetupFlow = new Set([
 const cleanupFlow = new Set([
   "pause-crosstalk-cleanup.html",
   "transcript-glossary.html",
+  "pronunciation-name-review.html",
   "transcript-search-navigation.html",
   "accessibility-readability-checks.html",
   "line-pickup-insert.html",

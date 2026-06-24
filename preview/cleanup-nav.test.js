@@ -22,10 +22,10 @@ assert.ok(!/innerHTML/.test(navScript), "cleanup nav builds the DOM without inne
 const cleanupScreens = [
   "pause-crosstalk-cleanup.html",
   "transcript-glossary.html",
+  "pronunciation-name-review.html",
   "transcript-search-navigation.html",
   "accessibility-readability-checks.html",
   "line-pickup-insert.html",
-  "pronunciation-name-review.html",
   "on-screen-correction-note.html",
 ];
 
@@ -164,6 +164,18 @@ assert.ok(
   "middle cleanup screen does not reuse the publish checklist back link",
 );
 
+const pronunciationNav = renderNavFor("pronunciation-name-review.html", "pronunciation-name-review");
+assert.equal(
+  linkWithText(pronunciationNav, "Previous: Transcript glossary").href,
+  "transcript-glossary.html",
+  "pronunciation review follows transcript glossary in the cleanup path",
+);
+assert.equal(
+  linkWithText(pronunciationNav, "Next: Transcript search").href,
+  "transcript-search-navigation.html",
+  "pronunciation review hands off to transcript search in the cleanup path",
+);
+
 const lastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correction-note");
 const visualsHandoff = linkWithText(lastNav, "Continue: Contextual b-roll moments");
 assert.equal(
@@ -191,6 +203,18 @@ assert.equal(
 );
 assert.equal(embeddedNext.target, "_top", "embedded cleanup next link targets the parent app");
 
+const embeddedPronunciationNav = renderNavFor("pronunciation-name-review.html", "pronunciation-name-review", true);
+assert.equal(
+  linkWithText(embeddedPronunciationNav, "Previous: Transcript glossary").href,
+  "../preview/app.html#transcript-glossary",
+  "embedded cleanup nav routes pronunciation review backward through the preview app hash",
+);
+assert.equal(
+  linkWithText(embeddedPronunciationNav, "Next: Transcript search").href,
+  "../preview/app.html#transcript-search-navigation",
+  "embedded cleanup nav routes pronunciation review forward through the preview app hash",
+);
+
 const embeddedMiddleNav = renderNavFor("line-pickup-insert.html", "line-pickup-insert", true);
 assert.equal(
   linkWithText(embeddedMiddleNav, "Previous: Accessibility & readability").href,
@@ -198,21 +222,9 @@ assert.equal(
   "embedded cleanup nav routes previous cleanup steps through the preview app hash",
 );
 assert.equal(
-  linkWithText(embeddedMiddleNav, "Next: Pronunciation & name review").href,
-  "../preview/app.html#pronunciation-name-review",
-  "embedded cleanup nav routes middle next steps through the preview app hash",
-);
-
-const embeddedPronunciationNav = renderNavFor("pronunciation-name-review.html", "pronunciation-name-review", true);
-assert.equal(
-  linkWithText(embeddedPronunciationNav, "Previous: Line pickup insert").href,
-  "../preview/app.html#line-pickup-insert",
-  "embedded cleanup nav routes pronunciation previous step through the preview app hash",
-);
-assert.equal(
-  linkWithText(embeddedPronunciationNav, "Next: On-screen correction note").href,
+  linkWithText(embeddedMiddleNav, "Next: On-screen correction note").href,
   "../preview/app.html#on-screen-correction-note",
-  "embedded cleanup nav routes pronunciation next step through the preview app hash",
+  "embedded cleanup nav routes middle next steps through the preview app hash",
 );
 
 const embeddedLastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correction-note", true);
