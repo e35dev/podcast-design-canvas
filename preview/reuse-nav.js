@@ -10,6 +10,7 @@ const REUSE_FLOW = [
   { id: "show-template-adaptation", file: "show-template-adaptation.html", label: "Show template adaptation" },
   { id: "start-from-previous-episode", file: "start-from-previous-episode.html", label: "Start from previous episode" },
   { id: "episode-chapter-markers", file: "episode-chapter-markers.html", label: "Episode chapter markers" },
+  { id: "intro-outro-builder", file: "intro-outro-builder.html", label: "Intro & outro builder" },
 ];
 
 const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive moment review" };

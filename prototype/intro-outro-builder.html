@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intro &amp; Outro Builder Prototype</title>
+    <script src="../preview/reuse-nav.js" defer></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .sequence {
+        display: grid;
+        gap: 14px;
+      }
+
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .desc {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.draft { color: #5e6b67; background: #eceeed; }
+      .badge.adapted { color: #2a4c8a; background: #e2ebfb; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.approved { color: #075246; background: #dff5ef; }
+      .badge.skipped { color: #5e6b67; background: #eceeed; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.draft { color: #5e6b67; background: #eceeed; }
+      .status.adapted { color: #2a4c8a; background: #e2ebfb; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+      .status.approved { color: #075246; background: #dff5ef; }
+      .status.skipped { color: #5e6b67; background: #eceeed; }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .preview-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .preview-card strong {
+        display: block;
+      }
+
+      .preview-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body data-reuse-step="intro-outro-builder">
+    <main>
+      <h1>Intro &amp; Outro Builder</h1>
+      <p class="lede">
+        Keep the episode opening and closing consistent with the show template while adapting names, links, sponsor notes, and music decisions to this specific episode before the final watch-through.
+      </p>
+
+      <section class="workspace" aria-label="Intro and outro builder workspace">
+        <div class="panel">
+          <h2>Sequence review</h2>
+          <div class="sequence" id="sequence"></div>
+          <div class="actions">
+            <button type="button" id="approve">Approve for export</button>
+            <button type="button" class="secondary" id="skip">Skip intro for episode</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Export summary</h2>
+          <div id="status" class="status draft">draft</div>
+          <div class="issues" id="issues"></div>
+          <div class="preview-card" style="margin-top: 16px;">
+            <strong>Preview against the episode</strong>
+            <span>Keep the opener short, pull guest details from the episode, and only carry sponsor or cue decisions forward when this episode is actually ready to ship with them.</span>
+          </div>
+          <p class="summary-note">
+            Skipping an intro or outro for this episode should not clear unrelated sponsor, metadata, or music warnings.
+          </p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const sampleSequence = [
+        {
+          id: "intro-copy",
+          title: "Opening title and guest names",
+          description: "Pull the show title, episode title, and guest names into the opener.",
+          state: "adapted",
+        },
+        {
+          id: "music-cue",
+          title: "Intro cue and sponsor disclosure",
+          description: "Keep the opening cue short and confirm sponsor-safe wording before export.",
+          state: "review",
+        },
+        {
+          id: "outro-links",
+          title: "Outro guest links and subscribe prompt",
+          description: "Update the closing links and decide whether this episode keeps the full subscribe prompt.",
+          state: "adapted",
+        },
+        {
+          id: "template-reuse",
+          title: "Template reuse decision",
+          description: "Choose whether this intro or outro adjustment should stay episode-only or go back to the reusable show template.",
+          state: "draft",
+        },
+      ];
+
+      let sequence = structuredClone(sampleSequence);
+
+      const stateMeta = {
+        draft: {
+          label: "draft",
+          className: "draft",
+          note: "Suggested structure is visible, but the episode still needs adaptation before export.",
+        },
+        adapted: {
+          label: "adapted for episode",
+          className: "adapted",
+          note: "The intro or outro is fitted to this episode, but some decisions still need final review before export.",
+        },
+        review: {
+          label: "needs review",
+          className: "review",
+          note: "One or more intro or outro details still need attention before they should ship in the final episode.",
+        },
+        approved: {
+          label: "approved for export",
+          className: "approved",
+          note: "The opening and closing are ready to export with this episode.",
+        },
+        skipped: {
+          label: "skipped for episode",
+          className: "skipped",
+          note: "The creator chose to skip the custom intro or outro for this episode without changing the saved template.",
+        },
+      };
+
+      function evaluateSequence(items) {
+        const states = items.map((item) => item.state);
+        if (states.length && states.every((state) => state === "skipped")) {
+          return "skipped";
+        }
+        if (states.some((state) => state === "review")) {
+          return "review";
+        }
+        if (states.every((state) => state === "draft")) {
+          return "draft";
+        }
+        if (states.every((state) => state === "approved" || state === "skipped") && states.some((state) => state === "approved")) {
+          return "approved";
+        }
+        return "adapted";
+      }
+
+      function issuesFor(overall, items) {
+        if (overall === "review") {
+          return items
+            .filter((item) => item.state === "review")
+            .map((item) => ({
+              tone: "",
+              title: `${item.title} still needs review`,
+              detail: item.description,
+            }));
+        }
+        if (overall === "draft") {
+          return [{
+            tone: "info",
+            title: "Episode details still need to be pulled in",
+            detail: "Keep the saved intro or outro structure, but adapt names, sponsor wording, and links before export.",
+          }];
+        }
+        if (overall === "approved") {
+          return [{
+            tone: "info",
+            title: "Ready for final watch-through",
+            detail: "The opening and closing are export-ready and can move into the final review pass.",
+          }];
+        }
+        if (overall === "skipped") {
+          return [{
+            tone: "info",
+            title: "Skipped for this episode only",
+            detail: "The custom intro or outro is omitted for this episode's export without rewriting the reusable show template.",
+          }];
+        }
+        return [{
+          tone: "info",
+          title: "Adapted, but not fully approved yet",
+          detail: "The episode-specific framing is in place, but a final export review still decides whether these sequences ship.",
+        }];
+      }
+
+      const sequenceEl = document.querySelector("#sequence");
+      const statusEl = document.querySelector("#status");
+      const issuesEl = document.querySelector("#issues");
+
+      function render() {
+        sequenceEl.replaceChildren(
+          ...sequence.map((item, index) => {
+            const article = document.createElement("article");
+            article.className = "item";
+            article.innerHTML = `
+              <div class="head">
+                <div>
+                  <strong>${item.title}</strong>
+                  <div class="desc">${item.description}</div>
+                </div>
+                <span class="badge ${item.state}">${stateMeta[item.state].label}</span>
+              </div>
+              <label>
+                Review state
+                <select data-index="${index}">
+                  <option value="draft" ${item.state === "draft" ? "selected" : ""}>draft</option>
+                  <option value="adapted" ${item.state === "adapted" ? "selected" : ""}>adapted for episode</option>
+                  <option value="review" ${item.state === "review" ? "selected" : ""}>needs review</option>
+                  <option value="approved" ${item.state === "approved" ? "selected" : ""}>approved for export</option>
+                  <option value="skipped" ${item.state === "skipped" ? "selected" : ""}>skipped for episode</option>
+                </select>
+              </label>
+            `;
+            article.querySelector("select").addEventListener("change", (event) => {
+              sequence[index].state = event.target.value;
+              render();
+            });
+            return article;
+          }),
+        );
+
+        const overall = evaluateSequence(sequence);
+        statusEl.className = `status ${stateMeta[overall].className}`;
+        statusEl.textContent = stateMeta[overall].label;
+
+        issuesEl.replaceChildren(
+          ...issuesFor(overall, sequence).map((issue) => {
+            const article = document.createElement("article");
+            article.className = `issue ${issue.tone}`.trim();
+            const strong = document.createElement("strong");
+            strong.textContent = issue.title;
+            const span = document.createElement("span");
+            span.textContent = issue.detail;
+            article.append(strong, span);
+            return article;
+          }),
+        );
+      }
+
+      document.querySelector("#approve").addEventListener("click", () => {
+        sequence = sequence.map((item) => ({
+          ...item,
+          state: item.state === "skipped" ? "skipped" : "approved",
+        }));
+        render();
+      });
+
+      document.querySelector("#skip").addEventListener("click", () => {
+        sequence = sequence.map((item) => ({ ...item, state: "skipped" }));
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        sequence = structuredClone(sampleSequence);
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          sampleSequence,
+          evaluateSequence,
+          issuesFor,
+        };
+      }
+    </script>
+  </body>
+</html>

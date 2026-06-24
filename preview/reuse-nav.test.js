@@ -24,12 +24,13 @@ const reuseScreens = [
   "show-template-adaptation.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
+  "intro-outro-builder.html",
 ];
 
 const reuseFlowMatch = navScript.match(/const REUSE_FLOW = \[([\s\S]*?)\];/);
 assert.ok(reuseFlowMatch, "reuse nav declares REUSE_FLOW");
 const flowFiles = [...reuseFlowMatch[1].matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-assert.deepStrictEqual(flowFiles, reuseScreens, "reuse nav path is the four reuse screens, in order");
+assert.deepStrictEqual(flowFiles, reuseScreens, "reuse nav path is the reuse screens, in order");
 
 for (const file of reuseScreens) {
   const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
@@ -130,7 +131,14 @@ assert.ok(
   "middle reuse screen does not reuse the sensitive moment review back link",
 );
 
-const lastNav = renderNavFor("episode-chapter-markers.html", "episode-chapter-markers");
+const chapterNav = renderNavFor("episode-chapter-markers.html", "episode-chapter-markers");
+assert.equal(
+  linkWithText(chapterNav, "Next: Intro & outro builder").href,
+  "intro-outro-builder.html",
+  "chapter markers advances to intro and outro builder",
+);
+
+const lastNav = renderNavFor("intro-outro-builder.html", "intro-outro-builder");
 const publishHandoff = linkWithText(lastNav, "Continue: Episode watch-through");
 assert.equal(
   publishHandoff.href,
@@ -169,7 +177,14 @@ assert.equal(
   "embedded reuse nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("episode-chapter-markers.html", "episode-chapter-markers", true);
+const embeddedChapterNav = renderNavFor("episode-chapter-markers.html", "episode-chapter-markers", true);
+assert.equal(
+  linkWithText(embeddedChapterNav, "Next: Intro & outro builder").href,
+  "../preview/app.html#intro-outro-builder",
+  "embedded reuse nav routes the intro and outro step through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("intro-outro-builder.html", "intro-outro-builder", true);
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Episode watch-through");
 assert.equal(
   embeddedHandoff.href,
