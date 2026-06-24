@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+      .panel + .panel { margin-top: 18px; }
+
+      .inputs { display: grid; gap: 14px; }
+      .input-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+      .input-label { font-weight: 700; font-size: 14px; }
+      .input-value { font-size: 13px; color: var(--muted); margin-top: 2px; }
+      .input-note { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+      .color-swatch {
+        width: 32px; height: 32px; border-radius: 6px;
+        border: 1px solid var(--line); display: inline-block;
+      }
+      .color-row { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+
+      .badge {
+        display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
+        padding: 0 10px; font-weight: 700; font-size: 12px; white-space: nowrap;
+      }
+      .badge.defaults { color: #2a4c8a; background: #e2ebfb; }
+      .badge.previewing { color: #075246; background: #dff5ef; }
+      .badge.conflict { color: #7a4400; background: #fff1d6; }
+      .badge.adjusted { color: #075246; background: #dff5ef; }
+      .badge.warning { color: #7a4400; background: #fff1d6; }
+      .badge.saved { color: #075246; background: #dff5ef; }
+
+      button {
+        min-height: 34px; border: 1px solid var(--accent); border-radius: 6px;
+        background: var(--accent); color: #fff; font: inherit; font-size: 13px;
+        font-weight: 700; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+      }
+      button.secondary { background: #fff; color: var(--accent); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .routed-link {
+        font-size: 13px; font-weight: 700; color: var(--accent);
+        text-decoration: none; white-space: nowrap;
+      }
+      .routed-link:hover { text-decoration: underline; }
+      .routed-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .preview-surfaces { display: grid; gap: 10px; margin-top: 12px; }
+      .preview-surface {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        border: 1px solid var(--line); border-radius: 7px; background: #fff;
+        padding: 10px 14px;
+      }
+      .preview-surface .surface-name { font-weight: 600; font-size: 13px; }
+
+      .conflict-card {
+        border: 1px solid var(--warn); border-radius: 8px; background: #fffbf3;
+        padding: 12px; margin-top: 10px;
+      }
+      .conflict-card p { font-size: 13px; margin: 0 0 8px; }
+      .conflict-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+      .status-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/reuse-nav.js" defer></script>
+  </head>
+  <body data-reuse-step="show-brand-kit-setup">
+    <main>
+      <h1>Show brand kit setup</h1>
+      <p class="lede">
+        Add show branding once, preview how it affects presets and layouts, and
+        reuse it across future episodes. All brand inputs are optional &mdash;
+        strong defaults apply when inputs are incomplete.
+      </p>
+
+      <section class="workspace" aria-label="Brand kit setup workspace">
+        <div>
+          <div class="panel">
+            <h2>Brand inputs</h2>
+            <div class="inputs" id="inputs"></div>
+          </div>
+
+          <div class="panel" id="conflicts-panel" hidden>
+            <h2>Brand conflicts</h2>
+            <div id="conflicts"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2>Preview surfaces</h2>
+            <p class="status-note">Brand choices preview on real episode content, not placeholders.</p>
+            <div class="preview-surfaces" id="surfaces"></div>
+          </div>
+
+          <div class="panel">
+            <h2>Kit status</h2>
+            <div id="status"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+              <button id="saveBtn" disabled>Save to show template</button>
+            </div>
+            <p class="status-note" id="templateNote"></p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var episode = {
+        show: "The Long Build",
+        host: "Maya",
+        guests: ["Dev", "Priya"],
+      };
+
+      var BRAND_INPUTS = [
+        { id: "logo", label: "Logo", value: "the-long-build-logo.svg", optional: true },
+        { id: "primary-color", label: "Primary color", value: "#136f63", optional: true },
+        { id: "secondary-color", label: "Secondary color", value: "#1a3a35", optional: true },
+        { id: "type-style", label: "Type style preference", value: "Clean sans-serif", optional: true },
+        { id: "lower-third", label: "Lower-third style", value: "Minimal bar with name and role", optional: true },
+        { id: "caption-emphasis", label: "Caption emphasis level", value: "Moderate", optional: true },
+        { id: "background", label: "Background texture", value: "Subtle grain", optional: true },
+        { id: "thumbnail", label: "Thumbnail treatment", value: "Speaker frame with show title overlay", optional: true },
+      ];
+
+      var PREVIEW_SURFACES = [
+        { id: "presets", label: "Preset cards", route: "preset-style-picker.html" },
+        { id: "frames", label: "Speaker frames", route: "speaker-framing-safety.html" },
+        { id: "captions", label: "Captions", route: "audio-caption-quality-review.html" },
+        { id: "titles", label: "Title moments", route: "contextual-title-cards.html" },
+        { id: "lowers", label: "Lower-thirds", route: "canvas-layer-controls.html" },
+        { id: "thumbnail", label: "Export thumbnail", route: "thumbnail-cover-frame.html" },
+      ];
+
+      var INITIAL_CONFLICTS = [
+        {
+          id: "caption-contrast",
+          description: "Primary color on dark backgrounds drops caption contrast below readable level at 04:12 and 31:40.",
+          suggestedFix: "Lighten caption background opacity to 85%",
+          surface: "captions",
+          status: "flagged",
+        },
+      ];
+
+      var state = {
+        inputs: BRAND_INPUTS.map(function (inp) { return { id: inp.id, value: inp.value, set: true }; }),
+        conflicts: INITIAL_CONFLICTS.map(function (c) { return Object.assign({}, c); }),
+        kitStatus: "previewing",
+        savedToTemplate: false,
+      };
+
+      // --- Pure logic (exported for tests) ---
+
+      function kitStatusLabel(status) {
+        var labels = {
+          "defaults": "Using defaults",
+          "previewing": "Previewing",
+          "conflict-flagged": "Conflict flagged",
+          "adjusted": "Adjusted",
+          "accepted-warning": "Accepted with warning",
+          "saved": "Saved to template",
+        };
+        return labels[status] || status;
+      }
+
+      function hasUnresolvedConflicts(conflicts) {
+        for (var i = 0; i < conflicts.length; i++) {
+          if (conflicts[i].status === "flagged") return true;
+        }
+        return false;
+      }
+
+      function computeKitStatus(st) {
+        if (st.savedToTemplate) return "saved";
+        var anySet = false;
+        for (var i = 0; i < st.inputs.length; i++) {
+          if (st.inputs[i].set) { anySet = true; break; }
+        }
+        if (!anySet) return "defaults";
+        if (hasUnresolvedConflicts(st.conflicts)) return "conflict-flagged";
+        var anyWarning = false;
+        for (var j = 0; j < st.conflicts.length; j++) {
+          if (st.conflicts[j].status === "accepted-warning") { anyWarning = true; break; }
+        }
+        if (anyWarning) return "accepted-warning";
+        return "previewing";
+      }
+
+      // --- DOM rendering ---
+
+      var inputsEl = document.getElementById("inputs");
+      var surfacesEl = document.getElementById("surfaces");
+      var conflictsEl = document.getElementById("conflicts");
+      var conflictsPanel = document.getElementById("conflicts-panel");
+      var statusEl = document.getElementById("status");
+      var saveBtnEl = document.getElementById("saveBtn");
+      var templateNoteEl = document.getElementById("templateNote");
+
+      function renderInputs() {
+        inputsEl.innerHTML = "";
+        for (var i = 0; i < BRAND_INPUTS.length; i++) {
+          (function (def, st) {
+            var card = document.createElement("div");
+            card.className = "input-card";
+
+            var info = document.createElement("div");
+            var label = document.createElement("div");
+            label.className = "input-label";
+            label.textContent = def.label;
+            info.appendChild(label);
+
+            var val = document.createElement("div");
+            val.className = "input-value";
+            val.textContent = st.set ? st.value : "Using default";
+            info.appendChild(val);
+
+            if (def.id === "primary-color" || def.id === "secondary-color") {
+              var row = document.createElement("div");
+              row.className = "color-row";
+              var swatch = document.createElement("span");
+              swatch.className = "color-swatch";
+              swatch.style.background = st.value;
+              row.appendChild(swatch);
+              info.appendChild(row);
+            }
+
+            if (def.optional) {
+              var note = document.createElement("div");
+              note.className = "input-note";
+              note.textContent = "Optional — strong defaults apply when unset";
+              info.appendChild(note);
+            }
+
+            card.appendChild(info);
+
+            var actions = document.createElement("div");
+            var badge = document.createElement("span");
+            badge.className = st.set ? "badge previewing" : "badge defaults";
+            badge.textContent = st.set ? "Set" : "Default";
+            actions.appendChild(badge);
+            card.appendChild(actions);
+
+            inputsEl.appendChild(card);
+          })(BRAND_INPUTS[i], state.inputs[i]);
+        }
+      }
+
+      function renderSurfaces() {
+        surfacesEl.innerHTML = "";
+        for (var i = 0; i < PREVIEW_SURFACES.length; i++) {
+          var surf = PREVIEW_SURFACES[i];
+          var row = document.createElement("div");
+          row.className = "preview-surface";
+          var name = document.createElement("span");
+          name.className = "surface-name";
+          name.textContent = surf.label;
+          row.appendChild(name);
+          var link = document.createElement("a");
+          link.className = "routed-link";
+          link.href = surf.route;
+          link.textContent = "Preview →";
+          row.appendChild(link);
+          surfacesEl.appendChild(row);
+        }
+      }
+
+      function renderConflicts() {
+        var hasConflicts = state.conflicts.length > 0;
+        conflictsPanel.hidden = !hasConflicts;
+        conflictsEl.innerHTML = "";
+
+        for (var i = 0; i < state.conflicts.length; i++) {
+          (function (conflict) {
+            var card = document.createElement("div");
+            card.className = "conflict-card";
+
+            var desc = document.createElement("p");
+            desc.textContent = conflict.description;
+            card.appendChild(desc);
+
+            var badge = document.createElement("span");
+            badge.className = conflict.status === "flagged" ? "badge conflict" : conflict.status === "accepted-warning" ? "badge warning" : "badge adjusted";
+            badge.textContent = conflict.status === "flagged" ? "Needs resolution" : conflict.status === "accepted-warning" ? "Accepted with warning" : "Adjusted";
+            card.appendChild(badge);
+
+            if (conflict.status === "flagged") {
+              var suggestion = document.createElement("p");
+              suggestion.style.cssText = "font-size:13px;margin:8px 0 0;";
+              suggestion.textContent = "Suggested fix: " + conflict.suggestedFix;
+              card.appendChild(suggestion);
+
+              var actions = document.createElement("div");
+              actions.className = "conflict-actions";
+              actions.style.marginTop = "8px";
+
+              var fixBtn = document.createElement("button");
+              fixBtn.textContent = "Accept fix";
+              fixBtn.addEventListener("click", function () {
+                conflict.status = "adjusted";
+                state.savedToTemplate = false;
+                render();
+              });
+              actions.appendChild(fixBtn);
+
+              var keepBtn = document.createElement("button");
+              keepBtn.className = "secondary";
+              keepBtn.textContent = "Keep with warning";
+              keepBtn.addEventListener("click", function () {
+                conflict.status = "accepted-warning";
+                state.savedToTemplate = false;
+                render();
+              });
+              actions.appendChild(keepBtn);
+
+              card.appendChild(actions);
+            }
+
+            conflictsEl.appendChild(card);
+          })(state.conflicts[i]);
+        }
+      }
+
+      function renderStatus() {
+        var status = computeKitStatus(state);
+        statusEl.innerHTML = "";
+
+        var badge = document.createElement("div");
+        badge.className = "badge " + (status === "saved" ? "saved" : status === "conflict-flagged" ? "conflict" : status === "accepted-warning" ? "warning" : status === "defaults" ? "defaults" : "previewing");
+        badge.textContent = kitStatusLabel(status);
+        statusEl.appendChild(badge);
+
+        var note = document.createElement("p");
+        note.className = "status-note";
+        if (status === "defaults") {
+          note.textContent = "No brand inputs set. Strong preset defaults are applied — editing is not blocked.";
+        } else if (status === "conflict-flagged") {
+          note.textContent = "One or more brand choices create a readability conflict. Resolve or accept with warning before saving.";
+        } else if (status === "accepted-warning") {
+          note.textContent = "Brand choice kept with a visible readability warning. The warning stays on publish-readiness.";
+        } else if (status === "saved") {
+          note.textContent = "Brand kit saved to the show template. Future episodes inherit these choices without changing already exported episodes.";
+        } else {
+          note.textContent = "Brand choices are previewing on real episode content. Resolve any flagged conflicts, then save to the template.";
+        }
+        statusEl.appendChild(note);
+
+        saveBtnEl.disabled = status === "saved" || status === "conflict-flagged" || status === "defaults";
+
+        templateNoteEl.textContent = status === "saved"
+          ? "Teams can update the brand kit for future episodes without changing already exported episodes."
+          : "Save carries approved brand inputs into the show template for future episodes.";
+      }
+
+      saveBtnEl.addEventListener("click", function () {
+        if (!saveBtnEl.disabled) {
+          state.savedToTemplate = true;
+          render();
+        }
+      });
+
+      function render() {
+        renderInputs();
+        renderSurfaces();
+        renderConflicts();
+        renderStatus();
+      }
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          episode: episode,
+          BRAND_INPUTS: BRAND_INPUTS,
+          PREVIEW_SURFACES: PREVIEW_SURFACES,
+          INITIAL_CONFLICTS: INITIAL_CONFLICTS,
+          state: state,
+          kitStatusLabel: kitStatusLabel,
+          hasUnresolvedConflicts: hasUnresolvedConflicts,
+          computeKitStatus: computeKitStatus,
+        };
+      }
+    </script>
+  </body>
+</html>

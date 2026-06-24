@@ -21,6 +21,7 @@ assert.ok(!/innerHTML/.test(navScript), "reuse nav builds the DOM without innerH
 
 const reuseScreens = [
   "show-segment-system.html",
+  "show-brand-kit-setup.html",
   "show-template-adaptation.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
@@ -29,7 +30,7 @@ const reuseScreens = [
 const reuseFlowMatch = navScript.match(/const REUSE_FLOW = \[([\s\S]*?)\];/);
 assert.ok(reuseFlowMatch, "reuse nav declares REUSE_FLOW");
 const flowFiles = [...reuseFlowMatch[1].matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-assert.deepStrictEqual(flowFiles, reuseScreens, "reuse nav path is the four reuse screens, in order");
+assert.deepStrictEqual(flowFiles, reuseScreens, "reuse nav path is the five reuse screens, in order");
 
 for (const file of reuseScreens) {
   const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
@@ -122,7 +123,7 @@ assert.equal(
 
 const middleNav = renderNavFor("show-template-adaptation.html", "show-template-adaptation");
 assert.ok(
-  linkWithText(middleNav, "Previous: Show segment system"),
+  linkWithText(middleNav, "Previous: Show brand kit setup"),
   "middle reuse screen renders the previous reuse step",
 );
 assert.ok(
@@ -149,10 +150,10 @@ assert.equal(
   "embedded reuse nav routes the contextual-visuals back-link through the preview app hash",
 );
 assert.equal(embeddedVisualsBack.target, "_top", "embedded contextual-visuals back-link targets the parent app");
-const embeddedNext = linkWithText(embeddedFirstNav, "Next: Show template adaptation");
+const embeddedNext = linkWithText(embeddedFirstNav, "Next: Show brand kit setup");
 assert.equal(
   embeddedNext.href,
-  "../preview/app.html#show-template-adaptation",
+  "../preview/app.html#show-brand-kit-setup",
   "embedded reuse nav routes next reuse steps through the preview app hash",
 );
 assert.equal(embeddedNext.target, "_top", "embedded reuse next link targets the parent app");
