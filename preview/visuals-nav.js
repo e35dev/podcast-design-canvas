@@ -20,6 +20,12 @@ const VISUALS_ENTRY_BACKLINKS = {
 const VISUALS_HANDOFF_TARGET = "show-segment-system.html";
 const VISUALS_HANDOFF_REUSE_PATH = "reuse";
 
+// Contextual b-roll moments are placed over the speaker layout, so it is a natural point to
+// jump back to the layout-first start and (re)place the speaker videos underneath — the same
+// placement already offered from the ingest, style, speaker-setup, reuse, and episode-flow steps.
+const LAYOUT_FIRST_PLACEMENT_STEP = "contextual-broll-moments";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
 const PREVIEW_APP_VISUALS_TARGETS = new Set([
   screenIdFromFile(VISUALS_ENTRY_BACKLINKS.cleanup.href),
   screenIdFromFile(VISUALS_ENTRY_BACKLINKS.style.href),
@@ -197,6 +203,30 @@ function setTopTargetWhenEmbedded(link) {
   }
 }
 
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "episode" || shellPath === "reuse" || shellPath === "publish") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "visuals");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  setTopTargetWhenEmbedded(link);
+}
+
 function setVisualsScreenLink(link, file) {
   const resolved = resolveVisualsLink(file);
   if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
@@ -365,6 +395,13 @@ function renderVisualsNav() {
   setTopTargetWhenEmbedded(previewApp);
   previewApp.textContent = "Preview app";
   wrap.appendChild(previewApp);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
