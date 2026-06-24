@@ -177,6 +177,24 @@
         background: #e8edf5;
       }
 
+      .rollup-focus-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-focus-tags .rollup-focus-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #5e6b67;
+        background: #eef2f0;
+      }
+
       .rollup-effect-tags {
         display: flex;
         flex-wrap: wrap;
@@ -836,11 +854,37 @@
         const bucket = trackBucketLabel(result.name);
         const issueLabel = issues[result.issue]?.label;
         const repairLabel = repairDisplayLabel(result.proposedRepair);
+        const moment = rollupPreviewMoment(result);
+        const momentLabel = moment?.label?.toLowerCase();
+
+        let label = `Open ${bucket}`;
         if (issueLabel && repairLabel) {
-          return `Open ${bucket} · ${issueLabel} → ${repairLabel}`;
+          label += ` · ${issueLabel} → ${repairLabel}`;
+        } else {
+          const detail = issueLabel || repairLabel;
+          if (detail) label += ` · ${detail}`;
         }
-        const detail = issueLabel || repairLabel;
-        return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
+        if (momentLabel) {
+          label += ` · ${momentLabel} preview`;
+        }
+        return label;
+      }
+
+      function renderRollupFocusTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-focus-tags";
+        wrap.setAttribute("aria-label", "What to watch for at each preview moment");
+
+        for (const result of needsWork) {
+          const focus = issues[result.issue]?.moment;
+          if (typeof focus !== "string" || !focus.length) continue;
+          const tag = document.createElement("span");
+          tag.className = "rollup-focus-tag";
+          tag.textContent = `${trackBucketLabel(result.name)} — ${focus}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
       }
 
       function renderRollupIssueTags(needsWork) {
@@ -942,6 +986,10 @@
           const momentTags = renderRollupMomentTags(rollup.needsWork);
           if (momentTags.childElementCount) {
             rollupElement.appendChild(momentTags);
+          }
+          const focusTags = renderRollupFocusTags(rollup.needsWork);
+          if (focusTags.childElementCount) {
+            rollupElement.appendChild(focusTags);
           }
           const effectTags = renderRollupRepairEffectTags(rollup.needsWork);
           if (effectTags.childElementCount) {
