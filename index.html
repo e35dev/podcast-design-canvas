@@ -80,6 +80,38 @@
         color: #aed4cc;
       }
 
+      .hero .flow-links {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .hero .flow-links a {
+        display: inline-block;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .hero .flow-links a.primary {
+        background: #ffffff;
+        color: #075246;
+      }
+
+      .hero .flow-links a.secondary {
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        color: #ffffff;
+      }
+
+      .hero .flow-links a:hover,
+      .hero .flow-links a:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
+      }
+
       nav.lanes {
         position: sticky;
         top: 0;
@@ -226,6 +258,10 @@
       <div class="wrap">
         <h1>Podcast Design Canvas</h1>
         <p>A visual workspace that turns synced multi-speaker recordings into polished, personalized, publish-ready long-form episodes — without a traditional editor. This preview routes to every screen in the product, organized by the episode workflow.</p>
+        <p class="flow-links">
+          <a class="primary" href="preview/episode-flow.html">Walk the guided episode flow</a>
+          <a class="secondary" href="preview/">Open preview shell</a>
+        </p>
         <div class="meta" id="meta"></div>
       </div>
     </header>
