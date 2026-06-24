@@ -38,15 +38,13 @@ const PREVIEW_APP_PUBLISH_TARGETS = new Set([
 // hand-off), instead of loading nested inside the iframe.
 const PUBLISH_FIX_PATHS = {
   "transcript-search-navigation.html": { path: "publish", from: "cleanup" },
-  // Publish checklist -> the screens that own each unresolved readiness fix.
-  "audio-caption-quality-review.html": { path: "publish" },
-  "source-media-health.html": { path: "publish" },
-  "episode-chapter-markers.html": { path: "publish" },
   // Export package handoff / destination crop -> framing & layout owners.
   "speaker-attribution-review.html": { path: "publish" },
   "speaker-framing-safety.html": { path: "publish" },
   "layout-safe-areas.html": { path: "publish" },
-  // Episode metadata publishing -> guest links owner.
+  // Episode metadata publishing -> guest links owner. The publish-checklist
+  // caption/chapter/source-media fixes are owned by PUBLISH_CHECKLIST_FIX_PATHS
+  // (setPublishChecklistFixLink), so they are not duplicated here.
   "social-context-intake.html": { path: "publish" },
 };
 
