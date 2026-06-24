@@ -655,7 +655,7 @@
 
         for (const speaker of needsWork) {
           const moment = rollupPreviewMomentForSpeaker(speaker);
-          if (!moment) continue;
+          if (!moment?.label) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-moment-tag";
           tag.textContent = `${bucketLabel(speaker)} — ${moment.label}`;
