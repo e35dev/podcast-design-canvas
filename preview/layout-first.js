@@ -610,7 +610,15 @@
     function placeDroppedFiles(fileList) {
       const target = firstOpenVisibleSlot();
       if (target) {
-        placeVideoFiles(target, fileList);
+        // A canvas-wide drop isn't aimed at a specific slot, so order the batch
+        // placeable-videos-first before routing. Otherwise an unplaceable file (a non-video, or
+        // a 0-byte export) that happens to come first in the drop would be sent to the target
+        // slot, rejected there, and — because a slot drop stops spilling once its first file is
+        // rejected — block every real recording in the same drop from placing. placeVideoFiles
+        // still reports the trailing unplaceable files.
+        const all = Array.prototype.slice.call(fileList || []).filter(Boolean);
+        const ordered = all.filter(isPlaceableVideo).concat(all.filter((file) => !isPlaceableVideo(file)));
+        placeVideoFiles(target, ordered);
         return;
       }
       // Every visible slot is already filled or flagged, so a canvas-wide drop has nowhere

@@ -800,6 +800,30 @@ controller.placeDroppedFiles([{ name: "guest.mp4", type: "video/mp4", size: 8, l
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "drop-anywhere targets the next empty slot when the first is taken");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "host.mp4", "drop-anywhere leaves an already-filled slot untouched");
 
+// A canvas/page drop whose first file happens to be a non-video must still place the videos in
+// the batch. Drop order is arbitrary, and a slot drop stops spilling after a rejected first
+// file — so without ordering the canvas batch videos-first, a leading thumbnail would block the
+// real recordings from landing at all.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeDroppedFiles([
+  { name: "thumbnail.png", type: "image/png", size: 3, lastModified: 3 },
+  { name: "host.mp4", type: "video/mp4", size: 4, lastModified: 4 },
+  { name: "guest.mp4", type: "video/mp4", size: 5, lastModified: 5 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a leading non-video does not block the first video from a canvas drop");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "the remaining video from the canvas drop still places");
+assert.equal(controller.zonesBySlot.host.classList.contains("is-invalid"), false, "the leading non-video does not flag a slot the videos should fill");
+
+// A leading 0-byte export must not block the canvas drop either (placeable = video with bytes).
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeDroppedFiles([
+  { name: "aborted.mp4", type: "video/mp4", size: 0, lastModified: 6 },
+  { name: "host.mp4", type: "video/mp4", size: 7, lastModified: 7 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a leading empty export does not block the real recording from a canvas drop");
+
 // A canvas-wide drop when every visible slot is already filled should report there's no
 // room instead of silently swallowing the file (#1026).
 controller.resetVideos();
