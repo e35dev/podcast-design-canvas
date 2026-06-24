@@ -890,7 +890,7 @@
 
         for (const result of needsWork) {
           const moment = rollupPreviewMoment(result);
-          if (!moment) continue;
+          if (!moment?.label) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-moment-tag";
           tag.textContent = `${trackBucketLabel(result.name)} — ${moment.label}`;
