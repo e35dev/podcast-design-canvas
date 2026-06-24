@@ -224,32 +224,40 @@
         grid-column: 1 / 4;
       }
 
-      /* equal: everyone the same size */
+      /* equal: all three speakers the same size */
       .frame.equal {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
       }
 
-      /* side-by-side: two up, active highlighted */
+      /* side-by-side: all three visible, active highlighted */
       .frame.side {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
       }
 
-      /* picture-in-picture: active big, one inset */
+      /* picture-in-picture: active big, the other two inset bottom-right */
       .frame.pip {
         grid-template-columns: 1fr;
       }
 
-      .frame.pip .spk:not(.active) {
+      .frame.pip .spk:nth-child(2) {
         position: absolute;
         right: 7%;
         bottom: 7%;
-        width: 30%;
-        height: 34%;
+        width: 27%;
+        height: 30%;
       }
 
-      /* reaction: active plus a highlighted listener */
+      .frame.pip .spk:nth-child(3) {
+        position: absolute;
+        right: 38%;
+        bottom: 7%;
+        width: 27%;
+        height: 30%;
+      }
+
+      /* reaction: all three visible, active plus a highlighted listener */
       .frame.reaction {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
       }
 
       .frame.reaction .spk.listener {
@@ -405,7 +413,17 @@
 
       document.querySelector("#addMoment").addEventListener("click", () => {
         const next = moments.length + 1;
-        moments.push({ id: `w${next}-${moments.length}`, style: "featured", speed: "smooth", flag: "static", fix: "review" });
+        // Rotate through styles and flags so adding moments exercises every layout and
+        // both the natural and flagged paths, not just one combination.
+        const styleKeys = Object.keys(styles);
+        const flagKeys = Object.keys(flags);
+        moments.push({
+          id: `w${next}-${moments.length}`,
+          style: styleKeys[moments.length % styleKeys.length],
+          speed: "smooth",
+          flag: flagKeys[moments.length % flagKeys.length],
+          fix: "review",
+        });
         render();
       });
 
@@ -486,20 +504,16 @@
         return state === "review" ? "needs review" : state;
       }
 
-      // Build the sample frame for a switch style: three speakers with the active one
-      // featured per the chosen style.
+      // Build the sample frame for a switch style. Every style shows all three speaker
+      // tracks (a Host / Guest 1 / Guest 2 layout); the active speaker is featured and,
+      // for "reaction aware", a listener is highlighted.
       function frameMarkup(style) {
-        if (style === "featured") {
-          return `<span class="spk active"></span><span class="spk"></span><span class="spk"></span>`;
-        }
-        if (style === "pip") {
-          return `<span class="spk active"></span><span class="spk"></span>`;
-        }
         if (style === "reaction") {
-          return `<span class="spk active"></span><span class="spk listener"></span>`;
+          return `<span class="spk active"></span><span class="spk listener"></span><span class="spk"></span>`;
         }
-        // equal and side-by-side: two equal speakers, active highlighted on side-by-side.
-        return `<span class="spk ${style === "side" ? "active" : ""}"></span><span class="spk"></span>`;
+        // featured, equal, side-by-side, and picture-in-picture all render three tiles;
+        // the CSS for each style controls how they are sized and placed.
+        return `<span class="spk active"></span><span class="spk"></span><span class="spk"></span>`;
       }
 
       function renderMoment(moment, index, result) {
