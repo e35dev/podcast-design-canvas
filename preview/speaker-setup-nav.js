@@ -1,54 +1,49 @@
 "use strict";
 
-// Connects the publish prep prototype screens into a short handoff path (#583).
-// Include from publish prototypes with:
-//   <body data-publish-step="export-package-handoff">
-//   <script src="../preview/publish-nav.js" defer></script>
+// Connects the speaker-setup prototype screens into a short setup path (#582 / #583).
+// These screens confirm and prepare each speaker after roles are assigned, before
+// the core episode path. Include from speaker-setup prototypes with:
+//   <body data-setup-step="speaker-attribution-review">
+//   <script src="../preview/speaker-setup-nav.js" defer></script>
 
-const PUBLISH_FLOW = [
-  { id: "episode-watch-through-preview", file: "episode-watch-through-preview.html", label: "Watch-through preview" },
-  { id: "destination-crop-preview", file: "destination-crop-preview.html", label: "Destination crop preview" },
-  { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
-  { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
-  { id: "export-package-handoff", file: "export-package-handoff.html", label: "Export package handoff" },
-  { id: "publish-checklist", file: "publish-checklist.html", label: "Publish checklist" },
+const SPEAKER_SETUP_FLOW = [
+  { id: "speaker-attribution-review", file: "speaker-attribution-review.html", label: "Speaker attribution review" },
+  { id: "guest-profile-reuse", file: "guest-profile-reuse.html", label: "Guest profile reuse" },
+  { id: "speaker-visual-match", file: "speaker-visual-match.html", label: "Speaker visual match" },
+  { id: "speaker-eye-line-coherence", file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" },
 ];
 
-function currentPublishIndex() {
-  const fromBody = document.body.dataset.publishStep;
+function currentSetupIndex() {
+  const fromBody = document.body.dataset.setupStep;
   if (fromBody) {
-    const byId = PUBLISH_FLOW.findIndex((step) => step.id === fromBody);
+    const byId = SPEAKER_SETUP_FLOW.findIndex((step) => step.id === fromBody);
     if (byId >= 0) {
       return byId;
     }
   }
 
   const name = window.location.pathname.split("/").pop() || "";
-  return PUBLISH_FLOW.findIndex((step) => step.file === name);
+  return SPEAKER_SETUP_FLOW.findIndex((step) => step.file === name);
 }
 
-function renderPublishNav() {
-  if (document.querySelector(".publish-nav")) {
-    return;
-  }
-
-  const index = currentPublishIndex();
+function renderSpeakerSetupNav() {
+  const index = currentSetupIndex();
   if (index < 0) {
     return;
   }
 
-  if (!document.getElementById("publish-nav-styles")) {
+  if (!document.getElementById("speaker-setup-nav-styles")) {
     const style = document.createElement("style");
-    style.id = "publish-nav-styles";
+    style.id = "speaker-setup-nav-styles";
     style.textContent = `
-      .publish-nav {
+      .speaker-setup-nav {
         border-bottom: 1px solid #d9e0dd;
         background: #f7faf8;
         color: #16211f;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
-      .publish-nav .wrap {
+      .speaker-setup-nav .wrap {
         max-width: 1180px;
         margin: 0 auto;
         padding: 10px 20px;
@@ -58,20 +53,20 @@ function renderPublishNav() {
         align-items: center;
       }
 
-      .publish-nav a {
+      .speaker-setup-nav a {
         color: #075246;
         font-size: 13px;
         font-weight: 700;
         text-decoration: none;
       }
 
-      .publish-nav a:hover,
-      .publish-nav a:focus-visible {
+      .speaker-setup-nav a:hover,
+      .speaker-setup-nav a:focus-visible {
         text-decoration: underline;
         outline: none;
       }
 
-      .publish-nav .step {
+      .speaker-setup-nav .step {
         margin-left: auto;
         color: #5e6b67;
         font-size: 13px;
@@ -79,7 +74,7 @@ function renderPublishNav() {
       }
 
       @media (max-width: 640px) {
-        .publish-nav .step {
+        .speaker-setup-nav .step {
           margin-left: 0;
           width: 100%;
         }
@@ -88,13 +83,13 @@ function renderPublishNav() {
     document.head.appendChild(style);
   }
 
-  const step = PUBLISH_FLOW[index];
-  const previous = index > 0 ? PUBLISH_FLOW[index - 1] : null;
-  const next = index < PUBLISH_FLOW.length - 1 ? PUBLISH_FLOW[index + 1] : null;
+  const step = SPEAKER_SETUP_FLOW[index];
+  const previous = index > 0 ? SPEAKER_SETUP_FLOW[index - 1] : null;
+  const next = index < SPEAKER_SETUP_FLOW.length - 1 ? SPEAKER_SETUP_FLOW[index + 1] : null;
 
   const nav = document.createElement("nav");
-  nav.className = "publish-nav";
-  nav.setAttribute("aria-label", "Publish prep path");
+  nav.className = "speaker-setup-nav";
+  nav.setAttribute("aria-label", "Speaker setup path");
 
   const wrap = document.createElement("div");
   wrap.className = "wrap";
@@ -122,15 +117,15 @@ function renderPublishNav() {
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
-    const finish = document.createElement("a");
-    finish.href = "../preview/";
-    finish.textContent = "Finish: back to the preview shell";
-    wrap.appendChild(finish);
+    const start = document.createElement("a");
+    start.href = "source-media-health.html";
+    start.textContent = "Continue: Source media health";
+    wrap.appendChild(start);
   }
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
-  stepLabel.textContent = `Publish step ${index + 1} of ${PUBLISH_FLOW.length} · ${step.label}`;
+  stepLabel.textContent = `Speaker setup step ${index + 1} of ${SPEAKER_SETUP_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 
   nav.appendChild(wrap);
@@ -138,7 +133,7 @@ function renderPublishNav() {
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", renderPublishNav);
+  document.addEventListener("DOMContentLoaded", renderSpeakerSetupNav);
 } else {
-  renderPublishNav();
+  renderSpeakerSetupNav();
 }

@@ -25,6 +25,10 @@ function currentVisualsIndex() {
 }
 
 function renderVisualsNav() {
+  if (document.querySelector(".visuals-nav")) {
+    return;
+  }
+
   const index = currentVisualsIndex();
   if (index < 0) {
     return;

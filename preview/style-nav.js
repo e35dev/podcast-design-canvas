@@ -26,6 +26,10 @@ function currentStyleIndex() {
 }
 
 function renderStyleNav() {
+  if (document.querySelector(".style-nav")) {
+    return;
+  }
+
   const index = currentStyleIndex();
   if (index < 0) {
     return;

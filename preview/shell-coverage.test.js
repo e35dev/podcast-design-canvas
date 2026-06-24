@@ -39,9 +39,27 @@ assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
 assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
+assert.match(shell, /Episode ingest setup/, "shell documents the ingest setup path");
+assert.match(shell, /Speaker setup/, "shell documents the speaker setup path");
+assert.match(shell, /Choose a visual direction/, "shell documents the visual direction path");
 assert.match(shell, /Publish prep after export/, "shell documents the publish prep path");
+assert.ok(
+  shell.indexOf("Choose a visual direction") < shell.indexOf("Publish prep after export"),
+  "visual direction section precedes publish prep in shell workflow order",
+);
 assert.ok(shell.includes("episode-readiness.html"), "shell links to episode readiness in setup path");
+assert.ok(shell.includes("social-context-intake.html"), "shell links to social context intake in ingest path");
+assert.ok(shell.includes("speaker-attribution-review.html"), "shell links to speaker attribution in setup path");
+assert.ok(shell.includes("preset-style-picker.html"), "shell links to preset style picker in visual path");
+assert.ok(shell.includes("speaker-framing-safety.html"), "shell links to speaker framing in visual path");
+assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to watch-through in publish path");
+assert.ok(shell.includes("destination-crop-preview.html"), "shell links to destination crop in publish path");
+assert.ok(shell.includes("show-notes-assembly.html"), "shell links to show notes assembly in publish path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
+assert.match(shell, /Add contextual visuals/, "shell documents the contextual visuals path");
+assert.match(shell, /Make it reusable/, "shell documents the reuse path");
+assert.ok(shell.includes("contextual-broll-moments.html"), "shell links to b-roll in visuals path");
+assert.ok(shell.includes("show-segment-system.html"), "shell links to show segments in reuse path");
 
 console.log(
   `preview shell coverage: ${prototypes.length} prototypes, all reachable, no dead links`,

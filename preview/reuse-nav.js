@@ -26,6 +26,10 @@ function currentReuseIndex() {
 }
 
 function renderReuseNav() {
+  if (document.querySelector(".reuse-nav")) {
+    return;
+  }
+
   const index = currentReuseIndex();
   if (index < 0) {
     return;

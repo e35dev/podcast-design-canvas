@@ -10,23 +10,12 @@
 const TOOL_STAGE = {
   "episode-readiness.html": "Bring in the recording",
   "speaker-role-mapping.html": "Bring in the recording",
-  "speaker-attribution-review.html": "Bring in the recording",
-  "speaker-visual-match.html": "Bring in the recording",
-  "speaker-eye-line-coherence.html": "Bring in the recording",
-  "guest-profile-reuse.html": "Bring in the recording",
   "pause-crosstalk-cleanup.html": "Clean up audio & captions",
   "transcript-glossary.html": "Clean up audio & captions",
   "transcript-search-navigation.html": "Clean up audio & captions",
   "accessibility-readability-checks.html": "Clean up audio & captions",
   "line-pickup-insert.html": "Clean up audio & captions",
   "on-screen-correction-note.html": "Clean up audio & captions",
-  
-  
-  
-  
-  "destination-crop-preview.html": "Review & publish",
-  "thumbnail-cover-frame.html": "Review & publish",
-  "show-notes-assembly.html": "Review & publish",
 };
 
 function currentToolStage() {
@@ -37,6 +26,9 @@ function currentToolStage() {
 function renderToolsNav() {
   // Don't double up if a page already shows the core episode-flow nav.
   if (document.querySelector(".episode-flow-nav")) {
+    return;
+  }
+  if (document.querySelector(".tools-nav")) {
     return;
   }
 

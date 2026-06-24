@@ -76,9 +76,9 @@
         .package-card { grid-template-columns: 1fr; }
       }
     </style>
-      <script src="../preview/tools-nav.js" defer></script>
+      <script src="../preview/publish-nav.js" defer></script>
   </head>
-  <body>
+  <body data-publish-step="show-notes-assembly">
     <main>
       <h1>Show Notes Assembly Prototype</h1>
       <p class="lede">
@@ -294,9 +294,10 @@
           state === "destination mismatch"
         ));
         const includedReady = results.filter(({ section, state }) => section.included && state === "ready");
+        const missingRequiredNotes = destination.requiresShowNotes && includedReady.length === 0;
         const packageReady = open.length === 0 && includedReady.length > 0;
         const overall = destination.requiresShowNotes
-          ? (open.length ? "review" : "ready")
+          ? (open.length || missingRequiredNotes ? "review" : "ready")
           : (open.length ? "optional" : "ready");
 
         return {
@@ -304,6 +305,7 @@
           results,
           open,
           includedReady,
+          missingRequiredNotes,
           packageReady,
           overall,
         };
@@ -501,6 +503,8 @@
 
         const statusDetail = evaluation.packageReady
           ? `${sectionList} can be added to ${evaluation.destination.packageLabel}.`
+          : evaluation.missingRequiredNotes
+            ? "Include or finish at least one show notes section before adding notes to the required package."
           : evaluation.destination.requiresShowNotes
             ? "Resolve the open sections before adding notes to the required publish package."
             : "This package can ship without show notes; clean up open sections before adding optional notes.";
@@ -543,15 +547,22 @@
             : "Optional notes ready";
         } else if (evaluation.overall === "optional") {
           summaryStatusElement.textContent = "Optional cleanup";
+        } else if (evaluation.missingRequiredNotes) {
+          summaryStatusElement.textContent = "Needs notes section";
         } else {
           summaryStatusElement.textContent = `${evaluation.open.length} open`;
         }
 
-        issuesElement.replaceChildren(
-          ...(evaluation.open.length
-            ? evaluation.open.map(({ issue }) => renderIssue(issue))
-            : [renderReadyIssue(evaluation)]),
-        );
+        if (evaluation.open.length) {
+          issuesElement.replaceChildren(...evaluation.open.map(({ issue }) => renderIssue(issue)));
+        } else if (evaluation.missingRequiredNotes) {
+          issuesElement.replaceChildren(renderIssue({
+            title: "Show notes need one included section",
+            detail: "Include or finish at least one section before adding notes to the required package.",
+          }));
+        } else {
+          issuesElement.replaceChildren(renderReadyIssue(evaluation));
+        }
       }
 
       function refresh() {

@@ -1,6 +1,6 @@
 "use strict";
 
-// Guards ingest prototype navigation and creator-facing copy (#582 / #584).
+// Smoke tests for ingest prototype navigation (#582 / #584).
 // Run with: `node preview/ingest-nav.test.js`
 
 const fs = require("fs");
@@ -9,13 +9,15 @@ const assert = require("assert");
 const vm = require("vm");
 
 const root = path.join(__dirname, "..");
-const navScript = fs.readFileSync(path.join(__dirname, "ingest-nav.js"), "utf8");
+const navPath = path.join(__dirname, "ingest-nav.js");
+const navSource = fs.readFileSync(navPath, "utf8");
 
-new vm.Script(navScript);
-assert.ok(navScript.includes('home.href = "../preview/"'), "ingest nav links back to the preview shell");
-assert.ok(navScript.includes("episode-flow.html"), "ingest nav links to the guided episode flow");
-assert.ok(navScript.includes("source-media-health.html"), "ingest nav hands off to source media health");
-assert.ok(!/innerHTML/.test(navScript), "ingest nav builds the DOM without innerHTML");
+new vm.Script(navSource);
+assert.ok(navSource.includes('home.href = "../preview/"'), "ingest nav links back to the preview shell");
+assert.ok(navSource.includes("episode-flow.html"), "ingest nav links to the guided episode flow");
+assert.ok(navSource.includes("source-media-health.html"), "ingest nav hands off to source media health");
+assert.ok(navSource.includes('document.querySelector(".ingest-nav")'), "ingest nav guards against double render");
+assert.ok(!/innerHTML/.test(navSource), "ingest nav builds the DOM without innerHTML");
 
 const ingestScreens = [
   "episode-readiness.html",
@@ -42,5 +44,128 @@ for (const file of ingestScreens) {
     assert.ok(!match, `${file} must not include internal copy: ${match && match[0]}`);
   }
 }
+
+function createElement(tagName) {
+  return {
+    tagName,
+    attributes: {},
+    children: [],
+    className: "",
+    href: "",
+    id: "",
+    textContent: "",
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+      if (name === "id") this.id = value;
+      if (name === "class") this.className = value;
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    insertBefore(child, before) {
+      const index = this.children.indexOf(before);
+      if (index === -1) {
+        this.children.unshift(child);
+      } else {
+        this.children.splice(index, 0, child);
+      }
+      return child;
+    },
+  };
+}
+
+function flatten(node) {
+  return [node, ...node.children.flatMap(flatten)];
+}
+
+function renderNavFor(fileName, ingestStep) {
+  const head = createElement("head");
+  const body = createElement("body");
+  if (ingestStep) {
+    body.dataset = { ingestStep };
+  }
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) {
+      return [...flatten(head), ...flatten(body)].find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return (
+        [...flatten(head), ...flatten(body)].find((node) =>
+          node.className.split(" ").includes(className),
+        ) || null
+      );
+    },
+  };
+
+  vm.runInNewContext(navSource, {
+    document,
+    window: { location: { pathname: `/prototype/${fileName}` } },
+  });
+
+  return { head, body, nodes: [...flatten(head), ...flatten(body)] };
+}
+
+const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
+assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
+assert.ok(
+  !firstNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Previous:")),
+  "first ingest screen does not render a previous link",
+);
+assert.ok(
+  firstNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
+  "first ingest screen renders next link",
+);
+
+const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping");
+assert.ok(
+  middleNav.nodes.some((node) => node.textContent === "Previous: Episode readiness"),
+  "middle ingest screen renders previous link",
+);
+const currentStep = middleNav.nodes.find((node) =>
+  node.textContent === "Setup step 2 of 3 · Speaker roles",
+);
+assert.ok(currentStep, "middle ingest screen renders visible step label");
+assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
+
+const lastNav = renderNavFor("social-context-intake.html", "social-context-intake");
+assert.ok(
+  lastNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
+  "last ingest screen hands off to source media health",
+);
+assert.ok(
+  !lastNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Next:")),
+  "last ingest screen does not render a next link",
+);
+
+const duplicateNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping");
+vm.runInNewContext(navSource, {
+  document: {
+    readyState: "complete",
+    head: duplicateNav.head,
+    body: duplicateNav.body,
+    createElement,
+    getElementById(id) {
+      return duplicateNav.nodes.find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return duplicateNav.nodes.find((node) => node.className.split(" ").includes(className)) || null;
+    },
+  },
+  window: { location: { pathname: "/prototype/speaker-role-mapping.html" } },
+});
+assert.equal(
+  flatten(duplicateNav.body).filter((node) => node.className === "ingest-nav").length,
+  1,
+  "ingest nav renders once if the script runs twice",
+);
 
 console.log("ingest nav: ingest screens connected with creator-facing copy");

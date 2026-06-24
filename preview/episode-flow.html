@@ -521,6 +521,10 @@
 
       const initial = (name) => (name.trim()[0] || "?").toUpperCase();
 
+      function invalidateExport() {
+        episode.exported = false;
+      }
+
       // Whether the current step is resolved enough to move on. The export step is always
       // reachable; it just reflects the state.
       function stepComplete(index) {
@@ -714,6 +718,7 @@
         }
         select.addEventListener("change", (event) => {
           speaker[controlField] = event.target.value;
+          invalidateExport();
           onChange();
           render();
         });
@@ -753,6 +758,7 @@
             fix.textContent = "Add speaker name";
             fix.addEventListener("click", () => {
               speaker.bucket = "ready";
+              invalidateExport();
               render();
             });
             action.append(fix);
@@ -763,6 +769,7 @@
             fix.textContent = "Assign recording";
             fix.addEventListener("click", () => {
               speaker.bucket = "ready";
+              invalidateExport();
               render();
             });
             action.append(fix);
@@ -804,6 +811,7 @@
           select.addEventListener("change", (event) => {
             speaker.role = event.target.value;
             episode.rolesConfirmed = false;
+            invalidateExport();
             render();
           });
           row.append(avatar, who, select);
@@ -889,6 +897,7 @@
           input.addEventListener("change", (event) => {
             episode.audio[key] = event.target.checked;
             episode.audio.applied = false;
+            invalidateExport();
             render();
           });
           toggle.append(text, input);
@@ -934,6 +943,7 @@
           input.addEventListener("input", (event) => {
             line.text = event.target.value;
             preview.textContent = line.text || "(empty caption)";
+            invalidateExport();
             renderNav();
           });
           const select = document.createElement("select");
@@ -947,6 +957,7 @@
           }
           select.addEventListener("change", (event) => {
             line.decision = event.target.value;
+            invalidateExport();
             render();
           });
           controls.append(input, select);

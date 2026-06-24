@@ -19,28 +19,22 @@ function parsePublishFlow(source) {
   while ((entry = filePattern.exec(match[1])) !== null) {
     files.push(entry[1]);
   }
+  assert.ok(files.length >= 3, "publish flow declares connected publish prep steps");
   return files;
 }
 
 const flowFiles = parsePublishFlow(publishSource);
-assert.deepStrictEqual(
-  flowFiles,
-  [
-    "episode-watch-through-preview.html",
-    "export-package-handoff.html",
-    "publish-checklist.html",
-  ],
-  "publish flow order is stable for shell consistency checks",
-);
 
-const publishSection = shellHtml.split("Publish prep after export")[1]?.split("<h2 class=\"tools-title\">More tools</h2>")[0] || "";
+const publishSection = shellHtml.split("Publish prep after export")[1]?.split(/<h2 class="tools-title">/)[0] || "";
 assert.ok(publishSection, "preview shell must include a publish prep section");
 
+let lastIndex = -1;
 for (const file of flowFiles) {
-  assert.ok(
-    publishSection.includes(`../prototype/${file}`),
-    `preview shell publish prep section must link to ${file}`,
-  );
+  const href = `../prototype/${file}`;
+  const index = publishSection.indexOf(href);
+  assert.ok(index >= 0, `preview shell publish prep section must link to ${file}`);
+  assert.ok(index > lastIndex, `preview shell publish prep order must match publish-nav.js for ${file}`);
+  lastIndex = index;
 }
 
-console.log("publish path consistency: shell publish prep list matches publish-nav.js");
+console.log(`publish path consistency: shell publish prep list matches publish-nav.js (${flowFiles.length} steps)`);

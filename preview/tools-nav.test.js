@@ -40,6 +40,9 @@ const ingestFlow = new Set([
 
 const publishFlow = new Set([
   "episode-watch-through-preview.html",
+  "destination-crop-preview.html",
+  "thumbnail-cover-frame.html",
+  "show-notes-assembly.html",
   "export-package-handoff.html",
   "publish-checklist.html",
 ]);
@@ -62,6 +65,13 @@ const reuseFlow = new Set([
   "show-template-adaptation.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
+]);
+
+const speakerSetupFlow = new Set([
+  "speaker-attribution-review.html",
+  "guest-profile-reuse.html",
+  "speaker-visual-match.html",
+  "speaker-eye-line-coherence.html",
 ]);
 
 const prototypes = fs
@@ -124,6 +134,15 @@ for (const file of prototypes) {
     assert.ok(
       !html.includes("../preview/tools-nav.js"),
       `reuse screen does not double up with tools nav: ${file}`,
+    );
+  } else if (speakerSetupFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/speaker-setup-nav.js"),
+      `speaker setup screen uses speaker setup navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `speaker setup screen does not double up with tools nav: ${file}`,
     );
   } else {
     // Every secondary screen links back to the shell.
