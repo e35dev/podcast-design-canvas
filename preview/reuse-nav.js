@@ -18,6 +18,13 @@ const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive mo
 const REUSE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Episode watch-through" };
 const REUSE_HANDOFF_PATH = "publish";
 
+// Starting a new episode from a previous one carries over the show's template but still needs
+// this episode's speaker videos placed, so that step is the natural point to jump into the
+// layout-first placement canvas — the same entry point already offered from the ingest, style,
+// and speaker-setup steps.
+const LAYOUT_FIRST_PLACEMENT_STEP = "start-from-previous-episode";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
 // Reuse screens hand off to these owning screens when a review item needs a fix.
 const REUSE_FIX_PATHS = {
   "music-cue-setup.html": "episode",
@@ -139,6 +146,34 @@ function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
   }
+}
+
+// Build the layout-first placement href with URLSearchParams so the shell path context is
+// preserved (the creator stays in their episode/reuse path) and the origin is recorded.
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "episode" || shellPath === "reuse") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "reuse");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+// Gate the placement link to the start-from-previous-episode step so it isn't rendered on
+// every reuse screen — only where (re)placing this episode's videos is the natural next move.
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  setTopTargetWhenEmbedded(link);
 }
 
 // Keep the episode workflow path (?path=...) on reuse links so a creator who entered
@@ -329,6 +364,13 @@ function renderReuseNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
