@@ -219,6 +219,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -364,6 +380,8 @@
               title: `Confirm this is the returning ${name}`,
               action: "We found a possible match. Confirm it before reusing their saved name and lower-third.",
               tone: "review",
+              fixScreen: "social-context-intake.html",
+              fixLabel: "social context intake",
             };
           } else if (guest.change !== "none" && guest.decision === "reuse") {
             state = "review";
@@ -555,7 +573,22 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        const fixLink = renderFixLink(issue);
+        if (fixLink) {
+          article.append(fixLink);
+        }
         return article;
+      }
+
+      function renderFixLink(issue) {
+        if (!issue.fixScreen || !issue.fixLabel) {
+          return null;
+        }
+        const openLink = document.createElement("a");
+        openLink.className = "fix-link";
+        openLink.href = issue.fixScreen;
+        openLink.textContent = `Open ${issue.fixLabel}`;
+        return openLink;
       }
 
       render();
