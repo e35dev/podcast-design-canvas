@@ -191,7 +191,14 @@
       .uses {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 6px;
+      }
+
+      .use-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
       }
 
       .use {
@@ -330,13 +337,17 @@
         "co-host": "Co-host",
       };
 
-      // Whether the link's derived context may appear on screen, or stays input-only.
+      // Whether the link's derived context may appear on screen. "Behind the scenes
+      // only" hides on-screen uses but still improves spellings and references.
       const visibility = {
-        screen: "Use on screen",
-        off: "Keep off screen",
+        screen: "Show on screen",
+        off: "Behind the scenes only",
       };
 
-      // Plain-language label for each derived use.
+      // Plain-language label for each derived use, and whether it is an on-screen use
+      // (a visible name, handle, title, company, or b-roll) versus a behind-the-scenes
+      // accuracy improvement. Only on-screen uses are hidden when a link is kept off
+      // screen; spellings and references always help the edit.
       const useLabels = {
         names: "names",
         handles: "handles",
@@ -346,6 +357,11 @@
         references: "references",
         "b-roll": "b-roll",
       };
+
+      const onScreenUses = new Set(["names", "handles", "titles", "company", "b-roll"]);
+
+      // These improve the edit's accuracy for every link, even when it is kept off screen.
+      const alwaysUses = ["spellings", "references"];
 
       const sampleLinks = [
         { id: "k1", handle: "@danabrooks", platform: "x", bucket: "host", visibility: "screen" },
@@ -388,8 +404,8 @@
           } else if (link.visibility === "off") {
             state = "offscreen";
             issue = {
-              title: `${link.handle || "This link"}: kept off screen`,
-              action: "Used to improve spellings and references, but it won't appear on screen.",
+              title: `${link.handle || "This link"}: behind the scenes only`,
+              action: "Still improves spellings and references in the edit — it just won't appear on screen.",
               tone: "info",
             };
           } else {
@@ -480,8 +496,15 @@
           .map(([value, label]) => `<option value="${value}" ${value === link.visibility ? "selected" : ""}>${label}</option>`)
           .join("");
         const off = link.visibility === "off";
-        const useChips = platform.uses
-          .map((use) => `<span class="use ${off ? "off" : ""}">${useLabels[use] || use}</span>`)
+        // On-screen uses are struck through when the link is kept off screen; the
+        // always-on accuracy uses (spellings, references) are never struck, so the UI
+        // can't imply the link is ignored entirely.
+        const screenUses = platform.uses.filter((use) => onScreenUses.has(use));
+        const screenChips = screenUses.length
+          ? screenUses.map((use) => `<span class="use ${off ? "off" : ""}">${useLabels[use] || use}</span>`).join("")
+          : `<span class="use off">none on screen</span>`;
+        const alwaysChips = alwaysUses
+          .map((use) => `<span class="use">${useLabels[use] || use}</span>`)
           .join("");
 
         // The scaffold holds only controlled values (platform/bucket/visibility keys and
@@ -507,7 +530,12 @@
             <label>On screen
               <select data-field="visibility" aria-label="On-screen visibility">${visibilityOptions}</select>
             </label>
-            <div class="uses" aria-label="Used for">${useChips}</div>
+            <div class="uses" aria-label="On screen">
+              <span class="use-label">On screen:</span>${screenChips}
+            </div>
+            <div class="uses" aria-label="Always improves the edit">
+              <span class="use-label">Always improves:</span>${alwaysChips}
+            </div>
           </div>
         `;
 
