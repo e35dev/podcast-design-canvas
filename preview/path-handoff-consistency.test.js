@@ -69,6 +69,12 @@ const expectedEntryBacklinks = [
     text: "Previous: Publish checklist",
     note: "cleanup helpers link back to publish prep",
   },
+  {
+    script: "reuse-nav.js",
+    href: 'review.href = "sensitive-moment-review.html"',
+    text: "Previous: Sensitive moment review",
+    note: "reuse path links back to contextual visuals",
+  },
 ];
 
 for (const { script, href, text, note } of expectedEntryBacklinks) {
