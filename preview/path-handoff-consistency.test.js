@@ -69,6 +69,12 @@ const expectedEntryBacklinks = [
     text: "Previous: Publish checklist",
     note: "cleanup helpers link back to publish prep",
   },
+  {
+    script: "visuals-nav.js",
+    href: 'cleanup.href = "on-screen-correction-note.html"',
+    text: "Previous: On-screen correction note",
+    note: "contextual visuals link back to cleanup helpers",
+  },
 ];
 
 for (const { script, href, text, note } of expectedEntryBacklinks) {
