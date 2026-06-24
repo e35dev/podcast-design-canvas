@@ -24,12 +24,13 @@ assert.ok(!/innerHTML/.test(navScript), "visuals nav builds the DOM without inne
 const visualsScreens = [
   "contextual-broll-moments.html",
   "contextual-title-cards.html",
+  "screen-share-moment-review.html",
   "sensitive-moment-review.html",
 ];
 
 // The nav declares its path in order, and every screen in it exists.
 const flowFiles = [...navScript.matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-assert.deepStrictEqual(flowFiles, visualsScreens, "visuals nav path is the three contextual-visuals screens, in order");
+assert.deepStrictEqual(flowFiles, visualsScreens, "visuals nav path is the four contextual-visuals screens, in order");
 
 for (const file of visualsScreens) {
   const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
@@ -145,8 +146,8 @@ assert.equal(
   "cleanup-entered visuals carry cleanup context backward inside the visuals path",
 );
 assert.equal(
-  linkWithText(cleanupMiddleNav, "Next: Sensitive moment review").href,
-  "sensitive-moment-review.html?from=cleanup",
+  linkWithText(cleanupMiddleNav, "Next: Screen share moment review").href,
+  "screen-share-moment-review.html?from=cleanup",
   "cleanup-entered visuals carry cleanup context forward inside the visuals path",
 );
 
@@ -198,8 +199,8 @@ assert.equal(
   "embedded visuals nav routes previous visuals steps through the preview app hash",
 );
 assert.equal(
-  linkWithText(embeddedMiddleNav, "Next: Sensitive moment review").href,
-  "../preview/app.html#sensitive-moment-review?from=cleanup",
+  linkWithText(embeddedMiddleNav, "Next: Screen share moment review").href,
+  "../preview/app.html#screen-share-moment-review?from=cleanup",
   "embedded visuals nav routes middle next steps through the preview app hash",
 );
 

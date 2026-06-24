@@ -8,6 +8,7 @@
 const VISUALS_FLOW = [
   { id: "contextual-broll-moments", file: "contextual-broll-moments.html", label: "Contextual b-roll moments" },
   { id: "contextual-title-cards", file: "contextual-title-cards.html", label: "Contextual title cards" },
+  { id: "screen-share-moment-review", file: "screen-share-moment-review.html", label: "Screen share moment review" },
   { id: "sensitive-moment-review", file: "sensitive-moment-review.html", label: "Sensitive moment review" },
 ];
 

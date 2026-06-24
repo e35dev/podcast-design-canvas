@@ -61,6 +61,7 @@ const styleFlow = new Set([
 const visualsFlow = new Set([
   "contextual-broll-moments.html",
   "contextual-title-cards.html",
+  "screen-share-moment-review.html",
   "sensitive-moment-review.html",
 ]);
 

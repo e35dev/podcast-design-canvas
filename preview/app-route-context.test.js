@@ -125,7 +125,7 @@ assert.equal(
 );
 assert.equal(
   styleEntry.nodes.nextStep.href,
-  "#sensitive-moment-review?from=cleanup",
+  "#screen-share-moment-review?from=cleanup",
   "cleanup entry context is preserved when stepping forward inside visuals",
 );
 
