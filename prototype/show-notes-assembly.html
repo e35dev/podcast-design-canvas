@@ -64,6 +64,20 @@
       .issue { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
       .issue.ready { border-left-color: var(--accent); }
       .issue strong { display: block; margin-bottom: 4px; }
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
       .notes-preview {
         margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: #fff;
         padding: 12px; min-height: 138px; white-space: pre-wrap; font-size: 14px; line-height: 1.5;
@@ -262,6 +276,8 @@
             issue: {
               title: `${section.label} needs confirmed source text`,
               detail: "Pull the confirmed chapter list before this section travels with the package.",
+              fixScreen: section.id === "chapters" ? "episode-chapter-markers.html" : null,
+              fixLabel: section.id === "chapters" ? "chapter markers" : null,
             },
           };
         }
@@ -449,6 +465,13 @@
           createText("strong", issue.title),
           createText("span", issue.detail),
         );
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
