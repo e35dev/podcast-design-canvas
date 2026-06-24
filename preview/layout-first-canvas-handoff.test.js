@@ -22,6 +22,7 @@ class Element {
     this.textContent = "";
     this.href = "";
     this.focused = false;
+    this.hidden = false;
   }
 
   setAttribute(name, value) {
@@ -29,6 +30,10 @@ class Element {
     if (name === "href") {
       this.href = String(value);
     }
+  }
+
+  getAttribute(name) {
+    return this.attributes[name];
   }
 
   removeAttribute(name) {
@@ -81,6 +86,9 @@ class Element {
     if (selector === ".slot-state") {
       return this.children.find((child) => child.className.split(/\s+/).includes("slot-state")) || null;
     }
+    if (selector === "[data-layout-label]") {
+      return this.children.find((child) => Object.prototype.hasOwnProperty.call(child.dataset, "layoutLabel")) || null;
+    }
     const slotMatch = selector.match(/^\.drop-zone\[data-slot="([^"]+)"\]$/);
     if (slotMatch) {
       return zones.find((zone) => zone.dataset.slot === slotMatch[1]) || null;
@@ -116,6 +124,15 @@ class Element {
       contains(name) {
         return split().includes(name);
       },
+      toggle(name, force) {
+        const shouldAdd = force === undefined ? !split().includes(name) : Boolean(force);
+        if (shouldAdd) {
+          this.add(name);
+        } else {
+          this.remove(name);
+        }
+        return shouldAdd;
+      },
     };
   }
 }
@@ -123,14 +140,30 @@ class Element {
 const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 const script = html.match(/<script>\s*\(function \(\) \{([\s\S]*?)\}\(\)\);\s*<\/script>/)[1];
 
-const chips = ["host", "guest", "broll"].map((track) => {
+function makeLayoutButton(layout, label) {
+  const button = new Element("button", "", "layout-choice");
+  button.dataset.layout = layout;
+  const strong = new Element("strong");
+  strong.dataset.layoutLabel = "";
+  strong.textContent = label;
+  button.children.push(strong);
+  return button;
+}
+
+const layoutButtons = [
+  makeLayoutButton("interview", "Using interview split"),
+  makeLayoutButton("solo", "Use solo spotlight"),
+  makeLayoutButton("panel", "Use panel grid"),
+];
+
+const chips = ["host", "guest", "guest-b", "broll"].map((track) => {
   const chip = new Element("span", "", "drag-chip");
   chip.dataset.track = track;
   return chip;
 });
 
-const zones = ["host", "guest", "broll"].map((slot) => {
-  const zone = new Element("div", "", `drop-zone ${slot}`);
+const zones = ["host", "guest", "guest-b", "broll"].map((slot) => {
+  const zone = new Element("div", "", `drop-zone ${slot}${slot === "guest-b" ? " is-hidden" : ""}`);
   zone.dataset.slot = slot;
   const label = new Element("span");
   label.className = "slot-label";
@@ -146,6 +179,9 @@ continueLink.attributes["aria-disabled"] = "true";
 continueLink.textContent = "Fill required speaker slots to continue";
 const continueNote = new Element("p", "canvas-continue-note");
 continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.";
+const sceneLabel = new Element("span", "canvas-scene-label");
+const runtimeLabel = new Element("span", "canvas-runtime-label");
+const speakerRow = new Element("div", "canvas-speaker-row", "speaker-row");
 
 const document = {
   querySelector(selector) {
@@ -160,6 +196,7 @@ const document = {
     return null;
   },
   querySelectorAll(selector) {
+    if (selector === "[data-layout]") return layoutButtons;
     if (selector === ".drag-chip") return chips;
     if (selector === ".drop-zone[data-slot]") return zones;
     if (selector === ".drop-zone.filled") {
@@ -173,6 +210,9 @@ const document = {
       "canvas-reset": resetButton,
       "canvas-continue": continueLink,
       "canvas-continue-note": continueNote,
+      "canvas-scene-label": sceneLabel,
+      "canvas-runtime-label": runtimeLabel,
+      "canvas-speaker-row": speakerRow,
     }[id] || null;
   },
   createElement(tagName) {
@@ -207,6 +247,100 @@ function drop(slot, track) {
   });
 }
 
+function pressKey(node, key) {
+  node.listeners.keydown({
+    key,
+    preventDefault() {},
+    target: node,
+  });
+}
+
+const hostChip = chips.find((chip) => chip.dataset.track === "host");
+const guestChip = chips.find((chip) => chip.dataset.track === "guest");
+const guestBChip = chips.find((chip) => chip.dataset.track === "guest-b");
+const brollChip = chips.find((chip) => chip.dataset.track === "broll");
+const hostZone = zones.find((zone) => zone.dataset.slot === "host");
+const guestZone = zones.find((zone) => zone.dataset.slot === "guest");
+const guestBZone = zones.find((zone) => zone.dataset.slot === "guest-b");
+const brollZone = zones.find((zone) => zone.dataset.slot === "broll");
+const soloButton = layoutButtons.find((button) => button.dataset.layout === "solo");
+const panelButton = layoutButtons.find((button) => button.dataset.layout === "panel");
+const interviewButton = layoutButtons.find((button) => button.dataset.layout === "interview");
+
+assert.equal(interviewButton.getAttribute("aria-pressed"), "true", "interview starts selected");
+assert.equal(guestBChip.hidden, true, "the second guest track is hidden until the panel layout is selected");
+assert.equal(guestBZone.classList.contains("is-hidden"), true, "the second guest slot is hidden in the interview layout");
+
+hostZone.listeners.click({ target: hostZone });
+assert.match(slotStatus.textContent, /Pick a track first/);
+
+hostChip.listeners.click({ target: hostChip });
+assert.equal(hostChip.getAttribute("aria-pressed"), "true");
+assert.match(slotStatus.textContent, /Choose its matching slot/);
+
+guestZone.listeners.click({ target: guestZone });
+assert.match(slotStatus.textContent, /different slot/);
+assert.equal(hostChip.getAttribute("aria-pressed"), "true");
+
+hostZone.listeners.click({ target: hostZone });
+assert.equal(hostChip.getAttribute("aria-pressed"), "false");
+assert.match(slotStatus.textContent, /1 of 2 required speaker videos ready/);
+
+pressKey(guestChip, "Enter");
+assert.equal(guestChip.getAttribute("aria-pressed"), "true");
+pressKey(guestZone, " ");
+assert.equal(guestChip.getAttribute("aria-pressed"), "false");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
+assert.strictEqual(
+  continueLink.href,
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
+  "interview continue carries the selected layout and required slots",
+);
+
+soloButton.click();
+assert.equal(soloButton.getAttribute("aria-pressed"), "true", "solo layout button becomes active");
+assert.equal(speakerRow.className, "speaker-row layout-solo", "solo layout visibly switches to a one-speaker composition");
+assert.equal(hostZone.classList.contains("filled"), true, "switching to solo preserves the placed host track");
+assert.equal(guestZone.classList.contains("filled"), true, "switching to solo keeps the guest placement available for switching back");
+assert.equal(guestZone.classList.contains("is-hidden"), true, "solo hides the guest slot instead of leaving the interview shape visible");
+assert.equal(continueLink.attributes["aria-disabled"], "false", "solo remains ready because the host track is already placed");
+assert.strictEqual(
+  continueLink.href,
+  "./app.html#speaker-role-mapping?path=episode&layout=solo&slots=host",
+  "solo continue only carries the required host slot",
+);
+
+panelButton.click();
+assert.equal(panelButton.getAttribute("aria-pressed"), "true", "panel layout button becomes active");
+assert.equal(speakerRow.className, "speaker-row layout-panel", "panel layout visibly switches to a three-speaker composition");
+assert.equal(guestZone.classList.contains("is-hidden"), false, "panel restores the first guest slot with its placement");
+assert.equal(guestBZone.classList.contains("is-hidden"), false, "panel reveals the second guest slot");
+assert.equal(guestBChip.hidden, false, "panel reveals the second guest track chip");
+assert.equal(hostZone.classList.contains("filled"), true, "panel keeps the host placement");
+assert.equal(guestZone.classList.contains("filled"), true, "panel keeps the first guest placement");
+assert.equal(continueLink.attributes["aria-disabled"], "true", "panel regates until Guest 2 is placed");
+assert.match(slotStatus.textContent, /Still need the Guest 2 video/);
+
+pressKey(guestBChip, "Enter");
+pressKey(guestBZone, "Enter");
+assert.equal(guestBZone.classList.contains("filled"), true, "keyboard placement fills the revealed Guest 2 panel slot");
+assert.equal(continueLink.attributes["aria-disabled"], "false", "panel unlocks after all three speaker tracks are placed");
+assert.strictEqual(
+  continueLink.href,
+  "./app.html#speaker-role-mapping?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "panel continue carries all required speaker slots",
+);
+
+resetButton.click();
+assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
+assert.strictEqual(continueLink.href, "");
+assert.match(slotStatus.textContent, /Still need the Host, Guest, and Guest 2 videos/);
+assert.equal(hostChip.getAttribute("aria-pressed"), "false");
+assert.equal(guestChip.getAttribute("aria-pressed"), "false");
+assert.equal(guestBChip.getAttribute("aria-pressed"), "false");
+assert.equal(brollChip.getAttribute("aria-pressed"), "false");
+
+interviewButton.click();
 drop("host", "guest");
 assert.match(slotStatus.textContent, /different slot/);
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
@@ -216,65 +350,23 @@ assert.equal(slotState("host").textContent, "Ready", "a placed host slot reads R
 assert.equal(slotState("guest").textContent, "Needs video", "the still-empty guest slot keeps flagging missing");
 drop("guest", "guest");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
-assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
+assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest");
 assert.strictEqual(continueLink.textContent, "Continue to speaker roles →");
 assert.match(slotStatus.textContent, /Required speaker videos ready/);
 assert.match(continueNote.textContent, /Optional b-roll can be added later/);
-assert.equal(zones.find((zone) => zone.dataset.slot === "broll").classList.contains("filled"), false);
+assert.equal(brollZone.classList.contains("filled"), false);
 
-drop("broll", "broll");
+pressKey(brollChip, "Enter");
+assert.equal(brollChip.getAttribute("aria-pressed"), "true");
+pressKey(brollZone, "Enter");
+assert.equal(brollChip.getAttribute("aria-pressed"), "false");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
-assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
+assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest");
 assert.match(slotStatus.textContent, /Optional b-roll is in place\./);
 assert.match(continueNote.textContent, /Optional b-roll is in place\./);
 
-resetButton.click();
-assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
-assert.strictEqual(continueLink.href, "");
-assert.strictEqual(slotStatus.textContent, "0 of 2 required speaker videos ready. Optional b-roll can be added later.");
-
-// Keyboard placement (WCAG 2.1.1): a focused chip places into its own slot on Enter/Space,
-// using the same fill + continue-unlock path as drag-and-drop. State is clean after reset.
-function keydown(chip, key) {
-  chip.listeners.keydown({ key, preventDefault() {} });
-}
-
-keydown(chips[0], "Enter");
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
-  true,
-  "Enter on the focused host chip fills the host slot",
-);
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "host").querySelector(".placed-track").textContent,
-  "Host track · Dana Brooks",
-  "keyboard placement writes the same placed-track label as a drop",
-);
-keydown(chips[1], " ");
-assert.strictEqual(
-  continueLink.attributes["aria-disabled"],
-  "false",
-  "keyboard-placing host and guest unlocks Continue just like dragging",
-);
-assert.strictEqual(
-  continueLink.href,
-  "./app.html#speaker-role-mapping?path=episode",
-  "keyboard placement carries the same speaker-roles handoff target",
-);
-assert.match(slotStatus.textContent, /Required speaker videos ready/, "keyboard placement updates readiness identically");
-
-// A non-activating key is a no-op, so Tab still moves focus instead of placing.
-keydown(chips[2], "Tab");
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "broll").classList.contains("filled"),
-  false,
-  "a non-activating key does not place a chip",
-);
-
 // Per-track remove: a creator can clear a single placed track without resetting the whole
-// layout. Host and guest are both filled from the keyboard block above.
-const hostZone = zones.find((zone) => zone.dataset.slot === "host");
-const guestZone = zones.find((zone) => zone.dataset.slot === "guest");
+// layout. Host and guest are both filled from the drag path above.
 const hostRemove = hostZone.querySelector(".placed-remove");
 assert.ok(hostRemove, "a placed track exposes a per-track remove control");
 assert.strictEqual(hostRemove.attributes["aria-label"], "Remove Host track · Dana Brooks", "the remove control is labelled per track");
@@ -284,53 +376,15 @@ assert.equal(slotState("host").textContent, "Needs video", "removing a track ret
 assert.strictEqual(hostZone.querySelector(".placed-track"), null, "the placed track and its remove control are gone");
 assert.strictEqual(guestZone.classList.contains("filled"), true, "removing one track leaves the others placed");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "Continue re-gates after a required track is removed");
-assert.strictEqual(chips[0].focused, true, "removing a track returns focus to its matching palette chip");
+assert.strictEqual(hostChip.focused, true, "removing a track returns focus to its matching palette chip");
 // Re-placing the cleared slot restores readiness.
-keydown(chips[0], "Enter");
+drop("host", "host");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false", "re-placing the removed track restores Continue");
 
-// Touch/pointer placement: tapping a chip fires a click, which must place it into its own
-// slot just like dragging or Enter/Space. HTML5 drag-and-drop is unreliable on touch, so
-// without this a touch-only creator cannot fill the gated slots. Start from a clean reset.
+// A non-activating key is a no-op, so Tab still moves focus instead of changing selection.
 resetButton.click();
-assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "reset re-gates Continue before the tap checks");
+pressKey(brollChip, "Tab");
+assert.equal(brollChip.getAttribute("aria-pressed"), "false", "a non-activating key does not select a chip");
+assert.match(slotStatus.textContent, /Optional b-roll can be added later\./, "reset returns b-roll copy to the optional-later state");
 
-chips[0].click();
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
-  true,
-  "tapping the host chip fills the host slot",
-);
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "host").querySelector(".placed-track").textContent,
-  "Host track · Dana Brooks",
-  "tap placement writes the same placed-track label as a drop",
-);
-chips[1].click();
-assert.strictEqual(
-  continueLink.attributes["aria-disabled"],
-  "false",
-  "tapping host and guest unlocks Continue just like dragging",
-);
-assert.strictEqual(
-  continueLink.href,
-  "./app.html#speaker-role-mapping?path=episode",
-  "tap placement carries the same speaker-roles handoff target",
-);
-assert.match(slotStatus.textContent, /Required speaker videos ready/, "tap placement updates readiness identically");
-
-// Idempotent: a second tap re-confirms the same placement — this mirrors the click some
-// browsers synthesize after Enter/Space — without re-gating Continue or corrupting state.
-chips[0].click();
-assert.strictEqual(
-  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
-  true,
-  "re-tapping a placed chip keeps it placed",
-);
-assert.strictEqual(
-  continueLink.attributes["aria-disabled"],
-  "false",
-  "re-tapping does not re-gate Continue",
-);
-
-console.log("layout-first canvas handoff: per-slot status, continue unlock, and b-roll readiness verified");
+console.log("layout-first canvas handoff: keyboard, click, and drag placement all unlock continue correctly");

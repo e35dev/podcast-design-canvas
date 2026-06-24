@@ -189,8 +189,8 @@ assert.ok(zoneFor("guest").classList.contains("filled"), "choosing a real guest 
 assert.equal(continueLink.attributes["aria-disabled"], "false", "Continue unlocks once host and guest hold valid media");
 assert.equal(
   continueLink.href,
-  "./app.html#speaker-role-mapping?path=episode",
-  "Continue carries the speaker-roles handoff once media is valid",
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
+  "Continue carries the speaker-roles handoff, selected layout, and required slots once media is valid",
 );
 assert.match(slotStatus.textContent, /Required speaker videos ready/, "status reports both required videos ready");
 assert.equal(zoneFor("broll").classList.contains("filled"), false, "b-roll stays optional and empty");

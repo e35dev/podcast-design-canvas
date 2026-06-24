@@ -25,15 +25,22 @@ const flowSteps = [
 assert.match(html, /<title>Podcast Design Canvas — Preview<\/title>/, "preview shell has product title");
 assert.match(html, /aria-label="Podcast Design Canvas preview shell"/, "preview shell exposes landmark label");
 assert.match(html, /Example podcast layout canvas/, "preview shell leads with an example podcast layout canvas");
+assert.match(html, /Starting layout options/, "preview shell exposes layout choices before placement");
+assert.match(html, /Use solo spotlight/, "preview shell offers a visibly different solo layout");
+assert.match(html, /Use panel grid/, "preview shell offers a three-speaker panel layout");
 assert.match(html, /Host video slot/, "preview shell shows a host video drop zone");
 assert.match(html, /Guest video slot/, "preview shell shows a guest video drop zone");
+assert.match(html, /Guest 2 video slot/, "preview shell includes the panel-only second guest slot");
 assert.match(html, /Caption area/, "preview shell reserves a caption area on the example canvas");
 assert.match(html, /B-roll drop zone/, "preview shell shows a contextual visuals drop zone");
 assert.match(html, /Drag speaker tracks onto the layout/, "preview shell exposes draggable speaker tracks for the example canvas");
 assert.match(html, /draggable="true"/, "preview shell marks example canvas tracks as draggable");
+assert.match(html, /aria-pressed="false"/, "preview shell exposes selectable track chips for non-drag placement");
 assert.match(html, /data-slot="host"/, "preview shell labels the host video slot for drag-in placement");
 assert.match(html, /data-slot="guest"/, "preview shell labels the guest video slot for drag-in placement");
+assert.match(html, /data-slot="guest-b"/, "preview shell labels the second guest slot for panel placement");
 assert.match(html, /data-slot="broll"/, "preview shell labels the b-roll slot for drag-in placement");
+assert.ok(html.includes("Pick a track first, then choose its slot."), "preview shell supports select-then-place guidance");
 assert.match(html, /Reset layout/, "preview shell lets creators reset the example canvas layout");
 assert.match(html, /canvas-slot-status/, "preview shell shows live slot fill status on the example canvas");
 assert.match(html, /id="canvas-continue"/, "preview shell exposes a continue handoff from the example canvas");
@@ -59,6 +66,11 @@ assert.match(
   html,
   /class="slot-file" type="file" accept="video\/\*" data-file-input="host"/,
   "preview canvas accepts a real uploaded host video, not only the sample track",
+);
+assert.match(
+  html,
+  /class="slot-file" type="file" accept="video\/\*" data-file-input="guest-b"/,
+  "preview canvas accepts a real uploaded second guest video when the panel layout is selected",
 );
 assert.match(
   html,

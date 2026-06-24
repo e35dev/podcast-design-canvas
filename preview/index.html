@@ -187,6 +187,14 @@
         gap: 16px;
       }
 
+      .speaker-row.layout-solo {
+        grid-template-columns: 1fr;
+      }
+
+      .speaker-row.layout-panel {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       .drop-zone {
         position: relative;
         display: grid;
@@ -224,6 +232,14 @@
 
       .drop-zone.guest {
         background: rgba(255, 255, 255, 0.12);
+      }
+
+      .drop-zone.guest-b {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .drop-zone.is-hidden {
+        display: none;
       }
 
       .drop-zone.broll {
@@ -292,6 +308,51 @@
         margin-bottom: 14px;
       }
 
+      .layout-picker {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 14px;
+      }
+
+      .layout-choice {
+        min-height: 74px;
+        border: 1px solid #bfd0ca;
+        border-radius: 12px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 10px 12px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .layout-choice strong,
+      .layout-choice span {
+        display: block;
+      }
+
+      .layout-choice strong {
+        font-size: 13px;
+      }
+
+      .layout-choice span {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .layout-choice[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #123d35;
+        color: #ffffff;
+      }
+
+      .layout-choice[aria-pressed="true"] span {
+        color: rgba(255, 255, 255, 0.82);
+      }
+
       .drag-chip {
         display: inline-flex;
         align-items: center;
@@ -312,7 +373,19 @@
         cursor: grabbing;
       }
 
+      .drag-chip.is-selected {
+        border-color: #123d35;
+        background: #123d35;
+        color: #ffffff;
+      }
+
       .drag-chip:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .layout-choice:focus-visible,
+      .drop-zone:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
@@ -320,6 +393,20 @@
       .drop-zone.drag-over {
         border-color: #ffffff;
         background: rgba(255, 255, 255, 0.18);
+      }
+
+      .slot-file {
+        position: relative;
+        z-index: 2;
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.95);
+        font: inherit;
+        font-size: 12px;
+      }
+
+      .slot-file:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
       }
 
       .drop-zone.filled {
@@ -342,6 +429,27 @@
         font-size: 12px;
         font-weight: 800;
         padding: 0 10px;
+      }
+
+      .placed-video {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .placed-video video {
+        width: 100%;
+        max-height: 132px;
+        border-radius: 12px;
+        background: rgba(16, 24, 22, 0.8);
+      }
+
+      .placed-video .placed-label {
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
       }
 
       .placed-remove {
@@ -367,49 +475,6 @@
       .placed-remove:focus-visible {
         outline: 2px solid #ffffff;
         outline-offset: 2px;
-      }
-
-      .slot-file {
-        position: relative;
-        z-index: 2;
-        margin-top: 10px;
-        max-width: 100%;
-        color: #ffffff;
-        font-size: 12px;
-      }
-
-      .slot-file:focus-visible {
-        outline: 2px solid #ffffff;
-        outline-offset: 2px;
-      }
-
-      .placed-video {
-        position: relative;
-        z-index: 2;
-        display: grid;
-        gap: 6px;
-        margin-bottom: 8px;
-      }
-
-      .placed-video video {
-        width: 100%;
-        max-height: 96px;
-        border-radius: 8px;
-        background: #000000;
-        object-fit: cover;
-      }
-
-      .placed-video .placed-label {
-        display: inline-flex;
-        width: fit-content;
-        align-items: center;
-        min-height: 28px;
-        border-radius: 999px;
-        background: rgba(223, 245, 239, 0.96);
-        color: #075246;
-        font-size: 12px;
-        font-weight: 800;
-        padding: 0 10px;
       }
 
       .canvas-toolbar {
@@ -541,6 +606,7 @@
       @media (max-width: 900px) {
         .canvas-grid,
         .canvas-footer,
+        .layout-picker,
         .speaker-row {
           grid-template-columns: 1fr;
         }
@@ -564,29 +630,49 @@
         <div class="canvas-grid">
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
-            <p class="canvas-lede">Start with a concrete long-form episode composition: drop a real host and guest video into their slots (or drag the sample tracks), keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
-            <div class="track-palette" aria-label="Drag speaker tracks onto the layout, or focus one and press Enter to place it">
-              <span class="drag-chip" draggable="true" data-track="host" tabindex="0" role="button" aria-keyshortcuts="Enter Space">Host track · Dana Brooks</span>
-              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0" role="button" aria-keyshortcuts="Enter Space">Guest track · Marcus Lee</span>
-              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0" role="button" aria-keyshortcuts="Enter Space">B-roll clip · intro beat</span>
+            <p class="canvas-lede">Start with a concrete long-form episode composition: place real host and guest videos into their slots, or select the sample tracks and choose their places, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
+            <div class="layout-picker" role="group" aria-label="Starting layout options">
+              <button type="button" class="layout-choice" data-layout="interview" aria-pressed="true">
+                <strong data-layout-label>Using interview split</strong>
+                <span>Host and guest side by side.</span>
+              </button>
+              <button type="button" class="layout-choice" data-layout="solo" aria-pressed="false">
+                <strong data-layout-label>Use solo spotlight</strong>
+                <span>One speaker with a larger frame.</span>
+              </button>
+              <button type="button" class="layout-choice" data-layout="panel" aria-pressed="false">
+                <strong data-layout-label>Use panel grid</strong>
+                <span>Host plus two guests.</span>
+              </button>
+            </div>
+            <div class="track-palette" aria-label="Drag speaker tracks onto the layout, or select one and choose its slot">
+              <span class="drag-chip" draggable="true" data-track="host" tabindex="0" role="button" aria-pressed="false" aria-keyshortcuts="Enter Space">Host track · Dana Brooks</span>
+              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0" role="button" aria-pressed="false" aria-keyshortcuts="Enter Space">Guest track · Marcus Lee</span>
+              <span class="drag-chip" draggable="true" data-track="guest-b" tabindex="0" role="button" aria-pressed="false" aria-keyshortcuts="Enter Space" hidden>Guest 2 track · Priya Shah</span>
+              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0" role="button" aria-pressed="false" aria-keyshortcuts="Enter Space">B-roll clip · intro beat</span>
             </div>
             <div class="canvas-toolbar">
               <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 2 required speaker videos ready. Optional b-roll can be added later.</p>
               <button type="button" class="canvas-reset" id="canvas-reset">Reset layout</button>
             </div>
             <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
-              <span class="canvas-chip scene">Interview scene · intro beat</span>
-              <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
-              <div class="speaker-row">
-                <div class="drop-zone host" data-slot="host">
+              <span class="canvas-chip scene" id="canvas-scene-label">Interview scene · intro beat</span>
+              <span class="canvas-chip runtime" id="canvas-runtime-label">Host + guest · 58 min cut</span>
+              <div class="speaker-row" id="canvas-speaker-row">
+                <div class="drop-zone host" data-slot="host" tabindex="0" role="button" aria-label="Place the selected track into the host video slot">
                   <span class="slot-label">Host video slot</span>
                   <span class="slot-note">Drop the host video file here, or choose one. Keep room for captions and chapter callouts.</span>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="host" aria-label="Choose host video file">
                 </div>
-                <div class="drop-zone guest" data-slot="guest">
+                <div class="drop-zone guest" data-slot="guest" tabindex="0" role="button" aria-label="Place the selected track into the guest video slot">
                   <span class="slot-label">Guest video slot</span>
                   <span class="slot-note">Drop the guest video file here, or choose one, matched to framing and safe-area rules.</span>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="guest" aria-label="Choose guest video file">
+                </div>
+                <div class="drop-zone guest-b is-hidden" data-slot="guest-b" tabindex="0" role="button" aria-label="Place the selected track into the second guest video slot">
+                  <span class="slot-label">Guest 2 video slot</span>
+                  <span class="slot-note">Drop the second guest video file here, or choose one, when the panel grid is selected.</span>
+                  <input class="slot-file" type="file" accept="video/*" data-file-input="guest-b" aria-label="Choose second guest video file">
                 </div>
               </div>
               <div class="canvas-footer">
@@ -594,7 +680,7 @@
                   <span class="slot-label">Caption area</span>
                   <div class="slot-note">Reserved for readable long-form captions and lower-thirds that never cover a speaker.</div>
                 </div>
-                <div class="title-slot drop-zone broll" data-slot="broll">
+                <div class="title-slot drop-zone broll" data-slot="broll" tabindex="0" role="button" aria-label="Place the selected track into the b-roll drop zone">
                   <span class="slot-label">B-roll drop zone</span>
                   <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="broll" aria-label="Choose optional b-roll video file">
@@ -1046,20 +1132,113 @@
         var trackLabels = {
           host: "Host track · Dana Brooks",
           guest: "Guest track · Marcus Lee",
+          "guest-b": "Guest 2 track · Priya Shah",
           broll: "B-roll clip · intro beat",
         };
 
-        // Real uploaded/synced media: alongside the sample track chips, each slot accepts an
-        // actual video file (dropped from the desktop or chosen with its file input), so the
-        // preview canvas places real media into the layout rather than only an internal
-        // example (#1131). Object URLs are tracked so they can be revoked on remove/reset.
+        var layouts = {
+          interview: {
+            activeLabel: "Using interview split",
+            readyLabel: "Use interview split",
+            layoutName: "interview split",
+            scene: "Interview scene · intro beat",
+            runtime: "Host + guest · 58 min cut",
+            rowClass: "",
+            visibleSlots: ["host", "guest", "broll"],
+            requiredSlots: ["host", "guest"],
+          },
+          solo: {
+            activeLabel: "Using solo spotlight",
+            readyLabel: "Use solo spotlight",
+            layoutName: "solo spotlight",
+            scene: "Solo spotlight · monologue",
+            runtime: "Host only · 42 min cut",
+            rowClass: "layout-solo",
+            visibleSlots: ["host", "broll"],
+            requiredSlots: ["host"],
+          },
+          panel: {
+            activeLabel: "Using panel grid",
+            readyLabel: "Use panel grid",
+            layoutName: "panel grid",
+            scene: "Panel grid · roundtable",
+            runtime: "Host + two guests · 64 min cut",
+            rowClass: "layout-panel",
+            visibleSlots: ["host", "guest", "guest-b", "broll"],
+            requiredSlots: ["host", "guest", "guest-b"],
+          },
+        };
+
+        var slotLabels = {
+          host: "Host",
+          guest: "Guest",
+          "guest-b": "Guest 2",
+        };
+
+        var videoExtensions = [".mp4", ".m4v", ".mov", ".webm", ".ogv", ".ogg", ".mkv", ".mpg", ".mpeg"];
         var objectUrls = [];
         var urlApi = (typeof URL !== "undefined")
           ? URL
           : (typeof window !== "undefined" && window.URL) ? window.URL : null;
 
+        var slotStatus = document.getElementById("canvas-slot-status");
+        var resetButton = document.getElementById("canvas-reset");
+        var continueLink = document.getElementById("canvas-continue");
+        var continueNote = document.getElementById("canvas-continue-note");
+        var sceneLabel = document.getElementById("canvas-scene-label");
+        var runtimeLabel = document.getElementById("canvas-runtime-label");
+        var speakerRow = document.getElementById("canvas-speaker-row");
+        var currentLayout = "interview";
+        var selectedTrack = "";
+        var selectedChip = null;
+
+        function currentDefinition() {
+          return layouts[currentLayout] || layouts.interview;
+        }
+
+        function formatList(items) {
+          if (items.length === 0) return "";
+          if (items.length === 1) return items[0];
+          if (items.length === 2) return items[0] + " and " + items[1];
+          return items.slice(0, -1).join(", ") + ", and " + items[items.length - 1];
+        }
+
+        function slotSelector(slot) {
+          return '.drop-zone[data-slot="' + slot + '"]';
+        }
+
+        function activationKey(event) {
+          return event.key === "Enter" || event.key === " " || event.key === "Spacebar";
+        }
+
+        function setClassState(node, className, enabled) {
+          if (!node || !node.classList) return;
+          if (enabled) {
+            node.classList.add(className);
+          } else {
+            node.classList.remove(className);
+          }
+        }
+
+        function hasVideoExtension(name) {
+          var lower = String(name || "").toLowerCase();
+          return videoExtensions.some(function (extension) {
+            return lower.slice(-extension.length) === extension;
+          });
+        }
+
         function isVideoFile(file) {
-          return Boolean(file && typeof file.type === "string" && file.type.indexOf("video/") === 0);
+          if (!file) return false;
+          var type = typeof file.type === "string" ? file.type : "";
+          if (type.indexOf("video/") === 0) return true;
+          if (type === "" || type === "application/octet-stream") {
+            return hasVideoExtension(file.name);
+          }
+          return false;
+        }
+
+        function isEmptyExport(file) {
+          return Boolean(file) && typeof file.size === "number" && file.size === 0;
         }
 
         // A stable identity for a placed recording. Display name alone is not enough: separate
@@ -1076,55 +1255,64 @@
           return parts.join("|");
         }
 
-        document.querySelectorAll(".drag-chip").forEach(function (chip) {
-          chip.addEventListener("dragstart", function (event) {
-            event.dataTransfer.setData("text/plain", chip.dataset.track);
-            chip.classList.add("dragging");
+        function updateChipSelection() {
+          var visible = new Set(currentDefinition().visibleSlots);
+          document.querySelectorAll(".drag-chip").forEach(function (chip) {
+            var active = chip === selectedChip;
+            setClassState(chip, "is-selected", active);
+            chip.setAttribute("aria-pressed", active ? "true" : "false");
+            chip.hidden = !visible.has(chip.dataset.track);
           });
-          chip.addEventListener("dragend", function () {
-            chip.classList.remove("dragging");
-          });
-          // Keyboard equivalent of dragging: a focused chip places into its own slot on
-          // Enter/Space, so the canvas is operable without a pointer (WCAG 2.1.1).
-          chip.addEventListener("keydown", function (event) {
-            if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") {
-              return;
-            }
-            event.preventDefault();
-            var track = chip.dataset.track;
-            placeTrack(document.querySelector('.drop-zone[data-slot="' + track + '"]'), track);
-          });
-          // Touch/pointer equivalent of dragging: tapping a chip places it into its own slot.
-          // HTML5 drag-and-drop is unreliable on touch, so without this a touch user cannot
-          // fill the gated slots. placeTrack is idempotent, so the click that some browsers
-          // synthesize after Enter/Space simply re-confirms the same placement.
-          chip.addEventListener("click", function () {
-            var track = chip.dataset.track;
-            placeTrack(document.querySelector('.drop-zone[data-slot="' + track + '"]'), track);
-          });
-        });
+        }
 
-        var slotStatus = document.getElementById("canvas-slot-status");
-        var resetButton = document.getElementById("canvas-reset");
-        var continueLink = document.getElementById("canvas-continue");
-        var continueNote = document.getElementById("canvas-continue-note");
+        function clearSelectedTrack() {
+          selectedTrack = "";
+          selectedChip = null;
+          updateChipSelection();
+        }
+
+        function selectTrack(chip) {
+          if (chip.hidden) return;
+          selectedTrack = chip.dataset.track || "";
+          selectedChip = chip;
+          updateChipSelection();
+          updateSlotStatus("Selected " + chip.textContent + ". Choose its matching slot.");
+        }
+
+        function requiredSlots() {
+          return currentDefinition().requiredSlots;
+        }
+
+        function visibleSpeakerSlots() {
+          var visible = new Set(currentDefinition().visibleSlots);
+          return Object.keys(slotLabels).filter(function (slot) {
+            return visible.has(slot);
+          });
+        }
 
         function optionalBrollCopy() {
-          var brollZone = document.querySelector('.drop-zone[data-slot="broll"]');
+          var brollZone = document.querySelector(slotSelector("broll"));
           return brollZone && brollZone.classList.contains("filled")
             ? "Optional b-roll is in place."
             : "Optional b-roll can be added later.";
         }
 
         function requiredFilledCount() {
-          var required = ["host", "guest"];
-          return required.filter(function (slot) {
-            var zone = document.querySelector('.drop-zone[data-slot="' + slot + '"]');
+          return requiredSlots().filter(function (slot) {
+            var zone = document.querySelector(slotSelector(slot));
             return zone && zone.classList.contains("filled");
           }).length;
         }
 
+        function placedRequiredSlots() {
+          return requiredSlots().filter(function (slot) {
+            var zone = document.querySelector(slotSelector(slot));
+            return zone && zone.classList.contains("filled");
+          });
+        }
+
         function updateSlotIndicators() {
+          var visible = new Set(currentDefinition().visibleSlots);
           document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
             var indicator = zone.querySelector(".slot-state");
             if (!indicator) {
@@ -1134,8 +1322,11 @@
             }
             indicator.classList.remove("is-ready", "is-missing", "is-optional");
             var slot = zone.dataset.slot;
-            var required = slot === "host" || slot === "guest";
-            indicator.hidden = false;
+            var required = requiredSlots().indexOf(slot) !== -1;
+            indicator.hidden = !visible.has(slot);
+            if (indicator.hidden) {
+              return;
+            }
             if (zone.classList.contains("filled")) {
               indicator.textContent = "Ready";
               indicator.classList.add("is-ready");
@@ -1149,20 +1340,16 @@
           });
         }
 
-        // The same recording in both speaker slots would put one person in two frames, so it
-        // is not a valid set of media assignments. Compare file identity (see fileSignature),
-        // not display name, and return the names of any speaker slots that repeat a recording.
-        function duplicateFileNames() {
+        function duplicateSpeakerSlots() {
           var seen = {};
           var duplicates = [];
-          ["host", "guest"].forEach(function (slot) {
-            var zone = document.querySelector('.drop-zone[data-slot="' + slot + '"]');
+          visibleSpeakerSlots().forEach(function (slot) {
+            var zone = document.querySelector(slotSelector(slot));
             if (!zone || !zone.classList.contains("filled")) return;
             var sig = (zone.dataset.fileSig || "").trim();
             if (!sig) return;
             if (seen[sig]) {
-              var name = (zone.dataset.fileName || "").trim() || sig;
-              if (duplicates.indexOf(name) === -1) duplicates.push(name);
+              if (duplicates.indexOf(slot) === -1) duplicates.push(slot);
             } else {
               seen[sig] = true;
             }
@@ -1172,12 +1359,14 @@
 
         function updateContinueLink(filled) {
           if (!continueLink) return;
-          if (filled === 2 && duplicateFileNames().length === 0) {
-            continueLink.href = "./app.html#speaker-role-mapping?path=episode";
+          var required = requiredSlots();
+          if (required.length > 0 && filled === required.length && duplicateSpeakerSlots().length === 0) {
+            var slots = placedRequiredSlots().join(",");
+            continueLink.href = "./app.html#speaker-role-mapping?path=episode&layout=" + currentLayout + "&slots=" + encodeURIComponent(slots);
             continueLink.setAttribute("aria-disabled", "false");
             continueLink.textContent = "Continue to speaker roles →";
             if (continueNote) {
-              continueNote.textContent = "Required speaker videos are ready. Continue into speaker roles. " + optionalBrollCopy();
+              continueNote.textContent = "Required speaker videos are ready for the " + currentDefinition().layoutName + ". Continue into speaker roles. " + optionalBrollCopy();
             }
             return;
           }
@@ -1186,7 +1375,9 @@
           continueLink.setAttribute("aria-disabled", "true");
           continueLink.textContent = "Fill required speaker slots to continue";
           if (continueNote) {
-            continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. " + optionalBrollCopy();
+            continueNote.textContent = "Place the " + formatList(required.map(function (slot) {
+              return (slotLabels[slot] || slot).toLowerCase();
+            })) + " into the " + currentDefinition().layoutName + " before continuing into speaker roles. " + optionalBrollCopy();
           }
         }
 
@@ -1198,17 +1389,27 @@
             slotStatus.textContent = message;
             return;
           }
-          if (duplicateFileNames().length > 0) {
+          if (duplicateSpeakerSlots().length > 0) {
             slotStatus.textContent =
               "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
             return;
           }
           var filled = requiredFilledCount();
-          if (filled === 2) {
+          var total = requiredSlots().length;
+          if (filled === total) {
             slotStatus.textContent = "Required speaker videos ready. " + optionalBrollCopy();
             return;
           }
-          slotStatus.textContent = filled + " of 2 required speaker videos ready. " + optionalBrollCopy();
+          var missing = requiredSlots()
+            .filter(function (slot) {
+              var zone = document.querySelector(slotSelector(slot));
+              return !zone || !zone.classList.contains("filled");
+            })
+            .map(function (slot) {
+              return slotLabels[slot] || slot;
+            });
+          var noun = missing.length === 1 ? "video" : "videos";
+          slotStatus.textContent = filled + " of " + total + " required speaker videos ready. Still need the " + formatList(missing) + " " + noun + ". " + optionalBrollCopy();
         }
 
         function revokeZoneUrl(zone) {
@@ -1217,7 +1418,9 @@
             urlApi.revokeObjectURL(url);
           }
           zone.dataset.objectUrl = "";
-          objectUrls = objectUrls.filter(function (candidate) { return candidate !== url; });
+          objectUrls = objectUrls.filter(function (candidate) {
+            return candidate !== url;
+          });
         }
 
         function ensureRemoveButton(zone, label) {
@@ -1228,7 +1431,9 @@
             remove.className = "placed-remove";
             remove.textContent = "Remove";
             remove.addEventListener("click", function (event) {
-              if (event && typeof event.stopPropagation === "function") event.stopPropagation();
+              if (event && typeof event.stopPropagation === "function") {
+                event.stopPropagation();
+              }
               removeTrack(zone);
             });
             zone.appendChild(remove);
@@ -1237,13 +1442,14 @@
           return remove;
         }
 
-        // Place a real uploaded/synced video into a slot: render the actual file, mark the slot
-        // filled, and record its identity so duplicates and readiness stay accurate. A non-video
-        // file surfaces the same creator-facing hint as any invalid assignment.
         function placeVideoFile(zone, file) {
           if (!zone) return;
           if (!isVideoFile(file)) {
             updateSlotStatus("Add an MP4, MOV, or WebM video file to that slot.");
+            return;
+          }
+          if (isEmptyExport(file)) {
+            updateSlotStatus("That video file is empty. Re-export it and place the finished file.");
             return;
           }
           revokeZoneUrl(zone);
@@ -1273,18 +1479,15 @@
           wrap.appendChild(label);
           zone.insertBefore(wrap, zone.firstChild);
           ensureRemoveButton(zone, file.name || "video");
+          clearSelectedTrack();
           updateSlotStatus();
         }
 
-        // Shared by drag-and-drop and keyboard activation. A track only fits its own slot;
-        // a mismatch surfaces the same creator-facing hint as a bad drop.
         function placeTrack(zone, track) {
           if (!zone || track !== zone.dataset.slot) {
             updateSlotStatus("That track belongs in a different slot.");
             return;
           }
-          // Placing a sample track over a real video clears the video (and its object URL)
-          // first, so a slot never shows both a placed file and an example chip at once.
           var existingVideo = zone.querySelector(".placed-video");
           if (existingVideo) {
             existingVideo.remove();
@@ -1300,21 +1503,8 @@
             zone.insertBefore(placed, zone.firstChild);
           }
           placed.textContent = trackLabels[track];
-          // Per-slot remove, so a creator who places the wrong track can fix just that slot
-          // instead of resetting the whole layout. It is a button, so Enter/Space work too.
-          var remove = zone.querySelector(".placed-remove");
-          if (!remove) {
-            remove = document.createElement("button");
-            remove.type = "button";
-            remove.className = "placed-remove";
-            remove.textContent = "Remove";
-            remove.addEventListener("click", function (event) {
-              if (event && typeof event.stopPropagation === "function") event.stopPropagation();
-              removeTrack(zone);
-            });
-            zone.appendChild(remove);
-          }
-          remove.setAttribute("aria-label", "Remove " + trackLabels[track]);
+          ensureRemoveButton(zone, trackLabels[track]);
+          clearSelectedTrack();
           updateSlotStatus();
         }
 
@@ -1332,14 +1522,56 @@
           var remove = zone.querySelector(".placed-remove");
           if (remove) remove.remove();
           updateSlotStatus();
-          // The Remove button is removed with the placement, so keyboard focus would otherwise
-          // fall to the page body. Return it to the matching track chip so the creator can
-          // re-place from the palette without losing context (WCAG 2.4.3).
           var chip = document.querySelector('.drag-chip[data-track="' + slot + '"]');
           if (chip && typeof chip.focus === "function") {
             chip.focus();
           }
         }
+
+        function applyLayout(name) {
+          var layout = layouts[name] || layouts.interview;
+          currentLayout = layouts[name] ? name : "interview";
+          var visible = new Set(layout.visibleSlots);
+
+          if (sceneLabel) sceneLabel.textContent = layout.scene;
+          if (runtimeLabel) runtimeLabel.textContent = layout.runtime;
+          if (speakerRow) {
+            speakerRow.className = "speaker-row" + (layout.rowClass ? " " + layout.rowClass : "");
+          }
+
+          document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+            setClassState(zone, "is-hidden", !visible.has(zone.dataset.slot));
+          });
+
+          document.querySelectorAll("[data-layout]").forEach(function (button) {
+            var buttonLayout = layouts[button.dataset.layout] || layouts.interview;
+            var active = button.dataset.layout === currentLayout;
+            var label = button.querySelector("[data-layout-label]");
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+            if (label) label.textContent = active ? buttonLayout.activeLabel : buttonLayout.readyLabel;
+          });
+
+          clearSelectedTrack();
+          updateSlotStatus();
+        }
+
+        document.querySelectorAll(".drag-chip").forEach(function (chip) {
+          chip.addEventListener("dragstart", function (event) {
+            event.dataTransfer.setData("text/plain", chip.dataset.track);
+            chip.classList.add("dragging");
+          });
+          chip.addEventListener("dragend", function () {
+            chip.classList.remove("dragging");
+          });
+          chip.addEventListener("click", function () {
+            selectTrack(chip);
+          });
+          chip.addEventListener("keydown", function (event) {
+            if (!activationKey(event)) return;
+            event.preventDefault();
+            selectTrack(chip);
+          });
+        });
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
           zone.addEventListener("dragover", function (event) {
@@ -1352,18 +1584,42 @@
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
             zone.classList.remove("drag-over");
-            // A real dropped video file takes priority; fall back to a dragged sample track.
             var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
             if (file) {
               placeVideoFile(zone, file);
               return;
             }
-            placeTrack(zone, event.dataTransfer.getData("text/plain"));
+            var track = event.dataTransfer.getData("text/plain");
+            if (!track) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
+              return;
+            }
+            placeTrack(zone, track);
+          });
+          zone.addEventListener("click", function () {
+            if (!selectedTrack) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
+              return;
+            }
+            placeTrack(zone, selectedTrack);
+          });
+          zone.addEventListener("keydown", function (event) {
+            if (!activationKey(event)) return;
+            event.preventDefault();
+            if (!selectedTrack) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
+              return;
+            }
+            placeTrack(zone, selectedTrack);
           });
         });
 
-        // Choosing a file with a slot's input places real media without a drag, so the canvas
-        // is usable on touch and with the keyboard, not only by dragging.
+        document.querySelectorAll("[data-layout]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            applyLayout(button.dataset.layout);
+          });
+        });
+
         document.querySelectorAll(".slot-file").forEach(function (input) {
           input.addEventListener("change", function () {
             var zone = document.querySelector('.drop-zone[data-slot="' + input.dataset.fileInput + '"]');
@@ -1385,12 +1641,12 @@
               var remove = zone.querySelector(".placed-remove");
               if (remove) remove.remove();
             });
+            clearSelectedTrack();
             updateSlotStatus();
           });
         }
 
-        updateContinueLink(requiredFilledCount());
-        updateSlotIndicators();
+        applyLayout(currentLayout);
       }());
     </script>
   </body>
