@@ -861,7 +861,8 @@
 
       function renderCompare() {
         const moment = previewMoments.find((entry) => entry.id === preview);
-        const original = momentProfiles[preview];
+        const profileBars = momentProfiles[preview] ?? momentProfiles["quiet-guest"];
+        const original = Array.isArray(profileBars) ? [...profileBars] : [];
         const cleaned = buildCleanedPreview(original);
         const effects = activeEffects();
 
