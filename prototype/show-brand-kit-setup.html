@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211f;
+        --muted: #61706a;
+        --line: #d8e2de;
+        --surface: #f5f8f7;
+        --panel: #ffffff;
+        --accent: #0f6a57;
+        --accent-soft: #dff3ed;
+        --review: #905400;
+        --review-soft: #fff1d7;
+        --warn: #b85f22;
+        --warn-soft: #ffe7cf;
+        --shadow: 0 14px 40px rgba(18, 32, 29, 0.08);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, #eef7f3 0, rgba(238, 247, 243, 0) 38%),
+          linear-gradient(180deg, #fbfdfc 0%, #f3f7f6 100%);
+      }
+
+      main {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        font-size: clamp(30px, 4vw, 42px);
+        line-height: 1.02;
+      }
+
+      .lede,
+      .hint,
+      .surface-copy,
+      .summary-copy,
+      .input-note,
+      .effect-list,
+      .issue-copy {
+        color: var(--muted);
+      }
+
+      .lede {
+        max-width: 820px;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      .sample-note {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: #eef4f2;
+        color: #50615b;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 12px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        margin-top: 26px;
+      }
+
+      .left-column,
+      .right-column {
+        display: grid;
+        gap: 20px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 0 12px;
+        white-space: nowrap;
+      }
+
+      .status.defaults,
+      .status.preview,
+      .summary-badge.defaults,
+      .summary-badge.preview {
+        background: #eef4f2;
+        color: #50615b;
+      }
+
+      .status.review,
+      .summary-badge.review {
+        background: var(--review-soft);
+        color: var(--review);
+      }
+
+      .status.warning,
+      .summary-badge.warning {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+
+      .status.ready,
+      .summary-badge.ready {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      label.control {
+        display: grid;
+        gap: 7px;
+      }
+
+      .control span {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bccbc6;
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 9px 11px;
+      }
+
+      .input-note {
+        margin-top: 14px;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #bccbc6;
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 9px 13px;
+        cursor: pointer;
+      }
+
+      button.primary {
+        border-color: #0f6a57;
+        background: #0f6a57;
+        color: #ffffff;
+      }
+
+      button.secondary {
+        border-color: #cbd6d2;
+        background: #f8fbfa;
+      }
+
+      button.warning {
+        border-color: #ebb479;
+        background: #fff5e8;
+        color: #8b5212;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .surfaces {
+        display: grid;
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .surface {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fbfdfc;
+        padding: 14px;
+      }
+
+      .surface-preview {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 16 / 9;
+        background: var(--surface-fill, linear-gradient(145deg, #293642, #18202a));
+        color: var(--headline, #ffffff);
+      }
+
+      .surface-preview.with-grain::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+          radial-gradient(circle at 68% 44%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+          radial-gradient(circle at 42% 76%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px);
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .preset-headline,
+      .thumbnail-title,
+      .frame-heading,
+      .preview-chip,
+      .preview-wordmark,
+      .lower-third,
+      .caption-band,
+      .host-chip,
+      .guest-chip {
+        position: absolute;
+      }
+
+      .preview-wordmark {
+        top: 12px;
+        left: 12px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #16201e;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        padding: 0 9px;
+      }
+
+      .preview-chip {
+        top: 12px;
+        right: 12px;
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.68);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 5px 8px;
+      }
+
+      .preview-chip.review {
+        background: rgba(144, 84, 0, 0.92);
+      }
+
+      .preview-chip.warning {
+        background: rgba(184, 95, 34, 0.92);
+      }
+
+      .preview-chip.ready {
+        background: rgba(15, 106, 87, 0.92);
+      }
+
+      .speaker-tile {
+        position: absolute;
+        top: 17%;
+        width: 26%;
+        height: 56%;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 2px solid rgba(255, 255, 255, 0.24);
+      }
+
+      .speaker-tile.host {
+        left: 10%;
+      }
+
+      .speaker-tile.guest {
+        right: 10%;
+      }
+
+      .host-chip,
+      .guest-chip {
+        bottom: 16%;
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        border-radius: 999px;
+        background: rgba(8, 16, 14, 0.62);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 0 8px;
+      }
+
+      .host-chip {
+        left: 13%;
+      }
+
+      .guest-chip {
+        right: 13%;
+      }
+
+      .caption-band {
+        left: 9%;
+        right: 9%;
+        bottom: 8%;
+        border-radius: 12px;
+        background: var(--caption-fill, rgba(255, 255, 255, 0.94));
+        color: var(--caption-ink, #16201e);
+        box-shadow: 0 10px 24px rgba(14, 22, 20, 0.12);
+        padding: 10px 12px;
+      }
+
+      .caption-band.emphasis-high {
+        bottom: 6%;
+        padding: 13px 14px;
+        font-weight: 800;
+      }
+
+      .caption-band.conflict {
+        box-shadow: 0 0 0 2px rgba(144, 84, 0, 0.35), 0 10px 24px rgba(14, 22, 20, 0.12);
+      }
+
+      .lower-third {
+        left: 11%;
+        bottom: 25%;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #16201e;
+        box-shadow: 0 10px 22px rgba(13, 20, 18, 0.12);
+        padding: 10px 12px;
+      }
+
+      .lower-third.compact {
+        right: 42%;
+      }
+
+      .lower-third.stacked {
+        right: 29%;
+        bottom: 16%;
+        padding-bottom: 22px;
+      }
+
+      .lower-third strong,
+      .caption-band strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+      }
+
+      .lower-third span,
+      .caption-band span {
+        display: block;
+        font-size: 11px;
+        line-height: 1.28;
+      }
+
+      .preset-headline {
+        left: 12%;
+        right: 14%;
+        bottom: 16%;
+        font-size: 22px;
+        font-weight: var(--headline-weight, 800);
+        line-height: 0.96;
+      }
+
+      .thumbnail-title {
+        left: 10%;
+        right: 10%;
+        bottom: 12%;
+        font-size: 20px;
+        font-weight: var(--headline-weight, 800);
+        line-height: 1;
+      }
+
+      .surface-body {
+        display: grid;
+        gap: 12px;
+      }
+
+      .surface-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .surface-head strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 15px;
+      }
+
+      .summary-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 0 10px;
+      }
+
+      .surface-copy {
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .surface-list,
+      .effect-list {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .issue-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .issue {
+        border-left: 4px solid #cdd8d4;
+        border-radius: 12px;
+        background: #fbfdfc;
+        padding: 10px 12px;
+      }
+
+      .issue.review {
+        border-left-color: var(--review);
+      }
+
+      .issue.warning {
+        border-left-color: var(--warn);
+      }
+
+      .issue.ready {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 14px;
+      }
+
+      .summary-copy {
+        margin-bottom: 14px;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .commit-note {
+        margin-top: 12px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+
+      .commit-note strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .surface {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .controls {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Show Brand Kit Setup</h1>
+      <p class="lede">
+        Add show branding once, preview it on sample episode surfaces, resolve readability conflicts without blocking the first preview, and decide whether the change stays on this episode or becomes a reusable show template default.
+      </p>
+      <div class="sample-note">Sample episode surfaces only. Real speaker media would replace these placeholders in product.</div>
+
+      <section class="workspace">
+        <div class="left-column">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Brand inputs</h2>
+                <p class="hint">Creators can keep refining the kit over time. Missing logo or palette inputs fall back to strong defaults instead of blocking preview.</p>
+              </div>
+            </div>
+            <div id="controls" class="controls"></div>
+            <p id="inputNote" class="input-note"></p>
+            <div id="actions" class="actions"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Preview surfaces</h2>
+                <p id="statusNote" class="hint"></p>
+              </div>
+              <div id="status" class="status"></div>
+            </div>
+            <div id="surfaces" class="surfaces"></div>
+          </section>
+        </div>
+
+        <aside class="right-column">
+          <section class="panel">
+            <h2>Review summary</h2>
+            <div id="summary"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Visible effects</h2>
+            <ul id="effects" class="effect-list"></ul>
+            <div id="commitNote" class="commit-note"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var PALETTES = {
+          default: {
+            label: "Strong default studio colors",
+            fill: "linear-gradient(145deg, #314758 0%, #1d2630 100%)",
+            headline: "#ffffff",
+            captionFill: "rgba(255, 255, 255, 0.94)",
+            captionInk: "#16201e",
+          },
+          ember: {
+            label: "Warm ember palette",
+            fill: "linear-gradient(145deg, #7b4028 0%, #22191d 100%)",
+            headline: "#fff6eb",
+            captionFill: "rgba(244, 181, 97, 0.92)",
+            captionInk: "#2a1b09",
+          },
+          ink: {
+            label: "Ink navy palette",
+            fill: "linear-gradient(145deg, #24446a 0%, #101f32 100%)",
+            headline: "#f6fbff",
+            captionFill: "rgba(235, 245, 255, 0.95)",
+            captionInk: "#102033",
+          },
+        };
+
+        var LOGOS = {
+          none: "Use strong default wordmark",
+          badge: "Show badge",
+          monogram: "Monogram mark",
+        };
+
+        var TYPE_STYLES = {
+          editorial: "Editorial serif",
+          bold: "Bold broadcast sans",
+        };
+
+        var CAPTION_STYLES = {
+          standard: "Standard emphasis",
+          high: "High-emphasis captions",
+        };
+
+        var LOWER_THIRD_STYLES = {
+          compact: "Compact lower-third",
+          stacked: "Stacked lower-third",
+        };
+
+        var TEXTURES = {
+          clean: "Clean background",
+          grain: "Soft grain texture",
+        };
+
+        var THUMBNAILS = {
+          calm: "Calm interview cover",
+          spotlight: "Host spotlight cover",
+        };
+
+        var STATUS_META = {
+          "using defaults": {
+            cls: "defaults",
+            note: "Missing logo or palette choices stay on strong defaults while preview remains available.",
+          },
+          previewing: {
+            cls: "preview",
+            note: "Brand inputs are previewable across presets, captions, lower-thirds, and thumbnail surfaces.",
+          },
+          "conflict flagged": {
+            cls: "review",
+            note: "A readability conflict is visible in preview. Resolve it or keep it with an explicit warning before committing the brand choice.",
+          },
+          adjusted: {
+            cls: "ready",
+            note: "The suggested readability fix is applied in preview without changing unrelated caption or export warnings.",
+          },
+          "accepted with warning": {
+            cls: "warning",
+            note: "The original brand choice stays visible with its publishing consequence still called out.",
+          },
+          "saved to template": {
+            cls: "ready",
+            note: "The approved kit is ready to carry into future episodes without rewriting already exported ones.",
+          },
+        };
+
+        var initialState = {
+          logo: "none",
+          palette: "default",
+          typeStyle: "editorial",
+          captionStyle: "standard",
+          lowerThirdStyle: "compact",
+          texture: "clean",
+          thumbnailStyle: "calm",
+          resolution: "none",
+          commitTarget: "none",
+        };
+
+        function copyState(state) {
+          return {
+            logo: state.logo,
+            palette: state.palette,
+            typeStyle: state.typeStyle,
+            captionStyle: state.captionStyle,
+            lowerThirdStyle: state.lowerThirdStyle,
+            texture: state.texture,
+            thumbnailStyle: state.thumbnailStyle,
+            resolution: state.resolution,
+            commitTarget: state.commitTarget,
+          };
+        }
+
+        function applyInput(state, key, value) {
+          var next = copyState(state);
+          next[key] = value;
+          next.commitTarget = "none";
+          if (key === "palette" || key === "captionStyle" || key === "lowerThirdStyle") {
+            next.resolution = "none";
+          }
+          return next;
+        }
+
+        function applyCommit(state, target) {
+          var next = copyState(state);
+          next.commitTarget = target === "episode" || target === "template" ? target : "none";
+          return next;
+        }
+
+        function applyResolution(state, mode) {
+          var next = copyState(state);
+          next.resolution = mode === "fix" || mode === "keep" ? mode : "none";
+          next.commitTarget = "none";
+          return next;
+        }
+
+        function ensureKey(value, table, fallback) {
+          return table[value] ? value : fallback;
+        }
+
+        function evaluate(rawState) {
+          var state = copyState(rawState);
+          state.logo = ensureKey(state.logo, LOGOS, "none");
+          state.palette = ensureKey(state.palette, PALETTES, "default");
+          state.typeStyle = ensureKey(state.typeStyle, TYPE_STYLES, "editorial");
+          state.captionStyle = ensureKey(state.captionStyle, CAPTION_STYLES, "standard");
+          state.lowerThirdStyle = ensureKey(state.lowerThirdStyle, LOWER_THIRD_STYLES, "compact");
+          state.texture = ensureKey(state.texture, TEXTURES, "clean");
+          state.thumbnailStyle = ensureKey(state.thumbnailStyle, THUMBNAILS, "calm");
+          state.resolution = state.resolution === "fix" || state.resolution === "keep" ? state.resolution : "none";
+          state.commitTarget = state.commitTarget === "episode" || state.commitTarget === "template" ? state.commitTarget : "none";
+
+          var missing = [];
+          if (state.logo === "none") {
+            missing.push("logo");
+          }
+          if (state.palette === "default") {
+            missing.push("palette");
+          }
+
+          var hasConflict = state.palette === "ember" && state.captionStyle === "high" && state.lowerThirdStyle === "stacked";
+          var unresolvedConflict = hasConflict && state.resolution === "none";
+
+          var effective = copyState(state);
+          if (hasConflict && state.resolution === "fix") {
+            effective.captionStyle = "standard";
+            effective.lowerThirdStyle = "compact";
+          }
+
+          if (!hasConflict) {
+            effective.resolution = "none";
+          }
+
+          var status = "previewing";
+          if (unresolvedConflict) {
+            status = "conflict flagged";
+          } else if (state.commitTarget === "template") {
+            status = "saved to template";
+          } else if (hasConflict && state.resolution === "fix") {
+            status = "adjusted";
+          } else if (hasConflict && state.resolution === "keep") {
+            status = "accepted with warning";
+          } else if (missing.length > 0) {
+            status = "using defaults";
+          }
+
+          var issues = [];
+          if (missing.length > 0) {
+            issues.push({
+              tone: "review",
+              title: "Defaults stay active for unfinished branding",
+              copy: "Preview keeps the default wordmark or palette until those inputs are chosen. The episode still stays previewable.",
+            });
+          }
+          if (unresolvedConflict) {
+            issues.push({
+              tone: "review",
+              title: "High-emphasis captions crowd the stacked lower-third",
+              copy: "Reduce caption emphasis and return to the compact lower-third, or keep the stronger brand look with its warning still visible.",
+            });
+          } else if (hasConflict && state.resolution === "fix") {
+            issues.push({
+              tone: "ready",
+              title: "Suggested readability fix applied",
+              copy: "The preview now uses the compact lower-third and standard caption emphasis while the warm palette stays intact.",
+            });
+          } else if (hasConflict && state.resolution === "keep") {
+            issues.push({
+              tone: "warning",
+              title: "Original brand choice kept with warning",
+              copy: "The warm palette and stacked lower-third stay visible. The crowding warning remains explicit instead of being silently cleared.",
+            });
+          }
+          if (state.commitTarget === "episode") {
+            issues.push({
+              tone: "ready",
+              title: "Kept on this episode only",
+              copy: "Future episodes keep the existing show template until the creator chooses to save these brand choices back later.",
+            });
+          }
+          if (state.commitTarget === "template") {
+            issues.push({
+              tone: "ready",
+              title: "Template defaults updated for future episodes",
+              copy: "The approved logo, palette, type, and lower-third treatment are ready to carry into the show template without rewriting finished exports.",
+            });
+          }
+
+          var effects = [
+            "Preset previews inherit " + PALETTES[effective.palette].label.toLowerCase() + ".",
+            "Captions render with " + CAPTION_STYLES[effective.captionStyle].toLowerCase() + ".",
+            "Lower-thirds use the " + LOWER_THIRD_STYLES[effective.lowerThirdStyle].toLowerCase() + " treatment.",
+            "Title and thumbnail text follow the " + TYPE_STYLES[effective.typeStyle].toLowerCase() + ".",
+            "Background surfaces use the " + TEXTURES[effective.texture].toLowerCase() + ".",
+          ];
+
+          var commitSummary = "";
+          if (state.commitTarget === "episode") {
+            commitSummary = "Episode-only change: this preview is approved for the current episode without changing the reusable show template.";
+          } else if (state.commitTarget === "template") {
+            commitSummary = "Template update: future episodes can inherit this kit, while exported episodes stay unchanged.";
+          }
+
+          return {
+            state: state,
+            effective: effective,
+            missing: missing,
+            hasConflict: hasConflict,
+            unresolvedConflict: unresolvedConflict,
+            canCommit: !unresolvedConflict,
+            status: status,
+            statusMeta: STATUS_META[status],
+            issues: issues,
+            effects: effects,
+            commitSummary: commitSummary,
+          };
+        }
+
+        function el(tag, options, children) {
+          var node = document.createElement(tag);
+          var opts = options || {};
+          if (opts.className) {
+            node.className = opts.className;
+          }
+          if (opts.text) {
+            node.textContent = opts.text;
+          }
+          if (opts.htmlFor) {
+            node.htmlFor = opts.htmlFor;
+          }
+          if (opts.attrs) {
+            Object.keys(opts.attrs).forEach(function (key) {
+              node.setAttribute(key, opts.attrs[key]);
+            });
+          }
+          if (opts.on) {
+            Object.keys(opts.on).forEach(function (name) {
+              node.addEventListener(name, opts.on[name]);
+            });
+          }
+          (children || []).forEach(function (child) {
+            if (child) {
+              node.appendChild(child);
+            }
+          });
+          return node;
+        }
+
+        function optionsFromMap(map) {
+          return Object.keys(map).map(function (key) {
+            return { value: key, label: map[key].label || map[key] };
+          });
+        }
+
+        function selectControl(id, labelText, table, current, onChange) {
+          var select = el("select", {
+            attrs: { id: id, "aria-label": labelText },
+            on: {
+              change: function (event) {
+                onChange(event.target.value);
+              },
+            },
+          });
+
+          optionsFromMap(table).forEach(function (entry) {
+            var option = document.createElement("option");
+            option.value = entry.value;
+            option.textContent = entry.label;
+            if (entry.value === current) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+
+          return el("label", { className: "control", htmlFor: id }, [
+            el("span", { text: labelText }),
+            select,
+          ]);
+        }
+
+        function badge(status, text) {
+          return el("span", { className: "summary-badge " + STATUS_META[status].cls, text: text || status });
+        }
+
+        function brandWordmark(state) {
+          if (state.logo === "monogram") {
+            return "TL";
+          }
+          if (state.logo === "badge") {
+            return "The Long Table";
+          }
+          return "Podcast Design Canvas";
+        }
+
+        function previewStyle(result) {
+          var palette = PALETTES[result.effective.palette];
+          return {
+            "--surface-fill": palette.fill,
+            "--headline": palette.headline,
+            "--caption-fill": palette.captionFill,
+            "--caption-ink": palette.captionInk,
+            "--headline-weight": result.effective.typeStyle === "bold" ? "900" : "780",
+          };
+        }
+
+        function applyStyleVariables(node, styleMap) {
+          Object.keys(styleMap).forEach(function (key) {
+            node.style.setProperty(key, styleMap[key]);
+          });
+        }
+
+        function previewFrame(result, kind, label, copy) {
+          var styleMap = previewStyle(result);
+          var classes = ["surface-preview"];
+          if (result.effective.texture === "grain") {
+            classes.push("with-grain");
+          }
+
+          var preview = el("div", { className: classes.join(" ") });
+          applyStyleVariables(preview, styleMap);
+
+          preview.appendChild(el("span", { className: "preview-wordmark", text: brandWordmark(result.state) }));
+
+          var chipTone = "preview";
+          if (result.unresolvedConflict) {
+            chipTone = "review";
+          } else if (result.status === "accepted with warning") {
+            chipTone = "warning";
+          } else if (result.status === "adjusted" || result.status === "saved to template") {
+            chipTone = "ready";
+          }
+          preview.appendChild(el("span", { className: "preview-chip " + chipTone, text: result.status }));
+
+          if (kind === "preset") {
+            preview.appendChild(el("div", { className: "speaker-tile host" }));
+            preview.appendChild(el("div", { className: "speaker-tile guest" }));
+            preview.appendChild(el("span", { className: "preset-headline", text: "Launch Week Story" }));
+          } else if (kind === "frame") {
+            preview.appendChild(el("div", { className: "speaker-tile host" }));
+            preview.appendChild(el("div", { className: "speaker-tile guest" }));
+            preview.appendChild(el("span", { className: "host-chip", text: "Host" }));
+            preview.appendChild(el("span", { className: "guest-chip", text: "Guest 1" }));
+
+            var lowerThirdClass = "lower-third " + result.effective.lowerThirdStyle;
+            preview.appendChild(
+              el("div", { className: lowerThirdClass }, [
+                el("strong", { text: "Nadia Cole" }),
+                el("span", { text: "Founder, The Long Table" }),
+              ])
+            );
+
+            var captionClass = "caption-band emphasis-" + result.effective.captionStyle;
+            if (result.hasConflict && result.state.resolution !== "fix") {
+              captionClass += " conflict";
+            }
+            preview.appendChild(
+              el("div", { className: captionClass }, [
+                el("strong", { text: "Caption emphasis" }),
+                el("span", { text: "The format should feel intentional before anyone opens the canvas." }),
+              ])
+            );
+          } else if (kind === "thumbnail") {
+            var title = result.effective.thumbnailStyle === "spotlight" ? "How We Build A Repeatable Show Look" : "A Cleaner Way To Shape A Long Episode";
+            preview.appendChild(el("div", { className: "speaker-tile host" }));
+            if (result.effective.thumbnailStyle === "calm") {
+              preview.appendChild(el("div", { className: "speaker-tile guest" }));
+            }
+            preview.appendChild(el("span", { className: "thumbnail-title", text: title }));
+          }
+
+          var details = [
+            el("div", { className: "surface-head" }, [
+              el("div", {}, [
+                el("strong", { text: label }),
+                el("p", { className: "surface-copy", text: copy }),
+              ]),
+              badge(result.status, result.status),
+            ]),
+          ];
+
+          var bulletItems = [];
+          if (kind === "preset") {
+            bulletItems = [
+              "Brand strength reads before a creator commits to a layout direction.",
+              "Defaults still make the preset card feel finished when brand inputs are incomplete.",
+            ];
+          } else if (kind === "frame") {
+            bulletItems = [
+              "Caption emphasis and lower-third spacing stay reviewable on the same frame.",
+              "Suggested fixes adjust the underlying brand input, not just one isolated caption card.",
+            ];
+          } else {
+            bulletItems = [
+              "Thumbnail tone updates with the same palette and type decisions used elsewhere.",
+              "Saved brand choices carry forward to future episodes without rewriting exported covers.",
+            ];
+          }
+
+          details.push(
+            el("ul", { className: "surface-list" }, bulletItems.map(function (item) {
+              return el("li", { text: item });
+            }))
+          );
+
+          return el("article", { className: "surface" }, [
+            preview,
+            el("div", { className: "surface-body" }, details),
+          ]);
+        }
+
+        var appState = copyState(initialState);
+        var controlsElement;
+        var inputNoteElement;
+        var actionsElement;
+        var statusElement;
+        var statusNoteElement;
+        var surfacesElement;
+        var summaryElement;
+        var effectsElement;
+        var commitNoteElement;
+
+        function setValue(key, value) {
+          appState = applyInput(appState, key, value);
+          render();
+        }
+
+        function commit(target) {
+          appState = applyCommit(appState, target);
+          render();
+        }
+
+        function chooseResolution(mode) {
+          appState = applyResolution(appState, mode);
+          render();
+        }
+
+        function resetState() {
+          appState = copyState(initialState);
+          render();
+        }
+
+        function renderControls(result) {
+          var nodes = [
+            selectControl("logo", "Logo choice", LOGOS, result.state.logo, function (value) { setValue("logo", value); }),
+            selectControl("palette", "Show colors", PALETTES, result.state.palette, function (value) { setValue("palette", value); }),
+            selectControl("typeStyle", "Type style", TYPE_STYLES, result.state.typeStyle, function (value) { setValue("typeStyle", value); }),
+            selectControl("captionStyle", "Caption emphasis", CAPTION_STYLES, result.state.captionStyle, function (value) { setValue("captionStyle", value); }),
+            selectControl("lowerThirdStyle", "Lower-third style", LOWER_THIRD_STYLES, result.state.lowerThirdStyle, function (value) { setValue("lowerThirdStyle", value); }),
+            selectControl("texture", "Background treatment", TEXTURES, result.state.texture, function (value) { setValue("texture", value); }),
+            selectControl("thumbnailStyle", "Thumbnail treatment", THUMBNAILS, result.state.thumbnailStyle, function (value) { setValue("thumbnailStyle", value); }),
+          ];
+
+          controlsElement.replaceChildren.apply(controlsElement, nodes);
+
+          if (result.missing.length > 0) {
+            inputNoteElement.textContent =
+              "Using defaults for " + result.missing.join(" and ") + ". The preview stays available while the creator decides whether those inputs belong in the reusable kit.";
+          } else {
+            inputNoteElement.textContent =
+              "Every core brand input is set. The creator can judge the current look on preset, frame, and thumbnail surfaces before saving it.";
+          }
+        }
+
+        function renderActions(result) {
+          var buttons = [];
+
+          if (result.unresolvedConflict) {
+            buttons.push(
+              el("button", {
+                className: "primary",
+                text: "Apply suggested readability fix",
+                attrs: { type: "button" },
+                on: { click: function () { chooseResolution("fix"); } },
+              })
+            );
+            buttons.push(
+              el("button", {
+                className: "warning",
+                text: "Keep brand choice with warning",
+                attrs: { type: "button" },
+                on: { click: function () { chooseResolution("keep"); } },
+              })
+            );
+          } else if (result.hasConflict && result.state.resolution === "keep") {
+            buttons.push(
+              el("button", {
+                className: "secondary",
+                text: "Switch back to the suggested fix",
+                attrs: { type: "button" },
+                on: { click: function () { chooseResolution("fix"); } },
+              })
+            );
+          } else if (result.hasConflict && result.state.resolution === "fix") {
+            buttons.push(
+              el("button", {
+                className: "secondary",
+                text: "Keep the original warning instead",
+                attrs: { type: "button" },
+                on: { click: function () { chooseResolution("keep"); } },
+              })
+            );
+          }
+
+          buttons.push(
+            el("button", {
+              className: "secondary",
+              text: "Apply to this episode only",
+              attrs: { type: "button" },
+              on: { click: function () { commit("episode"); } },
+            })
+          );
+
+          buttons.push(
+            el("button", {
+              className: "primary",
+              text: "Save to show template",
+              attrs: { type: "button" },
+              on: { click: function () { commit("template"); } },
+            })
+          );
+
+          buttons.push(
+            el("button", {
+              className: "secondary",
+              text: "Reset sample",
+              attrs: { type: "button" },
+              on: { click: resetState },
+            })
+          );
+
+          buttons.forEach(function (button) {
+            if ((button.textContent === "Apply to this episode only" || button.textContent === "Save to show template") && !result.canCommit) {
+              button.disabled = true;
+            }
+          });
+
+          actionsElement.replaceChildren.apply(actionsElement, buttons);
+        }
+
+        function renderSurfaces(result) {
+          var cards = [
+            previewFrame(
+              result,
+              "preset",
+              "Preset card and title moment",
+              "Brand colors and type should change the first-preview feel without forcing manual canvas work before the creator sees a polished direction."
+            ),
+            previewFrame(
+              result,
+              "frame",
+              "Episode frame with captions and lower-third",
+              "This is where brand choices must stay readable during a real long-form moment instead of only looking good on a static settings card."
+            ),
+            previewFrame(
+              result,
+              "thumbnail",
+              "Thumbnail and reusable cover treatment",
+              "The same kit should travel into publish surfaces and future episodes, not stay trapped in one preview state."
+            ),
+          ];
+          surfacesElement.replaceChildren.apply(surfacesElement, cards);
+        }
+
+        function renderSummary(result) {
+          var summaryChildren = [
+            el("p", {
+              className: "summary-copy",
+              text:
+                "The setup flow stays creator-facing: choose visible brand inputs, review readability on sample episode surfaces, then keep the change local or save it for future episodes.",
+            }),
+            el("div", { className: "issue-list" }, result.issues.map(function (issue) {
+              return el("article", { className: "issue " + issue.tone }, [
+                el("strong", { text: issue.title }),
+                el("span", { className: "issue-copy", text: issue.copy }),
+              ]);
+            })),
+          ];
+
+          if (result.issues.length === 0) {
+            summaryChildren[1] = el("article", { className: "issue ready" }, [
+              el("strong", { text: "No blocking brand decisions left in this sample" }),
+              el("span", { className: "issue-copy", text: "The creator can keep the preview local to this episode or save it back to the show template." }),
+            ]);
+          }
+
+          summaryElement.replaceChildren.apply(summaryElement, summaryChildren);
+        }
+
+        function renderEffects(result) {
+          effectsElement.replaceChildren.apply(
+            effectsElement,
+            result.effects.map(function (item) {
+              return el("li", { text: item });
+            })
+          );
+
+          if (result.commitSummary) {
+            commitNoteElement.replaceChildren(
+              el("strong", { text: result.state.commitTarget === "template" ? "Template effect" : "Episode effect" }),
+              el("span", { className: "issue-copy", text: result.commitSummary })
+            );
+          } else {
+            commitNoteElement.replaceChildren(
+              el("strong", { text: "Commit behavior" }),
+              el("span", { className: "issue-copy", text: "Choose whether the approved brand kit stays on this episode only or becomes the next reusable show-template default." })
+            );
+          }
+        }
+
+        function render() {
+          var result = evaluate(appState);
+
+          renderControls(result);
+          renderActions(result);
+          renderSurfaces(result);
+          renderSummary(result);
+          renderEffects(result);
+
+          statusElement.className = "status " + result.statusMeta.cls;
+          statusElement.textContent = result.status;
+          statusNoteElement.textContent = result.statusMeta.note;
+        }
+
+        if (typeof document !== "undefined") {
+          controlsElement = document.querySelector("#controls");
+          inputNoteElement = document.querySelector("#inputNote");
+          actionsElement = document.querySelector("#actions");
+          statusElement = document.querySelector("#status");
+          statusNoteElement = document.querySelector("#statusNote");
+          surfacesElement = document.querySelector("#surfaces");
+          summaryElement = document.querySelector("#summary");
+          effectsElement = document.querySelector("#effects");
+          commitNoteElement = document.querySelector("#commitNote");
+          render();
+        }
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports = {
+            PALETTES: PALETTES,
+            LOGOS: LOGOS,
+            TYPE_STYLES: TYPE_STYLES,
+            CAPTION_STYLES: CAPTION_STYLES,
+            LOWER_THIRD_STYLES: LOWER_THIRD_STYLES,
+            TEXTURES: TEXTURES,
+            THUMBNAILS: THUMBNAILS,
+            STATUS_META: STATUS_META,
+            initialState: initialState,
+            copyState: copyState,
+            applyInput: applyInput,
+            applyCommit: applyCommit,
+            applyResolution: applyResolution,
+            evaluate: evaluate,
+            brandWordmark: brandWordmark,
+          };
+        }
+      })();
+    </script>
+  </body>
+</html>
