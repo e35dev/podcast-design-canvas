@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(340px, 1fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .swatches {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .swatch {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .swatch[aria-pressed="true"] {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 2px #fff inset;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input[type="text"],
+      select {
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .preview-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      }
+
+      .preview-frame .face {
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        width: 30%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      .lower {
+        position: absolute;
+        left: 7%;
+        bottom: 12%;
+        max-width: 70%;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+
+      .lower .role {
+        font-weight: 500;
+        font-size: 11px;
+        opacity: 0.85;
+      }
+
+      .lower.bar {
+        border-left: 4px solid #ffffff;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .lower.box {
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.55);
+      }
+
+      .lower.minimal {
+        background: transparent;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      }
+
+      .cap {
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        bottom: 4%;
+        border-radius: 3px;
+        background: rgba(16, 24, 22, 0.8);
+      }
+
+      .cap.subtle {
+        height: 6%;
+        opacity: 0.6;
+      }
+
+      .cap.standard {
+        height: 9%;
+      }
+
+      .cap.strong {
+        height: 13%;
+        background: rgba(16, 24, 22, 0.95);
+      }
+
+      .logo {
+        position: absolute;
+        width: 13%;
+        aspect-ratio: 1;
+        border-radius: 6px;
+        background: #ffffff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .logo.tr {
+        right: 5%;
+        top: 7%;
+      }
+
+      .logo.ll {
+        left: 5%;
+        bottom: 30%;
+      }
+
+      .logo.none {
+        display: none;
+      }
+
+      .guardrail {
+        margin-top: 12px;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .guardrail.ok {
+        background: #eef9f4;
+        color: #075246;
+      }
+
+      .guardrail.warn {
+        background: #fff1d6;
+        color: #7a4400;
+      }
+
+      .saved {
+        margin-top: 12px;
+        border: 1px solid #bfe3d7;
+        border-radius: 6px;
+        background: #eef9f4;
+        color: #075246;
+        font-weight: 700;
+        padding: 10px 12px;
+      }
+
+      .saved[hidden] {
+        display: none;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Show brand kit setup</h1>
+      <p class="lede">Set your show's look once &mdash; colors, logo, lower-third, caption emphasis &mdash; and reuse it across episodes. Every change previews on a real speaker frame, so each show can feel distinct without designing every element from scratch.</p>
+
+      <section class="workspace" aria-label="Brand kit workspace">
+        <div class="panel">
+          <h2>Brand inputs</h2>
+          <label>Show color</label>
+          <div class="swatches" id="swatches" role="group" aria-label="Show color"></div>
+
+          <div class="controls" id="controls"></div>
+
+          <div class="actions">
+            <button type="button" id="save">Save to show template</button>
+            <button type="button" class="secondary" id="reset">Reset</button>
+          </div>
+          <div id="saved" class="saved" hidden></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Brand preview">
+          <h2>Preview on a real frame</h2>
+          <div class="preview-frame" id="preview" aria-hidden="true">
+            <span class="face"></span>
+            <span class="logo" data-logo>SHOW</span>
+            <div class="lower" data-lower><span data-name></span><span class="role" data-role></span></div>
+            <span class="cap"></span>
+          </div>
+          <div id="guardrail" class="guardrail ok"></div>
+          <p class="summary-note">Branding never reduces clarity: if a choice would make captions or a speaker hard to read, we say so instead of silently applying it.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Show colors offered as a palette. Each sets the frame's brand background.
+      const colors = {
+        teal: { label: "Teal", bg: "linear-gradient(160deg, #1f7a6b, #0e3b34)" },
+        indigo: { label: "Indigo", bg: "linear-gradient(160deg, #3b4a8a, #1a2147)" },
+        crimson: { label: "Crimson", bg: "linear-gradient(160deg, #9a3346, #3f121d)" },
+        amber: { label: "Amber", bg: "linear-gradient(160deg, #c98a2e, #6b4410)" },
+        slate: { label: "Slate", bg: "linear-gradient(160deg, #4a5a63, #232d33)" },
+      };
+
+      // The remaining brand controls.
+      const controlDefs = {
+        logo: { label: "Logo placement", options: { tr: "Top-right corner", ll: "Lower-left", none: "No logo" } },
+        lower: { label: "Lower-third style", options: { bar: "Accent bar", box: "Solid box", minimal: "Minimal" } },
+        caption: { label: "Caption emphasis", options: { subtle: "Subtle", standard: "Standard", strong: "Strong" } },
+      };
+
+      let state = { color: "teal", logo: "tr", lower: "bar", caption: "standard", name: "Dana Brooks", role: "Host" };
+      let saved = false;
+
+      const swatchesElement = document.querySelector("#swatches");
+      const controlsElement = document.querySelector("#controls");
+      const previewElement = document.querySelector("#preview");
+      const guardrailElement = document.querySelector("#guardrail");
+      const savedElement = document.querySelector("#saved");
+
+      document.querySelector("#save").addEventListener("click", () => {
+        saved = true;
+        renderSaved();
+      });
+      document.querySelector("#reset").addEventListener("click", () => {
+        state = { color: "teal", logo: "tr", lower: "bar", caption: "standard", name: "Dana Brooks", role: "Host" };
+        saved = false;
+        render();
+      });
+
+      function render() {
+        renderSwatches();
+        renderControls();
+        renderPreview();
+        renderGuardrail();
+        renderSaved();
+      }
+
+      function renderSwatches() {
+        swatchesElement.replaceChildren(
+          ...Object.entries(colors).map(([key, color]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "swatch";
+            button.style.background = color.bg;
+            button.setAttribute("aria-pressed", String(key === state.color));
+            button.setAttribute("aria-label", color.label);
+            button.addEventListener("click", () => {
+              state.color = key;
+              saved = false;
+              render();
+            });
+            return button;
+          }),
+        );
+      }
+
+      function renderControls() {
+        const controls = Object.entries(controlDefs).map(([field, def]) => {
+          const label = document.createElement("label");
+          label.textContent = def.label;
+          const select = document.createElement("select");
+          select.setAttribute("aria-label", def.label);
+          for (const [value, text] of Object.entries(def.options)) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = text;
+            option.selected = value === state[field];
+            select.append(option);
+          }
+          select.addEventListener("change", (event) => {
+            state[field] = event.target.value;
+            saved = false;
+            render();
+          });
+          label.append(select);
+          return label;
+        });
+
+        // A real editable field: the on-screen name shown in the lower-third.
+        const nameLabel = document.createElement("label");
+        nameLabel.textContent = "Speaker name (lower-third)";
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = state.name;
+        nameInput.setAttribute("aria-label", "Speaker name");
+        nameInput.addEventListener("input", (event) => {
+          // Editable text is read with .value and written to the preview via textContent
+          // only — never interpolated into markup.
+          state.name = event.target.value;
+          saved = false;
+          previewElement.querySelector("[data-name]").textContent = state.name || "Speaker";
+        });
+        nameLabel.append(nameInput);
+
+        controlsElement.replaceChildren(...controls, nameLabel);
+      }
+
+      function renderPreview() {
+        previewElement.style.background = colors[state.color].bg;
+        const logo = previewElement.querySelector("[data-logo]");
+        logo.className = `logo ${state.logo}`;
+        const lower = previewElement.querySelector("[data-lower]");
+        lower.className = `lower ${state.lower}`;
+        previewElement.querySelector("[data-name]").textContent = state.name || "Speaker";
+        previewElement.querySelector("[data-role]").textContent = state.role;
+        previewElement.querySelector(".cap").className = `cap ${state.caption}`;
+      }
+
+      // A light readability guardrail: a minimal lower-third over a strong caption is the
+      // one combination that can get hard to read; everything else reads clearly.
+      function renderGuardrail() {
+        const risky = state.lower === "minimal" && state.caption === "strong";
+        guardrailElement.className = `guardrail ${risky ? "warn" : "ok"}`;
+        guardrailElement.textContent = risky
+          ? "A minimal lower-third can get lost above a strong caption bar — try the accent bar or box."
+          : "Looks readable: captions and the speaker name stay clear.";
+      }
+
+      function renderSaved() {
+        if (!saved) {
+          savedElement.hidden = true;
+          savedElement.textContent = "";
+          return;
+        }
+        savedElement.hidden = false;
+        savedElement.textContent = `Saved to the show template — future episodes start from this ${colors[state.color].label.toLowerCase()} brand.`;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
