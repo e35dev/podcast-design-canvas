@@ -820,10 +820,11 @@
         wrap.setAttribute("aria-label", "Detected sync issues needing review");
 
         for (const result of needsWork) {
-          const issue = issues[result.issue];
+          const issueLabel = issues[result.issue]?.label;
+          if (!issueLabel) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-issue-tag";
-          tag.textContent = `${trackBucketLabel(result.name)} — ${issue.label}`;
+          tag.textContent = `${trackBucketLabel(result.name)} — ${issueLabel}`;
           wrap.appendChild(tag);
         }
 
