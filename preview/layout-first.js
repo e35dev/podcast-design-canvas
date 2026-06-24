@@ -728,7 +728,11 @@
         if (event && typeof event.stopPropagation === "function") {
           event.stopPropagation();
         }
+        // Announce the removal like the keyboard Delete path does, so a screen-reader user who
+        // activates the Remove button hears what happened, not only the recomputed readiness line.
+        const removedName = slotName(zone);
         removeVideo(zone);
+        announceAction("Removed the " + removedName + " video.");
       });
 
       wrap.appendChild(video);
