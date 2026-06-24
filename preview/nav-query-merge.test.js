@@ -142,6 +142,31 @@ assert.equal(
   "speaker setup nav preserves unrelated flags and hash segments when merging path context",
 );
 
+function speakerSetupResolveFor(file, search) {
+  const window = { location: { pathname: "/prototype/off-camera-speaker-presence.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${speakerSetupSource}\nglobalThis.result = resolveSetupLink(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  speakerSetupResolveFor("preset-style-picker.html", "?path=episode"),
+  "preset-style-picker.html?path=style",
+  "speaker setup nav promotes preset handoff links to the style path",
+);
+assert.equal(
+  (speakerSetupResolveFor("preset-style-picker.html?path=episode", "").match(/path=/g) || []).length,
+  1,
+  "speaker setup handoff emits one canonical path query param",
+);
+
 const reuseSource = fs.readFileSync(path.join(previewDir, "reuse-nav.js"), "utf8");
 function reuseHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/show-template-adaptation.html", search } };

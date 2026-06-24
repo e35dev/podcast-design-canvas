@@ -269,8 +269,8 @@ assert.ok(
   "last speaker setup screen hands off to the visual direction path",
 );
 assert.ok(
-  lastNav.nodes.some((node) => node.href === "preset-style-picker.html"),
-  "last speaker setup screen links to preset style picker",
+  lastNav.nodes.some((node) => node.href === "preset-style-picker.html?path=style"),
+  "last speaker setup screen links to preset style picker on the style path",
 );
 assert.ok(
   !lastNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Next:")),
@@ -328,8 +328,8 @@ const embeddedLastNav = renderNavFor("off-camera-speaker-presence.html", "off-ca
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Pick a preset style");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#preset-style-picker",
-  "embedded speaker setup nav routes the style handoff through the preview app hash",
+  "../preview/app.html#preset-style-picker?path=style",
+  "embedded speaker setup nav routes the style handoff through the preview app hash with style path",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded speaker setup handoff targets the parent app");
 
@@ -362,6 +362,16 @@ assert.equal(
   linkWithText(conflictingPathNav.nodes, "Previous: Speaker roles").href,
   "speaker-role-mapping.html?path=episode",
   "speaker setup nav replaces conflicting path values when linking back to speaker roles",
+);
+
+assert.ok(navScript.includes("setupStyleHandoffHref"), "speaker setup nav centralizes style-path handoff resolution");
+assert.ok(navScript.includes("SPEAKER_SETUP_HANDOFF_PATH"), "speaker setup nav declares the style handoff path constant");
+
+const standalonePresetHandoff = normalizeSetupHrefFor("preset-style-picker.html?path=episode", "?path=episode");
+assert.equal(
+  standalonePresetHandoff.href,
+  "preset-style-picker.html?path=style",
+  "speaker setup nav normalizes preset handoff links to the style path",
 );
 
 console.log("speaker setup nav: speaker-setup screens connected back to the preview shell");

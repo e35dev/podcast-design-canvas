@@ -15,7 +15,8 @@ const SPEAKER_SETUP_FLOW = [
 ];
 
 const SPEAKER_SETUP_ENTRY = { file: "speaker-role-mapping.html?path=episode", label: "Speaker roles" };
-const SPEAKER_SETUP_HANDOFF = { file: "preset-style-picker.html" };
+const SPEAKER_SETUP_HANDOFF = { file: "preset-style-picker.html", label: "Pick a preset style" };
+const SPEAKER_SETUP_HANDOFF_PATH = "style";
 
 const PREVIEW_APP_SETUP_TARGETS = new Set([
   screenIdFromFile(SPEAKER_SETUP_ENTRY.file),
@@ -101,7 +102,27 @@ function mergeRouteSearch(file, overrides = {}) {
   return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
+function isSpeakerSetupHandoffTarget(file) {
+  return screenIdFromFile(file) === screenIdFromFile(SPEAKER_SETUP_HANDOFF.file);
+}
+
+// Style-path handoff: speaker setup ends on preset-style-picker, which belongs on
+// the visual-direction guided path (#583), matching style-nav entry expectations.
+function setupStyleHandoffHref(file) {
+  if (!isSpeakerSetupHandoffTarget(file)) {
+    return null;
+  }
+  const existing = pathFromQuery(queryWithoutHash(file));
+  if (existing === SPEAKER_SETUP_HANDOFF_PATH) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: SPEAKER_SETUP_HANDOFF_PATH });
+}
+
 function routeSearchFromFile(file) {
+  if (isSpeakerSetupHandoffTarget(file)) {
+    return `?path=${SPEAKER_SETUP_HANDOFF_PATH}`;
+  }
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   const path = filePath || shellPath;
@@ -142,6 +163,10 @@ function hrefWithPath(file) {
 }
 
 function resolveSetupLink(file) {
+  const handoff = setupStyleHandoffHref(file);
+  if (handoff) {
+    return handoff;
+  }
   const screen = screenIdFromFile(file);
   if (PREVIEW_APP_SETUP_HANDOFFS.has(screen)) {
     const handoffSearch = PREVIEW_APP_SETUP_HANDOFFS.get(screen);
@@ -177,7 +202,7 @@ function shouldNormalizeSetupHref(href) {
     return false;
   }
   const screen = screenIdFromFile(href);
-  if (SETUP_IN_PAGE_TARGETS.has(screen)) {
+  if (SETUP_IN_PAGE_TARGETS.has(screen) || isSpeakerSetupHandoffTarget(href)) {
     return true;
   }
   if (PREVIEW_APP_SETUP_HANDOFFS.has(screen)) {
