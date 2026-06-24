@@ -182,6 +182,31 @@ assert.ok(hostVideo, "the host slot renders a placed video");
 const hostVideoEl = hostVideo.children.find((child) => child.tagName === "video");
 assert.ok(hostVideoEl, "the placed video renders an actual <video> element");
 assert.ok(hostVideoEl.src, "the placed <video> points at the uploaded file via an object URL");
+
+// Nested slot controls own their clicks/keys. A selected sample track must not replace an
+// already placed real video when the creator clicks the file picker or video controls.
+const hostChip = chips.find((chip) => chip.dataset.track === "host");
+const hostInput = inputs.find((entry) => entry.dataset.fileInput === "host");
+hostChip.listeners.click({ target: hostChip });
+zoneFor("host").listeners.click({ target: hostInput });
+assert.ok(zoneFor("host").querySelector(".placed-video"), "clicking the file input does not replace the placed video");
+assert.equal(zoneFor("host").querySelector(".placed-track"), null, "file-input clicks do not route through sample-track placement");
+assert.equal(hostChip.attributes["aria-pressed"], "true", "the selected track remains selected while the file input owns the click");
+let nestedKeyPrevented = false;
+zoneFor("host").listeners.keydown({
+  key: "Enter",
+  target: hostInput,
+  preventDefault() { nestedKeyPrevented = true; },
+});
+assert.equal(nestedKeyPrevented, false, "Enter on the nested file input is not hijacked by slot activation");
+zoneFor("host").listeners.click({ target: hostVideoEl });
+assert.ok(zoneFor("host").querySelector(".placed-video"), "clicking the placed video controls leaves the real video in place");
+assert.equal(zoneFor("host").querySelector(".placed-track"), null, "video-control clicks do not route through sample-track placement");
+const hostRemove = zoneFor("host").querySelector(".placed-remove");
+assert.ok(hostRemove, "the placed video renders a remove button");
+zoneFor("host").listeners.click({ target: hostRemove });
+assert.ok(zoneFor("host").querySelector(".placed-video"), "a bubbled remove-button click does not activate sample-track placement");
+assert.equal(zoneFor("host").querySelector(".placed-track"), null, "remove-button clicks do not route through sample-track placement");
 assert.equal(continueLink.attributes["aria-disabled"], "true", "Continue stays gated until both speaker videos are placed");
 
 chooseFile("guest", video("guest.mp4", 2000, 22));

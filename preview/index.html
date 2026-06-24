@@ -1372,6 +1372,38 @@
           return duplicates;
         }
 
+        function hasClassName(node, className) {
+          if (!node) return false;
+          if (node.classList && typeof node.classList.contains === "function") {
+            return node.classList.contains(className);
+          }
+          return typeof node.className === "string"
+            && node.className.split(/\s+/).filter(Boolean).indexOf(className) !== -1;
+        }
+
+        function isNestedSlotControl(target, zone) {
+          var node = target;
+          while (node && node !== zone) {
+            var tagName = node.tagName ? String(node.tagName).toUpperCase() : "";
+            if (
+              tagName === "INPUT"
+              || tagName === "BUTTON"
+              || tagName === "VIDEO"
+              || hasClassName(node, "slot-file")
+              || hasClassName(node, "placed-remove")
+              || hasClassName(node, "placed-video")
+            ) {
+              return true;
+            }
+            node = node.parentNode;
+          }
+          return false;
+        }
+
+        function shouldActivateSlot(event, zone) {
+          return !event || !isNestedSlotControl(event.target, zone);
+        }
+
         function updateContinueLink(filled) {
           if (!continueLink) return;
           var required = requiredSlots();
@@ -1611,7 +1643,10 @@
             }
             placeTrack(zone, track);
           });
-          zone.addEventListener("click", function () {
+          zone.addEventListener("click", function (event) {
+            if (!shouldActivateSlot(event, zone)) {
+              return;
+            }
             if (!selectedTrack) {
               updateSlotStatus("Pick a track first, then choose its slot.");
               return;
@@ -1619,6 +1654,7 @@
             placeTrack(zone, selectedTrack);
           });
           zone.addEventListener("keydown", function (event) {
+            if (event && event.target !== zone) return;
             if (!activationKey(event)) return;
             event.preventDefault();
             if (!selectedTrack) {
