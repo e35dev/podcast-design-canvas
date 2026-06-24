@@ -1039,7 +1039,7 @@
           for (const value of repairChoices(track.issue)) {
             const option = document.createElement("option");
             option.value = value;
-            option.textContent = repairs[value];
+            option.textContent = repairDisplayLabel(value) ?? value;
             option.selected = value === track.proposedRepair;
             repairSelect.appendChild(option);
           }
