@@ -29,6 +29,8 @@ const PREVIEW_APP_CLEANUP_HANDOFFS = new Map([
   ["guest-profile-reuse", ""],
 ]);
 const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
+const CLEANUP_BROLL_HANDOFF = "contextual-broll-moments.html";
+const CLEANUP_BROLL_PATH = "cleanup";
 const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
 const CLEANUP_RETURN_PATHS = new Set(["publish"]);
 
@@ -133,7 +135,33 @@ function isCleanupFlowFile(file) {
   return CLEANUP_FLOW.some((step) => step.file === base);
 }
 
+function isCleanupBrollHandoffTarget(file) {
+  return screenIdFromFile(file) === screenIdFromFile(CLEANUP_BROLL_HANDOFF);
+}
+
+// B-roll handoff: cleanup flow ends on contextual visuals with from=cleanup and a
+// canonical path=cleanup (or path=publish when entered from publish prep) (#583).
+function cleanupBrollHandoffHref(file) {
+  if (!isCleanupBrollHandoffTarget(file)) {
+    return null;
+  }
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath === "publish") {
+    return mergeRouteSearch(file, { from: "cleanup", path: "publish" });
+  }
+  return mergeRouteSearch(file, { from: "cleanup", path: CLEANUP_BROLL_PATH });
+}
+
 function routeSearchFromFile(file, fallbackSearch = cleanupEntrySearchFromWindow()) {
+  if (isCleanupBrollHandoffTarget(file)) {
+    const params = new URLSearchParams(queryWithoutHash(file));
+    if (params.get("from") === "cleanup" && params.get("path")) {
+      const out = new URLSearchParams();
+      out.set("from", "cleanup");
+      out.set("path", params.get("path"));
+      return `?${out.toString()}`;
+    }
+  }
   const params = new URLSearchParams(queryWithoutHash(file));
   const from = params.get("from");
   const filePath = params.get("path");
@@ -196,7 +224,8 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setCleanupScreenLink(link, file) {
-  const resolved = hrefWithCleanupContext(file);
+  const handoff = cleanupBrollHandoffHref(file);
+  const resolved = handoff || hrefWithCleanupContext(file);
   if (isEmbeddedInPreviewApp() && isPreviewAppCleanupRoute(resolved)) {
     link.href = previewAppHref(resolved);
     link.target = "_top";
@@ -214,7 +243,7 @@ function shouldNormalizeCleanupHref(href) {
   if (!isLocalScreenHref(href)) {
     return false;
   }
-  if (isPreviewAppCleanupTarget(href)) {
+  if (isPreviewAppCleanupTarget(href) || isCleanupBrollHandoffTarget(href)) {
     return true;
   }
   return isEmbeddedInPreviewApp() && isPreviewAppCleanupHandoff(href);

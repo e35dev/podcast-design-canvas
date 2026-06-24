@@ -199,8 +199,8 @@ const lastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correc
 const visualsHandoff = linkWithText(lastNav, "Continue: Contextual b-roll moments");
 assert.equal(
   visualsHandoff.href,
-  "contextual-broll-moments.html?from=cleanup",
-  "last cleanup screen hands off to contextual visuals",
+  "contextual-broll-moments.html?from=cleanup&path=cleanup",
+  "last cleanup screen hands off to contextual visuals on the cleanup path",
 );
 
 const embeddedFirstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-crosstalk-cleanup", true);
@@ -257,8 +257,8 @@ const embeddedLastNav = renderNavFor("on-screen-correction-note.html", "on-scree
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#contextual-broll-moments?from=cleanup",
-  "embedded cleanup nav routes the contextual visuals handoff through the preview app hash",
+  "../preview/app.html#contextual-broll-moments?from=cleanup&path=cleanup",
+  "embedded cleanup nav routes the contextual visuals handoff through the preview app hash with cleanup path",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets the parent app");
 
@@ -501,5 +501,32 @@ assert.equal(
   "embedded cleanup nav normalizes dynamic social context links before navigation",
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic social context links target the parent app");
+
+assert.ok(navScript.includes("cleanupBrollHandoffHref"), "cleanup nav centralizes b-roll handoff path resolution");
+
+function cleanupBrollResolveFor(file, search) {
+  const window = makeWindow("on-screen-correction-note.html", false, search);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = cleanupBrollHandoffHref(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  cleanupBrollResolveFor("contextual-broll-moments.html", "?from=cleanup"),
+  "contextual-broll-moments.html?from=cleanup&path=cleanup",
+  "cleanup nav promotes b-roll handoff links to the cleanup path",
+);
+assert.equal(
+  (cleanupBrollResolveFor("contextual-broll-moments.html?from=style", "").match(/path=/g) || []).length,
+  1,
+  "cleanup b-roll handoff emits one canonical path query param",
+);
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");
