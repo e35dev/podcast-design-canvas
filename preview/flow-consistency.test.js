@@ -67,4 +67,24 @@ assert.strictEqual(
   "guided flow keeps core step order after any ingest preamble",
 );
 
+function flowFiles(navSource) {
+  return [...navSource.matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((match) => match[1]);
+}
+
+const ingestNav = read("ingest-nav.js");
+const ingestFiles = flowFiles(ingestNav);
+assert.ok(ingestFiles.length >= 2, "ingest nav declares a setup path");
+for (const file of ingestFiles) {
+  const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
+  assert.ok(html.includes("../preview/ingest-nav.js"), `ingest path screen loads ingest nav: ${file}`);
+}
+
+const publishNav = read("publish-nav.js");
+const publishFiles = flowFiles(publishNav);
+assert.ok(publishFiles.length >= 2, "publish nav declares a publish prep path");
+for (const file of publishFiles) {
+  const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
+  assert.ok(html.includes("../preview/publish-nav.js"), `publish path screen loads publish nav: ${file}`);
+}
+
 console.log(`flow consistency: ${navFlow.length} core steps aligned across shell, nav, and flow page`);
