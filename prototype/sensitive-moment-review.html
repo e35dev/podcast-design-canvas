@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sensitive Moment Review Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --alert: #9f2626;
+        --info: #244b82;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .moments { display: grid; gap: 14px; }
+      .moment {
+        display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 14px;
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
+      }
+      .preview {
+        position: relative; width: 148px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+        background: linear-gradient(160deg, #5b7d74, #213734);
+      }
+      .preview.removed { background: linear-gradient(160deg, #35534c, #213734); }
+      .preview.muted { background: linear-gradient(160deg, #5b7d74, #2c3b58); }
+      .preview.masked { background: linear-gradient(160deg, #637a8a, #213734); }
+      .speaker {
+        position: absolute; top: 17%; left: 50%; width: 28%; aspect-ratio: 1; transform: translateX(-50%);
+        border-radius: 50%; background: #e8f4f1;
+      }
+      .caption {
+        position: absolute; left: 12%; right: 12%; bottom: 10%; min-height: 22%;
+        border-radius: 5px; background: rgba(255,255,255,0.92); color: #17211f;
+        font-size: 11px; font-weight: 800; line-height: 1.2; padding: 5px 6px;
+      }
+      .mask {
+        position: absolute; inset: 24% 16% 26%; border-radius: 8px;
+        background: rgba(255, 245, 210, 0.95); color: #433000; display: grid;
+        place-items: center; padding: 8px; text-align: center; font-size: 11px; font-weight: 800;
+      }
+      .cut {
+        position: absolute; inset: 32% 12%; border: 2px solid rgba(255,255,255,0.8);
+        border-radius: 999px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 12px;
+      }
+      .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+      .head strong, .consequence strong { display: block; margin-bottom: 4px; }
+      .head span, .consequence span, .summary li { color: var(--muted); }
+      .time { color: var(--muted); font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; white-space: nowrap;
+      }
+      .badge.flagged { background: #ffe0e0; color: var(--alert); }
+      .badge.removed, .badge.masked { background: #def3ed; color: var(--accent); }
+      .badge.noted { background: #e2ecff; color: var(--info); }
+      .badge.cleared { background: #eceeed; color: #55615d; }
+      .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 12px; }
+      label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+      select, textarea {
+        width: 100%; border: 1px solid #bfcbc7; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; padding: 8px 10px;
+      }
+      select { min-height: 40px; }
+      textarea { min-height: 66px; resize: vertical; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      .consequences { display: grid; gap: 10px; margin-top: 14px; }
+      .consequence { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .consequence.alert { border-left-color: var(--alert); }
+      .consequence.ready { border-left-color: var(--accent); }
+      .summary { margin: 16px 0 0; padding-left: 18px; display: grid; gap: 8px; }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .moment, .fields { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sensitive moment review</h1>
+      <p class="lede">Review private, off-the-record, or struck moments in context and choose a calm treatment before the finished episode ships.</p>
+
+      <section class="workspace" aria-label="Sensitive moment review workspace">
+        <div class="panel">
+          <h2>Flagged moments</h2>
+          <div id="moments" class="moments"></div>
+          <div class="actions">
+            <button type="button" id="addMoment">Add sample flag</button>
+            <button type="button" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Sensitive moment summary">
+          <h2>Export consequence</h2>
+          <div id="status" class="badge flagged">Needs a decision</div>
+          <div id="consequences" class="consequences"></div>
+          <ul class="summary">
+            <li>Caption text follows the chosen treatment for that moment.</li>
+            <li>Chapter starts near a removed moment stay marked for a quick check.</li>
+            <li>Title or b-roll attached to removed content resurfaces before export.</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const treatments = {
+        flag: "Needs decision",
+        remove: "Remove from episode",
+        mute: "Mute audio, keep picture",
+        mask: "Mask on-screen detail",
+        note: "Keep with note",
+        clear: "Clear to publish",
+      };
+
+      const samples = [
+        {
+          id: "s1",
+          time: "18:42",
+          title: "Guest says a private phone number",
+          before: "You can reach me at the number I just mentioned.",
+          after: "The private number is removed from captions and playback.",
+          treatment: "remove",
+          note: "",
+        },
+        {
+          id: "s2",
+          time: "34:10",
+          title: "Off-the-record aside",
+          before: "Do not use that next sentence; I was thinking out loud.",
+          after: "Picture remains while the aside is muted for the final cut.",
+          treatment: "mute",
+          note: "",
+        },
+        {
+          id: "s3",
+          time: "49:55",
+          title: "Unreviewed confidentiality flag",
+          before: "That client name should probably stay private.",
+          after: "Choose a treatment before relying on this export.",
+          treatment: "flag",
+          note: "",
+        },
+      ];
+
+      const addedSamples = [
+        {
+          time: "57:22",
+          title: "Address visible on screen",
+          before: "The shared screen briefly shows a mailing address.",
+          after: "A calm cover hides the detail while the conversation continues.",
+          treatment: "mask",
+          note: "",
+        },
+        {
+          time: "01:03:08",
+          title: "Collaborator should decide",
+          before: "The guest asks whether this story should stay in.",
+          after: "The moment stays visible with a note for review.",
+          treatment: "note",
+          note: "Ask producer before final publish.",
+        },
+      ];
+
+      let moments = structuredClone(samples);
+      let nextAdd = 0;
+
+      const momentsElement = document.querySelector("#moments");
+      const statusElement = document.querySelector("#status");
+      const consequencesElement = document.querySelector("#consequences");
+
+      document.querySelector("#addMoment").addEventListener("click", () => {
+        const sample = structuredClone(addedSamples[nextAdd % addedSamples.length]);
+        nextAdd += 1;
+        sample.id = `s${Date.now()}-${nextAdd}`;
+        moments.push(sample);
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(samples);
+        nextAdd = 0;
+        render();
+      });
+
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          const note = moment.note.trim();
+          let state = "flagged";
+          let message = "Choose a treatment before this sensitive content reaches export.";
+          let tone = "alert";
+
+          if (moment.treatment === "remove") {
+            state = "removed";
+            message = "The moment is cut, captions drop the removed words, and nearby chapter timing gets a quick check.";
+            tone = "ready";
+          } else if (moment.treatment === "mask" || moment.treatment === "mute") {
+            state = "masked";
+            message = moment.treatment === "mask"
+              ? "The visual detail is covered while the moment stays in place."
+              : "The picture stays in place while the sensitive audio is muted.";
+            tone = "ready";
+          } else if (moment.treatment === "note") {
+            state = "kept, noted";
+            message = note || "The moment stays in the episode with a collaborator note before final publish.";
+            tone = "review";
+          } else if (moment.treatment === "clear") {
+            state = "cleared";
+            message = "The flag was reviewed and the moment can publish as recorded.";
+            tone = "ready";
+          }
+
+          return { state, message, tone };
+        });
+
+        const open = results.filter((result) => result.state === "flagged").length;
+        const noted = results.filter((result) => result.state === "kept, noted").length;
+        const overall = open ? "flagged" : noted ? "kept, noted" : "cleared";
+        return { results, open, noted, overall };
+      }
+
+      function render() {
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])));
+        renderSummary(evaluation);
+      }
+
+      function renderMoment(moment, index, result) {
+        const article = document.createElement("article");
+        article.className = "moment";
+
+        const preview = document.createElement("div");
+        preview.className = `preview ${previewClass(moment.treatment)}`;
+        preview.append(renderSpeaker(), renderPreviewCopy(moment));
+
+        const body = document.createElement("div");
+        const head = document.createElement("div");
+        head.className = "head";
+
+        const copy = document.createElement("div");
+        const time = document.createElement("div");
+        time.className = "time";
+        time.textContent = moment.time;
+        const title = document.createElement("strong");
+        title.textContent = moment.title;
+        const before = document.createElement("span");
+        before.textContent = moment.before;
+        copy.append(time, title, before);
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${stateClass(result.state)}`;
+        badge.textContent = stateLabel(result.state);
+        head.append(copy, badge);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+        fields.append(renderTreatmentSelect(moment, index), renderNote(moment, index));
+
+        body.append(head, fields);
+        article.append(preview, body);
+        return article;
+      }
+
+      function renderSpeaker() {
+        const speaker = document.createElement("div");
+        speaker.className = "speaker";
+        return speaker;
+      }
+
+      function renderPreviewCopy(moment) {
+        if (moment.treatment === "remove") {
+          const cut = document.createElement("div");
+          cut.className = "cut";
+          cut.textContent = "gap closed";
+          return cut;
+        }
+
+        if (moment.treatment === "mask") {
+          const mask = document.createElement("div");
+          mask.className = "mask";
+          mask.textContent = "detail covered";
+          return mask;
+        }
+
+        const caption = document.createElement("div");
+        caption.className = "caption";
+        caption.textContent = moment.treatment === "flag" ? moment.before : moment.after;
+        return caption;
+      }
+
+      function renderTreatmentSelect(moment, index) {
+        const label = document.createElement("label");
+        label.textContent = "Treatment";
+        const select = document.createElement("select");
+        for (const [value, text] of Object.entries(treatments)) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = text;
+          option.selected = value === moment.treatment;
+          select.append(option);
+        }
+        select.addEventListener("change", (event) => {
+          moments[index].treatment = event.target.value;
+          render();
+        });
+        label.append(select);
+        return label;
+      }
+
+      function renderNote(moment, index) {
+        const label = document.createElement("label");
+        label.textContent = "Collaborator note";
+        const note = document.createElement("textarea");
+        note.value = moment.note;
+        note.disabled = moment.treatment !== "note";
+        note.placeholder = moment.treatment === "note" ? "Leave context for review" : "Only used when keeping with note";
+        note.addEventListener("input", (event) => {
+          moments[index].note = event.target.value;
+          render();
+        });
+        label.append(note);
+        return label;
+      }
+
+      function renderSummary(evaluation) {
+        statusElement.className = `badge ${stateClass(evaluation.overall)}`;
+        statusElement.textContent = evaluation.open
+          ? `${evaluation.open} sensitive flag${evaluation.open === 1 ? "" : "s"} need a decision`
+          : evaluation.noted
+            ? `${evaluation.noted} moment${evaluation.noted === 1 ? "" : "s"} kept with notes`
+            : "Sensitive moments ready";
+
+        consequencesElement.replaceChildren(
+          ...evaluation.results.map((result, index) => {
+            const article = document.createElement("article");
+            article.className = `consequence ${result.tone}`;
+            const title = document.createElement("strong");
+            title.textContent = `${moments[index].time} - ${stateLabel(result.state)}`;
+            const message = document.createElement("span");
+            message.textContent = result.message;
+            article.append(title, message);
+            return article;
+          }),
+        );
+      }
+
+      function previewClass(treatment) {
+        return treatment === "remove" ? "removed" : treatment === "mask" ? "masked" : treatment === "mute" ? "muted" : "";
+      }
+
+      function stateClass(state) {
+        return {
+          flagged: "flagged",
+          removed: "removed",
+          masked: "masked",
+          "kept, noted": "noted",
+          cleared: "cleared",
+        }[state];
+      }
+
+      function stateLabel(state) {
+        return {
+          flagged: "Needs decision",
+          removed: "Removed",
+          masked: "Handled in place",
+          "kept, noted": "Kept with note",
+          cleared: "Cleared",
+        }[state];
+      }
+
+      render();
+    </script>
+  </body>
+</html>
