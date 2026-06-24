@@ -819,7 +819,8 @@
 
       function renderPreviewTradeoff() {
         const moment = previewMoments.find((entry) => entry.id === preview);
-        previewTradeoffElement.textContent = enabled.size && moment?.note ? moment.note : "";
+        const note = moment?.note;
+        previewTradeoffElement.textContent = enabled.size && typeof note === "string" && note.length ? note : "";
       }
 
       function renderMomentHint() {
