@@ -25,6 +25,11 @@ const coreFlow = new Set([
   "export-readiness-review.html",
 ]);
 
+const ingestFlow = new Set([
+  "episode-readiness.html",
+  "speaker-role-mapping.html",
+]);
+
 const prototypes = fs
   .readdirSync(path.join(root, "prototype"))
   .filter((name) => name.endsWith(".html"));
@@ -40,6 +45,15 @@ for (const file of prototypes) {
     assert.ok(
       !html.includes("tools-nav.js"),
       `core-flow screen does not double up with tools nav: ${file}`,
+    );
+  } else if (ingestFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/ingest-nav.js"),
+      `ingest screen uses ingest navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `ingest screen does not double up with tools nav: ${file}`,
     );
   } else {
     // Every secondary screen links back to the shell.

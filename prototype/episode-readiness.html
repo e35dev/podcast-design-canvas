@@ -239,12 +239,12 @@
         }
       }
     </style>
-      <script src="../preview/tools-nav.js" defer></script>
+      <script src="../preview/ingest-nav.js" defer></script>
   </head>
-  <body>
+  <body data-ingest-step="episode-readiness">
     <main>
       <h1>Episode readiness</h1>
-      <p class="lede">Review synced speaker tracks before choosing a preset. Each flagged issue opens the surface where that problem is actually fixed &mdash; this screen stays focused on assignment, not diagnostics.</p>
+      <p class="lede">Review synced speaker tracks before choosing a preset. Each flagged issue links to the right fix — this screen stays focused on getting every speaker assigned, not technical diagnostics.</p>
 
       <section class="workspace" aria-label="Episode readiness workspace">
         <div class="panel">
@@ -455,7 +455,7 @@
           ? "Required buckets are assigned. Open issues that still affect the finished episode will carry forward to export review."
           : readiness.status === "blocked"
             ? "Add a host recording before continuing."
-            : "Open each issue in the surface that owns the fix, or resolve it on this screen.";
+            : "Open the suggested fix for each issue, or resolve it on this screen.";
       }
 
       function renderTrack(track, index) {
