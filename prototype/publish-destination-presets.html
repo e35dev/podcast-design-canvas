@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Destination Presets Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.82fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 18px;
+      }
+
+      .preset-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .preset {
+        display: grid;
+        gap: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .preset-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .preset-head strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 15px;
+      }
+
+      .preset-head span,
+      .rule span,
+      .warning span,
+      .summary li,
+      .checklist li {
+        color: var(--muted);
+      }
+
+      .toggles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      button.primary {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      button.active {
+        background: #def3ed;
+      }
+
+      .rules {
+        display: grid;
+        gap: 10px;
+      }
+
+      .rule {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 180px;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fcfdfd;
+        padding: 12px;
+      }
+
+      .rule strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .badge {
+        display: inline-flex;
+        width: fit-content;
+        min-height: 30px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 800;
+      }
+
+      .badge.primary {
+        background: #def3ed;
+        color: var(--accent);
+      }
+
+      .badge.additional {
+        background: #e9eefc;
+        color: #355da0;
+      }
+
+      .badge.review {
+        background: #fff1d7;
+        color: var(--review);
+      }
+
+      .badge.blocked {
+        background: #ffe0e0;
+        color: var(--blocked);
+      }
+
+      .badge.optional {
+        background: #eceeed;
+        color: #55615d;
+      }
+
+      .warning {
+        border-left: 4px solid var(--review);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+      }
+
+      .warning.blocked {
+        border-left-color: var(--blocked);
+      }
+
+      .summary,
+      .checklist {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      @media (max-width: 900px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .rule {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Publish Destination Presets Prototype</h1>
+      <p class="lede">
+        Choose one primary destination, add extra delivery targets, and keep overrides scoped to the destination they belong to instead of collapsing every export into one settings bundle.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Destination Presets</h2>
+          <div class="preset-list" id="presetList"></div>
+          <div class="actions">
+            <button type="button">Save show default</button>
+            <button type="button">Open publish checklist</button>
+            <button type="button">Review export package</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Primary Readiness</h2>
+          <div id="primaryBadge" class="badge primary">Primary · YouTube full episode</div>
+
+          <div id="warnings" style="display:grid; gap:10px; margin-top:14px;"></div>
+
+          <h3 style="margin-top:20px;">Prepared Destinations</h3>
+          <ul id="preparedList" class="summary"></ul>
+
+          <h3 style="margin-top:20px;">What Reopens</h3>
+          <ul class="checklist">
+            <li>thumbnail requirements when the primary destination changes</li>
+            <li>metadata consequences when chapter or title needs differ</li>
+            <li>review watermark expectations for private review copies</li>
+            <li>final package contents for every enabled destination</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const presets = [
+        {
+          id: "youtube",
+          name: "YouTube full episode",
+          summary: "Publish-ready package with thumbnail, captions, chapters, and metadata.",
+          effects: [
+            ["Captions", "Included by default"],
+            ["Thumbnail", "Required"],
+            ["Metadata", "Title, description, chapters, and guest links"],
+            ["Package", "Final video + caption file + thumbnail + metadata summary"],
+          ],
+          warnings: [
+            { tone: "blocked", title: "Metadata incomplete", detail: "Changing to YouTube reopens title, description, and chapter confirmation before export." },
+            { tone: "review", title: "Thumbnail not chosen", detail: "The full episode package still needs a cover frame before this destination is ready." },
+          ],
+          status: "needs review",
+        },
+        {
+          id: "sponsor",
+          name: "Sponsor approval copy",
+          summary: "Branded review export with disclosure visible and scoped approval notes.",
+          effects: [
+            ["Captions", "Optional if the sponsor only needs placement review"],
+            ["Watermark", "Sponsor approval label included"],
+            ["Disclosure", "Sponsor read status shown in the package summary"],
+            ["Package", "Review copy + approval summary + selected moments"],
+          ],
+          warnings: [
+            { tone: "review", title: "Disclosure note missing", detail: "Sponsor copy should explain whether the read is draft, approved, or intentionally omitted." },
+          ],
+          status: "ready",
+        },
+        {
+          id: "archive",
+          name: "Archive master",
+          summary: "Long-term storage package with final video, captions, and preserved delivery details.",
+          effects: [
+            ["Captions", "Saved with the package"],
+            ["Thumbnail", "Optional"],
+            ["Metadata", "Stored as a summary instead of destination-facing fields"],
+            ["Package", "Final video + captions + notes on ignored warnings"],
+          ],
+          warnings: [
+            { tone: "ready", title: "No blocking archive issues", detail: "Archive export can stay enabled even while thumbnail work continues elsewhere." },
+          ],
+          status: "ready",
+        },
+      ];
+
+      let primaryId = "youtube";
+      const additional = new Set(["sponsor"]);
+
+      const presetList = document.querySelector("#presetList");
+      const warningsElement = document.querySelector("#warnings");
+      const primaryBadge = document.querySelector("#primaryBadge");
+      const preparedList = document.querySelector("#preparedList");
+
+      function render() {
+        presetList.innerHTML = "";
+        warningsElement.innerHTML = "";
+        preparedList.innerHTML = "";
+
+        presets.forEach((preset) => {
+          const card = document.createElement("article");
+          card.className = "preset";
+
+          const head = document.createElement("div");
+          head.className = "preset-head";
+          head.innerHTML = `
+            <div>
+              <strong>${preset.name}</strong>
+              <span>${preset.summary}</span>
+            </div>
+            <span class="badge ${primaryId === preset.id ? "primary" : additional.has(preset.id) ? "additional" : preset.status === "needs review" ? "review" : "optional"}">
+              ${primaryId === preset.id ? "Primary" : additional.has(preset.id) ? "Additional" : preset.status === "needs review" ? "Needs review" : "Available"}
+            </span>
+          `;
+
+          const toggles = document.createElement("div");
+          toggles.className = "toggles";
+
+          const primaryButton = document.createElement("button");
+          primaryButton.type = "button";
+          primaryButton.className = `primary${primaryId === preset.id ? " active" : ""}`;
+          primaryButton.textContent = primaryId === preset.id ? "Primary destination" : "Make primary";
+          primaryButton.addEventListener("click", () => {
+            primaryId = preset.id;
+            additional.delete(preset.id);
+            render();
+          });
+
+          const additionalButton = document.createElement("button");
+          additionalButton.type = "button";
+          additionalButton.className = additional.has(preset.id) ? "active" : "";
+          additionalButton.textContent = additional.has(preset.id) ? "Additional enabled" : "Enable additional";
+          additionalButton.disabled = primaryId === preset.id;
+          additionalButton.addEventListener("click", () => {
+            if (additional.has(preset.id)) {
+              additional.delete(preset.id);
+            } else {
+              additional.add(preset.id);
+            }
+            render();
+          });
+
+          toggles.append(primaryButton, additionalButton);
+
+          const rules = document.createElement("div");
+          rules.className = "rules";
+          preset.effects.forEach(([label, detail]) => {
+            const row = document.createElement("div");
+            row.className = "rule";
+            row.innerHTML = `
+              <div>
+                <strong>${label}</strong>
+                <span>${detail}</span>
+              </div>
+              <span class="badge ${label === "Thumbnail" && preset.id === "youtube" ? "blocked" : label === "Watermark" ? "review" : "optional"}">
+                ${label === "Thumbnail" && preset.id === "youtube" ? "reopens" : label === "Watermark" ? "scoped" : "preset"}
+              </span>
+            `;
+            rules.appendChild(row);
+          });
+
+          card.append(head, toggles, rules);
+          presetList.appendChild(card);
+        });
+
+        const primary = presets.find((preset) => preset.id === primaryId);
+        primaryBadge.textContent = `Primary · ${primary.name}`;
+
+        primary.warnings.forEach((warning) => {
+          const item = document.createElement("div");
+          item.className = `warning${warning.tone === "blocked" ? " blocked" : ""}`;
+          item.innerHTML = `<strong>${warning.title}</strong><span>${warning.detail}</span>`;
+          warningsElement.appendChild(item);
+        });
+
+        [primary, ...presets.filter((preset) => additional.has(preset.id))].forEach((preset) => {
+          const li = document.createElement("li");
+          const prefix = preset.id === primaryId ? "Primary" : "Additional";
+          li.textContent = `${prefix}: ${preset.name} — ${preset.summary}`;
+          preparedList.appendChild(li);
+        });
+      }
+
+      render();
+    </script>
+  </body>
+</html>
