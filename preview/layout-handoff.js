@@ -254,13 +254,18 @@
     if (!state) {
       return clone(fallbackTracks || []);
     }
+    // Carried tracks always start "suggested", never "confirmed" — including the host. The role
+    // came from the layout slot→role table, not from anything the creator reviewed, and the
+    // role-mapping screen promises "a track is never locked into a role you have not seen." Seeding
+    // the host as confirmed let a solo handoff (one host slot) reach an overall "ready" gate with
+    // zero review; making every carried track suggested keeps the one-tap confirm the screen needs.
     return state.slots.map((slot, index) => ({
       id: `layout-${slot.slot}-${index + 1}`,
       name: slot.name || `${slot.label} video`,
       role: slot.role,
       sig: slot.sig || "",
       signal: "file-name",
-      decision: slot.role === "host" ? "confirmed" : "suggested",
+      decision: "suggested",
     }));
   }
 

@@ -142,6 +142,18 @@ assert.deepEqual(
   ],
   "role mapping can seed tracks from the selected layout slots",
 );
+// Carried tracks must start unconfirmed so the role-mapping gate can't read "ready" before the
+// creator reviews anything — the host is no longer auto-confirmed.
+assert.ok(
+  panelTracks.every((track) => track.decision === "suggested"),
+  "every carried track (host included) starts as a suggestion, not auto-confirmed",
+);
+const soloTracks = handoff.tracksFromState(handoff.stateFromSlots("solo", [{ slot: "host" }]), []);
+assert.equal(
+  soloTracks[0].decision,
+  "suggested",
+  "a solo layout's host track is suggested, so role mapping cannot auto-pass with zero review",
+);
 assert.deepEqual(
   handoff.assignedSourceCounts([
     { name: "Host", role: "host", sig: "same" },
