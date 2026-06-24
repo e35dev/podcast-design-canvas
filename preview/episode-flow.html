@@ -63,6 +63,13 @@
         text-decoration: none;
       }
 
+      .top-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: baseline;
+      }
+
       .stepper {
         list-style: none;
         display: flex;
@@ -341,6 +348,37 @@
         display: none;
       }
 
+      .publish-handoff {
+        margin-top: 16px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .publish-handoff strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .publish-handoff p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .publish-handoff .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .publish-handoff a {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
       .nav {
         display: flex;
         justify-content: space-between;
@@ -400,7 +438,10 @@
           <h1>Guided episode flow</h1>
           <p class="lede">One connected path from confirming your files and speaker roles to a publish-ready episode. Each step builds on the last, and the final readiness reflects every choice you made.</p>
         </div>
-        <a class="back" href="./index.html">← All screens</a>
+        <div class="top-links">
+          <a class="back" href="./index.html">← Preview shell</a>
+          <a class="back" href="../index.html">Full screen catalog</a>
+        </div>
       </div>
 
       <ol class="stepper" id="stepper" aria-label="Episode steps"></ol>
@@ -958,6 +999,25 @@
           render();
         });
         nodes.push(exportBtn);
+        if (episode.exported) {
+          const handoff = document.createElement("div");
+          handoff.className = "publish-handoff";
+          const title = document.createElement("strong");
+          title.textContent = "Continue to publish prep";
+          const copy = document.createElement("p");
+          copy.textContent = "Your episode exported from this flow. Open the publish tools to package files and confirm the final checklist.";
+          const links = document.createElement("div");
+          links.className = "links";
+          const packageLink = document.createElement("a");
+          packageLink.href = "../prototype/export-package-handoff.html";
+          packageLink.textContent = "Export package handoff";
+          const checklistLink = document.createElement("a");
+          checklistLink.href = "../prototype/publish-checklist.html";
+          checklistLink.textContent = "Publish checklist";
+          links.append(packageLink, checklistLink);
+          handoff.append(title, copy, links);
+          nodes.push(handoff);
+        }
         if (!allReady) {
           const gate = document.createElement("p");
           gate.className = "gate";

@@ -54,6 +54,10 @@ assert.ok(flow.includes("steps ready"), "flow summarizes progress in creator-fac
 assert.ok(flow.includes('speaker.bucket = "ready"'), "readiness step can resolve a speaker bucket");
 assert.ok(flow.includes("Add speaker name"), "readiness exposes a fix action for missing names");
 assert.ok(flow.includes("Confirm roles"), "roles step exposes a confirm action");
+assert.match(flow, /href="\.\.\/index\.html"/, "guided flow links to the full screen catalog");
+assert.ok(flow.includes("Continue to publish prep"), "guided flow offers publish handoff after export");
+assert.ok(flow.includes("export-package-handoff.html"), "guided flow links to export package handoff");
+assert.ok(flow.includes("publish-checklist.html"), "guided flow links to publish checklist");
 
 // Editable caption text is never interpolated into innerHTML (XSS-safe rendering).
 assert.ok(!/innerHTML/.test(flow), "flow builds the DOM without innerHTML");
