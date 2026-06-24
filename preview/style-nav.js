@@ -17,11 +17,23 @@ const STYLE_FLOW = [
 const STYLE_ENTRY = { file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" };
 const STYLE_HANDOFF = { file: "contextual-broll-moments.html?from=style", label: "Contextual b-roll moments" };
 
+// Style screens hand off to these owning screens when a review item needs a fix.
+const STYLE_FIX_PATHS = {
+  "destination-crop-preview.html": { path: "episode" },
+  "client-review-copy-flow.html": { path: "publish" },
+  "accessibility-readability-checks.html": { path: "episode", from: "cleanup" },
+  "contextual-broll-moments.html": { path: "episode", from: "style" },
+};
+
 const PREVIEW_APP_STYLE_TARGETS = new Set([
   screenIdFromFile(STYLE_ENTRY.file),
   screenIdFromFile(STYLE_HANDOFF.file),
   ...STYLE_FLOW.map((step) => step.id),
 ]);
+
+const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
+  Object.keys(STYLE_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
 
 function currentStyleIndex() {
   const fromBody = document.body.dataset.styleStep;
@@ -59,7 +71,7 @@ function previewAppHref(file) {
 }
 
 function currentPreviewAppHref(step) {
-  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+  return previewAppHref(hrefWithPath(step.file));
 }
 
 function pathFromQuery(query) {
@@ -140,14 +152,75 @@ function hrefWithPath(file) {
   return mergeRouteSearch(file, { path: shellPath });
 }
 
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function resolveStyleLink(file) {
+  const base = linkBase(file);
+  const hasStyleHandoff = new URLSearchParams(queryWithoutHash(file)).get("from") === "style";
+  if (Object.prototype.hasOwnProperty.call(STYLE_FIX_PATHS, base) && !hasStyleHandoff) {
+    const overrides = { ...STYLE_FIX_PATHS[base] };
+    const shellPath = new URLSearchParams(window.location.search).get("path");
+    if (!shellPath) {
+      delete overrides.path;
+    }
+    return mergeRouteSearch(file, overrides);
+  }
+  if (isPreviewAppStyleTarget(file)) {
+    return hrefWithPath(file);
+  }
+  return file;
+}
+
+function routesThroughPreviewApp(file) {
+  return isPreviewAppStyleTarget(file) || PREVIEW_APP_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
+}
+
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeStyleHref(href) {
+  return isLocalScreenHref(href) && (
+    isPreviewAppStyleTarget(href) ||
+    Object.prototype.hasOwnProperty.call(STYLE_FIX_PATHS, linkBase(href))
+  );
+}
+
 function setStyleScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppStyleTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = resolveStyleLink(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = resolved;
+}
+
+function normalizeStyleScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeStyleHref(href)) {
+    setStyleScreenLink(link, href);
+  }
+}
+
+function normalizeStyleScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeStyleScreenLink);
+}
+
+function normalizeStyleLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeStyleScreenLink(link);
+  }
 }
 
 function renderStyleNav() {
@@ -278,8 +351,16 @@ function renderStyleNav() {
   document.body.insertBefore(nav, document.body.firstChild);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", renderStyleNav);
-} else {
+function initStyleNav() {
   renderStyleNav();
+  normalizeStyleScreenLinks(document);
+  if (typeof document.addEventListener === "function") {
+    document.addEventListener("click", normalizeStyleLinkClick);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initStyleNav);
+} else {
+  initStyleNav();
 }

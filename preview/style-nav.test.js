@@ -257,4 +257,121 @@ assert.equal(
   "style nav merges episode path context onto the contextual visuals handoff without breaking from=style",
 );
 
+function renderNavWithInPageLinks(fileName, styleStep, embedded, search, hrefs) {
+  const head = createElement("head");
+  const body = createElement("body");
+  if (styleStep) { body.dataset = { styleStep }; }
+  const listeners = { click: null };
+  const allNodes = () => [...flatten(head), ...flatten(body)];
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) { return allNodes().find((node) => node.id === id) || null; },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return allNodes().find((node) => node.className.split(" ").includes(className)) || null;
+    },
+    querySelectorAll(selector) {
+      if (selector === "a[href]") {
+        return allNodes().filter((node) => node.tagName === "a" && node.attributes.href);
+      }
+      return [];
+    },
+    addEventListener(name, handler) {
+      if (name === "click") listeners.click = handler;
+    },
+  };
+  for (const href of hrefs) {
+    const link = createElement("a");
+    link.setAttribute("href", href);
+    link.getAttribute = function(name) { return this.attributes[name]; };
+    link.textContent = href;
+    body.appendChild(link);
+  }
+  const window = makeWindow(fileName, embedded, search || "");
+  vm.runInNewContext(navScript, { document, window, URLSearchParams });
+  return { nodes: allNodes(), listeners };
+}
+
+const inPageStyleLinks = renderNavWithInPageLinks(
+  "layout-safe-areas.html",
+  "layout-safe-areas",
+  false,
+  "?path=episode",
+  ["speaker-framing-safety.html", "canvas-layer-controls.html"],
+);
+assert.equal(
+  linkWithText(inPageStyleLinks.nodes, "speaker-framing-safety.html").href,
+  "speaker-framing-safety.html?path=episode",
+  "style nav keeps episode path context on in-page style links",
+);
+assert.equal(
+  linkWithText(inPageStyleLinks.nodes, "canvas-layer-controls.html").href,
+  "canvas-layer-controls.html?path=episode",
+  "style nav keeps episode path context on in-page canvas links",
+);
+
+const cropFixLink = renderNavWithInPageLinks(
+  "layout-safe-areas.html",
+  "layout-safe-areas",
+  false,
+  "?path=episode",
+  ["destination-crop-preview.html"],
+);
+assert.equal(
+  linkWithText(cropFixLink.nodes, "destination-crop-preview.html").href,
+  "destination-crop-preview.html?path=episode",
+  "layout safe area crop fix links keep episode path context",
+);
+
+const embeddedCropFix = renderNavWithInPageLinks(
+  "speaker-framing-safety.html",
+  "speaker-framing-safety",
+  true,
+  "?path=episode",
+  ["destination-crop-preview.html"],
+);
+const embeddedCrop = linkWithText(embeddedCropFix.nodes, "destination-crop-preview.html");
+assert.equal(
+  embeddedCrop.href,
+  "../preview/app.html#destination-crop-preview?path=episode",
+  "embedded style fix links route through the preview app",
+);
+assert.equal(embeddedCrop.target, "_top", "embedded style fix links target the parent app");
+
+const brollFixLink = renderNavWithInPageLinks(
+  "speaker-framing-safety.html",
+  "speaker-framing-safety",
+  false,
+  "?path=episode",
+  ["contextual-broll-moments.html"],
+);
+const brollHref = linkWithText(brollFixLink.nodes, "contextual-broll-moments.html").href;
+const brollParams = new URLSearchParams(brollHref.split("?")[1] || "");
+assert.equal(brollParams.get("from"), "style", "speaker framing b-roll fix links keep style context");
+assert.equal(brollParams.get("path"), "episode", "speaker framing b-roll fix links keep episode path context");
+
+const dynamicFix = renderNavWithInPageLinks(
+  "layout-safe-areas.html",
+  "layout-safe-areas",
+  true,
+  "?path=episode",
+  [],
+);
+const dynamicLink = createElement("a");
+dynamicLink.setAttribute("href", "accessibility-readability-checks.html");
+dynamicLink.getAttribute = function(name) { return this.attributes[name]; };
+dynamicLink.closest = function(selector) { return selector === "a[href]" ? this : null; };
+dynamicFix.nodes[0].appendChild(dynamicLink);
+dynamicFix.listeners.click({ target: dynamicLink });
+assert.ok(
+  dynamicLink.href.includes("../preview/app.html#accessibility-readability-checks"),
+  "embedded style fix links route accessibility checks through the preview app",
+);
+assert.ok(dynamicLink.href.includes("from=cleanup"), "embedded style fix links keep cleanup context");
+assert.ok(dynamicLink.href.includes("path=episode"), "embedded style fix links keep episode path context");
+
 console.log("style nav: visual direction screens connected back to the preview shell");
