@@ -194,6 +194,58 @@
       return duplicates;
     }
 
+    // Visible speaker slots that share the same recording identity block Continue even
+    // when each slot looks filled. Return them in layout order for guidance focus.
+    function duplicateBlockingZones() {
+      const sigToZones = Object.create(null);
+      visibleSlots().forEach((zone) => {
+        if (!zone.classList.contains("filled")) return;
+        const sig = (zone.dataset.fileSig || "").trim();
+        if (!sig) return;
+        if (!sigToZones[sig]) sigToZones[sig] = [];
+        sigToZones[sig].push(zone);
+      });
+      const blocked = [];
+      Object.keys(sigToZones).forEach((sig) => {
+        if (sigToZones[sig].length > 1) {
+          sigToZones[sig].forEach((zone) => {
+            if (blocked.indexOf(zone) === -1) blocked.push(zone);
+          });
+        }
+      });
+      return blocked;
+    }
+
+    function focusSlotInput(zone) {
+      if (!zone) return false;
+      const input = zone.querySelector("[data-file-input]");
+      if (input && typeof input.focus === "function") {
+        input.focus();
+        return true;
+      }
+      return false;
+    }
+
+    // When Continue is gated, send the creator to the first slot that still blocks
+    // progress — invalid rejection, missing required video, or duplicate recording.
+    function firstBlockingZone() {
+      const invalidRequired = requiredSlots().find((zone) => zone.classList.contains("is-invalid"));
+      if (invalidRequired) return invalidRequired;
+      const missingRequired = requiredSlots().find((zone) => !zone.classList.contains("filled"));
+      if (missingRequired) return missingRequired;
+      const duplicates = duplicateBlockingZones();
+      return duplicates.length > 0 ? duplicates[0] : null;
+    }
+
+    function focusFirstBlockingSlot() {
+      const zone = firstBlockingZone();
+      if (!zone) return false;
+      if (errorCard && !errorCard.hidden && typeof errorCard.scrollIntoView === "function") {
+        errorCard.scrollIntoView({ block: "nearest" });
+      }
+      return focusSlotInput(zone);
+    }
+
     function updateContinueState() {
       if (!continueLink) return;
       const required = requiredSlots();
@@ -500,6 +552,7 @@
       continueLink.addEventListener("click", (event) => {
         if (continueLink.getAttribute("aria-disabled") === "true") {
           event.preventDefault();
+          focusFirstBlockingSlot();
         }
       });
     }
@@ -515,6 +568,9 @@
       visibleSlots,
       filledRequiredSlots,
       duplicateFileNames,
+      duplicateBlockingZones,
+      firstBlockingZone,
+      focusFirstBlockingSlot,
       zonesBySlot,
       slotIndicators,
       updateSlotStatus,
