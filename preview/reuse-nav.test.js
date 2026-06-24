@@ -238,4 +238,126 @@ assert.equal(
   "reuse nav replaces conflicting path values when linking back to sensitive moment review",
 );
 
+
+assert.ok(navScript.includes("currentPreviewAppHref"), "reuse nav builds preview app href from the active step");
+
+function renderNavWithInPageLinks(fileName, reuseStep, embedded, search, hrefs) {
+  const head = createElement("head");
+  const body = createElement("body");
+  if (reuseStep) { body.dataset = { reuseStep }; }
+  const listeners = { click: null };
+  const allNodes = () => [...flatten(head), ...flatten(body)];
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) { return allNodes().find((node) => node.id === id) || null; },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
+    },
+    querySelectorAll(selector) {
+      if (selector === "a[href]") {
+        return allNodes().filter((node) => node.tagName === "a" && node.attributes.href);
+      }
+      return [];
+    },
+    addEventListener(name, handler) {
+      if (name === "click") listeners.click = handler;
+    },
+  };
+  for (const href of hrefs) {
+    const link = createElement("a");
+    link.setAttribute("href", href);
+    link.getAttribute = function(name) { return this.attributes[name]; };
+    link.textContent = href;
+    body.appendChild(link);
+  }
+  const window = { location: { pathname: "/prototype/" + fileName, search: search || "" } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  vm.runInNewContext(navScript, { document, window, URLSearchParams });
+  return { nodes: flatten(body), listeners };
+}
+
+const inPageReuseLinks = renderNavWithInPageLinks(
+  "intro-outro-builder.html",
+  "intro-outro-builder",
+  false,
+  "?path=episode",
+  ["show-segment-system.html", "social-context-intake.html"],
+);
+assert.equal(
+  linkWithText(inPageReuseLinks.nodes, "show-segment-system.html").href,
+  "show-segment-system.html?path=episode",
+  "reuse nav keeps episode path context on in-page reuse links",
+);
+assert.equal(
+  linkWithText(inPageReuseLinks.nodes, "social-context-intake.html").href,
+  "social-context-intake.html?path=episode",
+  "reuse nav keeps episode path context on in-page fix links",
+);
+
+const musicFixLink = renderNavWithInPageLinks(
+  "intro-outro-builder.html",
+  "intro-outro-builder",
+  false,
+  "?path=episode",
+  ["music-cue-setup.html"],
+);
+assert.equal(
+  linkWithText(musicFixLink.nodes, "music-cue-setup.html").href,
+  "music-cue-setup.html?path=episode",
+  "intro/outro music cue fix links keep episode path context",
+);
+
+const embeddedMusicFix = renderNavWithInPageLinks(
+  "intro-outro-builder.html",
+  "intro-outro-builder",
+  true,
+  "?path=episode",
+  ["music-cue-setup.html"],
+);
+const embeddedMusic = linkWithText(embeddedMusicFix.nodes, "music-cue-setup.html");
+assert.equal(
+  embeddedMusic.href,
+  "../preview/app.html#music-cue-setup?path=episode",
+  "embedded reuse fix links route through the preview app",
+);
+assert.equal(embeddedMusic.target, "_top", "embedded reuse fix links target the parent app");
+
+const dynamicFix = renderNavWithInPageLinks(
+  "episode-runtime-shaping.html",
+  "episode-runtime-shaping",
+  true,
+  "?path=episode",
+  [],
+);
+const dynamicLink = createElement("a");
+dynamicLink.setAttribute("href", "pause-crosstalk-cleanup.html");
+dynamicLink.getAttribute = function(name) { return this.attributes[name]; };
+dynamicLink.closest = function(selector) { return selector === "a[href]" ? this : null; };
+dynamicFix.nodes[0].appendChild(dynamicLink);
+dynamicFix.listeners.click({ target: dynamicLink });
+assert.equal(
+  dynamicLink.href,
+  "../preview/app.html#pause-crosstalk-cleanup?path=episode",
+  "embedded reuse nav normalizes dynamically rendered fix links before navigation",
+);
+
+const embeddedPreviewApp = renderNavWithInPageLinks(
+  "intro-outro-builder.html",
+  "intro-outro-builder",
+  true,
+  "?path=episode",
+  [],
+);
+assert.equal(
+  linkWithText(embeddedPreviewApp.nodes, "Preview app").href,
+  "../preview/app.html#intro-outro-builder?path=episode",
+  "embedded reuse nav keeps the current screen in the preview app href",
+);
+
 console.log("reuse nav: make-it-reusable screens connected into one path");

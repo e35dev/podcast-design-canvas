@@ -17,11 +17,23 @@ const REUSE_FLOW = [
 const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive moment review" };
 const REUSE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Episode watch-through" };
 
+// Reuse screens hand off to these owning screens when a review item needs a fix.
+const REUSE_FIX_PATHS = {
+  "music-cue-setup.html": "episode",
+  "social-context-intake.html": "episode",
+  "pause-crosstalk-cleanup.html": "episode",
+  "transcript-search-navigation.html": "episode",
+};
+
 const PREVIEW_APP_REUSE_TARGETS = new Set([
   screenIdFromFile(REUSE_ENTRY.file),
   screenIdFromFile(REUSE_HANDOFF.file),
   ...REUSE_FLOW.map((step) => step.id),
 ]);
+
+const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
+  Object.keys(REUSE_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
 
 function currentReuseIndex() {
   const fromBody = document.body.dataset.reuseStep;
@@ -56,6 +68,10 @@ function isEmbeddedInPreviewApp() {
 
 function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function currentPreviewAppHref(step) {
+  return previewAppHref(hrefWithPath(step.file));
 }
 
 function pathFromQuery(query) {
@@ -125,14 +141,66 @@ function hrefWithPath(file) {
   return mergeRouteSearch(file, { path: shellPath });
 }
 
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function resolveReuseLink(file) {
+  const base = linkBase(file);
+  if (Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, base)) {
+    return mergeRouteSearch(file, { path: REUSE_FIX_PATHS[base] });
+  }
+  return hrefWithPath(file);
+}
+
+function routesThroughPreviewApp(file) {
+  return isPreviewAppReuseTarget(file) || PREVIEW_APP_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
+}
+
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeReuseHref(href) {
+  return isLocalScreenHref(href) && (
+    isPreviewAppReuseTarget(href) ||
+    Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, linkBase(href))
+  );
+}
+
 function setReuseScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppReuseTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = resolveReuseLink(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = resolved;
+}
+
+function normalizeReuseScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeReuseHref(href)) {
+    setReuseScreenLink(link, href);
+  }
+}
+
+function normalizeReuseScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeReuseScreenLink);
+}
+
+function normalizeReuseLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeReuseScreenLink(link);
+  }
 }
 
 function renderReuseNav() {
@@ -224,7 +292,8 @@ function renderReuseNav() {
   wrap.appendChild(guided);
 
   const app = document.createElement("a");
-  app.href = "../preview/app.html";
+  app.href = currentPreviewAppHref(step);
+  setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
 
@@ -262,8 +331,16 @@ function renderReuseNav() {
   document.body.insertBefore(nav, document.body.firstChild);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", renderReuseNav);
-} else {
+function initReuseNav() {
   renderReuseNav();
+  normalizeReuseScreenLinks(document);
+  if (typeof document.addEventListener === "function") {
+    document.addEventListener("click", normalizeReuseLinkClick);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initReuseNav);
+} else {
+  initReuseNav();
 }
