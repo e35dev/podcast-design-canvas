@@ -318,6 +318,16 @@ assert.equal(
   "cleanup nav preserves from=cleanup and hash segments when merging path context",
 );
 
+const cleanupEpisodeWithHash = cleanupHrefWithPathFor(
+  "contextual-broll-moments.html?from=cleanup#moment",
+  "?path=episode",
+);
+assert.equal(
+  cleanupEpisodeWithHash,
+  "contextual-broll-moments.html?from=cleanup&path=episode#moment",
+  "cleanup nav preserves episode path when merging contextual visuals handoff context",
+);
+
 const cleanupFlowWithHash = cleanupFlowContextFor(
   "transcript-glossary.html?draft=terms#review",
   "?path=publish&from=cleanup",

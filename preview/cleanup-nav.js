@@ -30,7 +30,7 @@ const PREVIEW_APP_CLEANUP_HANDOFFS = new Map([
 ]);
 const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
 const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
-const CLEANUP_RETURN_PATHS = new Set(["publish"]);
+const CLEANUP_RETURN_PATHS = new Set(["publish", "episode"]);
 
 function currentCleanupIndex() {
   const fromBody = document.body.dataset.cleanupStep;
@@ -157,7 +157,7 @@ function routeSearchFromFile(file, fallbackSearch = cleanupEntrySearchFromWindow
 
 function hrefWithPath(file) {
   const shellPath = new URLSearchParams(window.location.search).get("path");
-  if (shellPath !== "publish") {
+  if (!CLEANUP_RETURN_PATHS.has(shellPath)) {
     return file;
   }
   if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
@@ -173,7 +173,7 @@ function withCleanupFlowContext(file) {
   if (context) {
     overrides.from = context;
   }
-  if (shellPath === "publish" && pathFromQuery(queryWithoutHash(file)) !== shellPath) {
+  if (CLEANUP_RETURN_PATHS.has(shellPath) && pathFromQuery(queryWithoutHash(file)) !== shellPath) {
     overrides.path = shellPath;
   }
   if (Object.keys(overrides).length === 0) {
