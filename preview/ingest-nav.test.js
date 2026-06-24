@@ -57,6 +57,10 @@ function createElement(tagName) {
     id: "",
     target: "",
     textContent: "",
+    getAttribute(name) {
+      if (name === "href") return this.href;
+      return this.attributes[name] || "";
+    },
     setAttribute(name, value) {
       this.attributes[name] = value;
       if (name === "id") this.id = value;
@@ -118,6 +122,7 @@ function renderNavFor(fileName, ingestStep, search = "", embedded = false) {
         ) || null
       );
     },
+    addEventListener() {},
   };
 
   vm.runInNewContext(navSource, {
@@ -161,6 +166,44 @@ function hrefWithPathFor(file, search = "") {
   return sandbox.result;
 }
 
+function normalizeIngestHrefFor(href, search = "", embedded = false) {
+  const link = createElement("a");
+  link.href = href;
+  const rootNode = {
+    querySelectorAll(selector) {
+      return selector === "a[href]" ? [link] : [];
+    },
+  };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window: makeWindow("episode-readiness.html", search, embedded),
+    URLSearchParams,
+    rootNode,
+  };
+  vm.runInNewContext(
+    `${navSource}\nnormalizeIngestScreenLinks(rootNode);\nglobalThis.result = { href: rootNode.querySelectorAll("a[href]")[0].href, target: rootNode.querySelectorAll("a[href]")[0].target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+function normalizeIngestClickFor(href, search = "", embedded = false) {
+  const link = createElement("a");
+  link.href = href;
+  link.closest = (selector) => (selector === "a[href]" ? link : null);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window: makeWindow("episode-readiness.html", search, embedded),
+    URLSearchParams,
+    link,
+  };
+  vm.runInNewContext(
+    `${navSource}\nnormalizeIngestLinkClick({ target: link });\nglobalThis.result = { href: link.href, target: link.target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
 assert.equal(
   routeSearchFor("speaker-role-mapping.html?draft=roles&path=ingest"),
   "?path=ingest",
@@ -191,6 +234,46 @@ assert.equal(
   1,
   "ingest nav emits a single canonical path query param",
 );
+
+const standaloneRoleLink = normalizeIngestHrefFor("speaker-role-mapping.html", "?path=ingest");
+assert.equal(
+  standaloneRoleLink.href,
+  "speaker-role-mapping.html?path=ingest",
+  "ingest nav preserves ingest context on in-page role mapping links",
+);
+assert.equal(standaloneRoleLink.target, "", "standalone ingest links do not force a top target");
+
+const embeddedRoleLink = normalizeIngestHrefFor("speaker-role-mapping.html", "?path=ingest", true);
+assert.equal(
+  embeddedRoleLink.href,
+  "../preview/app.html#speaker-role-mapping?path=ingest",
+  "embedded ingest nav routes in-page role mapping links through the preview app",
+);
+assert.equal(embeddedRoleLink.target, "_top", "embedded in-page ingest links target the parent app");
+
+const embeddedSourceMediaLink = normalizeIngestHrefFor("source-media-health.html", "?path=ingest", true);
+assert.equal(
+  embeddedSourceMediaLink.href,
+  "../preview/app.html#source-media-health?path=episode",
+  "embedded ingest nav routes in-page source media links through the episode handoff context",
+);
+assert.equal(embeddedSourceMediaLink.target, "_top", "embedded source media handoff links target the parent app");
+
+const syncRepairLink = normalizeIngestHrefFor("speaker-sync-repair.html", "?path=ingest", true);
+assert.equal(
+  syncRepairLink.href,
+  "speaker-sync-repair.html",
+  "ingest nav leaves non-ingest in-page fix links unchanged",
+);
+assert.equal(syncRepairLink.target, "", "ingest nav does not retarget non-ingest fix links");
+
+const dynamicSocialLink = normalizeIngestClickFor("social-context-intake.html", "?path=ingest", true);
+assert.equal(
+  dynamicSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "ingest nav normalizes dynamically rendered ingest links before navigation",
+);
+assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links target the parent app");
 
 const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
@@ -306,6 +389,7 @@ vm.runInNewContext(navSource, {
       const className = selector.slice(1);
       return duplicateNav.nodes.find((node) => node.className.split(" ").includes(className)) || null;
     },
+    addEventListener() {},
   },
   window: makeWindow("speaker-role-mapping.html"),
   URLSearchParams,

@@ -15,6 +15,7 @@ const PREVIEW_APP_INGEST_TARGETS = new Set([
   ...INGEST_FLOW.map((step) => step.id),
   "source-media-health",
 ]);
+const INGEST_IN_PAGE_TARGETS = new Set(PREVIEW_APP_INGEST_TARGETS);
 
 function screenIdFromFile(file) {
   const clean = (file || "").split("#")[0].split("?")[0];
@@ -103,6 +104,59 @@ function setIngestHandoffLink(link) {
   }
 
   link.href = file;
+}
+
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeIngestHref(href) {
+  return isLocalScreenHref(href) && INGEST_IN_PAGE_TARGETS.has(screenIdFromFile(href));
+}
+
+function hrefWithIngestContext(file) {
+  if (screenIdFromFile(file) !== "source-media-health") {
+    return file;
+  }
+
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  if (filePath === "episode") {
+    return file;
+  }
+  if (filePath === "ingest" || shouldHandoffToEpisodePath()) {
+    return mergeRouteSearch(file, { path: "episode" });
+  }
+  return file;
+}
+
+function setIngestInPageLink(link, file) {
+  setIngestScreenLink(link, hrefWithIngestContext(file));
+}
+
+function normalizeIngestScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeIngestHref(href)) {
+    setIngestInPageLink(link, href);
+  }
+}
+
+function normalizeIngestScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach((link) => {
+    normalizeIngestScreenLink(link);
+  });
+}
+
+function normalizeIngestLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeIngestScreenLink(link);
+  }
 }
 
 function pathQuerySuffix() {
@@ -271,6 +325,8 @@ function renderIngestNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeIngestScreenLinks(document);
+  document.addEventListener("click", normalizeIngestLinkClick);
 }
 
 if (document.readyState === "loading") {
