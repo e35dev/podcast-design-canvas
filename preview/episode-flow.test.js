@@ -20,8 +20,10 @@ assert.ok(shell.includes("episode-flow.html"), "preview shell links to the episo
 assert.match(flow, /<title>Podcast Design Canvas — Episode flow<\/title>/, "flow has product title");
 assert.match(flow, /aria-label="Podcast Design Canvas episode flow"/, "flow exposes a landmark label");
 
-// All five connected steps are present, in order, as one coherent path.
+// All seven connected steps are present, in order, as one coherent path.
 const stepTitles = [
+  "Episode readiness",
+  "Speaker roles",
   "Source media health",
   "Speaker sync",
   "Audio cleanup",
