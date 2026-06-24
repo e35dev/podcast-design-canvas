@@ -507,7 +507,12 @@
                       fixScreen: "accessibility-readability-checks.html",
                       fixLabel: "accessibility & readability checks",
                     }
-                    : {}),
+                    : row.check === "overlap"
+                      ? {
+                        fixScreen: "canvas-layer-controls.html",
+                        fixLabel: "canvas layer controls",
+                      }
+                      : {}),
             };
           }
 

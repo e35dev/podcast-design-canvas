@@ -79,6 +79,26 @@ assert.ok(
   shell.includes("../prototype/accessibility-readability-checks.html"),
   "accessibility & readability checks is reachable from the preview shell",
 );
+assert.ok(
+  shell.includes("../prototype/canvas-layer-controls.html"),
+  "canvas layer controls is reachable from the preview shell",
+);
+assert.ok(
+  styleNav.includes('id: "canvas-layer-controls"'),
+  "canvas layer controls is part of the connected visual direction path",
+);
+assert.ok(
+  html.includes('fixScreen: "canvas-layer-controls.html"'),
+  "element overlap routes to canvas layer controls",
+);
+assert.ok(
+  html.includes('fixLabel: "canvas layer controls"'),
+  "element overlap names the fix screen in creator-facing copy",
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, "canvas-layer-controls.html")),
+  "canvas layer controls exists as a real screen",
+);
 
 assert.ok(html.includes('openLink.className = "fix-link"'), "layout safe areas renders fix links with shared styling");
 assert.ok(html.includes("issue.fixScreen && issue.fixLabel"), "fix link rendering requires target and label");
@@ -86,3 +106,4 @@ assert.ok(html.includes("issue.fixScreen && issue.fixLabel"), "fix link renderin
 console.log("layout safe areas: review watermark overlap opens the review copy flow");
 console.log("layout safe areas: face-area overlap opens speaker framing safety");
 console.log("layout safe areas: too-small elements open accessibility & readability checks");
+console.log("layout safe areas: element overlap opens canvas layer controls");
