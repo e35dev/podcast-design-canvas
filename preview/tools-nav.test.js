@@ -31,6 +31,7 @@ const coreFlow = new Set([
   "audio-cleanup-controls.html",
   "audio-caption-quality-review.html",
   "export-readiness-review.html",
+  "render-failure-recovery.html",
 ]);
 
 const ingestFlow = new Set([

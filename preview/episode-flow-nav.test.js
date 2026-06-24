@@ -120,7 +120,13 @@ assert.ok(
   "first episode flow screen renders the next episode step",
 );
 
-const lastNav = renderNavFor("export-readiness-review.html");
+const exportNav = renderNavFor("export-readiness-review.html");
+assert.ok(
+  linkWithText(exportNav, "Next: Render recovery"),
+  "export readiness links forward to render recovery",
+);
+
+const lastNav = renderNavFor("render-failure-recovery.html");
 const publishHandoff = linkWithText(lastNav, "Continue: Watch-through preview");
 assert.equal(
   publishHandoff.href,
@@ -146,7 +152,7 @@ assert.equal(
 );
 assert.equal(embeddedPrevious.target, "_top", "embedded previous link targets the parent app");
 
-const embeddedLastNav = renderNavFor("export-readiness-review.html", true);
+const embeddedLastNav = renderNavFor("render-failure-recovery.html", true);
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Watch-through preview");
 assert.equal(
   embeddedHandoff.href,

@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Render Failure Recovery Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        --ok: #1a7a3a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+
+      .status-banner {
+        padding: 14px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+
+      .status-banner.failed {
+        background: #fef2f2;
+        color: var(--block);
+        border: 1px solid #f5c6c6;
+      }
+
+      .status-banner.retrying {
+        background: #fefbec;
+        color: var(--warn);
+        border: 1px solid #f0dca0;
+      }
+
+      .status-banner.needs-input {
+        background: #fefbec;
+        color: var(--warn);
+        border: 1px solid #f0dca0;
+      }
+
+      .status-banner.recovered {
+        background: #ecfdf5;
+        color: var(--ok);
+        border: 1px solid #a7f3d0;
+      }
+
+      .status-banner.exported-around {
+        background: #ecfdf5;
+        color: var(--ok);
+        border: 1px solid #a7f3d0;
+      }
+
+      .status-banner.set-aside {
+        background: var(--panel);
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      .failure-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+
+      .failure-card .title {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .failure-card .detail {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 10px;
+      }
+
+      .failure-card .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+        padding: 7px 14px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      button:hover { background: var(--panel); }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+      }
+
+      button.primary:hover { background: var(--accent-ink); }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .preserved-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .preserved-list li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+      }
+
+      .preserved-list .check {
+        color: var(--ok);
+        font-weight: 700;
+      }
+
+      .fix-link {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-ink);
+        text-decoration: none;
+        margin-top: 4px;
+      }
+
+      .fix-link:hover { text-decoration: underline; }
+
+      .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .result-summary {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .result-summary strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .result-summary dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .result-summary dt {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .bottom-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      @media (max-width: 860px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Render failure recovery</h1>
+      <p class="lede">Something went wrong during export. Your edits and readiness decisions are safe — review what failed and choose how to continue.</p>
+
+      <div class="workspace">
+        <div class="left">
+          <div id="status-banner" class="status-banner failed" role="status" aria-live="polite"></div>
+          <div id="failures"></div>
+          <div id="result-summary" class="result-summary" hidden></div>
+          <div id="bottom-actions" class="bottom-actions"></div>
+        </div>
+        <aside class="right">
+          <div class="panel">
+            <h2>Preserved episode state</h2>
+            <ul id="preserved" class="preserved-list"></ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      // Render failure recovery — creator-facing recovery from export failures.
+      //
+      // Grounded in the episode context used throughout the product: the failures
+      // reference real export areas (captions, b-roll, speaker video, audio mix,
+      // thumbnail) and route the creator back to the owning fix surface.
+
+      const FAILURE_CATALOG = [
+        {
+          id: "captions",
+          title: "Captions could not be included",
+          detail: "The transcript had unresolved spelling issues that blocked caption rendering.",
+          fixScreen: "audio-caption-quality-review.html",
+          fixLabel: "Caption quality review",
+          canRetry: true,
+          canSkip: true,
+          skipLabel: "Export without captions",
+          skipConsequence: "The exported episode will have no burned-in captions. Viewers relying on captions or watching without sound will miss spoken content.",
+        },
+        {
+          id: "broll",
+          title: "A b-roll asset is missing",
+          detail: "The b-roll clip placed at 14:32 is no longer available in the asset library.",
+          fixScreen: "contextual-broll-moments.html",
+          fixLabel: "Contextual b-roll moments",
+          canRetry: false,
+          canSkip: true,
+          skipLabel: "Skip this b-roll moment",
+          skipConsequence: "The moment at 14:32 will show the speaker layout without the planned b-roll overlay.",
+        },
+        {
+          id: "speaker",
+          title: "A speaker video file is unavailable",
+          detail: "Guest 1's synced recording cannot be read. The file may have been moved or renamed outside the product.",
+          fixScreen: "source-media-health.html",
+          fixLabel: "Source media health",
+          canRetry: false,
+          canSkip: false,
+        },
+        {
+          id: "audio",
+          title: "Audio mix could not be prepared",
+          detail: "Noise reduction on the host track produced silence. The cleanup settings may need adjustment.",
+          fixScreen: "audio-cleanup-controls.html",
+          fixLabel: "Audio cleanup",
+          canRetry: true,
+          canSkip: false,
+        },
+        {
+          id: "thumbnail",
+          title: "Thumbnail export failed",
+          detail: "The selected cover frame references a speaker crop that is no longer in the layout.",
+          fixScreen: "thumbnail-cover-frame.html",
+          fixLabel: "Thumbnail cover frame",
+          canRetry: true,
+          canSkip: true,
+          skipLabel: "Export without custom thumbnail",
+          skipConsequence: "The episode will export with a default auto-generated cover frame instead of the chosen thumbnail.",
+        },
+      ];
+
+      const PRESERVED_ITEMS = [
+        "Canvas layout edits",
+        "Caption corrections",
+        "Approved b-roll placements",
+        "Episode metadata and chapters",
+        "Review comments",
+        "Template changes",
+        "Export readiness decisions",
+      ];
+
+      // Recovery status follows the spec: exactly one status at a time, moving
+      // forward only as the creator acts. The states are sequential, not stacking.
+      const STATUS_LABELS = {
+        failed: "Export failed — choose a recovery action below",
+        retrying: "Retrying export…",
+        "needs-input": "Waiting for you — replace the missing asset or fix the readiness issue",
+        recovered: "Export recovered successfully",
+        "exported-around": "Exported around the issue — see what shipped below",
+        "set-aside": "Export set aside — your edits are saved to return to later",
+      };
+
+      // Start with a random subset of 2–3 failures to show a realistic scenario.
+      // The creator can then act on each one.
+      function pickInitialFailures() {
+        var shuffled = FAILURE_CATALOG.slice().sort(function () { return Math.random() - 0.5; });
+        return shuffled.slice(0, 2 + Math.floor(Math.random() * 2));
+      }
+
+      var activeFailures = pickInitialFailures();
+      var recoveryStatus = "failed";
+      var resolvedFailures = {};
+      var skippedFailures = {};
+
+      var statusBannerEl = document.getElementById("status-banner");
+      var failuresEl = document.getElementById("failures");
+      var preservedEl = document.getElementById("preserved");
+      var resultSummaryEl = document.getElementById("result-summary");
+      var bottomActionsEl = document.getElementById("bottom-actions");
+
+      function allResolved() {
+        return activeFailures.every(function (f) {
+          return resolvedFailures[f.id] || skippedFailures[f.id];
+        });
+      }
+
+      function render() {
+        statusBannerEl.className = "status-banner " + recoveryStatus;
+        statusBannerEl.textContent = STATUS_LABELS[recoveryStatus];
+
+        renderFailures();
+        renderPreserved();
+        renderResult();
+        renderBottomActions();
+      }
+
+      function renderFailures() {
+        failuresEl.replaceChildren();
+        if (recoveryStatus === "recovered" || recoveryStatus === "exported-around" || recoveryStatus === "set-aside") {
+          return;
+        }
+
+        activeFailures.forEach(function (failure) {
+          var card = document.createElement("div");
+          card.className = "failure-card";
+
+          var title = document.createElement("div");
+          title.className = "title";
+          title.textContent = failure.title;
+
+          var detail = document.createElement("div");
+          detail.className = "detail";
+
+          if (resolvedFailures[failure.id]) {
+            detail.textContent = "Resolved — the fix was applied successfully.";
+            card.append(title, detail);
+            failuresEl.appendChild(card);
+            return;
+          }
+          if (skippedFailures[failure.id]) {
+            detail.textContent = "Skipped — " + failure.skipConsequence;
+            card.append(title, detail);
+            failuresEl.appendChild(card);
+            return;
+          }
+
+          detail.textContent = failure.detail;
+          card.append(title, detail);
+
+          var actions = document.createElement("div");
+          actions.className = "actions";
+
+          if (failure.canRetry) {
+            var retryBtn = document.createElement("button");
+            retryBtn.className = "primary";
+            retryBtn.textContent = "Retry this area";
+            retryBtn.addEventListener("click", function () {
+              recoveryStatus = "retrying";
+              render();
+              setTimeout(function () {
+                resolvedFailures[failure.id] = true;
+                recoveryStatus = allResolved() ? "recovered" : "failed";
+                render();
+              }, 1200);
+            });
+            actions.appendChild(retryBtn);
+          }
+
+          if (failure.fixScreen) {
+            var fixLink = document.createElement("a");
+            fixLink.className = "fix-link";
+            fixLink.href = failure.fixScreen;
+            fixLink.textContent = "Open " + failure.fixLabel + " \u2192";
+            fixLink.addEventListener("click", function (e) {
+              if (!failure.canRetry) {
+                // Non-retryable failures need the creator to fix the issue at the
+                // owning surface — move to needs-input so the status reflects that
+                // the export is waiting on the creator, not retrying automatically.
+                recoveryStatus = "needs-input";
+                render();
+              }
+            });
+            actions.appendChild(fixLink);
+          }
+
+          if (failure.canSkip) {
+            var skipBtn = document.createElement("button");
+            skipBtn.textContent = failure.skipLabel;
+            skipBtn.addEventListener("click", function () {
+              skippedFailures[failure.id] = true;
+              if (allResolved()) {
+                recoveryStatus = "exported-around";
+              }
+              render();
+            });
+            actions.appendChild(skipBtn);
+          }
+
+          card.appendChild(actions);
+          failuresEl.appendChild(card);
+        });
+      }
+
+      function renderPreserved() {
+        preservedEl.replaceChildren();
+        PRESERVED_ITEMS.forEach(function (item) {
+          var li = document.createElement("li");
+          var check = document.createElement("span");
+          check.className = "check";
+          check.setAttribute("aria-hidden", "true");
+          check.textContent = "\u2713";
+          var text = document.createElement("span");
+          text.textContent = item;
+          li.append(check, text);
+          preservedEl.appendChild(li);
+        });
+      }
+
+      function renderResult() {
+        if (recoveryStatus !== "recovered" && recoveryStatus !== "exported-around") {
+          resultSummaryEl.hidden = true;
+          resultSummaryEl.replaceChildren();
+          return;
+        }
+
+        resultSummaryEl.hidden = false;
+        var heading = document.createElement("strong");
+        heading.textContent = recoveryStatus === "recovered" ? "Export recovered" : "Exported with adjustments";
+
+        var dl = document.createElement("dl");
+        var resolvedCount = Object.keys(resolvedFailures).length;
+        var skippedCount = Object.keys(skippedFailures).length;
+
+        var rows = [
+          ["Total failures", String(activeFailures.length)],
+          ["Resolved by retry", String(resolvedCount)],
+          ["Skipped (optional)", String(skippedCount)],
+          ["Destination", "YouTube — Full episode"],
+        ];
+
+        if (skippedCount > 0) {
+          var skippedNames = activeFailures
+            .filter(function (f) { return skippedFailures[f.id]; })
+            .map(function (f) { return f.title.toLowerCase(); });
+          rows.push(["Excluded from export", skippedNames.join(", ")]);
+        }
+
+        rows.forEach(function (row) {
+          var dt = document.createElement("dt");
+          dt.textContent = row[0];
+          var dd = document.createElement("dd");
+          dd.textContent = row[1];
+          dl.append(dt, dd);
+        });
+
+        resultSummaryEl.replaceChildren(heading, dl);
+      }
+
+      function renderBottomActions() {
+        bottomActionsEl.replaceChildren();
+
+        if (recoveryStatus === "recovered" || recoveryStatus === "exported-around") {
+          var continueBtn = document.createElement("button");
+          continueBtn.className = "primary";
+          continueBtn.textContent = "Continue to watch-through preview";
+          continueBtn.addEventListener("click", function () {
+            window.location.href = "episode-watch-through-preview.html";
+          });
+          bottomActionsEl.appendChild(continueBtn);
+        }
+
+        if (recoveryStatus === "failed" || recoveryStatus === "needs-input") {
+          var setAsideBtn = document.createElement("button");
+          setAsideBtn.textContent = "Set aside — keep edits for later";
+          setAsideBtn.addEventListener("click", function () {
+            recoveryStatus = "set-aside";
+            render();
+          });
+          bottomActionsEl.appendChild(setAsideBtn);
+        }
+
+        if (recoveryStatus === "set-aside") {
+          var resumeBtn = document.createElement("button");
+          resumeBtn.className = "primary";
+          resumeBtn.textContent = "Resume recovery";
+          resumeBtn.addEventListener("click", function () {
+            recoveryStatus = "failed";
+            render();
+          });
+          bottomActionsEl.appendChild(resumeBtn);
+
+          var readinessBtn = document.createElement("button");
+          readinessBtn.textContent = "Return to export readiness";
+          readinessBtn.addEventListener("click", function () {
+            window.location.href = "export-readiness-review.html";
+          });
+          bottomActionsEl.appendChild(readinessBtn);
+        }
+
+        var resetBtn = document.createElement("button");
+        resetBtn.textContent = "Reset scenario";
+        resetBtn.addEventListener("click", function () {
+          activeFailures = pickInitialFailures();
+          recoveryStatus = "failed";
+          resolvedFailures = {};
+          skippedFailures = {};
+          render();
+        });
+        bottomActionsEl.appendChild(resetBtn);
+      }
+
+      render();
+    </script>
+    <script src="../preview/episode-flow-nav.js" defer></script>
+  </body>
+</html>

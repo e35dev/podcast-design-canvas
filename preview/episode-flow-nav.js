@@ -10,6 +10,7 @@ const EPISODE_FLOW = [
   { file: "audio-cleanup-controls.html", label: "Audio cleanup" },
   { file: "audio-caption-quality-review.html", label: "Caption quality review" },
   { file: "export-readiness-review.html", label: "Export readiness" },
+  { file: "render-failure-recovery.html", label: "Render recovery" },
 ];
 
 const EPISODE_SHELL_PREFIX = 2;

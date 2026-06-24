@@ -188,7 +188,7 @@ assert.ok(
   "first flow screen renders next link",
 );
 const firstStep = firstNav.nodes.find((node) =>
-  node.textContent === "Current step: 3 of 7 · Source media health",
+  node.textContent === "Current step: 3 of 8 · Source media health",
 );
 assert.ok(firstStep, "first flow screen counts shell preamble steps in the step label");
 
@@ -202,14 +202,24 @@ assert.ok(
   "middle flow screen renders next link",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Current step: 5 of 7 · Audio cleanup"
+  node.textContent === "Current step: 5 of 8 · Audio cleanup"
 );
 assert.ok(currentStep, "middle flow screen renders visible current-step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current step exposes aria-current");
 
-const lastNav = renderNavFor("export-readiness-review.html");
+const exportNav = renderNavFor("export-readiness-review.html");
 assert.ok(
-  lastNav.nodes.some((node) => node.textContent === "Previous: Caption quality review"),
+  exportNav.nodes.some((node) => node.textContent === "Previous: Caption quality review"),
+  "export readiness screen renders previous link",
+);
+assert.ok(
+  exportNav.nodes.some((node) => node.textContent === "Next: Render recovery"),
+  "export readiness screen links forward to render recovery",
+);
+
+const lastNav = renderNavFor("render-failure-recovery.html");
+assert.ok(
+  lastNav.nodes.some((node) => node.textContent === "Previous: Export readiness"),
   "last flow screen renders previous link",
 );
 assert.ok(
@@ -252,7 +262,7 @@ assert.equal(
 );
 assert.equal(embeddedNext.target, "_top", "embedded next link targets the parent app");
 
-const embeddedLastNav = renderNavFor("export-readiness-review.html", true);
+const embeddedLastNav = renderNavFor("render-failure-recovery.html", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Watch-through preview");
 assert.equal(
   embeddedHandoff.href,
