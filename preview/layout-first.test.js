@@ -1248,4 +1248,26 @@ layoutButtons[0].listeners.keydown({ key: "Enter", preventDefault() {} });
 assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "a non-navigation key leaves the layout selection unchanged");
 controller.applyLayout("interview");
 
+// The gated Continue stays keyboard-reachable: an <a> with no href falls out of the tab order,
+// so a keyboard/screen-reader user could never focus it to hear why it is disabled or use the
+// jump-to-blocking-slot guidance. It keeps tabindex 0 while gated, and activating it with the
+// keyboard moves focus to the first blocking slot, matching the mouse path.
+const continueEl = elementsById["layout-continue"];
+controller.resetVideos();
+controller.applyLayout("interview");
+assert.equal(continueEl.attributes["aria-disabled"], "true", "Continue starts gated with both required videos missing");
+assert.equal(continueEl.getAttribute("tabindex"), "0", "the gated Continue stays in the tab order so keyboard users can reach it");
+continueEl.listeners.keydown({ key: "Enter", preventDefault() {} });
+assert.equal(
+  lastFocused,
+  controller.zonesBySlot.host.querySelector("[data-file-input]"),
+  "activating the gated Continue with the keyboard jumps to the first blocking slot",
+);
+controller.placeVideoFile(controller.zonesBySlot.host, video("cont-host.mp4"));
+controller.placeVideoFile(controller.zonesBySlot.guest, video("cont-guest.mp4"));
+assert.equal(continueEl.attributes["aria-disabled"], "false", "Continue enables once both required videos are placed");
+assert.equal(continueEl.getAttribute("tabindex"), undefined, "an enabled Continue relies on its href for focus, not a leftover tabindex");
+controller.resetVideos();
+controller.applyLayout("interview");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

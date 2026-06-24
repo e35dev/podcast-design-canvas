@@ -462,6 +462,8 @@
       continueLink.classList.toggle("is-disabled", !ready);
       continueLink.setAttribute("aria-disabled", ready ? "false" : "true");
       if (ready && continueLink.dataset.readyHref) {
+        // Enabled: the href puts it in the tab order, so no explicit tabindex is needed.
+        if (typeof continueLink.removeAttribute === "function") continueLink.removeAttribute("tabindex");
         const state = handoff && handoff.stateFromZones(currentLayout, zones);
         if (handoff && state) {
           handoff.save(storage, state);
@@ -471,6 +473,10 @@
         }
       } else {
         continueLink.removeAttribute("href");
+        // An <a> with no href drops out of the tab order. Keep the gated Continue focusable so a
+        // keyboard/screen-reader user can reach it, hear via aria-describedby which videos are
+        // still missing, and activate it to jump to the first blocking slot (mouse parity, #1181).
+        if (typeof continueLink.setAttribute === "function") continueLink.setAttribute("tabindex", "0");
         if (handoff && typeof handoff.clear === "function") {
           handoff.clear(storage);
         }
@@ -1247,6 +1253,17 @@
       continueLink.addEventListener("click", (event) => {
         if (continueLink.getAttribute("aria-disabled") === "true") {
           event.preventDefault();
+          focusFirstBlockingSlot();
+        }
+      });
+      // An <a> with no href doesn't fire a click on Enter/Space, so the gated Continue would be a
+      // dead key for keyboard users. Mirror the click guidance: activating it jumps to the first
+      // blocking slot, giving keyboard parity with the mouse path (#1181).
+      continueLink.addEventListener("keydown", (event) => {
+        const key = event && event.key;
+        if ((key === "Enter" || key === " " || key === "Spacebar")
+          && continueLink.getAttribute("aria-disabled") === "true") {
+          if (typeof event.preventDefault === "function") event.preventDefault();
           focusFirstBlockingSlot();
         }
       });
