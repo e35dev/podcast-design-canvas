@@ -56,6 +56,13 @@ assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to 
 assert.ok(shell.includes("destination-crop-preview.html"), "shell links to destination crop in publish path");
 assert.ok(shell.includes("show-notes-assembly.html"), "shell links to show notes assembly in publish path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
+assert.match(shell, /Clean up audio &amp; captions/, "shell documents the cleanup helper path");
+assert.ok(
+  shell.indexOf("Clean up audio") < shell.indexOf("Add contextual visuals"),
+  "cleanup helper section precedes contextual visuals in shell workflow order",
+);
+assert.ok(shell.includes("pause-crosstalk-cleanup.html"), "shell links to pause cleanup in helper path");
+assert.ok(shell.includes("on-screen-correction-note.html"), "shell links to correction note in helper path");
 assert.match(shell, /Add contextual visuals/, "shell documents the contextual visuals path");
 assert.match(shell, /Make it reusable/, "shell documents the reuse path");
 assert.ok(shell.includes("contextual-broll-moments.html"), "shell links to b-roll in visuals path");
