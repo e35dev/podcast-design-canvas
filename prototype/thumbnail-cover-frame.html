@@ -29,6 +29,11 @@
         color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
       }
       button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .surface-note {
+        border: 1px solid #c7d7d1; border-radius: 7px; background: #fff; color: var(--muted);
+        margin-bottom: 14px; padding: 11px 12px;
+      }
+      .surface-note strong { display: block; color: var(--ink); margin-bottom: 4px; }
       .variants { display: grid; gap: 14px; }
       .variant {
         display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 14px;
@@ -38,6 +43,12 @@
         position: relative; width: 172px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
         background: linear-gradient(160deg, #567a72, #213734);
       }
+      .preview-small .frame { width: 132px; }
+      .preview-small .title { font-size: 10px; padding: 4px 5px; }
+      .preview-mobile .frame { width: 116px; border-radius: 14px; }
+      .preview-mobile .title { left: 8%; right: 8%; bottom: 8%; font-size: 9px; padding: 4px 5px; }
+      .preview-dark .frame { box-shadow: 0 0 0 10px #101816; }
+      .preview-dark .title { background: rgba(16,24,22,0.9); color: #f5fbf8; }
       .speaker {
         position: absolute; top: 18%; width: 28%; aspect-ratio: 1; border-radius: 50%; background: #e8f4f1;
       }
@@ -92,14 +103,15 @@
       <section class="workspace">
         <div class="panel">
           <h2>Candidate Comparison</h2>
-          <div class="toolbar">
-            <button type="button" class="active">large header</button>
-            <button type="button">small grid</button>
-            <button type="button">mobile feed</button>
-            <button type="button">dark surface</button>
+          <div class="toolbar" id="surfaceToolbar" aria-label="Preview surface">
+            <button type="button" data-surface="large">large header</button>
+            <button type="button" data-surface="small">small grid</button>
+            <button type="button" data-surface="mobile">mobile feed</button>
+            <button type="button" data-surface="dark">dark surface</button>
           </div>
+          <div class="surface-note" id="surfaceNote" aria-live="polite"></div>
 
-          <div class="variants">
+          <div class="variants" id="variants">
             <article class="variant">
               <div class="frame">
                 <span class="tag">active cover</span>
@@ -228,5 +240,67 @@
         </aside>
       </section>
     </main>
+    <script>
+      const surfaces = {
+        large: {
+          title: "Large header preview",
+          detail: "Judge expression, guest presence, and title balance at the watch-page size.",
+          className: "variants preview-large",
+        },
+        small: {
+          title: "Small grid preview",
+          detail: "Check whether the title still reads when the frame appears beside other recommended episodes.",
+          className: "variants preview-small",
+        },
+        mobile: {
+          title: "Mobile feed preview",
+          detail: "Confirm the crop keeps both speakers and the title legible at phone-feed scale.",
+          className: "variants preview-mobile",
+        },
+        dark: {
+          title: "Dark surface preview",
+          detail: "Review whether the cover still separates from a dark destination background.",
+          className: "variants preview-dark",
+        },
+      };
+
+      let selectedSurface = "large";
+      const toolbarElement = document.querySelector("#surfaceToolbar");
+      const variantsElement = document.querySelector("#variants");
+      const surfaceNoteElement = document.querySelector("#surfaceNote");
+
+      function renderSurfaceNote(surface) {
+        surfaceNoteElement.replaceChildren();
+        const title = document.createElement("strong");
+        title.textContent = surface.title;
+        const detail = document.createElement("span");
+        detail.textContent = surface.detail;
+        surfaceNoteElement.append(title, detail);
+      }
+
+      function renderSurface() {
+        const surface = surfaces[selectedSurface];
+        variantsElement.className = surface.className;
+        renderSurfaceNote(surface);
+        toolbarElement.querySelectorAll("button").forEach((button) => {
+          const active = button.dataset.surface === selectedSurface;
+          button.className = active ? "active" : "";
+          button.setAttribute("aria-pressed", String(active));
+        });
+      }
+
+      toolbarElement.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedSurface = button.dataset.surface;
+          renderSurface();
+        });
+      });
+
+      renderSurface();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { surfaces };
+      }
+    </script>
   </body>
 </html>
