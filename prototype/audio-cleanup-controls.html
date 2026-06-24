@@ -913,6 +913,7 @@
           tags.className = "effect-tags";
           tags.setAttribute("aria-label", "Active cleanup effects");
           for (const effect of effects) {
+            if (typeof effect !== "string" || !effect.length) continue;
             const tag = document.createElement("span");
             tag.className = "effect-tag";
             tag.textContent = effect;
