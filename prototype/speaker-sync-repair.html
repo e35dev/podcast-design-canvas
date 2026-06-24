@@ -1048,16 +1048,6 @@
             render();
           });
 
-          const intentionalButton = document.createElement("button");
-          intentionalButton.type = "button";
-          intentionalButton.className = "secondary";
-          intentionalButton.textContent = "Mark intentional";
-          intentionalButton.addEventListener("click", () => {
-            tracks[index].repairConfirmed = false;
-            tracks[index].resolution = "accepted";
-            render();
-          });
-
           const ignoreButton = document.createElement("button");
           ignoreButton.type = "button";
           ignoreButton.className = "secondary";
@@ -1068,7 +1058,28 @@
             render();
           });
 
-          actions.append(applyButton, intentionalButton, ignoreButton);
+          actions.append(applyButton);
+
+          // "Mark intentional" only makes sense where deliberate timing is plausible
+          // (a slightly early/late start, drift, attribution) — those issues list
+          // "intentional" among their repairs. A track that ends early or has duplicate
+          // audio cannot be "intentional" (its repairs omit it), and accepting it would
+          // clear a real export blocker, so the button must not appear there. Gate it the
+          // same way as the attribution button below.
+          if (issues[track.issue].repairs.includes("intentional")) {
+            const intentionalButton = document.createElement("button");
+            intentionalButton.type = "button";
+            intentionalButton.className = "secondary";
+            intentionalButton.textContent = "Mark intentional";
+            intentionalButton.addEventListener("click", () => {
+              tracks[index].repairConfirmed = false;
+              tracks[index].resolution = "accepted";
+              render();
+            });
+            actions.append(intentionalButton);
+          }
+
+          actions.append(ignoreButton);
 
           if (issues[track.issue].repairs.includes("attribution")) {
             const attributionButton = document.createElement("button");
@@ -1318,6 +1329,12 @@
       }
 
       render();
+
+      // Exported only for the committed Node test (speaker-sync-repair.test.js). In the
+      // page `module` is undefined, so this block is skipped and nothing changes.
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack };
+      }
     </script>
   </body>
 </html>
