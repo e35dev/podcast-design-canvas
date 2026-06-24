@@ -90,19 +90,15 @@ function createPreviewAppRouting(order) {
     "client-review-copy-flow",
     "publish-checklist",
   ]);
-  const layoutHandoffSlots = {
-    interview: ["host", "guest"],
-    solo: ["host"],
-    panel: ["host", "guest", "guest-b"],
-  };
+  const layoutHandoff = typeof globalThis !== "undefined" && globalThis.PodcastLayoutHandoff
+    ? globalThis.PodcastLayoutHandoff
+    : typeof window !== "undefined" ? window.PodcastLayoutHandoff : null;
 
   function normalizedLayoutSlots(layout, value) {
-    const required = layoutHandoffSlots[layout];
-    if (!required) {
+    if (!layoutHandoff || typeof layoutHandoff.completeSlotQueryForLayout !== "function") {
       return "";
     }
-    const incoming = new Set(String(value || "").split(",").filter(Boolean));
-    return required.every((slot) => incoming.has(slot)) ? required.join(",") : "";
+    return layoutHandoff.completeSlotQueryForLayout(layout, value);
   }
 
   function routeSearchFor(screen, rawSearch) {

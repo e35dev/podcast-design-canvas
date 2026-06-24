@@ -121,6 +121,16 @@
     return params.toString();
   }
 
+  function completeSlotQueryForLayout(layout, value) {
+    const normalizedLayout = normalizeLayout(layout);
+    if (!normalizedLayout) {
+      return "";
+    }
+    const incoming = new Set(slotsFromQuery(value));
+    const required = requiredSlotsFor(normalizedLayout);
+    return required.every((slot) => incoming.has(slot)) ? required.join(",") : "";
+  }
+
   function hrefWithState(baseHref, state) {
     const query = queryForState(state);
     if (!baseHref || !query) {
@@ -187,6 +197,7 @@
 
   const api = {
     STORAGE_KEY,
+    completeSlotQueryForLayout,
     hrefWithState,
     load,
     normalizeLayout,

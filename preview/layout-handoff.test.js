@@ -37,6 +37,16 @@ assert.equal(
   "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
   "handoff href carries the chosen layout and required slots through the app hash",
 );
+assert.equal(
+  handoff.completeSlotQueryForLayout("interview", "host,guest,broll"),
+  "host,guest",
+  "shared route validation keeps required slots and excludes optional b-roll",
+);
+assert.equal(
+  handoff.completeSlotQueryForLayout("panel", "host,guest"),
+  "",
+  "shared route validation rejects incomplete layout-start handoffs",
+);
 
 const stored = {};
 const storage = {
