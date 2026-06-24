@@ -291,6 +291,120 @@
         margin: 14px 0 0;
       }
 
+      .readiness {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 8px;
+        margin: 12px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .readiness .count {
+        font-weight: 800;
+        color: var(--ink);
+      }
+
+      .readiness .count.blocked {
+        color: var(--warn);
+      }
+
+      .rollup {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .rollup h3 {
+        margin: 0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+      }
+
+      .rollup-group {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+      }
+
+      .rollup-group.empty {
+        opacity: 0.5;
+      }
+
+      .rollup-group .group-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .rollup-group .group-name {
+        font-weight: 800;
+      }
+
+      .rollup-group .group-count {
+        font-weight: 800;
+        color: var(--accent);
+      }
+
+      .rollup-group.attention .group-count {
+        color: var(--warn);
+      }
+
+      .rollup-group .group-desc {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .rollup-group .group-items {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        font-size: 12px;
+        color: var(--ink);
+        display: grid;
+        gap: 3px;
+      }
+
+      .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .filter-bar input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+      }
+
+      .filter-note {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 10px 0 0;
+      }
+
+      .filter-note button {
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--accent);
+        font: inherit;
+        font-weight: 700;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -319,7 +433,12 @@
       <section class="workspace" aria-label="Contextual b-roll workspace">
         <div class="panel">
           <h2>Suggested moments</h2>
+          <div class="filter-bar">
+            <input type="checkbox" id="focusFilter" checked>
+            <label for="focusFilter">Focus on moments that still need you</label>
+          </div>
           <div class="moments" id="moments"></div>
+          <p class="filter-note" id="filterNote" hidden></p>
           <div class="actions">
             <button type="button" id="addMoment">Add a moment</button>
             <button type="button" class="secondary" id="reset">Reset sample</button>
@@ -329,7 +448,9 @@
         <aside class="panel" aria-live="polite" aria-label="Visual review summary">
           <h2>Visual review summary</h2>
           <div id="status" class="status ready">Visuals reviewed</div>
+          <p class="readiness" id="readiness"></p>
           <div id="issues" class="issues"></div>
+          <section class="rollup" id="rollup" aria-label="Review states"></section>
           <p class="summary-note">Only approved moments appear in the export. Rejected suggestions stay out and won't be offered again this episode.</p>
         </aside>
       </section>
@@ -371,6 +492,42 @@
         rejected: "Reject",
       };
 
+      // The spec asks the review surface to group moments by state so a long episode
+      // stays calm instead of flagging every candidate equally. Each computed review
+      // state maps to one group, carrying the spec's description of what the state means
+      // for the export. (docs/contextual-broll-moments.md — Review States.)
+      const reviewGroups = [
+        {
+          key: "suggested",
+          name: "Needs a decision",
+          attention: true,
+          desc: "Shown with context but not in the export yet — approve, adjust, or reject each one.",
+        },
+        {
+          key: "review",
+          name: "Needs review",
+          attention: true,
+          desc: "Flagged for overlap or low-confidence context. Resolve before the moment is safe to include.",
+        },
+        {
+          key: "approved",
+          name: "In the export",
+          attention: false,
+          desc: "Approved visuals that will appear in the exported episode.",
+        },
+        {
+          key: "rejected",
+          name: "Rejected",
+          attention: false,
+          desc: "Left out of the export and not suggested again this episode.",
+        },
+      ];
+
+      // A moment is "unsettled" while it still needs the creator: suggested, or flagged
+      // for review. Settled moments (in the export, rejected) are summarized in the
+      // rollup and hidden from the calm default view.
+      const isUnsettledState = (state) => state === "suggested" || state === "review";
+
       const sampleMoments = [
         { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
         { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
@@ -380,9 +537,17 @@
 
       let moments = structuredClone(sampleMoments);
 
+      // The default review surface stays calm by focusing on moments that still need
+      // the creator; settled moments are summarized in the rollup and revealed on demand.
+      let focusUnsettled = true;
+
       const momentsElement = document.querySelector("#moments");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const readinessElement = document.querySelector("#readiness");
+      const rollupElement = document.querySelector("#rollup");
+      const filterNoteElement = document.querySelector("#filterNote");
+      const focusFilterElement = document.querySelector("#focusFilter");
 
       document.querySelector("#addMoment").addEventListener("click", () => {
         const next = moments.length + 1;
@@ -392,6 +557,12 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         moments = structuredClone(sampleMoments);
+        focusUnsettled = focusFilterElement.checked;
+        render();
+      });
+
+      focusFilterElement.addEventListener("change", () => {
+        focusUnsettled = focusFilterElement.checked;
         render();
       });
 
@@ -463,13 +634,32 @@
         return { overall, results };
       }
 
-      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
-      // a caret, so replacing them is safe).
+      // Full rebuild: used on load, add, reset, filter toggle, and select changes
+      // (selects don't hold a caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(moments);
-        momentsElement.replaceChildren(
-          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
-        );
+
+        // Apply the calm-default focus: when on, render only moments that still need a
+        // decision or a second look. Each card keeps its real moment index so the light
+        // typing-refresh path can target the right moment after filtering.
+        const visible = moments
+          .map((moment, index) => ({ moment, index, state: evaluation.results[index].state }))
+          .filter((entry) => !focusUnsettled || isUnsettledState(entry.state));
+
+        if (visible.length === 0 && moments.length > 0) {
+          momentsElement.replaceChildren(
+            Object.assign(document.createElement("p"), {
+              className: "summary-note",
+              textContent: "Every moment is settled — nothing needs your review right now.",
+            }),
+          );
+        } else {
+          momentsElement.replaceChildren(
+            ...visible.map(({ moment, index }) => renderMoment(moment, index, evaluation.results[index])),
+          );
+        }
+
+        updateFilterNote(visible.length);
         updateSummary(evaluation);
       }
 
@@ -477,11 +667,108 @@
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready" ? "Visuals reviewed" : "Moments need review";
 
+        updateReadiness(evaluation);
+
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every suggested moment is settled. Approved visuals are ready for export." })]),
+        );
+
+        updateRollup(evaluation);
+      }
+
+      // Honest export progress: only approved/adjusted moments are in the export, and
+      // suggested or needs-review moments still need the creator before the episode is
+      // visual-ready. Never counts an unsettled moment as ready.
+      function updateReadiness(evaluation) {
+        const inExport = evaluation.results.filter((result) => result.state === "approved").length;
+        const pending = evaluation.results.filter((result) => isUnsettledState(result.state)).length;
+
+        const exportCount = Object.assign(document.createElement("span"), {
+          className: "count",
+          textContent: String(inExport),
+        });
+        const pendingCount = Object.assign(document.createElement("span"), {
+          className: pending > 0 ? "count blocked" : "count",
+          textContent: String(pending),
+        });
+
+        const tail = pending === 0
+          ? " left to decide — every moment is settled."
+          : pending === 1
+            ? " moment still needs a decision before this episode is visual-ready."
+            : " moments still need a decision before this episode is visual-ready.";
+
+        readinessElement.replaceChildren(
+          exportCount,
+          document.createTextNode(inExport === 1 ? " visual in the export · " : " visuals in the export · "),
+          pendingCount,
+          document.createTextNode(tail),
+        );
+      }
+
+      // Group every moment by its computed review state so the creator sees the whole
+      // episode at a glance, calm by default, rather than a flat list that flags each
+      // candidate equally. Empty groups stay visible but dimmed so the picture is honest.
+      function updateRollup(evaluation) {
+        const heading = Object.assign(document.createElement("h3"), { textContent: "Review states" });
+
+        const sections = reviewGroups.map((group) => {
+          const members = moments.filter((moment, index) => evaluation.results[index].state === group.key);
+
+          const section = document.createElement("div");
+          section.className = ["rollup-group", group.attention ? "attention" : "", members.length ? "" : "empty"]
+            .filter(Boolean)
+            .join(" ");
+
+          const head = document.createElement("div");
+          head.className = "group-head";
+          head.append(
+            Object.assign(document.createElement("span"), { className: "group-name", textContent: group.name }),
+            Object.assign(document.createElement("span"), { className: "group-count", textContent: String(members.length) }),
+          );
+
+          const desc = Object.assign(document.createElement("p"), { className: "group-desc", textContent: group.desc });
+          section.append(head, desc);
+
+          if (members.length) {
+            const items = document.createElement("ul");
+            items.className = "group-items";
+            // Reason text is creator-editable, so each label is written with textContent.
+            members.forEach((moment) => {
+              items.append(Object.assign(document.createElement("li"), { textContent: moment.reason || "Untitled moment" }));
+            });
+            section.append(items);
+          }
+
+          return section;
+        });
+
+        rollupElement.replaceChildren(heading, ...sections);
+      }
+
+      // When the calm focus hides settled moments, say exactly how many are hidden and
+      // offer a one-click way to reveal them without losing the rollup summary.
+      function updateFilterNote(visibleCount) {
+        const hidden = moments.length - visibleCount;
+        if (!focusUnsettled || hidden <= 0) {
+          filterNoteElement.hidden = true;
+          filterNoteElement.replaceChildren();
+          return;
+        }
+
+        filterNoteElement.hidden = false;
+        const showAll = Object.assign(document.createElement("button"), { type: "button", textContent: "show all" });
+        showAll.addEventListener("click", () => {
+          focusUnsettled = false;
+          focusFilterElement.checked = false;
+          render();
+        });
+        filterNoteElement.replaceChildren(
+          document.createTextNode(`${hidden} settled ${hidden === 1 ? "moment is" : "moments are"} hidden — `),
+          showAll,
         );
       }
 
@@ -490,7 +777,10 @@
       // typing in (which would drop focus and the caret).
       function refreshStates() {
         const evaluation = evaluate(moments);
-        Array.from(momentsElement.children).forEach((card, index) => {
+        // The rendered cards can be a filtered subset, so resolve each card back to its
+        // real moment via the index stored on the card rather than its DOM position.
+        Array.from(momentsElement.children).forEach((card) => {
+          const index = Number(card.dataset.momentIndex);
           const badge = card.querySelector(".badge");
           if (badge && evaluation.results[index]) {
             badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
@@ -520,6 +810,9 @@
       function renderMoment(moment, index, result) {
         const article = document.createElement("article");
         article.className = "moment";
+        // Keep the real moment index on the card so the filtered list still maps each
+        // card back to its moment for in-place badge refreshes.
+        article.dataset.momentIndex = String(index);
 
         const frameClass = moment.decision === "rejected" ? "rejected" : moment.strength;
         const typeOptions = Object.entries(types)
