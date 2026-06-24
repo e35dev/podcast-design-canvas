@@ -1,0 +1,1294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sponsor Placement Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .count {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .placements {
+        display: grid;
+        gap: 14px;
+      }
+
+      .placement {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .when {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+
+      .ptype {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .chip {
+        justify-self: start;
+        font-size: 12px;
+        color: var(--muted);
+        background: #eef2f0;
+        border-radius: 999px;
+        padding: 2px 9px;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .sponsor {
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .sponsor strong {
+        font-weight: 800;
+      }
+
+      .controls-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .lbl {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      .panel-hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 12px;
+      }
+
+      /* ---- In-context preview frame ---------------------------------------- */
+      .preview {
+        margin-top: 28px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .preview-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .preview-sub {
+        color: var(--muted);
+        font-size: 13px;
+        text-align: right;
+      }
+
+      .stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 10px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #163a36 0%, #0e2a27 60%, #122f2b 100%);
+        border: 1px solid #c7d3cf;
+      }
+
+      .brandmark {
+        position: absolute;
+        left: 3.5%;
+        top: 5.5%;
+        color: #d7ebe6;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        font-size: clamp(9px, 1.5vw, 12px);
+        text-transform: uppercase;
+        opacity: 0.92;
+      }
+
+      .moment-label {
+        position: absolute;
+        right: 3.5%;
+        top: 5%;
+        color: #eaf5f1;
+        font-size: clamp(9px, 1.4vw, 12px);
+        background: rgba(0, 0, 0, 0.32);
+        padding: 3px 9px;
+        border-radius: 999px;
+      }
+
+      .tile {
+        position: absolute;
+        top: 12%;
+        height: 60%;
+        width: 41%;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(165deg, #1f4f49 0%, #0c2724 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .tile.host {
+        left: 5%;
+      }
+
+      .tile.guest {
+        right: 5%;
+      }
+
+      .tile .shoulders {
+        position: absolute;
+        left: 50%;
+        bottom: 4%;
+        transform: translateX(-50%);
+        width: 74%;
+        height: 40%;
+        border-radius: 46% 46% 14% 14% / 70% 70% 0 0;
+        background: #5aa096;
+      }
+
+      .tile .face {
+        position: absolute;
+        left: 50%;
+        top: 38%;
+        transform: translate(-50%, -50%);
+        width: 42%;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        background: #6fb0a6;
+      }
+
+      .tile .name {
+        position: absolute;
+        left: 7%;
+        bottom: 7%;
+        color: #f1faf7;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: clamp(8px, 1.4vw, 12px);
+        font-weight: 700;
+      }
+
+      .tile.hit .face {
+        box-shadow: 0 0 0 3px #ff5a5a, 0 0 0 7px rgba(255, 90, 90, 0.3);
+      }
+
+      .captions {
+        position: absolute;
+        left: 13%;
+        right: 13%;
+        bottom: 8%;
+        text-align: center;
+        color: #f4faf8;
+        background: rgba(7, 18, 16, 0.55);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: clamp(9px, 1.7vw, 14px);
+        line-height: 1.25;
+        border: 1px solid transparent;
+      }
+
+      .captions.review-hit {
+        border-color: #ffd071;
+        box-shadow: 0 0 0 2px rgba(255, 208, 113, 0.38);
+      }
+
+      .captions.exception-hit {
+        border-color: #ffd071;
+        box-shadow: 0 0 0 2px rgba(255, 208, 113, 0.38), inset 0 0 0 1px rgba(223, 245, 239, 0.35);
+      }
+
+      .sensitive-ribbon {
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        top: 30%;
+        background: rgba(165, 40, 40, 0.92);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: clamp(9px, 1.5vw, 13px);
+        text-align: center;
+        padding: 6px 10px;
+        border-radius: 6px;
+      }
+
+      .frame-note {
+        position: absolute;
+        left: 12%;
+        right: 12%;
+        top: 40%;
+        text-align: center;
+        color: #eaf5f1;
+        background: rgba(7, 18, 16, 0.62);
+        border: 1px dashed rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: clamp(10px, 1.6vw, 14px);
+      }
+
+      .sponsor-el {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #16211f;
+        border: 2px solid #0f5d53;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        font-size: clamp(9px, 1.45vw, 13px);
+      }
+
+      .sponsor-el .el-title {
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .sponsor-el .el-sub {
+        font-size: clamp(8px, 1.2vw, 11px);
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .sponsor-el.v-approved,
+      .sponsor-el.v-fixed {
+        border-color: #0f7d5a;
+        box-shadow: 0 0 0 2px rgba(15, 125, 90, 0.25), 0 4px 14px rgba(0, 0, 0, 0.3);
+      }
+
+      .sponsor-el.v-review {
+        border-color: var(--warn);
+      }
+
+      .sponsor-el.v-conflict {
+        border-color: var(--block);
+        box-shadow: 0 0 0 2px rgba(165, 40, 40, 0.3), 0 4px 14px rgba(0, 0, 0, 0.3);
+      }
+
+      .sponsor-el.v-lowcontrast {
+        background: rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.5);
+        border-color: var(--warn);
+        box-shadow: none;
+      }
+
+      .sponsor-el.v-lowcontrast .el-sub {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      .sponsor-el.v-skipped {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.6);
+        border: 2px dashed rgba(255, 255, 255, 0.5);
+        box-shadow: none;
+      }
+
+      .sponsor-el.v-skipped .el-sub {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .el-disc {
+        align-self: flex-start;
+        font-size: clamp(7px, 1.1vw, 10px);
+        font-weight: 800;
+        padding: 1px 7px;
+        border-radius: 999px;
+        letter-spacing: 0.02em;
+      }
+
+      .el-disc.shown {
+        background: #dff5ef;
+        color: #075246;
+      }
+
+      .el-disc.missing {
+        background: #ffe0e0;
+        color: #8b1e1e;
+      }
+
+      .el-tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: translateY(-122%);
+        font-size: clamp(8px, 1.2vw, 11px);
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      }
+
+      .el-tag.below {
+        top: auto;
+        bottom: 0;
+        transform: translateY(122%);
+      }
+
+      .el-tag.t-clean {
+        background: #dff5ef;
+        color: #075246;
+      }
+
+      .el-tag.t-review {
+        background: #fff1d6;
+        color: #7a4400;
+      }
+
+      .el-tag.t-conflict {
+        background: #ffe0e0;
+        color: #8b1e1e;
+      }
+
+      .el-tag.t-muted {
+        background: #eef2f0;
+        color: #5e6b67;
+      }
+
+      .desc-strip {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px 14px;
+      }
+
+      .desc-strip h3 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .desc-line {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .desc-disc {
+        font-weight: 800;
+      }
+
+      .desc-disc.shown {
+        color: #075246;
+      }
+
+      .desc-disc.missing {
+        color: #8b1e1e;
+      }
+
+      .frame-legend {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 12px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .legend-key {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot.red {
+        background: var(--block);
+      }
+
+      .dot.amber {
+        background: var(--warn);
+      }
+
+      .dot.green {
+        background: #0f7d5a;
+      }
+
+      .placement {
+        cursor: pointer;
+      }
+
+      .placement:hover {
+        border-color: #bcd0cb;
+      }
+
+      .placement.focused {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(19, 111, 99, 0.18);
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .placement {
+          grid-template-columns: 1fr;
+        }
+
+        .controls-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sponsor placement review</h1>
+      <p class="lede">Place sponsor visuals and disclosures, preview them in context, and confirm they do not cover a speaker, clash with captions, or miss a required disclosure before export. A blocking conflict can be fixed or skipped &mdash; never approved over.</p>
+
+      <section class="preview" aria-label="In-context sponsor placement preview">
+        <div class="preview-head">
+          <h2>In-context preview</h2>
+          <span class="preview-sub" id="previewSub"></span>
+        </div>
+        <div class="stage" id="stage"></div>
+        <div class="desc-strip" id="descStrip"></div>
+        <p class="frame-legend">
+          <span class="legend-key"><span class="dot red"></span> Blocks export</span>
+          <span class="legend-key"><span class="dot amber"></span> Needs a look</span>
+          <span class="legend-key"><span class="dot green"></span> Cleared or approved</span>
+          <span class="legend-key">Select an element below to preview where it lands.</span>
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Sponsor placement review workspace">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Sponsor elements</h2>
+            <span class="count" id="count"></span>
+          </div>
+          <p class="panel-hint">Select an element to preview where it lands on the frame above.</p>
+          <div class="placements" id="placements"></div>
+          <div class="actions">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Sponsor readiness summary">
+          <h2>Sponsor readiness</h2>
+          <div id="status" class="status review">Sponsors to confirm</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Sponsor decisions clear only sponsor-related export and checklist items. Sponsorship is never required, and unrelated metadata or caption warnings stay untouched.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var PLACEMENT_TYPES = {
+          "lower-corner": "Lower-corner mark",
+          "title-card": "Title-card mention",
+          "chapter-slate": "Chapter intro slate",
+          "host-read": "Host-read support",
+          "end-card": "End-card acknowledgement",
+          description: "Description reminder",
+        };
+
+        var STRENGTHS = {
+          subtle: "Subtle",
+          standard: "Standard",
+          prominent: "Prominent",
+        };
+
+        // Where each kind of sponsor element normally lands on the 16:9 frame when
+        // there is no conflict (percent of stage width/height). The preview draws the
+        // focused placement here so a creator can see it in episode context.
+        var SAFE_BOX = {
+          "lower-corner": { left: 73, top: 79, width: 23, height: 14 },
+          "title-card": { left: 18, top: 7, width: 64, height: 17 },
+          "chapter-slate": { left: 7, top: 31, width: 45, height: 33 },
+          "host-read": { left: 6, top: 60, width: 43, height: 14 },
+          "end-card": { left: 15, top: 15, width: 70, height: 62 },
+        };
+
+        // Positions that make a spatial conflict visible: an element that drifted over
+        // a speaker, or one that sits on top of the caption lower-third.
+        var OVER_FACE_BOX = { left: 58, top: 20, width: 30, height: 26 };
+        var OVER_CAPTIONS_BOX = { left: 14, top: 76, width: 60, height: 15 };
+
+        // Placement kinds that carry a visible/spoken sponsor disclosure.
+        var DISCLOSURE_TYPES = { "title-card": true, "host-read": true, "end-card": true, description: true };
+
+        // Each detected condition offers only the choices that make sense for it, and
+        // every choice within a condition leads to a DIFFERENT review state, so no
+        // option in a dropdown is ever a no-op. A blocking conflict never offers
+        // "approve" — it can only be fixed or skipped.
+        var CONDITIONS = {
+          clean: {
+            label: "No conflict",
+            blocking: false,
+            steps: ["place", "approve", "skip"],
+          },
+          "lower-third": {
+            label: "Overlaps the lower-third",
+            blocking: false,
+            fix: "Nudge it clear of the lower-third",
+            steps: ["needs-review", "fix", "approve", "skip"],
+          },
+          "low-contrast": {
+            label: "Hard to read (low contrast)",
+            blocking: false,
+            fix: "Swap in a higher-contrast asset",
+            steps: ["needs-review", "fix", "approve", "skip"],
+          },
+          "covers-face": {
+            label: "Covers a speaker's face",
+            blocking: true,
+            fix: "Move it off the speaker's face",
+            steps: ["conflict", "fix", "skip"],
+          },
+          "missing-disclosure": {
+            label: "Disclosure text is missing",
+            blocking: true,
+            fix: "Add the required disclosure",
+            steps: ["conflict", "fix", "skip"],
+          },
+          "sensitive-moment": {
+            label: "Lands on a sensitive moment",
+            blocking: true,
+            fix: "Move it away from that moment",
+            steps: ["conflict", "fix", "skip"],
+          },
+        };
+
+        // A creator choice maps to one of the spec's review states. The "fix" label is
+        // condition-specific (see CONDITIONS[...].fix); its state is always "placed".
+        var DISPOSITIONS = {
+          place: { label: "Place and decide later", state: "placed" },
+          "needs-review": { label: "Keep in review", state: "needs review" },
+          conflict: { label: "Leave flagged", state: "conflict flagged" },
+          fix: { label: "Apply the suggested fix", state: "placed" },
+          approve: { label: "Approve for export", state: "approved for export" },
+          skip: { label: "Skip for this episode", state: "not applicable for episode" },
+        };
+
+        function validCondition(condition) {
+          return CONDITIONS[condition] ? condition : "clean";
+        }
+
+        function dispositionLabel(disp, condition) {
+          if (disp === "fix") {
+            return CONDITIONS[validCondition(condition)].fix || DISPOSITIONS.fix.label;
+          }
+          return DISPOSITIONS[disp].label;
+        }
+
+        function fmt(seconds) {
+          var s = Math.max(0, Math.round(Number(seconds) || 0));
+          var m = Math.floor(s / 60);
+          var ss = String(s % 60).padStart(2, "0");
+          if (m >= 60) {
+            var h = Math.floor(m / 60);
+            var mm = String(m % 60).padStart(2, "0");
+            return h + ":" + mm + ":" + ss;
+          }
+          return m + ":" + ss;
+        }
+
+        function placedAt(item) {
+          return item.type === "description" ? "In description" : "at " + fmt(item.at);
+        }
+
+        // Single source of truth: reconcile each placement to a valid condition + choice
+        // and map to its review state. A stale choice not valid for the condition falls
+        // back to that condition's default so the logic never acts on an unoffered value.
+        function evaluate(list) {
+          var placements = list.map(function (item) {
+            var condition = validCondition(item.condition);
+            var steps = CONDITIONS[condition].steps;
+            var disp = steps.indexOf(item.disp) >= 0 ? item.disp : steps[0];
+            return { id: item.id, condition: condition, disp: disp, state: DISPOSITIONS[disp].state };
+          });
+
+          var counts = {};
+          placements.forEach(function (placement) {
+            counts[placement.state] = (counts[placement.state] || 0) + 1;
+          });
+
+          var blocked = placements.some(function (placement) {
+            return placement.state === "conflict flagged";
+          });
+          var pending = placements.some(function (placement) {
+            return placement.state === "needs review" || placement.state === "placed";
+          });
+          var allSkipped = placements.length > 0 && placements.every(function (placement) {
+            return placement.state === "not applicable for episode";
+          });
+
+          return {
+            placements: placements,
+            counts: counts,
+            overall: blocked ? "blocked" : pending ? "review" : "ready",
+            allSkipped: allSkipped,
+          };
+        }
+
+        // Pure: describe how the focused placement should be drawn on the
+        // representative frame, derived only from its reconciled condition + choice.
+        // No DOM here, so it is unit-testable alongside evaluate(). The frame reacts
+        // live: choosing the suggested fix moves the element to its safe box and clears
+        // the conflict; skipping sets it aside; description elements are never on-frame.
+        function previewModel(item, result) {
+          var type = item.type;
+          var cond = result.condition;
+          var fixed = result.disp === "fix";
+          var approved = result.state === "approved for export";
+          var skipped = result.state === "not applicable for episode";
+          var inDescription = type === "description";
+
+          var disclosure = "none";
+          if (DISCLOSURE_TYPES[type] || cond === "missing-disclosure") {
+            disclosure = cond === "missing-disclosure" && !fixed && !skipped ? "missing" : "shown";
+          }
+
+          var box = SAFE_BOX[type] || SAFE_BOX["lower-corner"];
+          var variant = "clean";
+          var tag = "Placed";
+          var tagTone = "muted";
+          var faceObscured = false;
+          var captionsState = "";
+          var sensitive = false;
+
+          if (skipped) {
+            variant = "skipped";
+            tag = "Set aside for this episode";
+            tagTone = "muted";
+          } else if (fixed) {
+            variant = "fixed";
+            tag = "Fixed · " + (CONDITIONS[cond].fix || "resolved");
+            tagTone = "clean";
+          } else if (cond === "clean") {
+            variant = approved ? "approved" : "clean";
+            tag = approved ? "Approved for export" : "Placed";
+            tagTone = approved ? "clean" : "muted";
+          } else if (cond === "covers-face") {
+            box = OVER_FACE_BOX;
+            faceObscured = true;
+            variant = "conflict";
+            tag = "Covers the guest's face";
+            tagTone = "conflict";
+          } else if (cond === "missing-disclosure") {
+            variant = "conflict";
+            tag = "Disclosure missing";
+            tagTone = "conflict";
+          } else if (cond === "sensitive-moment") {
+            sensitive = true;
+            variant = "conflict";
+            tag = "On a sensitive moment";
+            tagTone = "conflict";
+          } else if (cond === "lower-third") {
+            box = OVER_CAPTIONS_BOX;
+            captionsState = approved ? "exception-hit" : "review-hit";
+            if (approved) {
+              variant = "approved";
+              tag = "Approved over the captions";
+              tagTone = "review";
+            } else {
+              variant = "review";
+              tag = "Overlaps the captions";
+              tagTone = "review";
+            }
+          } else if (cond === "low-contrast") {
+            variant = "lowcontrast";
+            tag = approved ? "Approved as-is" : "Hard to read here";
+            tagTone = approved ? "clean" : "review";
+          }
+
+          return {
+            onFrame: !inDescription,
+            inDescription: inDescription,
+            box: box,
+            variant: variant,
+            tag: tag,
+            tagTone: tagTone,
+            faceObscured: faceObscured,
+            captionsState: captionsState,
+            sensitive: sensitive,
+            disclosure: disclosure,
+          };
+        }
+
+        // ---- DOM rendering (browser only) ----------------------------------------
+
+        function el(tag, options, children) {
+          var node = document.createElement(tag);
+          options = options || {};
+          if (options.className) {
+            node.className = options.className;
+          }
+          if (options.text != null) {
+            // All dynamic text goes through textContent; this prototype has no free
+            // text inputs at all, so there is no path from typed input into markup.
+            node.textContent = options.text;
+          }
+          if (options.attrs) {
+            Object.keys(options.attrs).forEach(function (key) {
+              node.setAttribute(key, options.attrs[key]);
+            });
+          }
+          if (options.on) {
+            Object.keys(options.on).forEach(function (event) {
+              node.addEventListener(event, options.on[event]);
+            });
+          }
+          (children || []).forEach(function (child) {
+            if (child) {
+              node.appendChild(child);
+            }
+          });
+          return node;
+        }
+
+        function badgeClass(state) {
+          if (state === "conflict flagged") {
+            return "blocked";
+          }
+          if (state === "needs review" || state === "placed") {
+            return "review";
+          }
+          return "ready";
+        }
+
+        function selectControl(labelText, ariaLabel, options, current, onChange) {
+          var select = el("select", {
+            attrs: { "aria-label": ariaLabel },
+            on: {
+              change: function (event) {
+                onChange(event.target.value);
+              },
+            },
+          });
+          options.forEach(function (option) {
+            var node = el("option", { text: option.label, attrs: { value: option.value } });
+            if (option.value === current) {
+              node.selected = true;
+            }
+            select.appendChild(node);
+          });
+          return el("label", {}, [el("span", { className: "lbl", text: labelText }), select]);
+        }
+
+        var placements;
+        var sample;
+        var placementsElement;
+        var statusElement;
+        var issuesElement;
+        var countElement;
+        var stageElement;
+        var previewSubElement;
+        var descStripElement;
+        var placementNodes = [];
+        var lastEvaluation;
+        // -1 means "auto": focus the most urgent placement (a blocker, else a review).
+        var focusIndex = -1;
+
+        function speakerTile(side, name, hit) {
+          return el("div", { className: "tile " + side + (hit ? " hit" : "") }, [
+            el("span", { className: "shoulders" }),
+            el("span", { className: "face" }),
+            el("span", { className: "name", text: name }),
+          ]);
+        }
+
+        function sponsorElement(item, model) {
+          var below = model.box.top < 12;
+          var kids = [el("span", { className: "el-tag t-" + model.tagTone + (below ? " below" : ""), text: model.tag })];
+          if (model.disclosure !== "none") {
+            kids.push(el("span", {
+              className: "el-disc " + model.disclosure,
+              text: model.disclosure === "missing" ? "No “Sponsored” label" : "Sponsored",
+            }));
+          }
+          kids.push(el("span", { className: "el-title", text: PLACEMENT_TYPES[item.type] || "Sponsor element" }));
+          kids.push(el("span", { className: "el-sub", text: item.sponsor + " · " + (STRENGTHS[item.strength] || "Standard") }));
+
+          var node = el("div", { className: "sponsor-el v-" + model.variant }, kids);
+          node.style.left = model.box.left + "%";
+          node.style.top = model.box.top + "%";
+          node.style.width = model.box.width + "%";
+          node.style.height = model.box.height + "%";
+          return node;
+        }
+
+        function renderDescStrip(item, model) {
+          var shown = model.disclosure !== "missing";
+          descStripElement.replaceChildren(
+            el("h3", { text: "Episode description" }),
+            el("p", { className: "desc-line" }, [
+              el("span", {
+                className: "desc-disc " + (shown ? "shown" : "missing"),
+                text: shown ? "[Sponsored] " : "[Sponsored mention not added] ",
+              }),
+              el("span", { text: item.sponsor + " — link and offer for listeners of the show." }),
+            ])
+          );
+        }
+
+        // Draw the focused placement on the representative frame. Kept separate from
+        // the list render so changing focus updates the preview without rebuilding the
+        // dropdowns (which would interrupt a click that is opening a native select).
+        function renderPreview() {
+          var item = placements[focusIndex];
+          var result = lastEvaluation.placements[focusIndex];
+          var model = previewModel(item, result);
+
+          previewSubElement.textContent =
+            (PLACEMENT_TYPES[item.type] || "Sponsor element") + " · " + item.sponsor + " · " + placedAt(item);
+
+          var children = [
+            el("span", { className: "brandmark", text: "The Long Table" }),
+            el("span", { className: "moment-label", text: model.inDescription ? "Episode description" : placedAt(item) }),
+            speakerTile("host", "Host", false),
+            speakerTile("guest", "Guest 1", model.faceObscured),
+            el("div", { className: "captions" + (model.captionsState ? " " + model.captionsState : ""), text: "“…and that's the part nobody talks about —”" }),
+          ];
+
+          if (model.sensitive) {
+            children.push(el("div", { className: "sensitive-ribbon", text: "⚠ Sensitive moment in this segment" }));
+          }
+
+          if (model.inDescription) {
+            children.push(el("div", { className: "frame-note", text: "This sponsor appears in the episode description, not on the video frame." }));
+          } else {
+            children.push(sponsorElement(item, model));
+          }
+
+          stageElement.replaceChildren.apply(stageElement, children);
+
+          if (model.inDescription) {
+            descStripElement.style.display = "";
+            renderDescStrip(item, model);
+          } else {
+            descStripElement.style.display = "none";
+          }
+        }
+
+        // Auto-focus the most urgent placement so the worst conflict is visible on load.
+        function defaultFocus(evaluation) {
+          var i;
+          for (i = 0; i < evaluation.placements.length; i++) {
+            if (evaluation.placements[i].state === "conflict flagged") {
+              return i;
+            }
+          }
+          for (i = 0; i < evaluation.placements.length; i++) {
+            if (evaluation.placements[i].state === "needs review") {
+              return i;
+            }
+          }
+          return 0;
+        }
+
+        function setFocus(index) {
+          if (index === focusIndex || index < 0 || index >= placements.length) {
+            return;
+          }
+          focusIndex = index;
+          placementNodes.forEach(function (node, i) {
+            node.classList.toggle("focused", i === focusIndex);
+          });
+          renderPreview();
+        }
+
+        function renderPlacement(item, index, result) {
+          var when = el("div", { className: "when" }, [
+            el("span", { className: "ptype", text: PLACEMENT_TYPES[item.type] || "Sponsor element" }),
+            el("span", { className: "chip", text: placedAt(item) }),
+          ]);
+
+          var sponsor = el("p", { className: "sponsor" }, [
+            el("strong", { text: item.sponsor }),
+            el("span", { text: " · " + (STRENGTHS[item.strength] || "Standard") + " strength" }),
+          ]);
+          var badge = el("span", { className: "badge " + badgeClass(result.state), text: result.state });
+          var head = el("div", { className: "head" }, [sponsor, badge]);
+
+          var conditionOptions = Object.keys(CONDITIONS).map(function (key) {
+            return { value: key, label: CONDITIONS[key].label };
+          });
+          var conditionControl = selectControl("What review found", "Detected sponsor condition", conditionOptions, result.condition, function (value) {
+            item.condition = value;
+            var steps = CONDITIONS[validCondition(value)].steps;
+            if (steps.indexOf(item.disp) < 0) {
+              item.disp = steps[0];
+            }
+            focusIndex = index;
+            render();
+          });
+
+          var dispOptions = CONDITIONS[result.condition].steps.map(function (key) {
+            return { value: key, label: dispositionLabel(key, result.condition) };
+          });
+          var dispControl = selectControl("What to do", "Sponsor decision", dispOptions, result.disp, function (value) {
+            item.disp = value;
+            focusIndex = index;
+            render();
+          });
+
+          var controls = el("div", { className: "controls-row" }, [conditionControl, dispControl]);
+          var fields = el("div", { className: "fields" }, [head, controls]);
+          return el("article", {
+            className: "placement" + (index === focusIndex ? " focused" : ""),
+            attrs: { "data-index": String(index) },
+            on: { click: function () { setFocus(index); } },
+          }, [when, fields]);
+        }
+
+        function renderIssue(issue) {
+          return el("article", { className: "issue " + issue.tone }, [
+            el("strong", { text: issue.title }),
+            el("span", { text: issue.action }),
+          ]);
+        }
+
+        function render() {
+          var evaluation = evaluate(placements);
+          lastEvaluation = evaluation;
+          if (focusIndex < 0 || focusIndex >= placements.length) {
+            focusIndex = defaultFocus(evaluation);
+          }
+
+          placementNodes = placements.map(function (item, index) {
+            return renderPlacement(item, index, evaluation.placements[index]);
+          });
+          placementsElement.replaceChildren.apply(placementsElement, placementNodes);
+
+          var decided = (evaluation.counts["approved for export"] || 0) + (evaluation.counts["not applicable for episode"] || 0);
+          countElement.textContent = decided + " of " + placements.length + " resolved";
+
+          statusElement.className = "status " + evaluation.overall;
+          statusElement.textContent =
+            evaluation.overall === "ready"
+              ? "Sponsors ready for export"
+              : evaluation.overall === "blocked"
+                ? "Resolve before export"
+                : "Sponsors to confirm";
+
+          var issues = [];
+          if (evaluation.allSkipped) {
+            issues.push({
+              tone: "info",
+              title: "No sponsor elements active for this episode",
+              action: "Sponsor checklist and export items are set aside; nothing else is affected.",
+            });
+          }
+          placements.forEach(function (item, index) {
+            var result = evaluation.placements[index];
+            var name = item.sponsor + " · " + (PLACEMENT_TYPES[item.type] || "sponsor element");
+            if (result.state === "conflict flagged") {
+              issues.push({
+                tone: "blocker",
+                title: name + ": " + CONDITIONS[result.condition].label,
+                action: "Blocks export for sponsor destinations — " + (CONDITIONS[result.condition].fix || "resolve the conflict") + ", or skip it for this episode.",
+              });
+            } else if (result.state === "needs review") {
+              issues.push({
+                tone: "review",
+                title: name + ": " + CONDITIONS[result.condition].label,
+                action: "Apply the fix, approve it as-is, or skip it for this episode.",
+              });
+            } else if (result.state === "placed") {
+              issues.push({
+                tone: "review",
+                title: name + ": placed, awaiting approval",
+                action: "Approve it for export or skip it for this episode.",
+              });
+            }
+          });
+
+          var issueNodes = issues.length
+            ? issues.map(renderIssue)
+            : [el("p", { text: "Every sponsor element is approved or set aside. Ready for export." })];
+          issuesElement.replaceChildren.apply(issuesElement, issueNodes);
+
+          renderPreview();
+        }
+
+        if (typeof document !== "undefined") {
+          sample = [
+            { id: "s1", sponsor: "Acme Tools", type: "lower-corner", strength: "subtle", at: 95, condition: "clean", disp: "place" },
+            { id: "s2", sponsor: "Brightline", type: "title-card", strength: "standard", at: 612, condition: "covers-face", disp: "conflict" },
+            { id: "s3", sponsor: "Lumen Audio", type: "host-read", strength: "standard", at: 1455, condition: "lower-third", disp: "needs-review" },
+            { id: "s4", sponsor: "Norththread", type: "end-card", strength: "prominent", at: 3380, condition: "missing-disclosure", disp: "conflict" },
+            { id: "s5", sponsor: "Acme Tools", type: "description", strength: "subtle", at: 0, condition: "clean", disp: "place" },
+          ];
+          placements = structuredClone(sample);
+
+          placementsElement = document.querySelector("#placements");
+          statusElement = document.querySelector("#status");
+          issuesElement = document.querySelector("#issues");
+          countElement = document.querySelector("#count");
+          stageElement = document.querySelector("#stage");
+          previewSubElement = document.querySelector("#previewSub");
+          descStripElement = document.querySelector("#descStrip");
+
+          document.querySelector("#reset").addEventListener("click", function () {
+            placements = structuredClone(sample);
+            focusIndex = -1;
+            render();
+          });
+
+          render();
+        }
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports = {
+            PLACEMENT_TYPES: PLACEMENT_TYPES,
+            STRENGTHS: STRENGTHS,
+            CONDITIONS: CONDITIONS,
+            DISPOSITIONS: DISPOSITIONS,
+            SAFE_BOX: SAFE_BOX,
+            OVER_FACE_BOX: OVER_FACE_BOX,
+            OVER_CAPTIONS_BOX: OVER_CAPTIONS_BOX,
+            DISCLOSURE_TYPES: DISCLOSURE_TYPES,
+            fmt: fmt,
+            evaluate: evaluate,
+            previewModel: previewModel,
+            dispositionLabel: dispositionLabel,
+          };
+        }
+      })();
+    </script>
+  </body>
+</html>
