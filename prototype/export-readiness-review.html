@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Export Readiness Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .destination {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .items {
+        display: grid;
+        gap: 12px;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .item .name {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .item .desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .item select {
+        min-width: 150px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .badge.na {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status.blocked {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        background: #cfe0db;
+        border-color: #cfe0db;
+        color: #6f817b;
+        cursor: not-allowed;
+      }
+
+      .done {
+        border: 1px solid #bfe3d7;
+        border-radius: 8px;
+        background: #eef9f4;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+
+      .done strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #075246;
+      }
+
+      .done dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        font-size: 13px;
+      }
+
+      .done dt {
+        color: var(--muted);
+      }
+
+      .done dd {
+        margin: 0;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .item {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Export readiness review</h1>
+      <p class="lede">Catch obvious publishing problems before rendering your long-form episode. We summarize what matters to a viewer &mdash; framing, captions, audio, visuals, branding, metadata &mdash; and only block export for issues that would really hurt the finished video.</p>
+
+      <section class="workspace" aria-label="Export readiness workspace">
+        <div class="panel">
+          <label class="destination">Export destination
+            <select id="destination" aria-label="Export destination"></select>
+          </label>
+          <div class="items" id="items"></div>
+          <div class="actions">
+            <button type="button" id="export">Export episode</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Readiness summary">
+          <h2>Readiness summary</h2>
+          <div id="status" class="status ready">Ready to export</div>
+          <div id="done" class="done" hidden></div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Warnings you've reviewed won't stop your export. We only block on problems that would ship a broken episode.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Export destinations and the file label each produces.
+      const destinations = {
+        youtube: { label: "YouTube full episode", file: "episode-full.mp4" },
+        client: { label: "Client review copy", file: "episode-review.mp4" },
+        archive: { label: "Archive master", file: "episode-master.mov" },
+        audio: { label: "Audio-only backup", file: "episode-audio.m4a" },
+      };
+
+      // The readiness areas a viewer would notice, each summarised from its own review
+      // surface. "blocks" marks a status that should hold up export.
+      const statuses = {
+        ready: { label: "Ready", blocks: false },
+        review: { label: "Reviewed warning", blocks: false },
+        "needs-review": { label: "Needs review", blocks: false },
+        blocked: { label: "Blocks export", blocks: true },
+        na: { label: "Not for this export", blocks: false },
+      };
+
+      const checkList = [
+        { id: "framing", name: "Speaker framing", desc: "Faces stay visible, no bad crops." },
+        { id: "captions", name: "Captions & spelling", desc: "Coverage and proper-noun accuracy." },
+        { id: "audio", name: "Audio cleanup", desc: "Clear speech, balanced levels." },
+        { id: "visuals", name: "Contextual visuals", desc: "B-roll, callouts, and titles approved." },
+        { id: "brand", name: "Brand & sponsor", desc: "Marks placed, disclosures present." },
+        { id: "metadata", name: "Metadata & chapters", desc: "Title, chapters, publish details." },
+        { id: "music", name: "Music cues", desc: "Cues placed and cleared for use." },
+        { id: "thumbnail", name: "Thumbnail", desc: "Cover frame selected and readable." },
+      ];
+
+      const sampleStatus = {
+        framing: "ready",
+        captions: "needs-review",
+        audio: "ready",
+        visuals: "review",
+        brand: "ready",
+        metadata: "blocked",
+        music: "na",
+        thumbnail: "ready",
+      };
+
+      let destination = "youtube";
+      let itemStatus = structuredClone(sampleStatus);
+      // Whether the episode has been exported with the current readiness. Any change
+      // clears it so the completion summary always matches what would ship.
+      let exported = false;
+
+      const itemsElement = document.querySelector("#items");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const doneElement = document.querySelector("#done");
+      const destinationElement = document.querySelector("#destination");
+      const exportButton = document.querySelector("#export");
+
+      destinationElement.innerHTML = Object.entries(destinations)
+        .map(([value, item]) => `<option value="${value}" ${value === destination ? "selected" : ""}>${item.label}</option>`)
+        .join("");
+
+      destinationElement.addEventListener("change", (event) => {
+        destination = event.target.value;
+        exported = false;
+        render();
+      });
+
+      exportButton.addEventListener("click", () => {
+        // Export is only enabled when nothing blocks it, so this renders the final file.
+        if (evaluate().overall === "blocked") {
+          return;
+        }
+        exported = true;
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        destination = "youtube";
+        itemStatus = structuredClone(sampleStatus);
+        exported = false;
+        destinationElement.value = destination;
+        render();
+      });
+
+      // Single source of truth: roll the per-area statuses into an overall readiness and
+      // a list of creator-facing issues. Only a "Blocks export" status stops the export.
+      function evaluate() {
+        const results = checkList.map((check) => {
+          const value = statuses[itemStatus[check.id]] ? itemStatus[check.id] : "ready";
+          const status = statuses[value];
+          let issue = null;
+          if (value === "blocked") {
+            issue = { title: `${check.name} blocks export`, action: `${check.desc} Fix this before rendering — it would ship a broken episode.`, tone: "blocker" };
+          } else if (value === "needs-review") {
+            issue = { title: `${check.name} needs review`, action: `${check.desc} Worth a look, but it won't block your export.`, tone: "review" };
+          } else if (value === "review") {
+            issue = { title: `${check.name}: reviewed`, action: "You've reviewed this warning — it won't stop the export.", tone: "info" };
+          }
+          return { id: check.id, value, blocks: status.blocks, issue };
+        });
+
+        const hasBlock = results.some((result) => result.blocks);
+        const hasReview = results.some((result) => result.value === "needs-review");
+        const overall = hasBlock ? "blocked" : hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      function render() {
+        const evaluation = evaluate();
+        itemsElement.replaceChildren(...checkList.map((check, index) => renderItem(check, evaluation.results[index])));
+
+        const ready = evaluation.overall !== "blocked";
+        statusElement.className = `status ${exported ? "ready" : evaluation.overall}`;
+        statusElement.textContent = exported
+          ? "Episode exported"
+          : evaluation.overall === "ready"
+            ? "Ready to export"
+            : evaluation.overall === "blocked"
+              ? "Blocked — fix the issue below"
+              : "Ready with warnings";
+
+        exportButton.disabled = !ready;
+        exportButton.textContent = exported ? "Re-export with changes" : "Export episode";
+
+        renderDone(evaluation);
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every area is ready. Your episode is set to export." })]),
+        );
+      }
+
+      // After export, show the resulting file and what shipped — the outcome of the review.
+      function renderDone(evaluation) {
+        if (!exported) {
+          doneElement.hidden = true;
+          doneElement.replaceChildren();
+          return;
+        }
+        const dest = destinations[destination];
+        const readyCount = evaluation.results.filter((result) => result.value === "ready").length;
+        const warnings = evaluation.results.filter((result) => result.value === "needs-review" || result.value === "review").length;
+        doneElement.hidden = false;
+
+        const heading = document.createElement("strong");
+        heading.textContent = "Export complete";
+        const dl = document.createElement("dl");
+        const rows = [
+          ["File", dest.file],
+          ["Destination", dest.label],
+          ["Areas ready", String(readyCount)],
+          ["Reviewed warnings", String(warnings)],
+        ];
+        for (const [term, value] of rows) {
+          const dt = document.createElement("dt");
+          dt.textContent = term;
+          const dd = document.createElement("dd");
+          dd.textContent = value;
+          dl.append(dt, dd);
+        }
+        doneElement.replaceChildren(heading, dl);
+      }
+
+      function renderItem(check, result) {
+        const article = document.createElement("article");
+        article.className = "item";
+
+        const statusOptions = Object.entries(statuses)
+          .map(([value, item]) => `<option value="${value}" ${value === result.value ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+
+        // Every value here is a controlled key or its fixed label/description; there is
+        // no user-editable free text, so the scaffold is safe to build with innerHTML.
+        article.innerHTML = `
+          <div>
+            <div class="name">${check.name}</div>
+            <div class="desc">${check.desc}</div>
+          </div>
+          <label aria-label="${check.name} status">
+            <select data-id="${check.id}">${statusOptions}</select>
+          </label>
+        `;
+
+        article.querySelector("select").addEventListener("change", (event) => {
+          itemStatus[event.target.dataset.id] = event.target.value;
+          exported = false;
+          render();
+        });
+        return article;
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
