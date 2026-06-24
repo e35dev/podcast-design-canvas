@@ -39,9 +39,23 @@ function previewAppHref(file) {
 }
 
 function routeSearchFromFile(file) {
-  const query = (file || "").split("?")[1] || "";
+  const query = queryWithoutHash(file);
   const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   return path === "episode" || path === "ingest" ? `?path=${path}` : "";
+}
+
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function hrefHasPath(file, path) {
+  return pathFromQuery(queryWithoutHash(file)) === path;
+}
+
+function appendPath(file, path) {
+  const [base, hash = ""] = (file || "").split("#");
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}path=${path}${hash ? `#${hash}` : ""}`;
 }
 
 function pathFromQuery(query) {
@@ -98,7 +112,14 @@ function shouldHandoffToEpisodePath() {
 
 function hrefWithPath(file) {
   const suffix = pathQuerySuffix();
-  return suffix ? `${file}${suffix}` : file;
+  if (!suffix) {
+    return file;
+  }
+  const path = suffix.replace("?path=", "");
+  if (hrefHasPath(file, path)) {
+    return file;
+  }
+  return appendPath(file, path);
 }
 
 function currentIngestIndex() {
