@@ -245,6 +245,7 @@
       </div>
     </div>
 
+    <script src="./app-route-context.js"></script>
     <script>
       // The product's screens, grouped by where they fall in the episode workflow. Every
       // screen loads INSIDE this shell via the iframe, so the whole product is reachable
@@ -295,31 +296,6 @@
           ORDER.push(screen);
         }
       }
-
-      const CONTEXTUAL_VISUALS = new Set([
-        "contextual-broll-moments",
-        "contextual-title-cards",
-        "screen-share-moment-review",
-        "sensitive-moment-review",
-      ]);
-      const VISUALS_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
-      const PATHED_INGEST_SCREENS = new Set([
-        "episode-readiness",
-        "speaker-role-mapping",
-        "social-context-intake",
-        "source-media-health",
-      ]);
-      const INGEST_PATH_CONTEXTS = new Set(["episode", "ingest"]);
-      const PATHED_PUBLISH_SCREENS = new Set([
-        "episode-watch-through-preview",
-        "destination-crop-preview",
-        "thumbnail-cover-frame",
-        "show-notes-assembly",
-        "episode-metadata-publishing",
-        "export-package-handoff",
-        "client-review-copy-flow",
-        "publish-checklist",
-      ]);
 
       const railElement = document.querySelector("#rail");
       const frame = document.querySelector("#screen");
@@ -393,26 +369,10 @@
       }));
 
       const firstScreen = STAGES[0][1][0];
+      const appRouting = createPreviewAppRouting(ORDER);
 
       function routeSearchFor(screen, rawSearch) {
-        const params = new URLSearchParams(rawSearch || "");
-        if (CONTEXTUAL_VISUALS.has(screen)) {
-          const from = params.get("from");
-          return VISUALS_ENTRY_CONTEXTS.has(from) ? `?from=${from}` : "";
-        }
-        if (PATHED_INGEST_SCREENS.has(screen)) {
-          const path = params.get("path");
-          if (path === "episode" && screen !== "social-context-intake") {
-            return "?path=episode";
-          }
-          if (path === "ingest" && screen !== "source-media-health") {
-            return "?path=ingest";
-          }
-        }
-        if (PATHED_PUBLISH_SCREENS.has(screen) && params.get("path") === "publish") {
-          return "?path=publish";
-        }
-        return "";
+        return appRouting.routeSearchFor(screen, rawSearch);
       }
 
       function currentRoute() {
@@ -422,79 +382,8 @@
         return { screen, search: routeSearchFor(screen, rawSearch) };
       }
 
-      function visualsEntryContext(search) {
-        const from = new URLSearchParams((search || "").replace(/^\?/, "")).get("from");
-        return VISUALS_ENTRY_CONTEXTS.has(from) ? from : "";
-      }
-
-      function ingestPathContext(search) {
-        const path = new URLSearchParams((search || "").replace(/^\?/, "")).get("path");
-        return INGEST_PATH_CONTEXTS.has(path) ? path : "";
-      }
-
-      function publishPathContext(search) {
-        const path = new URLSearchParams((search || "").replace(/^\?/, "")).get("path");
-        return path === "publish" ? path : "";
-      }
-
       function stepTarget(screen, index, offset, search) {
-        const context = visualsEntryContext(search);
-        const pathContext = ingestPathContext(search);
-        const publishContext = publishPathContext(search);
-        const orderedTarget = ORDER[index + offset];
-        if (pathContext === "episode") {
-          if (screen === "episode-readiness" && offset < 0) {
-            return {};
-          }
-          if (screen === "episode-readiness" && offset > 0) {
-            return { screen: "speaker-role-mapping", search };
-          }
-          if (screen === "speaker-role-mapping" && offset < 0) {
-            return { screen: "episode-readiness", search };
-          }
-          if (screen === "speaker-role-mapping" && offset > 0) {
-            return { screen: "source-media-health", search: "?path=episode" };
-          }
-          if (screen === "source-media-health" && offset < 0) {
-            return { screen: "speaker-role-mapping", search: "?path=episode" };
-          }
-          if (screen === "source-media-health" && offset > 0) {
-            return { screen: "speaker-sync-repair", search: "" };
-          }
-        }
-        if (pathContext === "ingest") {
-          if (screen === "episode-readiness" && offset < 0) {
-            return {};
-          }
-          if (screen === "episode-readiness" && offset > 0) {
-            return { screen: "speaker-role-mapping", search };
-          }
-          if (screen === "speaker-role-mapping" && offset < 0) {
-            return { screen: "episode-readiness", search };
-          }
-          if (screen === "speaker-role-mapping" && offset > 0) {
-            return { screen: "social-context-intake", search };
-          }
-          if (screen === "social-context-intake" && offset < 0) {
-            return { screen: "speaker-role-mapping", search };
-          }
-          if (screen === "social-context-intake" && offset > 0) {
-            return { screen: "source-media-health", search: "?path=episode" };
-          }
-        }
-        if (publishContext === "publish" && PATHED_PUBLISH_SCREENS.has(screen) && PATHED_PUBLISH_SCREENS.has(orderedTarget)) {
-          return { screen: orderedTarget, search };
-        }
-        if (offset < 0 && screen === "contextual-broll-moments") {
-          if (context === "cleanup") {
-            return { screen: "on-screen-correction-note", search: "" };
-          }
-          if (context === "style") {
-            return { screen: "canvas-layer-controls", search: "" };
-          }
-        }
-        const targetSearch = CONTEXTUAL_VISUALS.has(screen) && CONTEXTUAL_VISUALS.has(orderedTarget) ? search : "";
-        return { screen: orderedTarget, search: targetSearch };
+        return appRouting.stepTarget(screen, index, offset, search);
       }
 
       function route() {

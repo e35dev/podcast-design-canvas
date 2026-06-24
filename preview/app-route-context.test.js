@@ -10,6 +10,7 @@ const vm = require("vm");
 
 const appHtml = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
 const appScript = appHtml.match(/<script>([\s\S]*?)<\/script>/)[1];
+const routeContextScript = fs.readFileSync(path.join(__dirname, "app-route-context.js"), "utf8");
 
 function createElement(tagName) {
   return {
@@ -81,7 +82,7 @@ function makeDocument(hash) {
 
 function runApp(hash) {
   const page = makeDocument(hash);
-  vm.runInNewContext(appScript, {
+  vm.runInNewContext(`${routeContextScript}\n${appScript}`, {
     document: page.document,
     window: page.window,
     sessionStorage: {
@@ -178,8 +179,56 @@ assert.equal(
 );
 assert.equal(
   episodeRoles.nodes.nextStep.href,
-  "#speaker-sync-repair",
-  "episode path source media step continues to speaker sync",
+  "#speaker-sync-repair?path=episode",
+  "episode path source media step continues to speaker sync with route context",
+);
+
+episodeRoles.reroute("#speaker-sync-repair?path=episode");
+assert.equal(
+  episodeRoles.nodes.frame.src,
+  "../prototype/speaker-sync-repair.html?path=episode",
+  "speaker sync repair can carry episode path context in the preview app",
+);
+assert.equal(
+  episodeRoles.nodes.prevStep.href,
+  "#source-media-health?path=episode",
+  "episode path speaker sync step returns to source media health",
+);
+assert.equal(
+  episodeRoles.nodes.nextStep.href,
+  "#audio-cleanup-controls?path=episode",
+  "episode path speaker sync step continues to audio cleanup",
+);
+
+const setupPath = runApp("#guest-profile-reuse?path=episode");
+assert.equal(
+  setupPath.nodes.frame.src,
+  "../prototype/guest-profile-reuse.html?path=episode",
+  "speaker setup screens keep episode path context in the preview app",
+);
+assert.equal(
+  setupPath.nodes.prevStep.href,
+  "#speaker-attribution-review?path=episode",
+  "episode setup path steps back through speaker attribution",
+);
+assert.equal(
+  setupPath.nodes.nextStep.href,
+  "#speaker-visual-match?path=episode",
+  "episode setup path follows speaker setup order instead of the raw rail order",
+);
+
+setupPath.reroute("#speaker-attribution-review?path=episode");
+assert.equal(
+  setupPath.nodes.prevStep.href,
+  "#speaker-role-mapping?path=episode",
+  "speaker setup entry returns to role mapping with episode context",
+);
+
+setupPath.reroute("#off-camera-speaker-presence?path=episode");
+assert.equal(
+  setupPath.nodes.nextStep.href,
+  "#preset-style-picker?path=episode",
+  "speaker setup handoff keeps episode context when entering style",
 );
 
 const ingestRoles = runApp("#speaker-role-mapping?path=ingest");
@@ -219,8 +268,107 @@ assert.equal(
 ingestRoles.reroute("#speaker-visual-match?path=episode");
 assert.equal(
   ingestRoles.nodes.frame.src,
-  "../prototype/speaker-visual-match.html",
-  "non-ingest screens discard ingest route context",
+  "../prototype/speaker-visual-match.html?path=episode",
+  "speaker setup hashes emitted by child nav keep episode route context",
+);
+
+const stylePath = runApp("#layout-safe-areas?path=episode");
+assert.equal(
+  stylePath.nodes.frame.src,
+  "../prototype/layout-safe-areas.html?path=episode",
+  "style screens keep episode path context in the preview app",
+);
+assert.equal(
+  stylePath.nodes.prevStep.href,
+  "#preset-pacing-controls?path=episode",
+  "episode style path steps back with route context",
+);
+assert.equal(
+  stylePath.nodes.nextStep.href,
+  "#speaker-framing-safety?path=episode",
+  "episode style path steps forward with route context",
+);
+
+stylePath.reroute("#canvas-layer-controls?path=episode");
+assert.equal(
+  stylePath.nodes.nextStep.href,
+  "#contextual-broll-moments?from=style&path=episode",
+  "style handoff keeps both style entry and episode path context",
+);
+
+const visualsPath = runApp("#contextual-title-cards?from=style&path=episode");
+assert.equal(
+  visualsPath.nodes.frame.src,
+  "../prototype/contextual-title-cards.html?from=style&path=episode",
+  "visuals screens keep combined from and episode path context",
+);
+assert.equal(
+  visualsPath.nodes.prevStep.href,
+  "#contextual-broll-moments?from=style&path=episode",
+  "visuals path keeps combined context when stepping back",
+);
+assert.equal(
+  visualsPath.nodes.nextStep.href,
+  "#screen-share-moment-review?from=style&path=episode",
+  "visuals path keeps combined context when stepping forward",
+);
+
+visualsPath.reroute("#sensitive-moment-review?from=style&path=episode");
+assert.equal(
+  visualsPath.nodes.nextStep.href,
+  "#show-segment-system?path=episode",
+  "visuals handoff to reuse keeps episode path context",
+);
+
+const reusePath = runApp("#intro-outro-builder?path=episode");
+assert.equal(
+  reusePath.nodes.frame.src,
+  "../prototype/intro-outro-builder.html?path=episode",
+  "reuse screens keep episode path context in the preview app",
+);
+assert.equal(
+  reusePath.nodes.prevStep.href,
+  "#episode-chapter-markers?path=episode",
+  "episode reuse path steps back with route context",
+);
+assert.equal(
+  reusePath.nodes.nextStep.href,
+  "#episode-runtime-shaping?path=episode",
+  "episode reuse path steps forward with route context",
+);
+
+const musicPath = runApp("#music-cue-setup?path=episode");
+assert.equal(
+  musicPath.nodes.frame.src,
+  "../prototype/music-cue-setup.html?path=episode",
+  "music screens keep episode path context in the preview app",
+);
+assert.equal(
+  musicPath.nodes.prevStep.href,
+  "#audio-cleanup-controls?path=episode",
+  "music entry returns to audio cleanup with episode context",
+);
+assert.equal(
+  musicPath.nodes.nextStep.href,
+  "#music-ducking-under-speech?path=episode",
+  "music path steps forward with episode context",
+);
+
+const cleanupPath = runApp("#transcript-glossary?from=cleanup&path=episode");
+assert.equal(
+  cleanupPath.nodes.frame.src,
+  "../prototype/transcript-glossary.html?from=cleanup&path=episode",
+  "cleanup screens keep combined entry and episode path context",
+);
+assert.equal(
+  cleanupPath.nodes.prevStep.href,
+  "#pause-crosstalk-cleanup?from=cleanup&path=episode",
+  "cleanup path keeps combined context when stepping back",
+);
+assert.equal(
+  cleanupPath.nodes.nextStep.href,
+  "#transcript-search-navigation?from=cleanup&path=episode",
+  "cleanup path keeps combined context when stepping forward",
 );
 
 const publishPath = runApp("#episode-watch-through-preview?path=publish");
