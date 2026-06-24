@@ -70,14 +70,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}` } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, cleanupStep, embedded = false) {
+function renderNavFor(fileName, cleanupStep, embedded = false, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   if (cleanupStep) {
@@ -100,7 +100,7 @@ function renderNavFor(fileName, cleanupStep, embedded = false) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
     URLSearchParams,
   });
 
@@ -223,5 +223,24 @@ assert.equal(
   "embedded cleanup nav routes the contextual visuals handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets the parent app");
+
+const cleanupContextNav = renderNavFor("transcript-glossary.html", "transcript-glossary", true, "?from=cleanup");
+assert.equal(
+  linkWithText(cleanupContextNav, "Previous: Pause & cross-talk cleanup").href,
+  "../preview/app.html#pause-crosstalk-cleanup?from=cleanup",
+  "embedded cleanup nav preserves cleanup entry context on previous links",
+);
+assert.equal(
+  linkWithText(cleanupContextNav, "Next: Transcript search").href,
+  "../preview/app.html#transcript-search-navigation?from=cleanup",
+  "embedded cleanup nav preserves cleanup entry context on next links",
+);
+
+const standaloneCleanupContext = renderNavFor("line-pickup-insert.html", "line-pickup-insert", false, "?from=cleanup");
+assert.equal(
+  linkWithText(standaloneCleanupContext, "Next: Pronunciation & name review").href,
+  "pronunciation-name-review.html?from=cleanup",
+  "standalone cleanup nav keeps cleanup entry context between cleanup screens",
+);
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");

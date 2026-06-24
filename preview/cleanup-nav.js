@@ -57,9 +57,23 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function cleanupContextSuffix() {
+  const from = new URLSearchParams(window.location.search).get("from");
+  if (from === "cleanup") {
+    return "?from=cleanup";
+  }
+  if (from === "style") {
+    return "?from=style";
+  }
+  return "";
+}
+
 function routeSearchFromFile(file) {
   const query = ((file || "").split("#")[0].split("?")[1] || "");
-  const from = new URLSearchParams(query).get("from");
+  let from = new URLSearchParams(query).get("from");
+  if (!from) {
+    from = new URLSearchParams(cleanupContextSuffix().replace(/^\?/, "")).get("from");
+  }
   if (from === "style") {
     return "?from=style";
   }
@@ -69,6 +83,18 @@ function routeSearchFromFile(file) {
   return "";
 }
 
+function hrefWithCleanupContext(file) {
+  const base = (file || "").split("?")[0];
+  if (new URLSearchParams((file || "").split("?")[1] || "").get("from")) {
+    return file;
+  }
+  const suffix = cleanupContextSuffix();
+  if (suffix && CLEANUP_FLOW.some((step) => step.file === base)) {
+    return `${base}${suffix}`;
+  }
+  return file;
+}
+
 function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
@@ -76,10 +102,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setCleanupScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = hrefWithCleanupContext(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(resolved)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
+    return;
   }
+
+  link.href = resolved;
 }
 
 function renderCleanupNav() {
