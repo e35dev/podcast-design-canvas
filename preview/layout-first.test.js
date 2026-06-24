@@ -141,6 +141,8 @@ const zones = [
 ];
 
 const documentStub = {
+  listeners: {},
+  addEventListener(type, handler) { this.listeners[type] = handler; },
   createElement(tagName) { return new Element(tagName); },
   getElementById(id) { return elementsById[id] || null; },
   querySelectorAll(selector) {
@@ -813,5 +815,22 @@ assert.equal(dragZone.classList.contains("drag-over"), false, "leaving the slot 
 dragZone.listeners.dragenter({ preventDefault() {} });
 dragZone.listeners.drop({ preventDefault() {}, stopPropagation() {}, dataTransfer: { files: [] } });
 assert.equal(dragZone.classList.contains("drag-over"), false, "a drop clears the highlight even mid-drag");
+
+// A video released outside any slot — anywhere on the page — must not let the browser navigate
+// away and destroy the creator's placements (#1213). The controller guards drops at the document
+// level: it prevents the default file-open navigation and still routes the video into the first
+// open slot, so a near-miss places instead of being lost.
+assert.equal(typeof documentStub.listeners.dragover, "function", "the controller guards page-level dragover so drops are catchable");
+assert.equal(typeof documentStub.listeners.drop, "function", "the controller guards page-level drop");
+controller.resetVideos();
+controller.applyLayout("interview");
+let offSlotDropPrevented = false;
+documentStub.listeners.dragover({ preventDefault() {} });
+documentStub.listeners.drop({
+  preventDefault() { offSlotDropPrevented = true; },
+  dataTransfer: { files: [{ name: "stray.mp4", type: "video/mp4", size: 5, lastModified: 5 }] },
+});
+assert.equal(offSlotDropPrevented, true, "a drop outside the slots is prevented, so the browser never navigates away and loses placements");
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a near-miss drop still routes the video into the first open slot");
 
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

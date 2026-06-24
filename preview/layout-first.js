@@ -765,6 +765,28 @@
       });
       layoutCanvas.addEventListener("drop", (event) => {
         event.preventDefault();
+        // The canvas fully owns this drop — stop it bubbling to the document guard below, or
+        // the same files would be routed twice (once here, once at the document).
+        if (typeof event.stopPropagation === "function") {
+          event.stopPropagation();
+        }
+        placeDroppedFiles(event.dataTransfer && event.dataTransfer.files);
+      });
+    }
+
+    // A video released anywhere on the page — not just between slots but outside the whole
+    // canvas (the header, the page margins) — would otherwise trigger the browser's default
+    // "open this file" navigation, discarding the single-page app and every placement the
+    // creator has made (#1213, data loss). Guard at the document level: keep drops catchable
+    // (preventDefault on dragover), and for any drop that reaches the document — i.e. landed
+    // outside the canvas, since slot and canvas drops stop propagation — prevent the navigation
+    // and still route the videos into the first open slot so a near-miss isn't lost.
+    if (doc && typeof doc.addEventListener === "function") {
+      doc.addEventListener("dragover", (event) => {
+        event.preventDefault();
+      });
+      doc.addEventListener("drop", (event) => {
+        event.preventDefault();
         placeDroppedFiles(event.dataTransfer && event.dataTransfer.files);
       });
     }
