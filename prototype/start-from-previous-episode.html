@@ -443,7 +443,7 @@
         const episode = currentEpisode();
         const speakerBucketCopy = state.carry.roles
           ? state.mediaImported ? "New recordings are available for Host and Guest." : "Buckets are empty until new recordings are imported."
-          : state.rolesConfirmed ? "Speaker 1 and Speaker 2 are confirmed as Host and Guest for this draft." : "Host and Guest buckets are not carried; assign the new speaker slots before styling.";
+          : state.rolesConfirmed ? "Host and Guest are confirmed for this draft." : "Host and Guest buckets are not carried; assign the new speaker slots before styling.";
         const items = [
           ["Reusable style", state.started ? `${episode.style} carried into the draft.` : "Waiting for starter choice."],
           ["Cleared by default", `${episode.previousGuest}, ${episode.previousTopic}, previous recordings, and one-off moments are not copied.`],
