@@ -21,6 +21,7 @@ const PUBLISH_FLOW = [
   { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
   { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
   { id: "episode-metadata-publishing", file: "episode-metadata-publishing.html", label: "Episode metadata publishing" },
+  { id: "publish-destination-presets", file: "publish-destination-presets.html", label: "Publish destination presets" },
   { id: "export-package-handoff", file: "export-package-handoff.html", label: "Export package handoff" },
   { id: "clip-candidate-review", file: "clip-candidate-review.html", label: "Clip candidate review" },
   { id: "client-review-copy-flow", file: "client-review-copy-flow.html", label: "Client review copy" },

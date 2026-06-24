@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Destination Presets Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+
+      .dest-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
+      .dest-card {
+        border: 2px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
+        cursor: pointer; transition: border-color 0.15s;
+      }
+      .dest-card:hover { border-color: #9bc3b8; }
+      .dest-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .dest-card[aria-pressed="true"] { border-color: var(--accent); background: #eef8f5; }
+      .dest-card strong { display: block; margin-bottom: 4px; font-size: 15px; }
+      .dest-card span { color: var(--muted); font-size: 13px; }
+      .dest-card .card-tag {
+        display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px; padding: 2px 7px;
+      }
+      .card-tag.primary { background: #def3ed; color: var(--accent); }
+      .card-tag.additional { background: #eceeed; color: #55615d; }
+
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 28px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; font-size: 13px;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+
+      .preset-detail { margin-top: 16px; }
+      .preset-detail h3 { margin-bottom: 12px; }
+      .setting-rows { display: grid; gap: 8px; }
+      .setting-row {
+        display: grid; grid-template-columns: 160px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+        border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 10px 12px;
+      }
+      .setting-row strong { font-size: 14px; }
+      .setting-row .value { color: var(--muted); font-size: 14px; }
+      .setting-row .value.overridden { color: var(--accent); font-weight: 700; }
+      .setting-row button {
+        display: inline-flex; align-items: center; min-height: 32px; border: 1px solid #b9c8c3;
+        border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 13px;
+        font-weight: 700; padding: 4px 10px; cursor: pointer;
+      }
+      .setting-row button:hover { background: #f0f4f2; }
+      .setting-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .additional-section { margin-top: 24px; }
+      .additional-toggle {
+        display: inline-flex; align-items: center; gap: 8px; min-height: 38px;
+        border: 1px solid #b9c8c3; border-radius: 6px; background: #fff; color: var(--ink);
+        font: inherit; font-weight: 700; padding: 7px 14px; cursor: pointer;
+      }
+      .additional-toggle:hover { background: #f0f4f2; }
+      .additional-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .additional-toggle[aria-pressed="true"] { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+
+      .consequence { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .consequence strong { display: block; margin-bottom: 4px; }
+      .consequence span { color: var(--muted); }
+      .consequence.ok { border-left-color: var(--accent); }
+      .consequence .fix-link {
+        display: inline-block; margin-top: 8px; color: var(--accent);
+        font-weight: 700; font-size: 13px; text-decoration: none;
+      }
+      .consequence .fix-link:hover,
+      .consequence .fix-link:focus-visible { text-decoration: underline; outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+      .actions button {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 14px; cursor: pointer;
+      }
+      .actions button:hover { background: #f0f4f2; }
+      .actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .status-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        padding: 11px 12px; color: var(--muted);
+      }
+      .status-note strong { display: block; margin-bottom: 4px; color: var(--ink); }
+
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .dest-cards { grid-template-columns: 1fr; }
+        .setting-row { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="publish-destination-presets">
+    <main>
+      <h1>Publish Destination Presets Prototype</h1>
+      <p class="lede">
+        Choose where the episode is going and see what each destination sets for video, captions, thumbnail, metadata, and packaging before exporting.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Choose a primary destination</h2>
+          <div class="dest-cards" id="destCards" role="radiogroup" aria-label="Primary destination"></div>
+
+          <div class="preset-detail" id="presetDetail">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <h3 id="detailTitle">Preset defaults</h3>
+              <span class="badge ready" id="detailStatus">configured</span>
+            </div>
+            <div class="setting-rows" id="settingRows"></div>
+          </div>
+
+          <div class="additional-section">
+            <h3>Additional destinations</h3>
+            <p style="color:var(--muted); margin-bottom:12px; font-size:14px;">
+              Prepare extra copies alongside the primary. Each keeps its own preset defaults.
+            </p>
+            <div id="additionalToggles" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveDefault">Save as show default</button>
+            <button type="button" id="reviewPreset">Review all destinations</button>
+          </div>
+          <div class="status-note" id="statusNote" aria-live="polite"></div>
+        </div>
+
+        <aside class="panel">
+          <h2>Publishing consequences</h2>
+          <div id="consequences" style="display:grid; gap:10px;"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var DESTINATIONS = {
+        youtube: {
+          label: "YouTube full episode",
+          description: "Publish-ready video with chapters, captions, thumbnail, and full metadata.",
+          defaults: {
+            "Video size": "1080p",
+            "Audio mix": "Stereo broadcast",
+            "Captions": "Embedded + sidecar SRT",
+            "Thumbnail": "Required",
+            "Metadata": "Title, description, chapters, tags",
+            "Watermark": "None",
+            "File naming": "show-title-episode-number",
+            "Readiness checks": "Full publish checklist",
+          },
+        },
+        archive: {
+          label: "Archive master",
+          description: "High-quality storage copy with all assets preserved for future use.",
+          defaults: {
+            "Video size": "Original resolution",
+            "Audio mix": "Lossless stereo",
+            "Captions": "Sidecar SRT only",
+            "Thumbnail": "Optional",
+            "Metadata": "Episode metadata snapshot",
+            "Watermark": "None",
+            "File naming": "show-title-archive-date",
+            "Readiness checks": "Source media health only",
+          },
+        },
+        sponsor: {
+          label: "Sponsor approval copy",
+          description: "Watermarked copy focused on sponsor segments for partner review.",
+          defaults: {
+            "Video size": "720p",
+            "Audio mix": "Stereo standard",
+            "Captions": "Burned in",
+            "Thumbnail": "Not included",
+            "Metadata": "Sponsor disclosure only",
+            "Watermark": "Review watermark",
+            "File naming": "show-title-sponsor-review",
+            "Readiness checks": "Sponsor placement check",
+          },
+        },
+        audioOnly: {
+          label: "Audio-only podcast",
+          description: "Audio file for podcast RSS distribution with episode metadata.",
+          defaults: {
+            "Video size": "Audio only (no video)",
+            "Audio mix": "Mono podcast-optimized",
+            "Captions": "Not applicable",
+            "Thumbnail": "Cover art required",
+            "Metadata": "RSS episode fields",
+            "Watermark": "None",
+            "File naming": "show-title-episode-rss",
+            "Readiness checks": "Audio quality + metadata",
+          },
+        },
+        clientReview: {
+          label: "Private client review",
+          description: "Low-resolution watermarked copy for client or producer feedback.",
+          defaults: {
+            "Video size": "720p",
+            "Audio mix": "Stereo standard",
+            "Captions": "Burned in",
+            "Thumbnail": "Not included",
+            "Metadata": "Episode title only",
+            "Watermark": "Review watermark",
+            "File naming": "show-title-client-review",
+            "Readiness checks": "Review copy check",
+          },
+        },
+        teamReview: {
+          label: "Internal team review",
+          description: "Quick internal copy for team notes and production decisions.",
+          defaults: {
+            "Video size": "720p",
+            "Audio mix": "Stereo standard",
+            "Captions": "None",
+            "Thumbnail": "Not included",
+            "Metadata": "Episode title + notes",
+            "Watermark": "Draft label",
+            "File naming": "show-title-team-draft",
+            "Readiness checks": "None required",
+          },
+        },
+      };
+
+      var state = {
+        primary: "youtube",
+        overrides: {},
+        additional: {},
+        savedDefault: false,
+      };
+
+      function settingsForDestination(destKey) {
+        var base = Object.assign({}, DESTINATIONS[destKey].defaults);
+        var ov = state.overrides[destKey];
+        if (ov) {
+          Object.keys(ov).forEach(function (k) { base[k] = ov[k]; });
+        }
+        return base;
+      }
+
+      function hasOverrides(destKey) {
+        return state.overrides[destKey] && Object.keys(state.overrides[destKey]).length > 0;
+      }
+
+      function consequencesFor(destKey) {
+        var dest = DESTINATIONS[destKey];
+        var settings = settingsForDestination(destKey);
+        var items = [];
+
+        if (settings["Thumbnail"] === "Not included" || settings["Thumbnail"] === "Optional") {
+          items.push({
+            tone: "review",
+            title: "No thumbnail required",
+            detail: dest.label + " will ship without a dedicated thumbnail image.",
+          });
+        }
+        if (settings["Captions"] === "None" || settings["Captions"] === "Not applicable") {
+          items.push({
+            tone: "review",
+            title: "Captions excluded",
+            detail: dest.label + " will export without caption data.",
+          });
+        }
+        if (settings["Watermark"] !== "None") {
+          items.push({
+            tone: "review",
+            title: "Watermark applied",
+            detail: dest.label + " includes a " + settings["Watermark"].toLowerCase() + " overlay.",
+          });
+        }
+        if (settings["Metadata"] === "Episode title only" || settings["Metadata"] === "Sponsor disclosure only") {
+          items.push({
+            tone: "review",
+            title: "Partial metadata",
+            detail: dest.label + " ships with limited metadata: " + settings["Metadata"].toLowerCase() + ".",
+            fix: "episode-metadata-publishing.html",
+            fixLabel: "episode metadata",
+          });
+        }
+        if (items.length === 0) {
+          items.push({
+            tone: "ok",
+            title: "Destination configured",
+            detail: dest.label + " preset covers all recommended publishing settings.",
+          });
+        }
+        return items;
+      }
+
+      function renderCards() {
+        var container = document.getElementById("destCards");
+        container.replaceChildren();
+        Object.keys(DESTINATIONS).forEach(function (key) {
+          var dest = DESTINATIONS[key];
+          var card = document.createElement("div");
+          card.className = "dest-card";
+          card.setAttribute("role", "radio");
+          card.setAttribute("tabindex", "0");
+          card.setAttribute("aria-checked", String(key === state.primary));
+          card.setAttribute("aria-pressed", String(key === state.primary));
+
+          var title = document.createElement("strong");
+          title.textContent = dest.label;
+          var desc = document.createElement("span");
+          desc.textContent = dest.description;
+          card.append(title, desc);
+
+          if (key === state.primary) {
+            var tag = document.createElement("span");
+            tag.className = "card-tag primary";
+            tag.textContent = "Primary";
+            card.appendChild(tag);
+          } else if (state.additional[key]) {
+            var atag = document.createElement("span");
+            atag.className = "card-tag additional";
+            atag.textContent = "Additional";
+            card.appendChild(atag);
+          }
+
+          card.addEventListener("click", function () {
+            state.primary = key;
+            render();
+          });
+          card.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              state.primary = key;
+              render();
+            }
+          });
+          container.appendChild(card);
+        });
+      }
+
+      function cycleOverride(destKey, settingKey, currentValue) {
+        var original = DESTINATIONS[destKey].defaults[settingKey];
+        var options = {
+          "Captions": ["Embedded + sidecar SRT", "Burned in", "Sidecar SRT only", "None"],
+          "Thumbnail": ["Required", "Cover art required", "Optional", "Not included"],
+          "Watermark": ["None", "Review watermark", "Draft label"],
+        };
+        var choices = options[settingKey];
+        if (!choices) return;
+        var idx = choices.indexOf(currentValue);
+        var next = choices[(idx + 1) % choices.length];
+        if (!state.overrides[destKey]) state.overrides[destKey] = {};
+        if (next === original) {
+          delete state.overrides[destKey][settingKey];
+          if (Object.keys(state.overrides[destKey]).length === 0) delete state.overrides[destKey];
+        } else {
+          state.overrides[destKey][settingKey] = next;
+        }
+        render();
+      }
+
+      function renderSettings() {
+        var container = document.getElementById("settingRows");
+        container.replaceChildren();
+        var dest = DESTINATIONS[state.primary];
+        var settings = settingsForDestination(state.primary);
+        var overridable = ["Captions", "Thumbnail", "Watermark"];
+
+        document.getElementById("detailTitle").textContent = dest.label + " preset defaults";
+        var statusEl = document.getElementById("detailStatus");
+        if (hasOverrides(state.primary)) {
+          statusEl.className = "badge review";
+          statusEl.textContent = "customized";
+        } else {
+          statusEl.className = "badge ready";
+          statusEl.textContent = "configured";
+        }
+
+        Object.keys(settings).forEach(function (key) {
+          var row = document.createElement("div");
+          row.className = "setting-row";
+
+          var label = document.createElement("strong");
+          label.textContent = key;
+
+          var value = document.createElement("span");
+          value.className = "value";
+          var isOverridden = state.overrides[state.primary] && state.overrides[state.primary][key];
+          if (isOverridden) value.className += " overridden";
+          value.textContent = settings[key];
+
+          row.append(label, value);
+
+          if (overridable.indexOf(key) !== -1) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = isOverridden ? "Reset" : "Override";
+            var capturedKey = key;
+            btn.addEventListener("click", function () {
+              if (isOverridden) {
+                delete state.overrides[state.primary][capturedKey];
+                if (Object.keys(state.overrides[state.primary]).length === 0) delete state.overrides[state.primary];
+                render();
+              } else {
+                cycleOverride(state.primary, capturedKey, settings[capturedKey]);
+              }
+            });
+            row.appendChild(btn);
+          } else {
+            row.appendChild(document.createElement("span"));
+          }
+
+          container.appendChild(row);
+        });
+      }
+
+      function renderAdditionalToggles() {
+        var container = document.getElementById("additionalToggles");
+        container.replaceChildren();
+        Object.keys(DESTINATIONS).forEach(function (key) {
+          if (key === state.primary) return;
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "additional-toggle";
+          btn.setAttribute("aria-pressed", String(!!state.additional[key]));
+          btn.textContent = (state.additional[key] ? "- " : "+ ") + DESTINATIONS[key].label;
+          btn.addEventListener("click", function () {
+            state.additional[key] = !state.additional[key];
+            if (!state.additional[key]) delete state.additional[key];
+            render();
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function renderConsequences() {
+        var container = document.getElementById("consequences");
+        container.replaceChildren();
+
+        var allDests = [state.primary].concat(
+          Object.keys(state.additional).filter(function (k) { return state.additional[k]; })
+        );
+
+        allDests.forEach(function (destKey) {
+          var items = consequencesFor(destKey);
+          var isPrimary = destKey === state.primary;
+
+          if (allDests.length > 1) {
+            var heading = document.createElement("strong");
+            heading.style.fontSize = "14px";
+            heading.textContent = DESTINATIONS[destKey].label + (isPrimary ? " (primary)" : "");
+            container.appendChild(heading);
+          }
+
+          items.forEach(function (item) {
+            var el = document.createElement("div");
+            el.className = "consequence" + (item.tone === "ok" ? " ok" : "");
+            var title = document.createElement("strong");
+            title.textContent = item.title;
+            var detail = document.createElement("span");
+            detail.textContent = item.detail;
+            el.append(title, detail);
+            if (item.fix) {
+              var link = document.createElement("a");
+              link.className = "fix-link";
+              link.href = item.fix;
+              link.textContent = "Open " + (item.fixLabel || "the owning screen") + " \u2192";
+              el.appendChild(link);
+            }
+            container.appendChild(el);
+          });
+        });
+      }
+
+      function renderStatusNote(message) {
+        var container = document.getElementById("statusNote");
+        container.replaceChildren();
+        var s = document.createElement("strong");
+        s.textContent = message.title;
+        var d = document.createElement("span");
+        d.textContent = message.detail;
+        container.append(s, d);
+      }
+
+      function render() {
+        renderCards();
+        renderSettings();
+        renderAdditionalToggles();
+        renderConsequences();
+
+        var additionalCount = Object.keys(state.additional).filter(function (k) { return state.additional[k]; }).length;
+        renderStatusNote({
+          title: state.savedDefault ? "Show default saved" : "Destination selected",
+          detail: DESTINATIONS[state.primary].label + " is the primary destination"
+            + (additionalCount > 0 ? " with " + additionalCount + " additional destination" + (additionalCount > 1 ? "s" : "") : "")
+            + ". Each destination keeps its own preset defaults"
+            + (hasOverrides(state.primary) ? " (primary has overrides)" : "") + ".",
+        });
+      }
+
+      document.getElementById("saveDefault").addEventListener("click", function () {
+        state.savedDefault = true;
+        render();
+      });
+
+      document.getElementById("reviewPreset").addEventListener("click", function () {
+        state.savedDefault = false;
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          DESTINATIONS: DESTINATIONS,
+          state: state,
+          settingsForDestination: settingsForDestination,
+          hasOverrides: hasOverrides,
+          consequencesFor: consequencesFor,
+        };
+      }
+    </script>
+  </body>
+</html>

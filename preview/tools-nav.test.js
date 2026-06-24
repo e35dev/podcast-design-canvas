@@ -46,6 +46,7 @@ const publishFlow = new Set([
   "thumbnail-cover-frame.html",
   "show-notes-assembly.html",
   "episode-metadata-publishing.html",
+  "publish-destination-presets.html",
   "export-package-handoff.html",
   "clip-candidate-review.html",
   "client-review-copy-flow.html",
