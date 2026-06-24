@@ -40,7 +40,10 @@ assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell k
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
 assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
 assert.match(shell, /Publish prep after export/, "shell documents the publish prep path");
+assert.match(shell, /Choose a visual direction/, "shell documents the visual direction path");
 assert.ok(shell.includes("episode-readiness.html"), "shell links to episode readiness in setup path");
+assert.ok(shell.includes("preset-style-picker.html"), "shell links to preset style picker in visual path");
+assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to watch-through in publish path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
 
 console.log(
