@@ -37,6 +37,7 @@ for (const file of linked) {
 // 3) The shell still exposes the secondary tools section.
 assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
+assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
 
 console.log(
   `preview shell coverage: ${prototypes.length} prototypes, all reachable, no dead links`,

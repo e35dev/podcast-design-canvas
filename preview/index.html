@@ -102,6 +102,23 @@
         color: var(--muted);
         font-size: 13px;
       }
+
+      .catalog-link {
+        margin: 0 0 22px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .catalog-link a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      .catalog-link a:hover,
+      .catalog-link a:focus-visible {
+        text-decoration: underline;
+        outline: none;
+      }
     
       .tools-title { margin: 34px 0 4px; font-size: 22px; }
       .tools-lede { margin: 0 0 18px; color: var(--muted); max-width: 640px; }
@@ -117,6 +134,8 @@
     <main aria-label="Podcast Design Canvas preview shell">
       <h1>Podcast Design Canvas</h1>
       <p class="lede">Follow the core episode path from imported speaker files through cleanup, captions, and export readiness. Each step opens a working prototype screen.</p>
+
+      <p class="catalog-link"><a href="../index.html">Browse the full screen catalog →</a></p>
 
       <p class="guided-flow"><a href="./episode-flow.html">▶ Open the guided episode flow &mdash; all five steps connected</a></p>
 
