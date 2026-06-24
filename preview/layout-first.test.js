@@ -1145,4 +1145,27 @@ canvas.listeners.drop({
 assert.equal(guestZone.classList.contains("drag-over"), false, "a canvas-gap drop clears the destination highlight");
 assert.equal(canvasCtl.zonesBySlot.host.classList.contains("filled"), true, "a canvas-gap drop leaves the video in its source slot");
 
+// Keyboard move/swap (WCAG 2.1.1): a placed video is focusable and the arrow keys move or swap
+// it between slots, mirroring drag — so reordering isn't pointer-only even though the draggable
+// affordance announces itself to screen readers.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "k-host.mp4", type: "video/mp4", size: 5, lastModified: 5 });
+const placedHostVideo = controller.zonesBySlot.host.querySelector(".placed-video");
+assert.equal(placedHostVideo.attributes.tabindex, "0", "a placed video is focusable for keyboard move");
+assert.ok((placedHostVideo.attributes["aria-keyshortcuts"] || "").includes("ArrowRight"), "the placed video advertises arrow-key move shortcuts");
+// ArrowRight moves it into the next (empty) slot.
+placedHostVideo.listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.equal(controller.zonesBySlot.guest.dataset.fileName, "k-host.mp4", "arrow key moves the placed video into the next slot");
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "the source slot is emptied after a keyboard move");
+// Placing a video in the now-empty host and pressing ArrowRight swaps with the filled guest.
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "k-guest.mp4", type: "video/mp4", size: 6, lastModified: 6 });
+controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.equal(controller.zonesBySlot.guest.dataset.fileName, "k-guest.mp4", "arrow key swaps the video into a filled neighbour");
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "k-host.mp4", "and swaps the neighbour back to the source slot");
+// A non-arrow key is a no-op, so Tab still moves focus instead of the video.
+const beforeKey = controller.zonesBySlot.host.dataset.fileName;
+controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "Tab", preventDefault() {} });
+assert.equal(controller.zonesBySlot.host.dataset.fileName, beforeKey, "a non-arrow key does not move the placed video");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

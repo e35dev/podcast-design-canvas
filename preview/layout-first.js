@@ -586,12 +586,15 @@
       wrap.draggable = true;
       if (typeof wrap.setAttribute === "function") {
         wrap.setAttribute("draggable", "true");
-        // The drag-to-move/swap affordance is otherwise only conveyed visually. Give the
-        // placed video an accessible name and a drag role description so a screen-reader user
-        // knows it is a draggable item and which slot it holds.
+        // The drag-to-move/swap affordance is otherwise pointer-only and conveyed visually.
+        // Make the placed video keyboard-operable too: focusable, with a drag role description
+        // and arrow-key shortcuts, so a keyboard / screen-reader user can move or swap it
+        // between slots instead of only dragging it with a mouse (WCAG 2.1.1).
         wrap.setAttribute("role", "group");
         wrap.setAttribute("aria-roledescription", "Draggable video");
-        wrap.setAttribute("aria-label", slotName(zone) + " video — drag onto another slot to move or swap it");
+        wrap.setAttribute("tabindex", "0");
+        wrap.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight ArrowUp ArrowDown");
+        wrap.setAttribute("aria-label", slotName(zone) + " video — drag, or focus and press the arrow keys, to move or swap it with another slot");
       }
       wrap.addEventListener("dragstart", (event) => {
         draggingFromSlot = zone.dataset.slot || null;
@@ -607,6 +610,31 @@
       wrap.addEventListener("dragend", () => {
         draggingFromSlot = null;
         clearDragAffordances();
+      });
+      // Keyboard equivalent of dragging a placed video onto another slot: the arrow keys move it
+      // to the previous/next visible slot, moving into an empty slot or swapping with a filled
+      // one through the same moveSlotVideo path as drag. Focus follows the video to its new slot
+      // so a keyboard user stays oriented after the move.
+      wrap.addEventListener("keydown", (event) => {
+        let delta = 0;
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+          delta = -1;
+        } else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+          delta = 1;
+        } else {
+          return;
+        }
+        event.preventDefault();
+        const order = visibleSlots();
+        const target = order[order.indexOf(zone) + delta];
+        if (!target) {
+          return;
+        }
+        moveSlotVideo(zone, target);
+        const moved = target.querySelector && target.querySelector(".placed-video");
+        if (moved && typeof moved.focus === "function") {
+          moved.focus();
+        }
       });
 
       const video = doc.createElement("video");
