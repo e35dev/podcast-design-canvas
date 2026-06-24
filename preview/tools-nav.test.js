@@ -71,6 +71,7 @@ const visualsFlow = new Set([
 const reuseFlow = new Set([
   "show-segment-system.html",
   "show-template-adaptation.html",
+  "show-brand-kit-setup.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
   "intro-outro-builder.html",

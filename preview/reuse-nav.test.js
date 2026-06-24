@@ -22,6 +22,7 @@ assert.ok(!/innerHTML/.test(navScript), "reuse nav builds the DOM without innerH
 const reuseScreens = [
   "show-segment-system.html",
   "show-template-adaptation.html",
+  "show-brand-kit-setup.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
   "intro-outro-builder.html",
@@ -169,8 +170,8 @@ assert.equal(embeddedNext.target, "_top", "embedded reuse next link targets the 
 
 const embeddedMiddleNav = renderNavFor("start-from-previous-episode.html", "start-from-previous-episode", true);
 assert.equal(
-  linkWithText(embeddedMiddleNav, "Previous: Show template adaptation").href,
-  "../preview/app.html#show-template-adaptation",
+  linkWithText(embeddedMiddleNav, "Previous: Show brand kit").href,
+  "../preview/app.html#show-brand-kit-setup",
   "embedded reuse nav routes previous reuse steps through the preview app hash",
 );
 assert.equal(
@@ -222,7 +223,7 @@ assert.ok(
   "reuse nav keeps the episode path context on the previous link",
 );
 assert.ok(
-  linkWithText(pathNav, "Next: Start from previous episode").href.includes("?path=episode"),
+  linkWithText(pathNav, "Next: Show brand kit").href.includes("?path=episode"),
   "reuse nav keeps the episode path context on the next link",
 );
 const noPathNav = renderNavWithSearch("show-template-adaptation.html", "show-template-adaptation", "");

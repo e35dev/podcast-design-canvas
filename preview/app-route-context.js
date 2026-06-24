@@ -33,6 +33,7 @@ function createPreviewAppRouting(order) {
   const reuseScreens = [
     "show-segment-system",
     "show-template-adaptation",
+    "show-brand-kit-setup",
     "start-from-previous-episode",
     "episode-chapter-markers",
     "intro-outro-builder",
