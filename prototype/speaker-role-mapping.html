@@ -545,31 +545,39 @@
           if (!result.issue) return;
           const track = list[index];
           const role = roles[track.role] ? track.role : "";
-          if (role !== "" && track.sig && sigCount[track.sig] > 1) {
+          // A shared recording and a duplicate single-seat role are two independent problems with
+          // two different fixes ("give each speaker a separate video" vs "pick the real Host"). A
+          // track can hit BOTH at once, so report each group on its own — don't let the first match
+          // swallow the second, which used to hide the duplicate-role conflict entirely.
+          const sharesRecording = role !== "" && track.sig && sigCount[track.sig] > 1;
+          const sharesSingleSeat = role !== "" && roles[role].single && seatCount[role] > 1;
+          if (sharesRecording) {
             const key = `sig:${track.sig}`;
-            if (seenGroup.has(key)) return;
-            seenGroup.add(key);
-            const names = assignedSourceNames(list, track.sig);
-            issues.push({
-              title: `${joinNames(names)} use the same recording`,
-              action: `Give each speaker their own video — one recording can't fill ${names.length} speaker frames.`,
-              tone: "review",
-            });
-            return;
+            if (!seenGroup.has(key)) {
+              seenGroup.add(key);
+              const names = assignedSourceNames(list, track.sig);
+              issues.push({
+                title: `${joinNames(names)} use the same recording`,
+                action: `Give each speaker their own video — one recording can't fill ${names.length} speaker frames.`,
+                tone: "review",
+              });
+            }
           }
-          if (role !== "" && roles[role].single && seatCount[role] > 1) {
+          if (sharesSingleSeat) {
             const key = `role:${role}`;
-            if (seenGroup.has(key)) return;
-            seenGroup.add(key);
-            const names = list.filter((item) => item.role === role).map((item) => item.name);
-            issues.push({
-              title: `${joinNames(names)} are set as ${roles[role].label}`,
-              action: `Only one ${roles[role].label} fits the layout. Confirm the real ${roles[role].label} and change the others.`,
-              tone: "review",
-            });
-            return;
+            if (!seenGroup.has(key)) {
+              seenGroup.add(key);
+              const names = list.filter((item) => item.role === role).map((item) => item.name);
+              issues.push({
+                title: `${joinNames(names)} are set as ${roles[role].label}`,
+                action: `Only one ${roles[role].label} fits the layout. Confirm the real ${roles[role].label} and change the others.`,
+                tone: "review",
+              });
+            }
           }
-          issues.push(result.issue);
+          if (!sharesRecording && !sharesSingleSeat) {
+            issues.push(result.issue);
+          }
         });
 
         const hasBlock = results.some((result) => result.state === "unassigned");

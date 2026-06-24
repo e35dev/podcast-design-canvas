@@ -151,6 +151,22 @@ assert.ok(
   "the duplicate-host summary names both tracks",
 );
 
+// A shared recording and a duplicate single-seat role are independent problems with different
+// fixes. When the SAME tracks hit both (two Hosts that also share one recording), the summary
+// must surface BOTH — the shared-recording card must not swallow the duplicate-Host conflict.
+const twoHostsSameRecording = evaluate([
+  { id: "a", name: "Dana", role: "host", sig: SIG, signal: "file-name", decision: "suggested" },
+  { id: "b", name: "Priya", role: "host", sig: SIG, signal: "file-name", decision: "suggested" },
+]);
+assert.ok(
+  twoHostsSameRecording.issues.some((issue) => /same recording/i.test(issue.title)),
+  "two hosts sharing one recording still report the shared-recording conflict",
+);
+assert.ok(
+  twoHostsSameRecording.issues.some((issue) => /set as Host/i.test(issue.title)),
+  "two hosts sharing one recording ALSO report the duplicate-Host conflict (not masked by the recording card)",
+);
+
 // Per-track problems stay one card per track (no over-aggregation).
 const twoUnassigned = evaluate([
   { id: "a", name: "Dana", role: "", sig: "", signal: "manual", decision: "suggested" },
