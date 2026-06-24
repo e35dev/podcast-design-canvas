@@ -102,8 +102,18 @@
       // at the slot itself whether it still needs a video — not only in the side-panel summary.
       const indicator = doc.createElement("span");
       indicator.className = "slot-state";
+      const indicatorId = "slot-state-" + zone.dataset.slot;
+      indicator.id = indicatorId;
+      if (typeof indicator.setAttribute === "function") indicator.setAttribute("id", indicatorId);
       zone.appendChild(indicator);
       slotIndicators[zone.dataset.slot] = indicator;
+      // Tie the badge to the slot's file control so a screen-reader user hears the slot's
+      // current state (Needs video / Ready / Invalid file) when they focus "Choose <slot> video",
+      // not only sighted creators reading the badge on the canvas.
+      const slotInput = zone.querySelector && zone.querySelector("[data-file-input]");
+      if (slotInput && typeof slotInput.setAttribute === "function") {
+        slotInput.setAttribute("aria-describedby", indicatorId);
+      }
     });
 
     const sceneLabel = doc.getElementById("layout-scene-label");

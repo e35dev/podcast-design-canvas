@@ -616,6 +616,19 @@ const stateDoc = {
 const stateCtl = createLayoutFirstController(stateDoc, { URL: urlApi });
 const slotState = (slot) => stateCtl.slotIndicators[slot];
 
+// Each slot's status badge is tied to its file control via aria-describedby, so a
+// screen-reader user hears the slot's current state when they focus "Choose <slot> video",
+// not only sighted creators who can read the badge on the canvas.
+["host", "guest", "guest-b", "broll"].forEach((slot) => {
+  assert.equal(slotState(slot).id, `slot-state-${slot}`, `the ${slot} status badge has a stable id`);
+  const slotInput = stateCtl.zonesBySlot[slot].querySelector("[data-file-input]");
+  assert.equal(
+    slotInput.getAttribute("aria-describedby"),
+    `slot-state-${slot}`,
+    `the ${slot} file control is described by its status badge`,
+  );
+});
+
 // Interview start: required slots flag missing, optional flags optional, hidden slot is blank.
 assert.equal(slotState("host").textContent, "Needs video", "an empty required host slot flags that it needs a video");
 assert.ok(slotState("host").classList.contains("is-missing"), "the missing host slot carries the missing state class");
