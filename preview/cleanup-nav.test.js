@@ -502,4 +502,91 @@ assert.equal(
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic social context links target the parent app");
 
+const transcriptSearchFixLinks = renderNavFor(
+  "transcript-search-navigation.html",
+  "transcript-search-navigation",
+  false,
+  "?path=publish&from=cleanup",
+  [
+    "speaker-attribution-review.html",
+    "episode-chapter-markers.html",
+    "clip-candidate-review.html",
+    "audio-caption-quality-review.html",
+  ],
+);
+assert.equal(
+  linkWithText(transcriptSearchFixLinks, "speaker-attribution-review.html").href,
+  "speaker-attribution-review.html?path=episode",
+  "cleanup nav keeps episode path context on transcript attribution handoffs",
+);
+assert.equal(
+  linkWithText(transcriptSearchFixLinks, "episode-chapter-markers.html").href,
+  "episode-chapter-markers.html?path=episode",
+  "cleanup nav keeps episode path context on transcript chapter handoffs",
+);
+assert.equal(
+  linkWithText(transcriptSearchFixLinks, "clip-candidate-review.html").href,
+  "clip-candidate-review.html?path=publish",
+  "cleanup nav keeps publish path context on transcript clip pin handoffs",
+);
+assert.equal(
+  linkWithText(transcriptSearchFixLinks, "audio-caption-quality-review.html").href,
+  "audio-caption-quality-review.html",
+  "standalone cleanup nav leaves caption quality transcript handoffs direct",
+);
+
+const embeddedTranscriptSearchFixLinks = renderNavFor(
+  "transcript-search-navigation.html",
+  "transcript-search-navigation",
+  true,
+  "?path=publish&from=cleanup",
+  [
+    "speaker-attribution-review.html",
+    "episode-chapter-markers.html",
+    "clip-candidate-review.html",
+    "audio-caption-quality-review.html",
+  ],
+);
+assert.equal(
+  linkWithText(embeddedTranscriptSearchFixLinks, "speaker-attribution-review.html").href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded cleanup nav routes transcript attribution handoffs through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedTranscriptSearchFixLinks, "episode-chapter-markers.html").href,
+  "../preview/app.html#episode-chapter-markers?path=episode",
+  "embedded cleanup nav routes transcript chapter handoffs through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedTranscriptSearchFixLinks, "clip-candidate-review.html").href,
+  "../preview/app.html#clip-candidate-review?path=publish",
+  "embedded cleanup nav routes transcript clip pin handoffs through the preview app",
+);
+const embeddedCaptionHandoff = linkWithText(embeddedTranscriptSearchFixLinks, "audio-caption-quality-review.html");
+assert.equal(
+  embeddedCaptionHandoff.href,
+  "../preview/app.html#audio-caption-quality-review",
+  "embedded cleanup nav routes transcript caption handoffs through the preview app",
+);
+assert.equal(embeddedCaptionHandoff.target, "_top", "embedded transcript caption handoffs target the parent app");
+
+const dynamicTranscriptSearchLinks = renderNavFor(
+  "transcript-search-navigation.html",
+  "transcript-search-navigation",
+  true,
+  "?path=publish&from=cleanup",
+);
+const dynamicClipLink = appendStaticLink(
+  dynamicTranscriptSearchLinks[0],
+  "clip-candidate-review.html",
+  "Pin as clip candidate",
+);
+dynamicTranscriptSearchLinks.listeners.click({ target: dynamicClipLink });
+assert.equal(
+  dynamicClipLink.href,
+  "../preview/app.html#clip-candidate-review?path=publish",
+  "embedded cleanup nav normalizes dynamic transcript clip pin links before navigation",
+);
+assert.equal(dynamicClipLink.target, "_top", "dynamic embedded transcript clip links target the parent app");
+
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");

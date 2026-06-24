@@ -28,6 +28,18 @@ const PREVIEW_APP_CLEANUP_HANDOFFS = new Map([
   ["social-context-intake", "?path=ingest"],
   ["guest-profile-reuse", ""],
 ]);
+
+// Cross-stage screens that cleanup prototypes hand off to when transcript search
+// pins or opens a result owned by another workflow stage.
+const CLEANUP_FIX_PATHS = {
+  "speaker-attribution-review.html": { path: "episode" },
+  "episode-chapter-markers.html": { path: "episode" },
+  "clip-candidate-review.html": { path: "publish" },
+};
+
+const PREVIEW_APP_CLEANUP_CROSS_PATH_TARGETS = new Set(
+  Object.keys(CLEANUP_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
 const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
 const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
 const CLEANUP_RETURN_PATHS = new Set(["publish"]);
@@ -65,7 +77,8 @@ function isPreviewAppCleanupHandoff(file) {
 }
 
 function isPreviewAppCleanupRoute(file) {
-  return isPreviewAppCleanupTarget(file) || isPreviewAppCleanupHandoff(file);
+  return isPreviewAppCleanupTarget(file) || isPreviewAppCleanupHandoff(file)
+    || PREVIEW_APP_CLEANUP_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
 }
 
 function isEmbeddedInPreviewApp() {
@@ -139,14 +152,15 @@ function routeSearchFromFile(file, fallbackSearch = cleanupEntrySearchFromWindow
   const filePath = params.get("path");
   const shellPath = new URLSearchParams(window.location.search).get("path");
   const fallbackFrom = new URLSearchParams((fallbackSearch || "").replace(/^\?/, "")).get("from");
+  const crossPathHandoff = PREVIEW_APP_CLEANUP_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
 
   const out = new URLSearchParams();
   if (CLEANUP_ENTRY_CONTEXTS.has(from)) {
     out.set("from", from);
-  } else if (CLEANUP_ENTRY_CONTEXTS.has(fallbackFrom)) {
+  } else if (!crossPathHandoff && CLEANUP_ENTRY_CONTEXTS.has(fallbackFrom)) {
     out.set("from", fallbackFrom);
   }
-  if (CLEANUP_RETURN_PATHS.has(filePath)) {
+  if (filePath === "episode" || filePath === "ingest" || CLEANUP_RETURN_PATHS.has(filePath)) {
     out.set("path", filePath);
   } else if (CLEANUP_RETURN_PATHS.has(shellPath)) {
     out.set("path", shellPath);
@@ -189,6 +203,18 @@ function hrefWithCleanupContext(file) {
   return hrefWithPath(file);
 }
 
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function resolveCleanupLink(file) {
+  const base = linkBase(file);
+  if (Object.prototype.hasOwnProperty.call(CLEANUP_FIX_PATHS, base)) {
+    return mergeRouteSearch(file, CLEANUP_FIX_PATHS[base]);
+  }
+  return hrefWithCleanupContext(file);
+}
+
 function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
@@ -196,8 +222,8 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setCleanupScreenLink(link, file) {
-  const resolved = hrefWithCleanupContext(file);
-  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupRoute(resolved)) {
+  const resolved = resolveCleanupLink(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupRoute(file)) {
     link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
@@ -215,6 +241,9 @@ function shouldNormalizeCleanupHref(href) {
     return false;
   }
   if (isPreviewAppCleanupTarget(href)) {
+    return true;
+  }
+  if (Object.prototype.hasOwnProperty.call(CLEANUP_FIX_PATHS, linkBase(href))) {
     return true;
   }
   return isEmbeddedInPreviewApp() && isPreviewAppCleanupHandoff(href);
