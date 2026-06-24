@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Asset Library Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #9a4b12;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 820px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .filter-btn {
+        min-height: 34px;
+        border: 1px solid #bfd0ca;
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+      }
+
+      .filter-btn[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #123d35;
+        color: #ffffff;
+      }
+
+      .filter-btn:focus-visible,
+      select:focus-visible,
+      .fix-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .assets {
+        display: grid;
+        gap: 12px;
+      }
+
+      .asset-card {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+      }
+
+      .preview {
+        min-height: 92px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+        padding: 8px;
+        background: linear-gradient(155deg, #6db5a8, #1d554d);
+      }
+
+      .preview.broll { background: linear-gradient(155deg, #6f6da8, #2c355d); }
+      .preview.sponsor { background: linear-gradient(155deg, #c68b4b, #7a4400); }
+      .preview.guest { background: linear-gradient(155deg, #8ab6da, #31577a); }
+      .preview.template { background: linear-gradient(155deg, #798c84, #42504b); }
+
+      .meta { display: grid; gap: 10px; align-content: start; }
+      .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+      .head strong { font-size: 15px; }
+      .sub { color: var(--muted); font-size: 13px; }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 0 10px;
+      }
+
+      .badge.suggested { color: #31577a; background: #e2ebfb; }
+      .badge.in-use { color: #075246; background: #dff5ef; }
+      .badge.archived { color: #5e6b67; background: #eceeed; }
+      .badge.approved { color: #075246; background: #dff5ef; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.rejected { color: #7e2020; background: #fde2e2; }
+
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .uses {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        border-radius: 999px;
+        font-weight: 800;
+        padding: 0 12px;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.block { border-left-color: var(--block); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .fix-link:hover { text-decoration: underline; }
+      .summary-note { margin-top: 14px; color: var(--muted); font-size: 13px; }
+
+      @media (max-width: 860px) {
+        .workspace { grid-template-columns: 1fr; }
+        .asset-card { grid-template-columns: 1fr; }
+        .fields { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/reuse-nav.js" defer></script>
+  </head>
+  <body data-reuse-step="episode-asset-library">
+    <main>
+      <h1>Episode asset library</h1>
+      <p class="lede">Keep reusable logos, guest images, b-roll, sponsor marks, title backgrounds, and recurring graphics in one creator-facing place. Lifecycle decides whether an asset is offered for new use; approval decides whether the creator should trust it.</p>
+
+      <section class="workspace" aria-label="Episode asset library workspace">
+        <div class="panel">
+          <h2>Reusable assets for “Founders Weekly”</h2>
+          <div class="filters" id="filters" aria-label="Asset library filters"></div>
+          <div class="assets" id="assets"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Episode asset summary">
+          <h2>Library summary</h2>
+          <div id="status" class="status review">Needs review</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">An asset can stay visible on episodes that already used it while staying out of new suggestions until its approval concern is resolved.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const filters = {
+        available: "Available for new use",
+        "in-use": "In use",
+        "needs-decision": "Needs a decision",
+        archived: "Archived",
+      };
+
+      const filterOrder = ["available", "in-use", "needs-decision", "archived"];
+
+      const assets = [
+        {
+          id: "a1",
+          name: "Dana headshot",
+          type: "Guest image",
+          scope: "Guest profile · Dana Brooks",
+          preview: "DB",
+          previewTone: "guest",
+          lifecycle: "in-use",
+          approval: "review",
+          role: "Lower-third image",
+          usedIn: "Episode 42 lower-third and guest profile",
+          fixScreen: "guest-profile-reuse.html",
+          fixLabel: "guest profile reuse",
+          warning: "Wrong-speaker warning still unresolved from the last episode.",
+        },
+        {
+          id: "a2",
+          name: "Launch montage",
+          type: "B-roll clip",
+          scope: "Current episode + show template",
+          preview: "B-roll",
+          previewTone: "broll",
+          lifecycle: "suggested",
+          approval: "approved",
+          role: "Context clip",
+          usedIn: "Suggested for chapter 2 and title beat",
+          fixScreen: "contextual-broll-moments.html",
+          fixLabel: "contextual b-roll moments",
+          warning: "",
+        },
+        {
+          id: "a3",
+          name: "Spring sponsor lockup",
+          type: "Sponsor mark",
+          scope: "Sponsor kit · Turborepo",
+          preview: "Sponsor",
+          previewTone: "sponsor",
+          lifecycle: "in-use",
+          approval: "rejected",
+          role: "Sponsor overlay",
+          usedIn: "Used on Episode 41 sponsor read",
+          fixScreen: "layout-safe-areas.html",
+          fixLabel: "layout safe areas",
+          warning: "Previously rejected as unreadable over captions; keep it visible on old exports but hold it back from new placements.",
+        },
+        {
+          id: "a4",
+          name: "Season four gradient",
+          type: "Title background",
+          scope: "Show template",
+          preview: "Title bg",
+          previewTone: "template",
+          lifecycle: "archived",
+          approval: "approved",
+          role: "Title and chapter background",
+          usedIn: "Archived after Season 4 but still present on older exports",
+          fixScreen: "show-template-adaptation.html",
+          fixLabel: "show template adaptation",
+          warning: "",
+        },
+        {
+          id: "a5",
+          name: "Founder fireside frame",
+          type: "Thumbnail source",
+          scope: "Episode package",
+          preview: "Thumb",
+          previewTone: "template",
+          lifecycle: "suggested",
+          approval: "review",
+          role: "Thumbnail candidate",
+          usedIn: "Queued for cover-frame review",
+          fixScreen: "thumbnail-cover-frame.html",
+          fixLabel: "thumbnail & cover frame",
+          warning: "Still needs a final cover-frame decision before it can become reusable.",
+        },
+      ];
+
+      let activeFilter = "available";
+
+      const assetsElement = document.querySelector("#assets");
+      const filtersElement = document.querySelector("#filters");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      function availability(asset) {
+        return asset.lifecycle !== "archived" && asset.approval === "approved";
+      }
+
+      function issueFor(asset) {
+        if (asset.approval === "approved") return null;
+        return {
+          title: `${asset.name} needs a decision`,
+          detail: asset.warning || `${asset.type} is held back from new placements until its owning workflow resolves the approval concern.`,
+          tone: asset.approval === "rejected" ? "block" : "review",
+          fixScreen: asset.fixScreen,
+          fixLabel: asset.fixLabel,
+        };
+      }
+
+      function filterAssets(list, filterId) {
+        if (filterId === "available") return list.filter(availability);
+        if (filterId === "in-use") return list.filter((asset) => asset.lifecycle === "in-use");
+        if (filterId === "needs-decision") return list.filter((asset) => asset.approval !== "approved");
+        if (filterId === "archived") return list.filter((asset) => asset.lifecycle === "archived");
+        return list;
+      }
+
+      function summaryFor(list) {
+        const issues = list.map(issueFor).filter(Boolean);
+        return {
+          overall: issues.length > 0 ? "review" : "ready",
+          issueCount: issues.length,
+          issues,
+        };
+      }
+
+      function renderFilters() {
+        filtersElement.replaceChildren(
+          ...filterOrder.map((filterId) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "filter-btn";
+            button.textContent = filters[filterId];
+            button.setAttribute("aria-pressed", String(filterId === activeFilter));
+            button.addEventListener("click", () => {
+              activeFilter = filterId;
+              render();
+            });
+            return button;
+          }),
+        );
+      }
+
+      function renderAsset(asset) {
+        const card = document.createElement("article");
+        card.className = "asset-card";
+
+        const preview = document.createElement("div");
+        preview.className = `preview ${asset.previewTone}`;
+        preview.textContent = asset.preview;
+        card.appendChild(preview);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const head = document.createElement("div");
+        head.className = "head";
+        const strong = document.createElement("strong");
+        strong.textContent = asset.name;
+        const sub = document.createElement("span");
+        sub.className = "sub";
+        sub.textContent = `${asset.type} · ${asset.scope}`;
+        head.append(strong, sub);
+
+        const badges = document.createElement("div");
+        badges.className = "badges";
+        const life = document.createElement("span");
+        life.className = `badge ${asset.lifecycle}`;
+        life.textContent = asset.lifecycle === "in-use" ? "in use" : asset.lifecycle;
+        const approval = document.createElement("span");
+        approval.className = `badge ${asset.approval}`;
+        approval.textContent = asset.approval;
+        badges.append(life, approval);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const lifecycleLabel = document.createElement("label");
+        lifecycleLabel.textContent = "Lifecycle";
+        const lifecycleSelect = document.createElement("select");
+        ["suggested", "in-use", "archived"].forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value === "in-use" ? "in use" : value;
+          option.selected = asset.lifecycle === value;
+          lifecycleSelect.appendChild(option);
+        });
+        lifecycleSelect.addEventListener("change", () => {
+          asset.lifecycle = lifecycleSelect.value;
+          render();
+        });
+        lifecycleLabel.appendChild(lifecycleSelect);
+
+        const approvalLabel = document.createElement("label");
+        approvalLabel.textContent = "Approval";
+        const approvalSelect = document.createElement("select");
+        ["approved", "review", "rejected"].forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          option.selected = asset.approval === value;
+          approvalSelect.appendChild(option);
+        });
+        approvalSelect.addEventListener("change", () => {
+          asset.approval = approvalSelect.value;
+          render();
+        });
+        approvalLabel.appendChild(approvalSelect);
+
+        fields.append(lifecycleLabel, approvalLabel);
+
+        const uses = document.createElement("p");
+        uses.className = "uses";
+        uses.textContent = `${asset.role} · ${asset.usedIn}`;
+
+        meta.append(head, badges, fields, uses);
+        card.appendChild(meta);
+        return card;
+      }
+
+      function renderIssues(issues) {
+        if (issues.length === 0) {
+          const empty = document.createElement("p");
+          empty.textContent = "Everything visible in this filter is approved or safely archived.";
+          return [empty];
+        }
+        return issues.map((issue) => {
+          const item = document.createElement("div");
+          item.className = `issue ${issue.tone}`;
+          const title = document.createElement("strong");
+          title.textContent = issue.title;
+          const detail = document.createElement("span");
+          detail.textContent = issue.detail;
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          item.append(title, detail, openLink);
+          return item;
+        });
+      }
+
+      function render() {
+        renderFilters();
+        const filtered = filterAssets(assets, activeFilter);
+        assetsElement.replaceChildren(...filtered.map(renderAsset));
+        const summary = summaryFor(filtered);
+        statusElement.className = `status ${summary.overall}`;
+        statusElement.textContent = summary.overall === "ready"
+          ? `${filtered.length} asset${filtered.length === 1 ? "" : "s"} ready in this filter`
+          : `${summary.issueCount} asset${summary.issueCount === 1 ? "" : "s"} need a decision`;
+        issuesElement.replaceChildren(...renderIssues(summary.issues));
+      }
+
+      render();
+
+      if (typeof module !== "undefined") {
+        module.exports = { assets, filterAssets, summaryFor, issueFor, availability };
+      }
+    </script>
+  </body>
+</html>

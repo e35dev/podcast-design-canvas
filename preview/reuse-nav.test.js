@@ -26,6 +26,7 @@ const reuseScreens = [
   "episode-chapter-markers.html",
   "intro-outro-builder.html",
   "episode-runtime-shaping.html",
+  "episode-asset-library.html",
 ];
 
 const reuseFlowMatch = navScript.match(/const REUSE_FLOW = \[([\s\S]*?)\];/);
@@ -141,7 +142,19 @@ assert.equal(
 );
 
 const lastNav = renderNavFor("episode-runtime-shaping.html", "episode-runtime-shaping");
-const publishHandoff = linkWithText(lastNav, "Continue: Episode watch-through");
+assert.equal(
+  linkWithText(lastNav, "Next: Episode asset library").href,
+  "episode-asset-library.html",
+  "runtime shaping advances to the asset library",
+);
+
+const assetLibraryNav = renderNavFor("episode-asset-library.html", "episode-asset-library");
+assert.equal(
+  linkWithText(assetLibraryNav, "Previous: Episode runtime shaping").href,
+  "episode-runtime-shaping.html",
+  "asset library links back to runtime shaping",
+);
+const publishHandoff = linkWithText(assetLibraryNav, "Continue: Episode watch-through");
 assert.equal(
   publishHandoff.href,
   "episode-watch-through-preview.html?path=publish",
@@ -187,7 +200,18 @@ assert.equal(
 );
 
 const embeddedLastNav = renderNavFor("episode-runtime-shaping.html", "episode-runtime-shaping", true);
-const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Episode watch-through");
+assert.equal(
+  linkWithText(embeddedLastNav, "Next: Episode asset library").href,
+  "../preview/app.html#episode-asset-library",
+  "embedded reuse nav routes the asset-library step through the preview app hash",
+);
+const embeddedAssetLibraryNav = renderNavFor("episode-asset-library.html", "episode-asset-library", true);
+assert.equal(
+  linkWithText(embeddedAssetLibraryNav, "Previous: Episode runtime shaping").href,
+  "../preview/app.html#episode-runtime-shaping",
+  "embedded asset-library back link routes through the preview app hash",
+);
+const embeddedHandoff = linkWithText(embeddedAssetLibraryNav, "Continue: Episode watch-through");
 assert.equal(
   embeddedHandoff.href,
   "../preview/app.html#episode-watch-through-preview?path=publish",
