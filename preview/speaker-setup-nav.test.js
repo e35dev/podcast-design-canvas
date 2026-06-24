@@ -17,6 +17,7 @@ assert.ok(navScript.includes("episode-flow.html"), "speaker setup nav links to t
 assert.ok(navScript.includes("app.html"), "speaker setup nav links to the preview app");
 assert.ok(navScript.includes("preset-style-picker.html"), "speaker setup nav hands off to the visual direction path");
 assert.ok(navScript.includes("speaker-role-mapping.html"), "speaker setup nav links back to speaker roles");
+assert.ok(navScript.includes("Previous: Speaker roles"), "speaker setup nav names the entry back-link in creator copy");
 assert.ok(navScript.includes('document.querySelector(".speaker-setup-nav")'), "speaker setup nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "speaker setup nav builds the DOM without innerHTML");
 
