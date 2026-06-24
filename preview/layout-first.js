@@ -527,11 +527,18 @@
           && !candidate.classList.contains("filled")
           && !candidate.classList.contains("is-invalid");
       });
-      extras.forEach((file, index) => {
-        if (openSlots[index]) {
-          placeVideoFile(openSlots[index], file);
+      for (let index = 0; index < extras.length; index++) {
+        const target = openSlots[index];
+        if (!target) {
+          break;
         }
-      });
+        placeVideoFile(target, extras[index]);
+        if (!target.classList.contains("filled")) {
+          // A spill slot rejected its file — stop so later recordings do not shift into
+          // the wrong speaker slots while this one still shows Invalid file.
+          break;
+        }
+      }
     }
 
     // Clear a single placed video without disturbing the other slots, so a creator who

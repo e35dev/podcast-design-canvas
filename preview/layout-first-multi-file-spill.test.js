@@ -160,4 +160,16 @@ assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "the target slot st
 assert.ok(ctl.zonesBySlot.guest.classList.contains("is-invalid"), "spill does not overwrite a slot that already rejected a file");
 assert.ok(!ctl.zonesBySlot.guest.classList.contains("filled"), "the rejected guest slot stays empty until the creator places there");
 
-console.log("layout-first multi-file spill: no spill on reject; spill skips invalid slots");
+// A spill slot that rejects its file stops the batch so later videos do not shift down.
+ctl.resetVideos();
+ctl.applyLayout("panel");
+ctl.placeVideoFiles(ctl.zonesBySlot.host, [
+  video("host.mp4"),
+  { name: "guest.mp4", type: "video/mp4", size: 0 },
+  video("guest-b.mp4"),
+]);
+assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "the target slot still fills");
+assert.ok(ctl.zonesBySlot.guest.classList.contains("is-invalid"), "the first spill slot flags an empty export");
+assert.ok(!ctl.zonesBySlot["guest-b"].classList.contains("filled"), "spill stops before shifting the next file to guest-b");
+
+console.log("layout-first multi-file spill: no spill on reject; spill skips invalid slots; spill stops on spill reject");
