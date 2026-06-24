@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pronunciation &amp; Name Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #7a4400;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      h2 { font-size: 18px; margin-bottom: 10px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel + .panel { margin-top: 18px; }
+      .entries { display: grid; gap: 14px; }
+
+      .entry {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .entry-name { font-weight: 800; font-size: 16px; }
+      .entry-guide,
+      .entry-source,
+      .entry-context,
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .entry-guide { margin-top: 4px; font-size: 14px; }
+      .entry-source { margin-top: 4px; }
+      .entry-context { margin-top: 6px; font-style: italic; }
+
+      .entry-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.confirmed,
+      .badge.guest-preferred {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.suggested {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.needs-review {
+        color: var(--warn);
+        background: #fff1d6;
+      }
+
+      .badge.not-spoken {
+        color: var(--muted);
+        background: #eeeeee;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 6px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:focus-visible,
+      .routed-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .routed-link {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .routed-link:hover { text-decoration: underline; }
+
+      .summary-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .summary-count { font-size: 14px; font-weight: 800; }
+
+      .correction-input {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .correction-input input {
+        flex: 1;
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+        .entry { grid-template-columns: 1fr; }
+        .entry-actions { align-items: flex-start; }
+      }
+    </style>
+    <script src="../preview/cleanup-nav.js" defer></script>
+  </head>
+  <body data-cleanup-step="pronunciation-name-review">
+    <main>
+      <h1>Pronunciation &amp; name review</h1>
+      <p class="lede">Confirm how names, brands, and recurring terms are said before publishing. The review stays in plain language so creators can approve the episode without technical notation or audio controls.</p>
+
+      <section class="workspace" aria-label="Pronunciation and name review workspace">
+        <div class="panel">
+          <div class="summary-row" id="summary"></div>
+          <div class="entries" id="entries"></div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2>Readiness</h2>
+            <div id="readiness"></div>
+          </div>
+          <div class="panel">
+            <h2>Owning screens</h2>
+            <p class="summary-note">Written spellings stay in <a class="routed-link" href="transcript-glossary.html">transcript glossary</a>. Guest identity and links stay in <a class="routed-link" href="social-context-intake.html">social context</a>. Returning guest preferences stay in <a class="routed-link" href="guest-profile-reuse.html">guest profile reuse</a>.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var episode = {
+        show: "The Long Build",
+        host: "Maya",
+        guests: ["Dev Anand", "Priya Chakraborty"],
+      };
+
+      var INITIAL_ENTRIES = [
+        {
+          id: "priya-chakraborty",
+          term: "Priya Chakraborty",
+          guide: "PREE-yah chuh-kruh-BOR-tee",
+          source: "Guest introduction",
+          context: "00:42 - Priya introduces herself before the platform segment.",
+          status: "guest-preferred",
+          spokenInEpisode: true,
+        },
+        {
+          id: "dev-anand",
+          term: "Dev Anand",
+          guide: "DAYV ah-NUND",
+          source: "Social context",
+          context: "01:15 - Maya introduces Dev before the infra discussion.",
+          status: "suggested",
+          spokenInEpisode: true,
+        },
+        {
+          id: "turborepo",
+          term: "Turborepo",
+          guide: "TUR-bo-REP-oh",
+          source: "Transcript glossary",
+          context: "14:22 - Priya mentions the migration stack.",
+          status: "needs-review",
+          spokenInEpisode: true,
+        },
+        {
+          id: "vercel",
+          term: "Vercel",
+          guide: "vur-SELL",
+          source: "Social context",
+          context: "14:30 - Dev references a partner team.",
+          status: "confirmed",
+          spokenInEpisode: true,
+        },
+        {
+          id: "supabase",
+          term: "Supabase",
+          guide: "SOO-pah-base",
+          source: "Guest profile reuse",
+          context: "",
+          status: "not-spoken",
+          spokenInEpisode: false,
+        },
+      ];
+
+      var entries = INITIAL_ENTRIES.map(function (entry) {
+        return Object.assign({}, entry);
+      });
+
+      function statusLabel(status) {
+        var labels = {
+          "confirmed": "Confirmed",
+          "suggested": "Suggested",
+          "needs-review": "Needs review",
+          "guest-preferred": "Guest preferred",
+          "not-spoken": "Not spoken in episode",
+        };
+        return labels[status] || status;
+      }
+
+      function needsPronunciationReview(entry) {
+        return entry.spokenInEpisode && (entry.status === "needs-review" || entry.status === "suggested");
+      }
+
+      function isConfirmedStatus(status) {
+        return status === "confirmed" || status === "guest-preferred";
+      }
+
+      function entrySummary(list) {
+        return list.reduce(function (summary, entry) {
+          summary.total += 1;
+          if (isConfirmedStatus(entry.status)) {
+            summary.confirmed += 1;
+          }
+          if (needsPronunciationReview(entry)) {
+            summary.needsReview += 1;
+          }
+          return summary;
+        }, { confirmed: 0, needsReview: 0, total: 0 });
+      }
+
+      function isReadyForPublish(list) {
+        return !list.some(needsPronunciationReview);
+      }
+
+      function updateEntryStatus(list, id, status) {
+        return list.map(function (entry) {
+          if (entry.id !== id) {
+            return entry;
+          }
+          return Object.assign({}, entry, { status: status });
+        });
+      }
+
+      function updateEntryGuide(list, id, guide) {
+        return list.map(function (entry) {
+          if (entry.id !== id) {
+            return entry;
+          }
+          return Object.assign({}, entry, { guide: guide.trim() || entry.guide });
+        });
+      }
+
+      function setEntryStatus(id, status) {
+        entries = updateEntryStatus(entries, id, status);
+        render();
+      }
+
+      function setEntryGuide(id, guide) {
+        entries = updateEntryGuide(entries, id, guide);
+        render();
+      }
+
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) {
+          node.className = className;
+        }
+        if (text !== undefined) {
+          node.textContent = text;
+        }
+        return node;
+      }
+
+      var entriesEl = null;
+      var summaryEl = null;
+      var readinessEl = null;
+
+      function renderEntry(entry) {
+        var card = el("article", "entry");
+        var info = el("div");
+        info.append(
+          el("div", "entry-name", entry.term),
+          el("div", "entry-guide", "Sounds like: " + entry.guide),
+          el("div", "entry-source", "Source: " + entry.source),
+        );
+
+        if (entry.context) {
+          info.append(el("div", "entry-context", entry.context));
+        }
+
+        if (needsPronunciationReview(entry)) {
+          var correction = el("div", "correction-input");
+          var input = document.createElement("input");
+          input.type = "text";
+          input.value = entry.guide;
+          input.setAttribute("aria-label", "Pronunciation guide for " + entry.term);
+          var update = el("button", "secondary", "Update");
+          update.type = "button";
+          update.addEventListener("click", function () {
+            setEntryGuide(entry.id, input.value);
+          });
+          correction.append(input, update);
+          info.append(correction);
+        }
+
+        var actions = el("div", "entry-actions");
+        actions.append(el("span", "badge " + entry.status, statusLabel(entry.status)));
+
+        if (needsPronunciationReview(entry)) {
+          var confirm = el("button", "", "Confirm");
+          confirm.type = "button";
+          confirm.addEventListener("click", function () {
+            setEntryStatus(entry.id, "confirmed");
+          });
+
+          var guest = el("button", "secondary", "Guest preferred");
+          guest.type = "button";
+          guest.addEventListener("click", function () {
+            setEntryStatus(entry.id, "guest-preferred");
+          });
+          actions.append(confirm, guest);
+        }
+
+        if (entry.status === "confirmed" && entry.spokenInEpisode) {
+          var glossary = el("a", "routed-link", "Apply in transcript glossary");
+          glossary.href = "transcript-glossary.html";
+          actions.append(glossary);
+        }
+
+        if (entry.status === "guest-preferred") {
+          var profile = el("a", "routed-link", "Saved to guest profile");
+          profile.href = "guest-profile-reuse.html";
+          actions.append(profile);
+        }
+
+        card.append(info, actions);
+        return card;
+      }
+
+      function renderSummary() {
+        var summary = entrySummary(entries);
+        var reviewBadge = el("span", "badge needs-review", summary.needsReview + " need review");
+        if (summary.needsReview === 0) {
+          reviewBadge = el("span", "badge confirmed", "No pronunciation review open");
+        }
+        summaryEl.replaceChildren(
+          el("span", "summary-count", summary.total + " names and terms"),
+          reviewBadge,
+          el("span", "badge confirmed", summary.confirmed + " confirmed"),
+        );
+      }
+
+      function renderReadiness() {
+        var ready = isReadyForPublish(entries);
+        var badge = el("div", ready ? "badge confirmed" : "badge needs-review", ready ? "Ready for publish" : "Review needed before publish");
+        var note = el(
+          "p",
+          "summary-note",
+          ready
+            ? "All spoken suggested or flagged names are confirmed or guest-preferred."
+            : "Suggested and needs-review spoken names must be confirmed before this pronunciation pass is ready.",
+        );
+        readinessEl.replaceChildren(badge, note);
+      }
+
+      function render() {
+        if (!entriesEl || !summaryEl || !readinessEl) {
+          return;
+        }
+        entriesEl.replaceChildren.apply(entriesEl, entries.map(renderEntry));
+        renderSummary();
+        renderReadiness();
+      }
+
+      if (typeof document !== "undefined") {
+        entriesEl = document.querySelector("#entries");
+        summaryEl = document.querySelector("#summary");
+        readinessEl = document.querySelector("#readiness");
+        render();
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          episode: episode,
+          INITIAL_ENTRIES: INITIAL_ENTRIES,
+          statusLabel: statusLabel,
+          needsPronunciationReview: needsPronunciationReview,
+          entrySummary: entrySummary,
+          isReadyForPublish: isReadyForPublish,
+          updateEntryStatus: updateEntryStatus,
+          updateEntryGuide: updateEntryGuide,
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -86,6 +86,7 @@ const cleanupFlow = new Set([
   "transcript-search-navigation.html",
   "accessibility-readability-checks.html",
   "line-pickup-insert.html",
+  "pronunciation-name-review.html",
   "on-screen-correction-note.html",
 ]);
 
