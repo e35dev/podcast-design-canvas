@@ -324,6 +324,31 @@
         padding: 0 10px;
       }
 
+      .placed-remove {
+        position: relative;
+        z-index: 2;
+        align-self: flex-start;
+        min-height: 26px;
+        margin-top: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.45);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 10px;
+        cursor: pointer;
+      }
+
+      .placed-remove:hover {
+        background: rgba(16, 24, 22, 0.6);
+      }
+
+      .placed-remove:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
+      }
+
       .canvas-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -1041,6 +1066,31 @@
             zone.insertBefore(placed, zone.firstChild);
           }
           placed.textContent = trackLabels[track];
+          // Per-slot remove, so a creator who places the wrong track can fix just that slot
+          // instead of resetting the whole layout. It is a button, so Enter/Space work too.
+          var remove = zone.querySelector(".placed-remove");
+          if (!remove) {
+            remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "placed-remove";
+            remove.textContent = "Remove";
+            remove.addEventListener("click", function (event) {
+              if (event && typeof event.stopPropagation === "function") event.stopPropagation();
+              removeTrack(zone);
+            });
+            zone.appendChild(remove);
+          }
+          remove.setAttribute("aria-label", "Remove " + trackLabels[track]);
+          updateSlotStatus();
+        }
+
+        function removeTrack(zone) {
+          if (!zone || !zone.classList.contains("filled")) return;
+          zone.classList.remove("filled");
+          var placed = zone.querySelector(".placed-track");
+          if (placed) placed.remove();
+          var remove = zone.querySelector(".placed-remove");
+          if (remove) remove.remove();
           updateSlotStatus();
         }
 
@@ -1065,6 +1115,8 @@
               zone.classList.remove("filled");
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
+              var remove = zone.querySelector(".placed-remove");
+              if (remove) remove.remove();
             });
             updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
           });

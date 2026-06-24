@@ -52,6 +52,12 @@ class Element {
     return node;
   }
 
+  appendChild(node) {
+    node.parentNode = this;
+    this.children.push(node);
+    return node;
+  }
+
   remove() {
     if (!this.parentNode) {
       return;
@@ -63,6 +69,9 @@ class Element {
   querySelector(selector) {
     if (selector === ".placed-track") {
       return this.children.find((child) => child.className === "placed-track") || null;
+    }
+    if (selector === ".placed-remove") {
+      return this.children.find((child) => child.className === "placed-remove") || null;
     }
     const slotMatch = selector.match(/^\.drop-zone\[data-slot="([^"]+)"\]$/);
     if (slotMatch) {
@@ -229,5 +238,21 @@ assert.strictEqual(
   false,
   "a non-activating key does not place a chip",
 );
+
+// Per-track remove: a creator can clear a single placed track without resetting the whole
+// layout. Host and guest are both filled from the keyboard block above.
+const hostZone = zones.find((zone) => zone.dataset.slot === "host");
+const guestZone = zones.find((zone) => zone.dataset.slot === "guest");
+const hostRemove = hostZone.querySelector(".placed-remove");
+assert.ok(hostRemove, "a placed track exposes a per-track remove control");
+assert.strictEqual(hostRemove.attributes["aria-label"], "Remove Host track · Dana Brooks", "the remove control is labelled per track");
+hostRemove.listeners.click({ stopPropagation() {} });
+assert.strictEqual(hostZone.classList.contains("filled"), false, "removing a track clears just that slot");
+assert.strictEqual(hostZone.querySelector(".placed-track"), null, "the placed track and its remove control are gone");
+assert.strictEqual(guestZone.classList.contains("filled"), true, "removing one track leaves the others placed");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "Continue re-gates after a required track is removed");
+// Re-placing the cleared slot restores readiness.
+keydown(chips[0], "Enter");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "false", "re-placing the removed track restores Continue");
 
 console.log("layout-first canvas handoff: continue unlocks after required speaker videos while b-roll stays optional");
