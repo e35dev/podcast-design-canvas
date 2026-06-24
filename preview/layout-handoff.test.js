@@ -74,16 +74,16 @@ assert.equal(
   "intro-card.mp4",
   "stored optional b-roll is restored when the URL carries broll=placed",
 );
-const queryOnlyBroll = handoff.load(null, "?path=episode&layout=interview&slots=host,guest&broll=placed");
+const queryOnlyBroll = handoff.load(null, `?path=episode&${handoff.queryForState(interview)}`);
 assert.deepEqual(
   queryOnlyBroll.optionalBroll,
-  { slot: "broll", label: "Optional b-roll", name: "", sig: "" },
-  "the URL broll flag is preserved when storage is unavailable",
+  { slot: "broll", label: "Optional b-roll", name: "intro-card.mp4", sig: "" },
+  "the query-only handoff preserves the optional b-roll file name when storage is unavailable",
 );
 assert.equal(
   handoff.placementList(queryOnlyBroll),
-  "Host, Guest, Optional b-roll",
-  "query-only layout handoff still tells role mapping that optional b-roll was placed",
+  "Host (host-cam.mp4), Guest (guest-cam.mp4), Optional b-roll (intro-card.mp4)",
+  "query-only layout handoff keeps the full placed-video summary, including optional b-roll",
 );
 assert.equal(
   new URLSearchParams(handoff.queryForState(queryOnlyBroll)).get("broll"),
@@ -157,6 +157,25 @@ assert.equal(
   handoff.load(null, "?path=episode&layout=interview&slots=host,guest&placements=%E0%A4%A").slots[0].sig,
   "",
   "malformed placement JSON falls back to slot-only handoff instead of throwing",
+);
+
+handoff.save(storage, interview);
+const fresherQueryState = handoff.stateFromZones("interview", [
+  zone("host", "fresh-host.mp4", true, "name:fresh-host.mp4|size:5|mtime:1"),
+  zone("guest", "fresh-guest.mp4", true, "name:fresh-guest.mp4|size:6|mtime:2"),
+  zone("broll", "fresh-intro.mp4", true, "name:fresh-intro.mp4|size:7|mtime:3"),
+]);
+const fresherQuery = handoff.queryForState(fresherQueryState);
+const fresherLoad = handoff.load(storage, `?path=episode&${fresherQuery}`);
+assert.equal(
+  fresherLoad.slots.find((slot) => slot.slot === "host").name,
+  "fresh-host.mp4",
+  "query-carried placement names win over stale stored handoff data for the same layout slots",
+);
+assert.equal(
+  fresherLoad.optionalBroll.name,
+  "fresh-intro.mp4",
+  "query-carried optional b-roll identity wins over stale stored handoff data",
 );
 
 const panelTracks = handoff.tracksFromState(

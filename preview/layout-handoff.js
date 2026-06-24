@@ -167,8 +167,21 @@
     }
   }
 
-  function slotEntriesFromQuery(params) {
-    const carried = placementEntriesFromQuery(params);
+  function optionalBrollFromQueryEntries(entries) {
+    const entry = (entries || []).find((candidate) => candidate.slot === "broll");
+    if (!entry) {
+      return null;
+    }
+    return {
+      slot: "broll",
+      label: slotLabels.broll,
+      name: entry.name || "",
+      sig: entry.sig || "",
+    };
+  }
+
+  function slotEntriesFromQuery(params, carriedEntries) {
+    const carried = carriedEntries || placementEntriesFromQuery(params);
     return slotsFromQuery(params.get("slots")).map((slot) => {
       const entry = carried.find((candidate) => candidate.slot === slot);
       return entry || { slot };
@@ -246,12 +259,12 @@
     }
   }
 
-  function withOptionalBrollFlag(state, placed) {
-    if (!state || !placed || state.optionalBroll) {
+  function withOptionalBrollFlag(state, placed, carriedOptionalBroll) {
+    if (!state || (!placed && !carriedOptionalBroll) || state.optionalBroll) {
       return state;
     }
     const flagged = clone(state);
-    flagged.optionalBroll = {
+    flagged.optionalBroll = carriedOptionalBroll || {
       slot: "broll",
       label: slotLabels.broll,
       name: "",
@@ -260,14 +273,32 @@
     return flagged;
   }
 
+  function stateMatchesPlacementEntries(state, entries) {
+    if (!state || !(entries || []).length) {
+      return true;
+    }
+    const placed = placementQueryPayload(state);
+    return entries.every((entry) => {
+      const current = placed.find((candidate) => candidate.slot === entry.slot);
+      return current
+        && current.name === entry.name
+        && current.sig === entry.sig;
+    });
+  }
+
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
-    const queryState = stateFromSlots(params.get("layout"), slotEntriesFromQuery(params));
+    const queryPlacements = placementEntriesFromQuery(params);
+    const queryState = stateFromSlots(params.get("layout"), slotEntriesFromQuery(params, queryPlacements));
     if (!queryState) {
       return null;
     }
     const queryHasBroll = params.get("broll") === "placed";
-    const queryStateWithBroll = withOptionalBrollFlag(queryState, queryHasBroll);
+    const queryStateWithBroll = withOptionalBrollFlag(
+      queryState,
+      queryHasBroll,
+      optionalBrollFromQueryEntries(queryPlacements),
+    );
     if (!storage) {
       return queryStateWithBroll;
     }
@@ -291,6 +322,7 @@
         && storedState.layout === queryState.layout
         && storedSlots === querySlots
         && brollMatches
+        && stateMatchesPlacementEntries(storedState, queryPlacements)
       ) {
         return storedState;
       }
