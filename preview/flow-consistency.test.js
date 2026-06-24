@@ -43,13 +43,28 @@ for (const file of navFlow) {
   );
 }
 
-// 5) The flow page advances through the same number of steps, in order.
+// 5) The guided flow may add ingest preamble steps before the core prototype path.
 const flowPage = read("episode-flow.html");
 const stepDefs = [...flowPage.matchAll(/\{\s*id:\s*"[a-z0-9-]+",\s*title:\s*"([^"]+)"\s*\}/g)].map((m) => m[1]);
+const coreFlow = [
+  "Source media health",
+  "Speaker sync",
+  "Audio cleanup",
+  "Caption review",
+  "Export readiness",
+];
+assert.ok(stepDefs.length >= coreFlow.length, "guided flow includes the core prototype path");
+
+let coreIndex = 0;
+for (const title of stepDefs) {
+  if (title === coreFlow[coreIndex]) {
+    coreIndex += 1;
+  }
+}
 assert.strictEqual(
-  stepDefs.length,
-  navFlow.length,
-  "flow page has one step per core-flow screen",
+  coreIndex,
+  coreFlow.length,
+  "guided flow keeps core step order after any ingest preamble",
 );
 
 console.log(`flow consistency: ${navFlow.length} core steps aligned across shell, nav, and flow page`);

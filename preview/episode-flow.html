@@ -442,7 +442,6 @@
         { id: "export", title: "Export readiness" },
       ];
 
-      const bucketStates = { ready: "Ready to continue", "needs-file": "Needs a file", "needs-name": "Needs a speaker name" };
       const roleOptions = ["Host", "Guest 1", "Guest 2", "Co-host"];
 
       const sourceStates = { ready: "Looks good", review: "Needs review", "audio-only": "Audio-only" };
@@ -666,7 +665,49 @@
           "Confirm files, speakers, and transcripts are ready before editing. Fix any missing file or name before you move on.",
         );
         for (const speaker of episode.speakers) {
-          nodes.push(speakerRow(speaker, "bucket", bucketStates, () => {}));
+          const row = document.createElement("div");
+          row.className = "row";
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent = initial(speaker.name);
+          const who = document.createElement("div");
+          who.className = "who";
+          const name = document.createElement("strong");
+          name.textContent = speaker.name;
+          const role = document.createElement("span");
+          role.textContent = speaker.role;
+          who.append(name, role);
+
+          const action = document.createElement("div");
+          if (speaker.bucket === "ready") {
+            const badge = document.createElement("span");
+            badge.className = "badge ok";
+            badge.textContent = "Ready to continue";
+            action.append(badge);
+          } else if (speaker.bucket === "needs-name") {
+            const fix = document.createElement("button");
+            fix.type = "button";
+            fix.className = "btn";
+            fix.textContent = "Add speaker name";
+            fix.addEventListener("click", () => {
+              speaker.bucket = "ready";
+              render();
+            });
+            action.append(fix);
+          } else {
+            const fix = document.createElement("button");
+            fix.type = "button";
+            fix.className = "btn";
+            fix.textContent = "Assign recording";
+            fix.addEventListener("click", () => {
+              speaker.bucket = "ready";
+              render();
+            });
+            action.append(fix);
+          }
+
+          row.append(avatar, who, action);
+          nodes.push(row);
         }
         return nodes;
       }
