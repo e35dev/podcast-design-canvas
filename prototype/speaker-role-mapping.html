@@ -591,15 +591,24 @@
         tracksElement.replaceChildren(
           ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
         );
+        renderSummary(evaluation);
+      }
 
-        statusElement.className = `status ${evaluation.overall}`;
-        statusElement.textContent = evaluation.overall === "ready"
+      // Refresh only the parts a Speaker name edit can change — the status line, the issues
+      // list, and the layout-handoff note — WITHOUT rebuilding the track rows. The name feeds
+      // the summary copy (issue titles) only; the badges and the readiness gate depend on
+      // role/signal/decision, not the name. Rebuilding every row on each keystroke destroyed the
+      // very <input> being typed into, so focus and caret were lost after one character (#1277).
+      function renderSummary(evaluation) {
+        const result = evaluation || evaluate(tracks);
+        statusElement.className = `status ${result.overall}`;
+        statusElement.textContent = result.overall === "ready"
           ? "Roles confirmed"
-          : evaluation.overall === "blocked"
+          : result.overall === "blocked"
             ? "Some tracks need a role"
             : "Review suggested roles";
 
-        const issues = evaluation.issues;
+        const issues = result.issues;
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
@@ -700,6 +709,14 @@
         }
         const track = tracks[index];
         track[field] = event.target.value;
+
+        // A Speaker name edit only changes the summary copy, never the rows or the gate. Refresh
+        // just the summary so the input the creator is typing into is left intact and keeps focus
+        // (#1277), instead of rebuilding every row and dropping focus after one character.
+        if (field === "name") {
+          renderSummary();
+          return;
+        }
 
         // Changing the role makes any earlier confirmation stale: a freshly chosen
         // role drops back to "suggested" so the creator confirms the new choice, and
