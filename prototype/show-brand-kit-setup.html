@@ -429,36 +429,55 @@
       }
 
       // --- Conflicts ---
+      // Each check measures the exact text/background pair that renders in the preview.
       function evaluateConflicts() {
         var conflicts = [];
 
-        var captionContrast = contrastRatio(state.primaryColor, "#1a1a1a");
-        if (captionContrast < 3) {
-          conflicts.push({
-            id: "caption-contrast",
-            text: "Caption color has low contrast against dark backgrounds.",
-            where: "Captions on speaker frames",
-            fix: "Use a lighter primary color or add a caption background.",
-          });
+        // Caption text color is auto-chosen by textColorOn(primaryColor) rendered on primaryColor.
+        // Check that the logo text is readable on its actual background in the preview cards.
+        if (state.logoText) {
+          var logoFg = textColorOn(state.primaryColor);
+          var logoContrast = contrastRatio(logoFg, state.primaryColor);
+          if (logoContrast < 3) {
+            conflicts.push({
+              id: "logo-contrast",
+              text: "Logo text has low contrast against the primary color background.",
+              where: "Logo overlay on preset cards and thumbnails",
+              fix: "Choose a primary color with more contrast against " + (luminance(state.primaryColor) > 0.4 ? "dark" : "light") + " text.",
+            });
+          }
         }
 
-        var lowerContrast = contrastRatio(state.primaryColor, state.secondaryColor);
-        if (lowerContrast < 3) {
-          conflicts.push({
-            id: "lower-third-contrast",
-            text: "Lower-third text may be hard to read with these color choices.",
-            where: "Speaker name lower-thirds",
-            fix: "Increase contrast between primary and secondary colors.",
-          });
+        // Lower-third: for bar and pill styles, text (textColorOn) renders on primaryColor bg.
+        // For minimal and boxed, text renders on the dark speaker frame (#2d6a5a).
+        var lowerBg = (state.lowerThird === "minimal" || state.lowerThird === "boxed") ? "#2d6a5a" : state.primaryColor;
+        var lowerFg = (state.lowerThird === "minimal" || state.lowerThird === "boxed") ? textColorOn(state.primaryColor) : textColorOn(state.primaryColor);
+        if (state.lowerThird === "minimal" || state.lowerThird === "boxed") {
+          // These styles render text colored by textColorOn(primaryColor) against a transparent bg on a dark frame
+          lowerFg = textColorOn(state.primaryColor);
+          var lowerContrast = contrastRatio(lowerFg, "#2d6a5a");
+          if (lowerContrast < 3) {
+            conflicts.push({
+              id: "lower-third-contrast",
+              text: "Lower-third text may be hard to read against the speaker frame background.",
+              where: "Speaker name lower-thirds",
+              fix: "Switch to a solid bar or pill style, or adjust the primary color.",
+            });
+          }
         }
 
-        if (state.typeStyle === "bold" && state.captionEmphasis === "bold-active") {
-          conflicts.push({
-            id: "bold-overload",
-            text: "Bold display type with bold-active captions may look heavy on screen.",
-            where: "Captions during fast exchanges",
-            fix: "Use standard or subtle caption emphasis with bold display type.",
-          });
+        // Accent color used in bold-active and color-highlight captions
+        if (state.captionEmphasis === "color-highlight") {
+          var highlightFg = textColorOn(state.accentColor);
+          var highlightContrast = contrastRatio(highlightFg, state.accentColor);
+          if (highlightContrast < 3) {
+            conflicts.push({
+              id: "highlight-contrast",
+              text: "Highlighted caption words have low contrast against the accent color.",
+              where: "Color-highlighted captions",
+              fix: "Choose an accent color with more contrast against text.",
+            });
+          }
         }
 
         return conflicts;
