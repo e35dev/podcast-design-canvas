@@ -840,6 +840,21 @@ assert.match(
 assert.equal(elementsById["layout-error-card"].hidden, false, "the no-room message is shown to the creator");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "a full-layout drop leaves existing placements untouched");
 
+// A full-layout drop of only a 0-byte export must explain the empty file was skipped — not
+// mislabel it as "no open slot left" just because the filename ends in .mp4 (#1231 gap).
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 });
+controller.placeVideoFile(controller.zonesBySlot.guest, { name: "g.mp4", type: "video/mp4", size: 12, lastModified: 12 });
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "b.mp4", type: "video/mp4", size: 13, lastModified: 13 });
+controller.placeDroppedFiles([{ name: "aborted.mp4", type: "video/mp4", size: 0, lastModified: 14 }]);
+assert.match(
+  elementsById["layout-error"].textContent,
+  /empty export, so it was skipped/i,
+  "a full-layout drop of only an empty export names the empty file, not a false no-room message",
+);
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "an empty-export drop on a full layout leaves placements untouched");
+
 // Drag-over highlight stays steady while the cursor crosses the slot's contents. dragenter and
 // dragleave fire for each child (label, badge, input), so the highlight is tracked by enter/
 // leave depth rather than toggled on every crossing — which would flicker — and a drop clears it.
@@ -909,6 +924,41 @@ assert.match(
   /wasn't a video, so it was skipped/i,
   "a page-level non-video drop on a full layout explains the file was skipped",
 );
+
+// A page-level drop of only an empty export on a full layout gets the same empty-export
+// guidance as a canvas-wide drop, not a misleading no-room message.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 });
+controller.placeVideoFile(controller.zonesBySlot.guest, { name: "g.mp4", type: "video/mp4", size: 12, lastModified: 12 });
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "b.mp4", type: "video/mp4", size: 13, lastModified: 13 });
+documentStub.listeners.drop({
+  preventDefault() {},
+  dataTransfer: { files: [{ name: "aborted.mp4", type: "video/mp4", size: 0, lastModified: 14 }] },
+});
+assert.match(
+  elementsById["layout-error"].textContent,
+  /empty export, so it was skipped/i,
+  "a page-level empty-export drop on a full layout explains the file was skipped",
+);
+
+// A page-level drop whose first file is a non-video must still place the videos behind it —
+// the document guard routes through the same placeable-videos-first batch ordering (#1230).
+controller.resetVideos();
+controller.applyLayout("interview");
+documentStub.listeners.drop({
+  preventDefault() {},
+  dataTransfer: {
+    files: [
+      { name: "thumbnail.png", type: "image/png", size: 3, lastModified: 3 },
+      { name: "host.mp4", type: "video/mp4", size: 4, lastModified: 4 },
+      { name: "guest.mp4", type: "video/mp4", size: 5, lastModified: 5 },
+    ],
+  },
+});
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a leading non-video does not block videos from a page-level drop");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "the remaining videos from a page-level drop still place");
+assert.equal(controller.zonesBySlot.host.classList.contains("is-invalid"), false, "a leading non-video from a page-level drop does not flag a speaker slot");
 
 // Multi-file page-level drops spill into the next open slots, same as canvas-wide drops.
 controller.resetVideos();
