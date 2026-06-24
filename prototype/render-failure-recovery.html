@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Render Failure Recovery Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .recovery {
+        display: grid;
+        gap: 14px;
+      }
+
+      .frame-wrap {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame .speaker {
+        position: absolute;
+        top: 12%;
+        left: 18%;
+        width: 22%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .frame .missing {
+        position: absolute;
+        top: 12%;
+        right: 8%;
+        width: 58%;
+        height: 72%;
+        border: 2px dashed rgba(255, 255, 255, 0.85);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        display: grid;
+        place-content: center;
+        text-align: center;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 12px;
+      }
+
+      .frame .caption {
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        bottom: 8%;
+        border-radius: 6px;
+        background: rgba(16, 24, 22, 0.82);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 10px;
+        text-align: center;
+      }
+
+      .frame.recovered .missing {
+        border-style: solid;
+        background: rgba(255, 255, 255, 0.86);
+        color: var(--ink);
+      }
+
+      .fields { display: grid; gap: 10px; }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .effect {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #f4faf8;
+        padding: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        background: #cfe0db;
+        border-color: #cfe0db;
+        color: #6f817b;
+        cursor: not-allowed;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .badge.failed { color: #8b1e1e; background: #ffe0e0; }
+      .badge.retrying { color: #2a4c8a; background: #e2ebfb; }
+      .badge.input { color: #7a4400; background: #fff1d6; }
+      .badge.recovered { color: #075246; background: #dff5ef; }
+      .badge.skipped { color: #3f4d66; background: #e8edf5; }
+      .badge.aside { color: #5e6b67; background: #eef2f0; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.failed { color: #8b1e1e; background: #ffe0e0; }
+      .status.retrying { color: #2a4c8a; background: #e2ebfb; }
+      .status.input { color: #7a4400; background: #fff1d6; }
+      .status.recovered { color: #075246; background: #dff5ef; }
+      .status.skipped { color: #3f4d66; background: #e8edf5; }
+      .status.aside { color: #5e6b67; background: #eef2f0; }
+
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker { border-left-color: var(--block); }
+      .issue.info { border-left-color: var(--accent); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      .preserved {
+        border: 1px solid #bfe3d7;
+        border-radius: 8px;
+        background: #eef9f4;
+        padding: 12px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Render failure recovery</h1>
+      <p class="lede">When preview or export stops, we explain what happened in episode terms and help you recover without losing edits. No stack traces &mdash; just the part of the episode that needs attention and a clear next step.</p>
+
+      <section class="workspace" aria-label="Render failure recovery workspace">
+        <div class="panel">
+          <h2>What failed</h2>
+          <div class="recovery" id="recovery"></div>
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Recovery summary">
+          <h2>Recovery summary</h2>
+          <div id="status" class="status failed">Export failed</div>
+          <div id="issues" class="issues"></div>
+          <div class="preserved" id="preserved"></div>
+          <p class="summary-note">Canvas edits, caption corrections, approved b-roll, and readiness decisions stay saved while you recover.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Recovery choices from docs/render-failure-recovery.md. Each explains the effect
+      // on the finished episode in plain language — not infrastructure progress.
+      const actions = {
+        retry: {
+          label: "Retry export",
+          effect: "Run export again with your current edits preserved.",
+        },
+        replace: {
+          label: "Replace missing asset",
+          effect: "Open the asset library for the product demo clip at 08:14.",
+        },
+        skip: {
+          label: "Skip optional visual",
+          effect: "Finish export without this b-roll moment and record that choice for handoff.",
+        },
+        moment: {
+          label: "Return to issue moment",
+          effect: "Jump to 08:14 to pick a different visual for the product demo.",
+        },
+        aside: {
+          label: "Set aside for now",
+          effect: "Keep all edits and return to this export later.",
+        },
+      };
+
+      const sampleFailure = {
+        title: "A b-roll asset is missing",
+        moment: "08:14 — product demo",
+        caption: "Guest: …and here is the dashboard we shipped last quarter",
+        explanation: "The product demo visual could not be included in the export file.",
+        status: "failed",
+        proposedAction: "replace",
+        assetReady: false,
+      };
+
+      let failure = structuredClone(sampleFailure);
+
+      const recoveryElement = document.querySelector("#recovery");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const preservedElement = document.querySelector("#preserved");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        failure = structuredClone(sampleFailure);
+        render();
+      });
+
+      // Single source of truth: one recovery status at a time, mapped from the chosen
+      // action and whether a retry has finished.
+      function evaluate(state) {
+        let issue = null;
+
+        if (state.status === "failed") {
+          issue = {
+            title: state.title,
+            action: `${state.explanation} Choose a recovery action, then confirm it.`,
+            tone: "blocker",
+          };
+        } else if (state.status === "retrying") {
+          issue = {
+            title: "Retrying export",
+            action: actions.retry.effect,
+            tone: "info",
+          };
+        } else if (state.status === "needs creator input") {
+          issue = {
+            title: "Waiting on a missing asset",
+            action: state.proposedAction === "moment"
+              ? actions.moment.effect
+              : "Replace the missing product demo clip, then retry export when it is ready.",
+            tone: "review",
+          };
+        } else if (state.status === "recovered") {
+          issue = {
+            title: "Export recovered",
+            action: "The latest export finished successfully with your edits preserved.",
+            tone: "info",
+          };
+        } else if (state.status === "exported around the issue") {
+          issue = {
+            title: "Exported without optional visual",
+            action: "The episode exported without the missing b-roll moment. Readiness for that visual stays open for handoff.",
+            tone: "info",
+          };
+        } else if (state.status === "set aside") {
+          issue = {
+            title: "Export set aside",
+            action: "Your edits are saved. Resume this export whenever you are ready.",
+            tone: "info",
+          };
+        }
+
+        return { status: state.status, issue };
+      }
+
+      function statusClass(status) {
+        if (status === "needs creator input") return "input";
+        if (status === "exported around the issue") return "skipped";
+        if (status === "set aside") return "aside";
+        return status;
+      }
+
+      function availableActions(status) {
+        if (status === "failed") {
+          return ["replace", "retry", "skip", "moment", "aside"];
+        }
+        if (status === "needs creator input") {
+          return ["replace", "retry", "skip", "moment", "aside"];
+        }
+        if (status === "retrying") {
+          return [];
+        }
+        return [];
+      }
+
+      function summaryLabel(status) {
+        if (status === "failed") return "Export failed";
+        if (status === "retrying") return "Retrying export";
+        if (status === "needs creator input") return "Waiting on you";
+        if (status === "recovered") return "Export recovered";
+        if (status === "exported around the issue") return "Exported without optional visual";
+        return "Export set aside";
+      }
+
+      function applyAction(actionKey) {
+        if (actionKey === "retry") {
+          failure.status = "retrying";
+          return;
+        }
+        if (actionKey === "replace" || actionKey === "moment") {
+          failure.status = "needs creator input";
+          failure.proposedAction = actionKey;
+          failure.assetReady = false;
+          return;
+        }
+        if (actionKey === "skip") {
+          failure.status = "exported around the issue";
+          return;
+        }
+        if (actionKey === "aside") {
+          failure.status = "set aside";
+        }
+      }
+
+      function renderFrame(state) {
+        const wrap = document.createElement("div");
+        wrap.className = "frame-wrap";
+
+        const head = document.createElement("div");
+        head.style.display = "flex";
+        head.style.justifyContent = "space-between";
+        head.style.gap = "10px";
+        head.style.alignItems = "center";
+
+        const title = document.createElement("strong");
+        title.textContent = state.moment;
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${statusClass(state.status)}`;
+        badge.textContent = state.status;
+        head.append(title, badge);
+
+        const frame = document.createElement("div");
+        frame.className = `frame ${state.status === "recovered" || state.status === "exported around the issue" ? "recovered" : ""}`;
+
+        const speaker = document.createElement("div");
+        speaker.className = "speaker";
+
+        const missing = document.createElement("div");
+        missing.className = "missing";
+        missing.textContent = state.status === "recovered"
+          ? "Product demo clip restored"
+          : state.status === "exported around the issue"
+            ? "Optional visual skipped"
+            : "Missing b-roll clip";
+
+        const caption = document.createElement("div");
+        caption.className = "caption";
+        caption.textContent = state.caption;
+
+        frame.append(speaker, missing, caption);
+        wrap.append(head, frame);
+        return wrap;
+      }
+
+      function renderControls(state, evaluation) {
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const explanation = document.createElement("div");
+        explanation.className = "effect";
+        explanation.textContent = evaluation.issue.action;
+        fields.appendChild(explanation);
+
+        const actionsRow = document.createElement("div");
+        actionsRow.className = "actions";
+
+        const options = availableActions(state.status);
+        if (options.length) {
+          const label = document.createElement("label");
+          label.textContent = "Recovery action";
+          const select = document.createElement("select");
+          select.dataset.field = "action";
+          for (const key of options) {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = actions[key].label;
+            option.selected = key === state.proposedAction;
+            select.appendChild(option);
+          }
+          select.addEventListener("change", (event) => {
+            failure.proposedAction = event.target.value;
+            const effect = document.querySelector("#action-effect");
+            if (effect) {
+              effect.textContent = actions[failure.proposedAction].effect;
+            }
+          });
+          label.appendChild(select);
+          fields.appendChild(label);
+
+          const effect = document.createElement("div");
+          effect.id = "action-effect";
+          effect.className = "effect";
+          effect.textContent = actions[state.proposedAction].effect;
+          fields.appendChild(effect);
+
+          const confirm = document.createElement("button");
+          confirm.type = "button";
+          confirm.textContent = "Confirm recovery choice";
+          confirm.addEventListener("click", () => {
+            applyAction(failure.proposedAction);
+            render();
+          });
+          actionsRow.appendChild(confirm);
+        }
+
+        if (state.status === "needs creator input") {
+          const assetReady = document.createElement("button");
+          assetReady.type = "button";
+          assetReady.className = "secondary";
+          assetReady.textContent = "Mark asset replaced";
+          assetReady.addEventListener("click", () => {
+            failure.assetReady = true;
+            render();
+          });
+          actionsRow.appendChild(assetReady);
+
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.textContent = "Retry export";
+          retry.disabled = !state.assetReady;
+          retry.addEventListener("click", () => {
+            failure.status = "retrying";
+            render();
+          });
+          actionsRow.appendChild(retry);
+        }
+
+        if (state.status === "retrying") {
+          const finished = document.createElement("button");
+          finished.type = "button";
+          finished.textContent = "Confirm export recovered";
+          finished.addEventListener("click", () => {
+            failure.status = "recovered";
+            render();
+          });
+          actionsRow.appendChild(finished);
+        }
+
+        fields.appendChild(actionsRow);
+        return fields;
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone === "blocker" ? "blocker" : issue.tone === "info" ? "info" : ""}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      function render() {
+        const evaluation = evaluate(failure);
+        recoveryElement.replaceChildren(
+          renderFrame(failure),
+          renderControls(failure, evaluation),
+        );
+
+        const klass = statusClass(evaluation.status);
+        statusElement.className = `status ${klass}`;
+        statusElement.textContent = summaryLabel(evaluation.status);
+
+        issuesElement.replaceChildren(renderIssue(evaluation.issue));
+
+        preservedElement.textContent = evaluation.status === "recovered"
+          ? "Last successful export: Episode 42 — Founders Weekly (full length, captions included)."
+          : "Still preserved: canvas edits, caption corrections, approved b-roll, metadata, and readiness decisions.";
+      }
+
+      render();
+    </script>
+  </body>
+</html>
