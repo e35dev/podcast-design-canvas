@@ -665,15 +665,20 @@
         );
       }
 
-      function renderRollupChoiceEffectTags() {
+      function renderRollupSpeakerEffectTags(needsWork) {
         const wrap = document.createElement("div");
         wrap.className = "rollup-effect-tags";
-        wrap.setAttribute("aria-label", "Expected cleanup outcomes for active choices");
+        wrap.setAttribute("aria-label", "Expected cleanup outcomes for speaker buckets needing review");
 
-        for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
+        const effects = choices
+          .filter((entry) => enabled.has(entry.id))
+          .map((entry) => entry.effect);
+        if (!effects.length) return wrap;
+
+        for (const speaker of needsWork) {
           const tag = document.createElement("span");
           tag.className = "rollup-effect-tag";
-          tag.textContent = `${choice.label} — ${choice.effect}`;
+          tag.textContent = `${bucketLabel(speaker)} — ${effects.join("; ")}`;
           wrap.appendChild(tag);
         }
 
@@ -706,7 +711,7 @@
           if (momentTags.childElementCount) {
             rollupElement.appendChild(momentTags);
           }
-          const effectTags = renderRollupChoiceEffectTags();
+          const effectTags = renderRollupSpeakerEffectTags(rollup.needsWork);
           if (effectTags.childElementCount) {
             rollupElement.appendChild(effectTags);
           }
