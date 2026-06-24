@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>On-Screen Correction Note Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --review: #5d4f9c;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 780px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .frame {
+        position: relative;
+        width: 148px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame .speaker {
+        position: absolute;
+        top: 14%;
+        left: 50%;
+        width: 34%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .frame .caption {
+        position: absolute;
+        right: 8%;
+        bottom: 7%;
+        left: 8%;
+        border-radius: 5px;
+        background: rgba(16, 24, 22, 0.82);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.35;
+        padding: 5px 6px;
+        text-align: center;
+      }
+
+      .frame .lead {
+        position: absolute;
+        left: 8%;
+        top: 9%;
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.82);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 7px;
+      }
+
+      .frame .correction {
+        position: absolute;
+        right: 8%;
+        left: 8%;
+        border-radius: 6px;
+        background: rgba(255, 248, 229, 0.96);
+        color: #23312d;
+        box-shadow: 0 6px 18px rgba(16, 24, 22, 0.18);
+        padding: 7px 8px;
+      }
+
+      .frame .correction strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 10px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .frame .correction span {
+        display: block;
+        font-size: 10px;
+        line-height: 1.32;
+        font-weight: 700;
+      }
+
+      .frame .correction.subtle {
+        bottom: 33%;
+      }
+
+      .frame .correction.held {
+        top: 26%;
+        bottom: auto;
+      }
+
+      .frame .correction.drafted {
+        background: rgba(240, 233, 255, 0.96);
+        outline: 1px dashed rgba(93, 79, 156, 0.45);
+      }
+
+      .frame .placeholder {
+        position: absolute;
+        right: 8%;
+        left: 8%;
+        top: 28%;
+        border-radius: 6px;
+        border: 1px dashed rgba(255, 255, 255, 0.55);
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.32;
+        padding: 10px 8px;
+        text-align: center;
+      }
+
+      .frame.dismissed .placeholder {
+        top: 32%;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .frame.dismissed .speaker,
+      .frame.dismissed .caption {
+        opacity: 0.92;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.needed {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.drafted {
+        color: #5d4f9c;
+        background: #efe8ff;
+      }
+
+      .badge.placed {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.dismissed {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 88px;
+        padding: 10px 12px;
+        resize: vertical;
+      }
+
+      select {
+        min-height: 42px;
+        padding: 8px 10px;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .suggestion {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .suggestion span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .count-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .count-card {
+        display: grid;
+        gap: 3px;
+        min-height: 72px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .count-card strong {
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .count-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary-item {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .summary-item.drafted {
+        border-left-color: var(--review);
+      }
+
+      .summary-item.info {
+        border-left-color: var(--accent);
+      }
+
+      .summary-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .summary-item span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .moment {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 100%;
+        }
+
+        .field-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>On-screen correction note</h1>
+      <p class="lede">Mark a misstatement, write a short calm correction, and preview it on the real episode moment without opening a motion-graphics tool. This prototype stays inside the note workflow defined in <code>docs/on-screen-correction-note.md</code>.</p>
+
+      <section class="workspace" aria-label="On-screen correction note workspace">
+        <div class="panel">
+          <div class="moments" id="moments"></div>
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Correction summary</h2>
+          <div id="status" class="status review">Corrections to review</div>
+          <div class="count-grid" id="counts"></div>
+          <div class="summary-list" id="summaryList"></div>
+          <p class="summary-note">A still-needed correction stays visible in review, but it does not silently block export on its own. Placed notes inherit the show’s existing correction-card style instead of opening a separate graphics editor.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const sampleMoments = [
+        {
+          id: "launch",
+          speaker: "Host",
+          context: "Launch timeline",
+          moment: "06:18",
+          quote: "We launched the beta in 2021 and opened signups the same week.",
+          note: "",
+          suggestion: "Correction: the beta launched in 2022.",
+          prominence: "subtle",
+          resolution: null,
+        },
+        {
+          id: "quote",
+          speaker: "Guest 1",
+          context: "Quoted source",
+          moment: "18:43",
+          quote: "That line is usually credited to Joan Rivers.",
+          note: "Correction: the quote is usually attributed to Joan Robinson.",
+          suggestion: "Correction: the quote is usually attributed to Joan Robinson.",
+          prominence: "held",
+          resolution: null,
+        },
+        {
+          id: "figure",
+          speaker: "Host",
+          context: "Fundraising figure",
+          moment: "32:11",
+          quote: "We said the round was four million dollars.",
+          note: "Correction: the round size was $3.4 million.",
+          suggestion: "",
+          prominence: "subtle",
+          resolution: "placed",
+        },
+        {
+          id: "policy",
+          speaker: "Guest 2",
+          context: "Since-recording update",
+          moment: "44:57",
+          quote: "That rule is still in effect everywhere.",
+          note: "Since recording: the policy changed in March and now applies only in New York.",
+          suggestion: "Since recording: the policy changed in March and now applies only in New York.",
+          prominence: "held",
+          resolution: "dismissed",
+        },
+      ];
+
+      let moments = structuredClone(sampleMoments);
+
+      const momentsElement = document.querySelector("#moments");
+      const statusElement = document.querySelector("#status");
+      const countsElement = document.querySelector("#counts");
+      const summaryListElement = document.querySelector("#summaryList");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(sampleMoments);
+        render();
+      });
+
+      function stateFor(moment) {
+        if (moment.resolution === "placed") {
+          return "placed";
+        }
+
+        if (moment.resolution === "dismissed") {
+          return "dismissed";
+        }
+
+        return moment.note.trim() ? "drafted" : "needed";
+      }
+
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          const state = stateFor(moment);
+          const summary = state === "needed"
+            ? "Marked for a correction, but viewers would still hear the line with no on-screen note."
+            : state === "drafted"
+              ? "The note previews here, but it will not ship until you place it."
+              : state === "placed"
+                ? `The correction appears as a ${moment.prominence === "held" ? "held clarification beat" : "subtle lower note"} in the finished episode.`
+                : "This moment ships as spoken with no correction note.";
+
+          return { ...moment, state, summary };
+        });
+
+        const counts = {
+          needed: results.filter((result) => result.state === "needed").length,
+          drafted: results.filter((result) => result.state === "drafted").length,
+          placed: results.filter((result) => result.state === "placed").length,
+          dismissed: results.filter((result) => result.state === "dismissed").length,
+        };
+
+        return {
+          results,
+          counts,
+          overall: counts.needed || counts.drafted ? "review" : "ready",
+        };
+      }
+
+      function badgeLabel(state) {
+        return {
+          needed: "Needed",
+          drafted: "Drafted",
+          placed: "Placed",
+          dismissed: "Dismissed",
+        }[state];
+      }
+
+      function buildFrame(result) {
+        const frame = document.createElement("div");
+        frame.className = `frame ${result.state}`;
+
+        const speaker = makeElement("div", { className: "speaker" });
+        const lead = makeElement("div", { className: "lead", textContent: `${result.speaker} · ${result.moment}` });
+        const caption = makeElement("div", { className: "caption", textContent: result.quote });
+
+        frame.append(speaker, lead, caption);
+
+        if (result.state === "needed") {
+          frame.append(
+            makeElement("div", {
+              className: "placeholder",
+              textContent: "Correction note not written yet.",
+            }),
+          );
+          return frame;
+        }
+
+        if (result.state === "dismissed") {
+          frame.append(
+            makeElement("div", {
+              className: "placeholder",
+              textContent: "No correction note will appear here.",
+            }),
+          );
+          return frame;
+        }
+
+        const correction = document.createElement("div");
+        correction.className = `correction ${result.prominence} ${result.state}`;
+        correction.append(
+          makeElement("strong", {
+            textContent: result.state === "drafted" ? "Draft note" : "Correction",
+          }),
+          makeElement("span", {
+            textContent: result.note.trim(),
+          }),
+        );
+        frame.append(correction);
+        return frame;
+      }
+
+      function renderMomentCard(moment, result) {
+        const article = document.createElement("article");
+        article.className = "moment";
+        article.dataset.id = moment.id;
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const head = document.createElement("div");
+        head.className = "head";
+        head.append(
+          makeElement("strong", { textContent: moment.context }),
+          makeElement("span", {
+            className: `badge ${result.state}`,
+            textContent: badgeLabel(result.state),
+          }),
+        );
+
+        const meta = makeElement("div", {
+          className: "meta",
+          textContent: `${moment.speaker} · ${moment.moment}`,
+        });
+
+        const noteField = document.createElement("label");
+        noteField.append(
+          document.createTextNode("Correction note"),
+        );
+        const textarea = makeElement("textarea", {
+          value: moment.note,
+          placeholder: "Correction: ...",
+        });
+        textarea.addEventListener("input", () => {
+          const item = moments.find((entry) => entry.id === moment.id);
+          item.note = textarea.value;
+          if (item.resolution === "placed") {
+            item.resolution = null;
+          }
+          if (item.resolution === "dismissed" && textarea.value.trim()) {
+            item.resolution = null;
+          }
+          syncMoment(moment.id);
+        });
+        noteField.append(textarea);
+
+        const prominenceField = document.createElement("label");
+        prominenceField.append(document.createTextNode("Prominence"));
+        const prominenceSelect = document.createElement("select");
+        [
+          ["subtle", "Subtle lower note"],
+          ["held", "Held clarification beat"],
+        ].forEach(([value, label]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          option.selected = value === moment.prominence;
+          prominenceSelect.append(option);
+        });
+        prominenceSelect.addEventListener("change", () => {
+          const item = moments.find((entry) => entry.id === moment.id);
+          item.prominence = prominenceSelect.value;
+          if (item.resolution === "placed") {
+            item.resolution = null;
+          }
+          replaceMoment(moment.id);
+        });
+        prominenceField.append(prominenceSelect);
+
+        const row = makeElement("div", { className: "field-row" });
+        row.append(noteField, prominenceField);
+
+        const hint = makeElement("div", {
+          className: "hint",
+          textContent: result.summary,
+        });
+
+        const actions = makeElement("div", { className: "actions" });
+        if (moment.suggestion) {
+          const suggestion = makeElement("div", { className: "suggestion" });
+          suggestion.append(
+            makeElement("span", { textContent: "Confirmed context available." }),
+            makeActionButton("Use suggested correction", "secondary", () => {
+              const item = moments.find((entry) => entry.id === moment.id);
+              item.note = item.suggestion;
+              if (item.resolution === "dismissed" || item.resolution === "placed") {
+                item.resolution = null;
+              }
+              replaceMoment(moment.id);
+            }),
+          );
+          fields.append(head, meta, row, suggestion, actions, hint);
+        } else {
+          fields.append(head, meta, row, actions, hint);
+        }
+
+        const placeLabel = result.state === "placed" ? "Placed" : "Place note";
+        actions.append(
+          makeActionButton(placeLabel, "", () => {
+            const item = moments.find((entry) => entry.id === moment.id);
+            if (!item.note.trim()) {
+              return;
+            }
+            item.resolution = "placed";
+            replaceMoment(moment.id);
+          }, !moment.note.trim()),
+        );
+
+        if (result.state === "dismissed") {
+          actions.append(
+            makeActionButton("Restore draft", "secondary", () => {
+              const item = moments.find((entry) => entry.id === moment.id);
+              item.resolution = null;
+              replaceMoment(moment.id);
+            }),
+          );
+        } else {
+          actions.append(
+            makeActionButton("Dismiss for this episode", "secondary", () => {
+              const item = moments.find((entry) => entry.id === moment.id);
+              item.resolution = "dismissed";
+              replaceMoment(moment.id);
+            }),
+          );
+        }
+
+        article.append(buildFrame(result), fields);
+        return article;
+      }
+
+      function makeActionButton(label, className, handler, disabled = false) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = label;
+        if (className) {
+          button.className = className;
+        }
+        button.disabled = disabled;
+        button.addEventListener("click", handler);
+        return button;
+      }
+
+      function makeElement(tagName, props) {
+        return Object.assign(document.createElement(tagName), props);
+      }
+
+      function replaceMoment(id) {
+        const evaluation = evaluate(moments);
+        const result = evaluation.results.find((entry) => entry.id === id);
+        const moment = moments.find((entry) => entry.id === id);
+        const current = momentsElement.querySelector ? momentsElement.querySelector(`[data-id="${id}"]`) : null;
+
+        if (current) {
+          current.replaceWith(renderMomentCard(moment, result));
+        } else {
+          render();
+          return;
+        }
+
+        renderSummary(evaluation);
+      }
+
+      function syncMoment(id) {
+        const evaluation = evaluate(moments);
+        const result = evaluation.results.find((entry) => entry.id === id);
+        const card = momentsElement.querySelector ? momentsElement.querySelector(`[data-id="${id}"]`) : null;
+        if (!card) {
+          render();
+          return;
+        }
+
+        const badge = card.querySelector(".badge");
+        badge.className = `badge ${result.state}`;
+        badge.textContent = badgeLabel(result.state);
+
+        const hint = card.querySelector(".hint");
+        hint.textContent = result.summary;
+
+        const placeButton = card.querySelector(".actions button");
+        placeButton.disabled = !result.note.trim();
+        placeButton.textContent = result.state === "placed" ? "Placed" : "Place note";
+
+        const frame = card.querySelector(".frame");
+        frame.replaceWith(buildFrame(result));
+
+        renderSummary(evaluation);
+      }
+
+      function renderSummary(evaluation = evaluate(moments)) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Corrections settled" : "Corrections to review";
+
+        countsElement.replaceChildren(
+          renderCountCard(evaluation.counts.needed, "Needed"),
+          renderCountCard(evaluation.counts.drafted, "Drafted"),
+          renderCountCard(evaluation.counts.placed, "Placed"),
+          renderCountCard(evaluation.counts.dismissed, "Dismissed"),
+        );
+
+        summaryListElement.replaceChildren(
+          ...evaluation.results.map((result) => {
+            const article = document.createElement("article");
+            article.className = `summary-item ${result.state === "needed" ? "" : result.state === "drafted" ? "drafted" : "info"}`;
+            article.append(
+              makeElement("strong", {
+                textContent: `${result.context} · ${result.moment}`,
+              }),
+              makeElement("span", {
+                textContent: result.summary,
+              }),
+            );
+            return article;
+          }),
+        );
+      }
+
+      function renderCountCard(count, label) {
+        const card = makeElement("div", { className: "count-card" });
+        card.append(
+          makeElement("strong", { textContent: String(count) }),
+          makeElement("span", { textContent: label }),
+        );
+        return card;
+      }
+
+      function render() {
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(
+          ...evaluation.results.map((result, index) => renderMomentCard(moments[index], result)),
+        );
+        renderSummary(evaluation);
+      }
+
+      render();
+    </script>
+  </body>
+</html>
