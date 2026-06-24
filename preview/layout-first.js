@@ -527,11 +527,21 @@
           && !candidate.classList.contains("filled")
           && !candidate.classList.contains("is-invalid");
       });
+      let overflow = 0;
       extras.forEach((file, index) => {
         if (openSlots[index]) {
           placeVideoFile(openSlots[index], file);
+        } else {
+          overflow += 1;
         }
       });
+      // More videos than open slots: the surplus has nowhere to land. Say so instead of
+      // silently dropping the extra files, and tell the creator how to make room.
+      if (overflow > 0) {
+        const noun = overflow === 1 ? "video" : "videos";
+        const verb = overflow === 1 ? "wasn't" : "weren't";
+        setError(`There's no open slot left, so ${overflow} extra ${noun} ${verb} placed. Remove a video to make room for another.`);
+      }
     }
 
     // Clear a single placed video without disturbing the other slots, so a creator who

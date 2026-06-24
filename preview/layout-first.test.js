@@ -724,4 +724,23 @@ controller.placeVideoFiles(controller.zonesBySlot.host, [
 assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a single dropped file fills its slot");
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), false, "a single dropped file does not touch other slots");
 
+// Overflow: dropping more videos than there are open slots fills what it can (host, guest,
+// optional b-roll = 3 visible) and tells the creator the surplus wasn't placed, instead of
+// silently dropping the extra files.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFiles(controller.zonesBySlot.host, [
+  { name: "a.mp4", type: "video/mp4", size: 1, lastModified: 1 },
+  { name: "b.mp4", type: "video/mp4", size: 2, lastModified: 2 },
+  { name: "c.mp4", type: "video/mp4", size: 3, lastModified: 3 },
+  { name: "d.mp4", type: "video/mp4", size: 4, lastModified: 4 },
+]);
+assert.equal(elementsById["layout-error-card"].hidden, false, "an overflowing multi-file drop surfaces a message");
+assert.match(
+  elementsById["layout-error"].textContent,
+  /1 extra video wasn't placed/,
+  "the overflow message names how many videos could not be placed",
+);
+assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), true, "the drop still fills every available slot before overflowing");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
