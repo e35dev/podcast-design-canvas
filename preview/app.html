@@ -206,6 +206,18 @@
         outline-offset: 2px;
       }
 
+      .layout-handoff-summary {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .layout-handoff-summary[hidden] {
+        display: none;
+      }
+
       iframe#screen {
         width: 100%;
         height: 100%;
@@ -235,6 +247,7 @@
         <div class="crumb">
           <span>Now viewing:</span>
           <strong id="crumb-label">—</strong>
+          <span class="layout-handoff-summary" id="layout-handoff-summary" hidden></span>
           <span class="step-count" id="step-count"></span>
           <span class="stepper">
             <a class="step-btn" id="prev-step" href="#" rel="prev">← Previous</a>
@@ -248,6 +261,7 @@
 
     <script src="./layout-handoff.js"></script>
     <script src="./app-route-context.js"></script>
+    <script src="./app-layout-handoff-ui.js"></script>
     <script>
       // The product's screens, grouped by where they fall in the episode workflow. Every
       // screen loads INSIDE this shell via the iframe, so the whole product is reachable
@@ -308,6 +322,11 @@
       const prevStep = document.querySelector("#prev-step");
       const nextStep = document.querySelector("#next-step");
       const progressEl = document.querySelector("#progress");
+      const layoutPlacement = createLayoutPlacementSummary({
+        summaryElement: document.querySelector("#layout-handoff-summary"),
+        handoff: window.PodcastLayoutHandoff,
+        storage: sessionStorage,
+      });
 
       // Shared session state: which screens the creator has already opened in this shell,
       // so the rail shows progress through the product (✓) across navigations.
@@ -395,6 +414,7 @@
         frame.src = `../prototype/${screen}.html${search}`;
         const label = titleCase(screen);
         crumbLabel.textContent = label;
+        layoutPlacement.update(screen);
         frame.title = `${label} screen`;
         openDirect.href = `../prototype/${screen}.html${search}`;
         for (const [name, link] of Object.entries(linkFor)) {
