@@ -153,17 +153,30 @@ function shouldNormalizePublishHref(href) {
   return isLocalScreenHref(href) && isPreviewAppPublishTarget(href);
 }
 
+function normalizePublishScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizePublishHref(href)) {
+    setPublishScreenLink(link, href);
+  }
+}
+
 function normalizePublishScreenLinks(root) {
   if (!root || typeof root.querySelectorAll !== "function") {
     return;
   }
 
   root.querySelectorAll("a[href]").forEach((link) => {
-    const href = link.getAttribute("href") || "";
-    if (shouldNormalizePublishHref(href)) {
-      setPublishScreenLink(link, href);
-    }
+    normalizePublishScreenLink(link);
   });
+}
+
+function normalizePublishLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizePublishScreenLink(link);
+  }
 }
 
 function renderPublishNav() {
@@ -289,6 +302,7 @@ function renderPublishNav() {
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
   normalizePublishScreenLinks(document);
+  document.addEventListener("click", normalizePublishLinkClick);
 }
 
 if (document.readyState === "loading") {

@@ -108,6 +108,7 @@ function renderNavFor(fileName, embedded = false, search = "", staticHrefs = [])
       if (selector !== "a[href]") return [];
       return flatten(body).filter((node) => node.tagName === "a" && node.getAttribute("href"));
     },
+    addEventListener() {},
   };
 
   vm.runInNewContext(navScript, {
@@ -141,6 +142,24 @@ function publishNavApi(fileName, search = "") {
 
 function linkWithText(nodes, text) {
   return nodes.find((node) => node.tagName === "a" && node.textContent === text);
+}
+
+function normalizePublishClickFor(href, search = "", embedded = false) {
+  const link = createElement("a");
+  link.href = href;
+  link.attributes.href = href;
+  link.closest = (selector) => (selector === "a[href]" ? link : null);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window: makeWindow("episode-metadata-publishing.html", embedded, search),
+    URLSearchParams,
+    link,
+  };
+  vm.runInNewContext(
+    `${navScript}\nnormalizePublishLinkClick({ target: link });\nglobalThis.result = { href: link.href, target: link.target };`,
+    sandbox,
+  );
+  return sandbox.result;
 }
 
 const firstNav = renderNavFor("episode-watch-through-preview.html");
@@ -329,6 +348,29 @@ assert.equal(
   "embedded publish nav routes in-page backward publish links through the preview app with publish context",
 );
 
+const dynamicChecklistLink = normalizePublishClickFor("publish-checklist.html", "?path=publish", true);
+assert.equal(
+  dynamicChecklistLink.href,
+  "../preview/app.html#publish-checklist?path=publish",
+  "embedded publish nav normalizes dynamically rendered publish links before navigation",
+);
+assert.equal(dynamicChecklistLink.target, "_top", "dynamic embedded publish links target the parent app");
+
+const dynamicStandaloneLink = normalizePublishClickFor("show-notes-assembly.html", "?path=publish");
+assert.equal(
+  dynamicStandaloneLink.href,
+  "show-notes-assembly.html?path=publish",
+  "standalone publish nav preserves publish context on dynamically rendered publish links",
+);
+
+const dynamicExternalLink = normalizePublishClickFor("https://example.com/publish", "?path=publish", true);
+assert.equal(
+  dynamicExternalLink.href,
+  "https://example.com/publish",
+  "publish nav leaves dynamic external links unchanged",
+);
+assert.equal(dynamicExternalLink.target, "", "publish nav does not retarget dynamic external links");
+
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
 const body = createElement("body");
@@ -346,6 +388,7 @@ const ctx = {
     const className = selector.slice(1);
     return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
   },
+  addEventListener() {},
 };
 const win = makeWindow("destination-crop-preview.html");
 vm.runInNewContext(navScript, { document: ctx, window: win, URLSearchParams });
