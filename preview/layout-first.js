@@ -552,6 +552,12 @@
       wrap.draggable = true;
       if (typeof wrap.setAttribute === "function") {
         wrap.setAttribute("draggable", "true");
+        // The drag-to-move/swap affordance is otherwise only conveyed visually. Give the
+        // placed video an accessible name and a drag role description so a screen-reader user
+        // knows it is a draggable item and which slot it holds.
+        wrap.setAttribute("role", "group");
+        wrap.setAttribute("aria-roledescription", "Draggable video");
+        wrap.setAttribute("aria-label", slotName(zone) + " video — drag onto another slot to move or swap it");
       }
       wrap.addEventListener("dragstart", (event) => {
         draggingFromSlot = zone.dataset.slot || null;
