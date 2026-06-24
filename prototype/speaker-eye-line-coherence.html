@@ -44,6 +44,10 @@
       .guest .eye { left: 18%; }
       .same-way .host .eye { left: 18%; right: auto; }
       .same-way .guest .eye { left: 18%; }
+      .swapped .host { right: 16%; left: auto; }
+      .swapped .guest { left: 16%; right: auto; }
+      .swapped .host .eye { left: 18%; right: auto; }
+      .swapped .guest .eye { right: 18%; left: auto; }
       .mirrored .guest .eye { right: 18%; left: auto; }
       .reaction .guest { top: 14%; }
       .lower {
@@ -77,10 +81,17 @@
       .warning.blocked { border-left-color: var(--blocked); }
       .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
       .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      .action-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        color: var(--muted); padding: 11px 12px;
+      }
+      .action-note strong { display: block; color: var(--ink); margin-bottom: 4px; }
+      .moment.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15, 106, 87, 0.12); }
       button {
         min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
         color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
       }
+      button:disabled { opacity: 0.52; cursor: not-allowed; }
       @media (max-width: 920px) {
         .workspace { grid-template-columns: 1fr; }
         .moment, .choice { grid-template-columns: 1fr; }
@@ -97,9 +108,9 @@
       <section class="workspace">
         <div class="panel">
           <h2>Shared-Frame Moments</h2>
-          <div class="moments">
-            <article class="moment">
-              <div class="preview same-way">
+          <div class="moments" id="moments">
+            <article class="moment active" data-moment="split">
+              <div class="preview same-way" data-preview="split">
                 <span class="tag">split moment</span>
                 <div class="speaker host"><div class="eye"></div></div>
                 <div class="speaker guest"><div class="eye"></div></div>
@@ -111,7 +122,7 @@
                     <strong>Host and guest both look left</strong>
                     <span>The conversation reads like both speakers are staring away from each other instead of sharing the same exchange.</span>
                   </div>
-                  <span class="badge review">needs review</span>
+                  <span class="badge review" data-status="split">needs review</span>
                 </div>
                 <div class="choices">
                   <div class="choice">
@@ -132,7 +143,7 @@
               </div>
             </article>
 
-            <article class="moment">
+            <article class="moment" data-moment="reaction">
               <div class="preview mirrored reaction">
                 <span class="tag">reaction moment</span>
                 <span class="warn">logo warning</span>
@@ -169,10 +180,11 @@
           </div>
 
           <div class="actions">
-            <button type="button">Open shared-frame preview</button>
-            <button type="button">Swap placement</button>
-            <button type="button">Save recurring arrangement</button>
+            <button type="button" id="openPreview">Open shared-frame preview</button>
+            <button type="button" id="swapPlacement">Swap placement</button>
+            <button type="button" id="saveArrangement">Save recurring arrangement</button>
           </div>
+          <div class="action-note" id="actionNote" aria-live="polite"></div>
         </div>
 
         <aside class="panel">
@@ -200,5 +212,82 @@
         </aside>
       </section>
     </main>
+    <script>
+      const actions = {
+        preview: {
+          title: "Shared-frame preview opened",
+          detail: "The flagged split moment is selected so the creator can compare the current same-way look against the preset-supported swap.",
+        },
+        swap: {
+          title: "Placement swapped",
+          detail: "Host and guest now face inward in the split moment while the reaction-shot logo warning stays visible for separate review.",
+        },
+        save: {
+          title: "Recurring arrangement saved",
+          detail: "Future episodes with this Host and Guest setup can start from the inward-facing placement after role mapping confirms the same buckets.",
+        },
+      };
+
+      let selectedMoment = "split";
+      let splitSwapped = false;
+      let saved = false;
+
+      const momentsElement = document.querySelector("#moments");
+      const splitPreviewElement = document.querySelector('[data-preview="split"]');
+      const splitStatusElement = document.querySelector('[data-status="split"]');
+      const actionNoteElement = document.querySelector("#actionNote");
+      const openPreviewButton = document.querySelector("#openPreview");
+      const swapPlacementButton = document.querySelector("#swapPlacement");
+      const saveArrangementButton = document.querySelector("#saveArrangement");
+
+      function renderNote(action) {
+        const copy = actions[action];
+        actionNoteElement.replaceChildren();
+        const title = document.createElement("strong");
+        title.textContent = copy.title;
+        const detail = document.createElement("span");
+        detail.textContent = copy.detail;
+        actionNoteElement.append(title, detail);
+      }
+
+      function render() {
+        momentsElement.querySelectorAll("[data-moment]").forEach((moment) => {
+          moment.classList.toggle("active", moment.dataset.moment === selectedMoment);
+        });
+
+        splitPreviewElement.className = splitSwapped ? "preview swapped" : "preview same-way";
+        splitStatusElement.className = splitSwapped ? "badge ready" : "badge review";
+        splitStatusElement.textContent = splitSwapped ? "coherent" : "needs review";
+        saveArrangementButton.disabled = !splitSwapped || saved;
+      }
+
+      openPreviewButton.addEventListener("click", () => {
+        selectedMoment = "split";
+        renderNote("preview");
+        render();
+      });
+
+      swapPlacementButton.addEventListener("click", () => {
+        selectedMoment = "split";
+        splitSwapped = true;
+        saved = false;
+        renderNote("swap");
+        render();
+      });
+
+      saveArrangementButton.addEventListener("click", () => {
+        if (!splitSwapped) return;
+        saved = true;
+        renderNote("save");
+        render();
+      });
+
+      renderNote("preview");
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { actions };
+      }
+    </script>
   </body>
 </html>
