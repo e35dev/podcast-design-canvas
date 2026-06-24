@@ -82,6 +82,22 @@
       .check strong { display: block; margin-bottom: 4px; }
       .check span { color: var(--muted); }
 
+      .check .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .check .fix-link:hover,
+      .check .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .reuse { display: grid; gap: 8px; margin: 14px 0 0; }
       .reuse label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); }
 
@@ -244,6 +260,8 @@
             title: "Captions may be covered",
             action: "A speaker frame sits above the captions. Move captions higher in the stack so they stay readable.",
             tone: "review",
+            fixScreen: "layout-safe-areas.html",
+            fixLabel: "layout safe areas",
           });
         }
         list.forEach(function (layer) {
@@ -294,7 +312,12 @@
           checksEl.replaceChildren(el("p", { class: "summary-note", text: "No layout conflicts. Reorder, lock, and save as a reusable show layout." }, []));
         } else {
           checksEl.replaceChildren.apply(checksEl, evaluation.checks.map(function (c) {
-            return el("div", { class: "check " + c.tone }, [el("strong", { text: c.title }, []), el("span", { text: c.action }, [])]);
+            const check = el("div", { class: "check " + c.tone }, [el("strong", { text: c.title }, []), el("span", { text: c.action }, [])]);
+            if (c.fixScreen && c.fixLabel) {
+              const openLink = el("a", { class: "fix-link", href: c.fixScreen, text: "Open " + c.fixLabel }, []);
+              check.appendChild(openLink);
+            }
+            return check;
           }));
         }
 
