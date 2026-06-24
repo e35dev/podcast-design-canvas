@@ -56,6 +56,9 @@ const storage = {
   getItem(key) {
     return stored[key] || null;
   },
+  removeItem(key) {
+    delete stored[key];
+  },
 };
 handoff.save(storage, interview);
 assert.equal(
@@ -63,6 +66,14 @@ assert.equal(
   "host-cam.mp4",
   "matching stored handoff restores the placed file names for the current layout-start URL",
 );
+handoff.clear(storage);
+assert.equal(
+  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest").slots[0].name,
+  "Host video",
+  "cleared storage no longer restores stale file names for the same layout-start URL",
+);
+assert.equal(storage.getItem(handoff.STORAGE_KEY), null, "clear removes the stored layout handoff");
+handoff.save(storage, interview);
 assert.equal(
   handoff.load(storage, "?path=episode&layout=solo&slots=host").layout,
   "solo",

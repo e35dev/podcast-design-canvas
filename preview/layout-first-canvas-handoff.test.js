@@ -192,4 +192,42 @@ assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
 assert.strictEqual(continueLink.href, "");
 assert.strictEqual(slotStatus.textContent, "0 of 2 required speaker videos ready. Optional b-roll can be added later.");
 
+// Keyboard placement (WCAG 2.1.1): a focused chip places into its own slot on Enter/Space,
+// using the same fill + continue-unlock path as drag-and-drop. State is clean after reset.
+function keydown(chip, key) {
+  chip.listeners.keydown({ key, preventDefault() {} });
+}
+
+keydown(chips[0], "Enter");
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
+  true,
+  "Enter on the focused host chip fills the host slot",
+);
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "host").querySelector(".placed-track").textContent,
+  "Host track · Dana Brooks",
+  "keyboard placement writes the same placed-track label as a drop",
+);
+keydown(chips[1], " ");
+assert.strictEqual(
+  continueLink.attributes["aria-disabled"],
+  "false",
+  "keyboard-placing host and guest unlocks Continue just like dragging",
+);
+assert.strictEqual(
+  continueLink.href,
+  "./app.html#speaker-role-mapping?path=episode",
+  "keyboard placement carries the same speaker-roles handoff target",
+);
+assert.match(slotStatus.textContent, /Required speaker videos ready/, "keyboard placement updates readiness identically");
+
+// A non-activating key is a no-op, so Tab still moves focus instead of placing.
+keydown(chips[2], "Tab");
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "broll").classList.contains("filled"),
+  false,
+  "a non-activating key does not place a chip",
+);
+
 console.log("layout-first canvas handoff: continue unlocks after required speaker videos while b-roll stays optional");

@@ -155,6 +155,9 @@
         }
       } else {
         continueLink.removeAttribute("href");
+        if (handoff && typeof handoff.clear === "function") {
+          handoff.clear(storage);
+        }
       }
     }
 
@@ -169,18 +172,22 @@
       const duplicates = duplicateFileNames();
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
+      const brollZone = zonesBySlot["broll"];
+      const brollNote = brollZone && brollZone.classList.contains("filled")
+        ? "Optional b-roll is in place."
+        : "Optional b-roll can be added later.";
       if (duplicates.length > 0) {
         slotStatus.textContent =
           "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
       } else if (filled === total) {
-        slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
+        slotStatus.textContent = `Required speaker videos ready. ${brollNote}`;
       } else {
         const missingNames = requiredSlots()
           .filter((zone) => !zone.classList.contains("filled"))
           .map((zone) => SLOT_LABELS[zone.dataset.slot] || zone.dataset.slot);
         const noun = missingNames.length > 1 ? "videos" : "video";
         slotStatus.textContent =
-          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. Optional b-roll can be added later.`;
+          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. ${brollNote}`;
       }
       updateContinueState();
     }
@@ -209,6 +216,18 @@
       zones.forEach(clearZone);
     }
 
+    function clearMatchingSource(zone, file) {
+      const incomingSig = fileSignature(file);
+      if (!incomingSig) {
+        return;
+      }
+      zones.forEach((other) => {
+        if (other !== zone && other.dataset.fileSig === incomingSig) {
+          clearZone(other);
+        }
+      });
+    }
+
     function placeVideoFile(zone, file) {
       if (!zone || zone.classList.contains("is-hidden")) {
         return;
@@ -220,7 +239,17 @@
         return;
       }
 
+      // A 0-byte file is a failed or aborted export, not a usable recording. Reject it so
+      // it never fills a slot or counts toward the Continue gate. Guard on === 0 (not
+      // falsy) so files whose size is unknown are still accepted.
+      if (typeof file.size === "number" && file.size === 0) {
+        setError("That video file is empty. Re-export it and place the finished file.");
+        updateSlotStatus();
+        return;
+      }
+
       setError("");
+      clearMatchingSource(zone, file);
       clearZone(zone);
       zone.classList.add("filled");
       zone.dataset.fileName = file.name || "";
@@ -270,6 +299,13 @@
       clearZone(zone);
       setError("");
       updateSlotStatus();
+      // The Remove button lived inside the cleared video, so keyboard/screen-reader focus
+      // would otherwise fall to the page body. Return it to this slot's file input — the
+      // surviving "Choose <slot> video" control — so the creator stays oriented.
+      const input = zone.querySelector("[data-file-input]");
+      if (input && typeof input.focus === "function") {
+        input.focus();
+      }
     }
 
     function applyLayout(name) {

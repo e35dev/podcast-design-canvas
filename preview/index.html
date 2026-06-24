@@ -477,10 +477,10 @@
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
             <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
-            <div class="track-palette" aria-label="Drag speaker tracks onto the layout">
-              <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
-              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
-              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
+            <div class="track-palette" aria-label="Drag speaker tracks onto the layout, or focus one and press Enter to place it">
+              <span class="drag-chip" draggable="true" data-track="host" tabindex="0" role="button" aria-keyshortcuts="Enter Space">Host track · Dana Brooks</span>
+              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0" role="button" aria-keyshortcuts="Enter Space">Guest track · Marcus Lee</span>
+              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0" role="button" aria-keyshortcuts="Enter Space">B-roll clip · intro beat</span>
             </div>
             <div class="canvas-toolbar">
               <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 2 required speaker videos ready. Optional b-roll can be added later.</p>
@@ -966,6 +966,16 @@
           chip.addEventListener("dragend", function () {
             chip.classList.remove("dragging");
           });
+          // Keyboard equivalent of dragging: a focused chip places into its own slot on
+          // Enter/Space, so the canvas is operable without a pointer (WCAG 2.1.1).
+          chip.addEventListener("keydown", function (event) {
+            if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") {
+              return;
+            }
+            event.preventDefault();
+            var track = chip.dataset.track;
+            placeTrack(document.querySelector('.drop-zone[data-slot="' + track + '"]'), track);
+          });
         });
 
         var slotStatus = document.getElementById("canvas-slot-status");
@@ -1016,6 +1026,24 @@
           slotStatus.textContent = filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
         }
 
+        // Shared by drag-and-drop and keyboard activation. A track only fits its own slot;
+        // a mismatch surfaces the same creator-facing hint as a bad drop.
+        function placeTrack(zone, track) {
+          if (!zone || track !== zone.dataset.slot) {
+            updateSlotStatus("That track belongs in a different slot.");
+            return;
+          }
+          zone.classList.add("filled");
+          var placed = zone.querySelector(".placed-track");
+          if (!placed) {
+            placed = document.createElement("span");
+            placed.className = "placed-track";
+            zone.insertBefore(placed, zone.firstChild);
+          }
+          placed.textContent = trackLabels[track];
+          updateSlotStatus();
+        }
+
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
           zone.addEventListener("dragover", function (event) {
             event.preventDefault();
@@ -1027,20 +1055,7 @@
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
             zone.classList.remove("drag-over");
-            var track = event.dataTransfer.getData("text/plain");
-            if (track !== zone.dataset.slot) {
-              updateSlotStatus("That track belongs in a different slot.");
-              return;
-            }
-            zone.classList.add("filled");
-            var placed = zone.querySelector(".placed-track");
-            if (!placed) {
-              placed = document.createElement("span");
-              placed.className = "placed-track";
-              zone.insertBefore(placed, zone.firstChild);
-            }
-            placed.textContent = trackLabels[track];
-            updateSlotStatus();
+            placeTrack(zone, event.dataTransfer.getData("text/plain"));
           });
         });
 

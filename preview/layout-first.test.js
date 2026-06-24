@@ -30,6 +30,8 @@ class ClassList {
   }
 }
 
+let lastFocused = null;
+
 class Element {
   constructor(tagName, options = {}) {
     this.tagName = tagName;
@@ -48,6 +50,7 @@ class Element {
     this.href = options.href || "";
   }
 
+  focus() { lastFocused = this; }
   setAttribute(name, value) { this.attributes[name] = value; }
   getAttribute(name) { return this.attributes[name]; }
   removeAttribute(name) {
@@ -167,6 +170,9 @@ const storage = {
   getItem(key) {
     return stored[key] || null;
   },
+  removeItem(key) {
+    delete stored[key];
+  },
 };
 
 function video(name) {
@@ -240,6 +246,19 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), false, "b-roll remains empty and optional");
 
+controller.placeVideoFile(controller.zonesBySlot.broll, video("broll.mp4"));
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll is in place\./,
+  "readiness copy acknowledges b-roll when the optional slot is filled",
+);
+controller.removeVideo(controller.zonesBySlot.broll);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll can be added later\./,
+  "readiness copy invites b-roll again after the optional slot is cleared",
+);
+
 controller.applyLayout("panel");
 assert.equal(
   controller.zonesBySlot.host.classList.contains("filled"),
@@ -307,6 +326,7 @@ assert.equal(
   "Continue re-gates after a required video is removed",
 );
 assert.ok(revokedUrls.includes("blob:guest.mp4"), "removing a slot revokes its object URL");
+assert.equal(stored[layoutHandoff.STORAGE_KEY], undefined, "removing a required video clears stale layout handoff storage");
 // Re-filling the cleared slot restores readiness.
 controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
 assert.equal(
@@ -336,6 +356,7 @@ assert.equal(elementsById["layout-error-card"].hidden, false, "non-video drops s
 assert.match(elementsById["layout-error"].textContent, /video/, "non-video error stays creator-facing");
 elementsById["layout-reset"].listeners.click();
 assert.equal(controller.filledRequiredSlots().length, 0, "reset clears filled required slots");
+assert.equal(stored[layoutHandoff.STORAGE_KEY], undefined, "reset clears stale layout handoff storage");
 assert.ok(revokedUrls.length > 0 && createdUrls.length > 0, "reset revokes created object URLs");
 
 // Switching layout preserves videos placed in slots that stay visible (#1026), and only
@@ -382,9 +403,9 @@ assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "swit
 assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
 assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
 
-// Duplicate guard keyed on file identity (name + size + modified time), not display name.
-// The same recording in two speaker slots blocks Continue; two separate recordings that
-// merely share a filename (riverside-track.mp4) are allowed.
+// Source movement is keyed on file identity (name + size + modified time), not display
+// name. The same recording moves out of its old slot before filling the new one, while
+// two separate recordings that merely share a filename (riverside-track.mp4) are allowed.
 controller.resetVideos();
 controller.applyLayout("interview");
 const sharedTake = { name: "riverside-track.mp4", type: "video/mp4", size: 12582912, lastModified: 1717000000000 };
@@ -392,20 +413,31 @@ controller.placeVideoFile(controller.zonesBySlot.host, sharedTake);
 controller.placeVideoFile(controller.zonesBySlot.guest, sharedTake);
 assert.deepEqual(
   controller.duplicateFileNames(),
-  ["riverside-track.mp4"],
-  "the same recording placed in two speaker slots is detected by file identity",
+  [],
+  "moving the same recording prevents duplicate speaker-slot identity",
+);
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  false,
+  "placing the same source in a new slot clears the previous slot",
+);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  true,
+  "placing the same source fills the new target slot",
 );
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
   "true",
-  "Continue is blocked while two speaker slots share the same recording",
+  "Continue re-gates because moving the source leaves the host slot empty",
 );
 assert.match(
   elementsById["layout-slot-status"].textContent,
-  /same video is in more than one speaker slot/i,
-  "duplicate guidance is creator-facing",
+  /Still need the Host video/i,
+  "move guidance returns to the missing-slot readiness copy",
 );
 const separateGuestTake = { name: "riverside-track.mp4", type: "video/mp4", size: 20447232, lastModified: 1717000900000 };
+controller.placeVideoFile(controller.zonesBySlot.host, sharedTake);
 controller.placeVideoFile(controller.zonesBySlot.guest, separateGuestTake);
 assert.deepEqual(
   controller.duplicateFileNames(),
@@ -413,9 +445,116 @@ assert.deepEqual(
   "two separate recordings that share a filename are not treated as duplicates",
 );
 assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "same filename with different source metadata does not clear the host slot",
+);
+assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
   "false",
   "Continue is restored once each speaker has a separate recording",
 );
+
+// Removing a placed video returns keyboard focus to that slot's file input, so a
+// keyboard/screen-reader user is not stranded on the page body after the Remove button
+// (which lived inside the cleared video) disappears. Fresh controller to isolate state.
+const focusZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const focusButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const focusById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const focusDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return focusById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return focusButtons;
+    if (selector === ".drop-zone[data-slot]") return focusZones;
+    return [];
+  },
+};
+const focusController = createLayoutFirstController(focusDoc, { URL: urlApi });
+focusController.placeVideoFile(focusController.zonesBySlot.guest, video("guest.mp4"));
+lastFocused = null;
+focusController.removeVideo(focusController.zonesBySlot.guest);
+assert.strictEqual(
+  lastFocused,
+  focusController.zonesBySlot.guest.querySelector("[data-file-input]"),
+  "removing a video returns focus to that slot's file input",
+);
+assert.strictEqual(
+  focusController.zonesBySlot.guest.querySelector(".placed-video"),
+  null,
+  "the removed video (with its focused Remove button) is gone from the slot",
+);
+
+// A 0-byte video (a failed/aborted export) is rejected: it never fills a slot, surfaces a
+// clear error, and keeps Continue gated — while a normal video still places. Fresh controller.
+const emptyZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const emptyButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const emptyById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const emptyDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return emptyById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return emptyButtons;
+    if (selector === ".drop-zone[data-slot]") return emptyZones;
+    return [];
+  },
+};
+const emptyCtl = createLayoutFirstController(emptyDoc, { URL: urlApi });
+emptyCtl.placeVideoFile(emptyCtl.zonesBySlot.host, { name: "aborted.mp4", type: "video/mp4", size: 0 });
+assert.strictEqual(
+  emptyCtl.zonesBySlot.host.classList.contains("filled"),
+  false,
+  "a 0-byte video does not fill the slot",
+);
+assert.strictEqual(emptyById["layout-error-card"].hidden, false, "a 0-byte video surfaces a visible error");
+assert.match(emptyById["layout-error"].textContent, /empty/i, "the empty-file error is creator-facing");
+assert.strictEqual(
+  emptyById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "a 0-byte video keeps Continue gated",
+);
+emptyCtl.placeVideoFile(emptyCtl.zonesBySlot.host, { name: "host.mp4", type: "video/mp4", size: 2048 });
+assert.strictEqual(
+  emptyCtl.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "a normal video still places after an empty one was rejected",
+);
+assert.strictEqual(emptyById["layout-error-card"].hidden, true, "placing a valid video clears the empty-file error");
 
 console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");
