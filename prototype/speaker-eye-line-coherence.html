@@ -86,6 +86,9 @@
         color: var(--muted); padding: 11px 12px;
       }
       .action-note strong { display: block; color: var(--ink); margin-bottom: 4px; }
+      .moment.filtered-out { display: none; }
+      .coherence-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+      .coherence-rollup { margin: 0; color: var(--muted); font-size: 13px; }
       .moment.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15, 106, 87, 0.12); }
       button {
         min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
@@ -189,6 +192,7 @@
 
         <aside class="panel">
           <h2>Guardrails</h2>
+          <div id="coherenceFilter" class="coherence-filter"></div>
           <div class="warning">
             <strong>Preview under the chosen preset</strong>
             <span>Eye-line choices should stay visible with lower-thirds and brand colors so the final conversation feel is what the creator approves.</span>
@@ -231,8 +235,10 @@
       let selectedMoment = "split";
       let splitSwapped = false;
       let saved = false;
+      let showNeedsChoiceOnly = false;
 
       const momentsElement = document.querySelector("#moments");
+      const coherenceFilterElement = document.querySelector("#coherenceFilter");
       const splitPreviewElement = document.querySelector('[data-preview="split"]');
       const splitStatusElement = document.querySelector('[data-status="split"]');
       const actionNoteElement = document.querySelector("#actionNote");
@@ -259,6 +265,40 @@
         splitStatusElement.className = splitSwapped ? "badge ready" : "badge review";
         splitStatusElement.textContent = splitSwapped ? "coherent" : "needs review";
         saveArrangementButton.disabled = !splitSwapped || saved;
+        renderCoherenceFilter();
+      }
+
+      function renderCoherenceFilter() {
+        const cards = momentsElement.querySelectorAll("[data-moment]");
+        let total = 0;
+        let needsChoice = 0;
+        cards.forEach((m) => {
+          total++;
+          const badge = m.querySelector(".head .badge");
+          if (badge && !badge.classList.contains("ready")) needsChoice++;
+        });
+        if (showNeedsChoiceOnly && needsChoice === 0) showNeedsChoiceOnly = false;
+        cards.forEach((m) => {
+          const badge = m.querySelector(".head .badge");
+          const resolved = badge && badge.classList.contains("ready");
+          m.classList.toggle("filtered-out", showNeedsChoiceOnly && resolved);
+        });
+        coherenceFilterElement.replaceChildren();
+        const rollup = document.createElement("p");
+        rollup.className = "coherence-rollup";
+        rollup.textContent = needsChoice === 0
+          ? "All speaker moments are coherent."
+          : `${needsChoice} of ${total} speaker ${total === 1 ? "moment" : "moments"} still ${needsChoice === 1 ? "needs" : "need"} a coherence choice.`;
+        coherenceFilterElement.append(rollup);
+        if (needsChoice > 0) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = showNeedsChoiceOnly
+            ? `Show all ${total} moments`
+            : `Show only the ${needsChoice} that ${needsChoice === 1 ? "needs" : "need"} a choice`;
+          btn.addEventListener("click", () => { showNeedsChoiceOnly = !showNeedsChoiceOnly; render(); });
+          coherenceFilterElement.append(btn);
+        }
       }
 
       openPreviewButton.addEventListener("click", () => {
