@@ -295,6 +295,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -510,6 +526,20 @@
             };
           }
 
+          // An off-camera speaker (producer, narrator) has no video frame, so once their
+          // role is settled the creator still needs to choose how they appear — a name card,
+          // photo, or audiogram. That on-screen presence is owned by the off-camera speaker
+          // presence screen, so route a confirmed off-camera speaker there as their next step.
+          if (role !== "" && roles[role].offcamera && state === "confirmed") {
+            issue = {
+              title: `Choose how ${track.name || "this speaker"} appears off camera`,
+              action: `${roles[role].label} has no camera. Pick a name card, photo, or audiogram so they still feel present on screen.`,
+              tone: "info",
+              fixScreen: "off-camera-speaker-presence.html",
+              fixLabel: "off-camera speaker presence",
+            };
+          }
+
           return { id: track.id, state, issue };
         });
 
@@ -654,6 +684,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen && issue.fixLabel) {
+          const fix = document.createElement("a");
+          fix.className = "fix-link";
+          fix.href = issue.fixScreen;
+          fix.textContent = "Open " + issue.fixLabel;
+          article.append(fix);
+        }
         return article;
       }
 
