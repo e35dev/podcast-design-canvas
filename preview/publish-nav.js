@@ -5,6 +5,39 @@
 //   <body data-publish-step="export-package-handoff">
 //   <script src="../preview/publish-nav.js" defer></script>
 
+const PUBLISH_HANDOFF_PATH = "publish";
+
+// Destination crop preview is where the creator checks how each speaker frame fits the export
+// destination, so it is the natural publish-prep point to jump back and verify the placed
+// speaker videos in the layout — the same placement already offered from the episode-flow steps.
+const LAYOUT_FIRST_PLACEMENT_STEP = "destination-crop-preview";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "publish" || shellPath === "episode") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "publish");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  link.setAttribute("aria-label", "Place videos in layout to verify speaker slots before export");
+  setTopTargetWhenEmbedded(link);
+}
+
 const PUBLISH_FLOW = [
   {
     id: "long-form-navigation",
@@ -351,6 +384,13 @@ function renderPublishNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
