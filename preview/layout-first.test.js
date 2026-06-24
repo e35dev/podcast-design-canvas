@@ -1231,9 +1231,16 @@ const pickerShortcuts = layoutButtons[0].getAttribute("aria-keyshortcuts") || ""
 ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].forEach((key) => {
   assert.ok(pickerShortcuts.includes(key), "layout options advertise the " + key + " shortcut they handle");
 });
+// Roving tabindex: only the active layout is in the tab order, so the picker is a single tab
+// stop (Tab doesn't catch on each of the three options); the arrow keys reach the rest.
+assert.equal(layoutButtons[0].getAttribute("tabindex"), "0", "the active layout option is in the tab order");
+assert.equal(layoutButtons[1].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
+assert.equal(layoutButtons[2].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
 layoutButtons[0].listeners.keydown({ key: "ArrowRight", preventDefault() {} });
 assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowRight applies the next layout (solo)");
 assert.equal(lastFocused, layoutButtons[1], "ArrowRight moves focus to the next layout option");
+assert.equal(layoutButtons[1].getAttribute("tabindex"), "0", "the newly active layout option becomes tabbable after navigation");
+assert.equal(layoutButtons[0].getAttribute("tabindex"), "-1", "the previously active layout option leaves the tab order");
 layoutButtons[1].listeners.keydown({ key: "ArrowDown", preventDefault() {} });
 assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "ArrowDown also advances to the next layout (panel)");
 layoutButtons[2].listeners.keydown({ key: "ArrowUp", preventDefault() {} });

@@ -1020,6 +1020,13 @@
         const active = button.dataset.layout === currentLayout;
         const label = button.querySelector("[data-layout-label]");
         button.setAttribute("aria-pressed", active ? "true" : "false");
+        // Roving tabindex: the arrow keys navigate within the picker (#1295), so the group is a
+        // single tab stop — Tab lands on the active layout and moves on, instead of stopping on
+        // each of the three buttons. Only the active option is tabbable; the others are reached
+        // with the arrow keys (which still focus them programmatically).
+        if (typeof button.setAttribute === "function") {
+          button.setAttribute("tabindex", active ? "0" : "-1");
+        }
         if (label) label.textContent = active ? buttonLayout.activeLabel : buttonLayout.readyLabel;
       });
 
