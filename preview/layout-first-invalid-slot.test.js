@@ -231,6 +231,22 @@ assert.doesNotMatch(
   "restored rejection is not listed in Still need",
 );
 
+// A deferred rejection promotes once the visible invalid slot is fixed.
+const promote = buildController();
+const promoteCtl = promote.controller;
+const promoteHost = promoteCtl.zonesBySlot.host;
+const promoteGuest = promoteCtl.zonesBySlot.guest;
+const promoteError = promote.elementsById["layout-error"];
+promoteCtl.placeVideoFile(promoteGuest, notVideo("guest.png"));
+promoteCtl.applyLayout("solo");
+promoteCtl.placeVideoFile(promoteHost, notVideo("host.png"));
+promoteCtl.applyLayout("interview");
+assert.ok(promoteHost.classList.contains("is-invalid"), "host rejection stays visible first");
+assert.ok(!promoteGuest.classList.contains("is-invalid"), "guest rejection waits while host is still invalid");
+promoteCtl.placeVideoFile(promoteHost, video("host.mp4"));
+assert.ok(promoteGuest.classList.contains("is-invalid"), "fixing host promotes the deferred guest rejection");
+assert.match(promoteError.textContent, /Guest/, "the promoted rejection surfaces the guest error");
+
 // Removing/clearing the slot clears the flag (reset path goes through clearZone).
 asideCtl.placeVideoFile(asideGuest, notVideo("guest-again.png"));
 assert.ok(asideGuest.classList.contains("is-invalid"), "guest re-flagged before reset");
