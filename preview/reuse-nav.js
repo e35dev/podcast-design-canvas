@@ -106,10 +106,15 @@ function mergeRouteSearch(file, overrides = {}) {
 }
 
 function routeSearchFromFile(file) {
+  if (screenIdFromFile(file) === screenIdFromFile(REUSE_HANDOFF.file)) {
+    return "?path=publish";
+  }
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   const path = filePath || shellPath;
-  return path === "episode" || path === "reuse" || path === "ingest" ? `?path=${path}` : "";
+  return path === "episode" || path === "reuse" || path === "ingest" || path === "publish"
+    ? `?path=${path}`
+    : "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -149,6 +154,9 @@ function linkBase(href) {
 
 function resolveReuseLink(file) {
   const base = linkBase(file);
+  if (screenIdFromFile(file) === screenIdFromFile(REUSE_HANDOFF.file)) {
+    return mergeRouteSearch(file, { path: "publish" });
+  }
   if (Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, base)) {
     if (base === "speaker-role-mapping.html" && pathFromQuery(queryWithoutHash(file)) === "ingest") {
       return file;

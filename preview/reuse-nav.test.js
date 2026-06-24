@@ -144,8 +144,8 @@ const lastNav = renderNavFor("episode-runtime-shaping.html", "episode-runtime-sh
 const publishHandoff = linkWithText(lastNav, "Continue: Episode watch-through");
 assert.equal(
   publishHandoff.href,
-  "episode-watch-through-preview.html",
-  "last reuse screen hands off to episode watch-through",
+  "episode-watch-through-preview.html?path=publish",
+  "last reuse screen hands off to episode watch-through on the publish path",
 );
 
 const embeddedFirstNav = renderNavFor("show-segment-system.html", "show-segment-system", true);
@@ -190,8 +190,8 @@ const embeddedLastNav = renderNavFor("episode-runtime-shaping.html", "episode-ru
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Episode watch-through");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#episode-watch-through-preview",
-  "embedded reuse nav routes the publish handoff through the preview app hash",
+  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "embedded reuse nav routes the publish handoff through the preview app hash with publish path",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded reuse handoff targets the parent app");
 
