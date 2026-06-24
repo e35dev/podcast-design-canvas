@@ -635,7 +635,7 @@
               at: 642,
               speaker: "Host",
               kind: "cross-talk",
-              disp: "suggested",
+              disp: "reduce",
               context: "“…so the real question is —” [both talking] “— exactly, that is what I mean.”",
             },
             {
@@ -661,6 +661,18 @@
               kind: "false-start",
               disp: "suggested",
               context: "“I think — I mean — what I really think is that timing matters most.”",
+            },
+            {
+              // Second cross-talk moment so the same-kind "Apply to N similar"
+              // workflow is visible and testable in the default sample. It starts
+              // with a different choice than m2 (kept vs. reduced), so the control
+              // appears on both and always propagates a real decision — never a no-op.
+              id: "m6",
+              at: 3245,
+              speaker: "Guest 2",
+              kind: "cross-talk",
+              disp: "keep",
+              context: "“…and honestly that surprised me —” [both laughing over each other] “— no, you go, you go.”",
             },
           ];
           moments = structuredClone(sample);
