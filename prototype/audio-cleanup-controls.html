@@ -130,6 +130,81 @@
         margin-bottom: 16px;
       }
 
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .preview-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .preview-card strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .preview-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      .wave {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 52px;
+        padding: 8px;
+        border-radius: 6px;
+        background: #eef2f0;
+      }
+
+      .wave i {
+        flex: 1;
+        min-width: 4px;
+        border-radius: 2px;
+        background: #8aa59c;
+      }
+
+      .wave.cleaned i {
+        background: #2a8476;
+      }
+
+      .wave.cleaned i.soft {
+        background: #6db5a8;
+      }
+
+      .effect-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .effect-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 0 9px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      @media (max-width: 640px) {
+        .compare { grid-template-columns: 1fr; }
+      }
+
       button {
         min-height: 38px;
         border: 1px solid #b9c8c3;
@@ -189,6 +264,9 @@
           <h2>Preview moment</h2>
           <div class="moments" id="moments" role="group" aria-label="Preview moment"></div>
 
+          <h2>Compare on this moment</h2>
+          <div class="compare" id="compare" aria-live="polite"></div>
+
           <h2>Speaker balance</h2>
           <div class="speakers" id="speakers"></div>
         </div>
@@ -204,21 +282,29 @@
 
     <script>
       const choices = [
-        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices" },
-        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level" },
-        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise" },
-        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural" },
-        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis" },
-        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy" },
+        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices", effect: "Room hum softens; voices stay present" },
+        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level", effect: "Host and guest levels move closer together" },
+        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise", effect: "Soft guest lines rise without lifting the room floor" },
+        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural", effect: "Hollow tail softens while speech stays natural" },
+        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis", effect: "Sudden laughs stay energetic but less harsh" },
+        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy", effect: "Speech edges sharpen for clearer captions" },
       ];
 
       const previewMoments = [
-        { id: "quiet-guest", label: "Quiet guest answer" },
-        { id: "exchange", label: "Host and guest exchange" },
-        { id: "noisy-room", label: "Noisy room stretch" },
-        { id: "peak", label: "Laugh or peak moment" },
-        { id: "caption-line", label: "Caption-sensitive line" },
+        { id: "quiet-guest", label: "Quiet guest answer", note: "Lift the guest without pulling room noise forward." },
+        { id: "exchange", label: "Host and guest exchange", note: "Keep both speakers natural as the conversation moves." },
+        { id: "noisy-room", label: "Noisy room stretch", note: "Reduce distraction without making the room feel artificial." },
+        { id: "peak", label: "Laugh or peak moment", note: "Protect listeners on sudden emphasis." },
+        { id: "caption-line", label: "Caption-sensitive line", note: "Keep speech clear enough for trusted captions." },
       ];
+
+      const momentProfiles = {
+        "quiet-guest": [18, 22, 26, 24, 20, 28, 32, 30, 24, 22],
+        exchange: [34, 52, 38, 56, 42, 48, 36, 54, 40, 50],
+        "noisy-room": [48, 52, 46, 50, 54, 49, 53, 47, 51, 55],
+        peak: [30, 34, 78, 82, 36, 32, 74, 80, 34, 30],
+        "caption-line": [26, 32, 38, 42, 36, 40, 34, 38, 32, 28],
+      };
 
       const sampleSpeakers = [
         { name: "Host — Dana Brooks", state: "not needed" },
@@ -232,6 +318,7 @@
 
       const controlsElement = document.querySelector("#controls");
       const momentsElement = document.querySelector("#moments");
+      const compareElement = document.querySelector("#compare");
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
@@ -248,6 +335,7 @@
       function render() {
         controlsElement.replaceChildren(...choices.map(renderChoice));
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
+        renderCompare();
         speakersElement.replaceChildren(...speakers.map(renderSpeaker));
 
         const hasSuggested = speakers.some((speaker) => speaker.state === "suggested");
@@ -255,8 +343,109 @@
         summaryElement.textContent = applied
           ? `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} after previewing "${previewMoments.find((moment) => moment.id === preview).label.toLowerCase()}".`
           : hasSuggested
-            ? "Preview the guest track on a real moment, then apply cleanup across the episode or per speaker."
+            ? "Compare original and cleaned audio on a real moment, then apply cleanup across the episode."
             : "Tracks are already clean enough for the final episode.";
+      }
+
+      function applyChoice(bars, choiceId, momentId) {
+        switch (choiceId) {
+          case "noise":
+            if (momentId === "noisy-room") {
+              return bars.map((height) => Math.round(height * 0.62 + 10));
+            }
+            return bars.map((height) => Math.max(16, height - 7));
+          case "balance": {
+            const average = bars.reduce((sum, height) => sum + height, 0) / bars.length;
+            const strength = momentId === "exchange" ? 0.45 : 0.65;
+            return bars.map((height) => Math.round(average + (height - average) * strength));
+          }
+          case "quiet":
+            return bars.map((height) => (height < 34 ? Math.min(58, height + 16) : height));
+          case "echo":
+            return bars
+              .map((height, index, list) => {
+                const previous = list[index - 1] ?? height;
+                const next = list[index + 1] ?? height;
+                const blended = (previous + height + next) / 3;
+                return Math.round(blended * 0.85 + height * 0.15);
+              })
+              .map((height, index) => (index % 2 === 1 ? Math.round(height * 0.82) : height));
+          case "peaks":
+            return bars.map((height) => (height > 62 ? Math.round(50 + (height - 62) * 0.28) : height));
+          case "clarity":
+            return bars.map((height) => {
+              if (height >= 28 && height <= 46) {
+                return Math.min(68, height + 12);
+              }
+              return Math.min(64, height + 4);
+            });
+          default:
+            return bars;
+        }
+      }
+
+      function buildCleanedPreview(original) {
+        return choices.reduce(
+          (bars, choice) => (enabled.has(choice.id) ? applyChoice(bars, choice.id, preview) : bars),
+          [...original],
+        );
+      }
+
+      function activeEffects() {
+        return choices.filter((choice) => enabled.has(choice.id)).map((choice) => choice.effect);
+      }
+
+      function waveMarkup(heights, cleaned) {
+        return heights
+          .map((height) => `<i class="${cleaned ? "soft" : ""}" style="height:${height}%"></i>`)
+          .join("");
+      }
+
+      function renderCompare() {
+        const moment = previewMoments.find((entry) => entry.id === preview);
+        const original = momentProfiles[preview];
+        const cleaned = buildCleanedPreview(original);
+        const effects = activeEffects();
+
+        compareElement.replaceChildren(
+          renderPreviewCard("Original", original, false, "What listeners hear now."),
+          renderPreviewCard(
+            "With cleanup",
+            enabled.size ? cleaned : original,
+            true,
+            enabled.size ? moment.note : "Turn on a cleanup choice to preview the difference.",
+            effects,
+          ),
+        );
+      }
+
+      function renderPreviewCard(title, heights, cleaned, note, effects = []) {
+        const card = document.createElement("article");
+        card.className = "preview-card";
+        const heading = document.createElement("strong");
+        heading.textContent = title;
+        const wave = document.createElement("div");
+        wave.className = `wave ${cleaned ? "cleaned" : ""}`;
+        wave.innerHTML = waveMarkup(heights, cleaned);
+        const copy = document.createElement("span");
+        copy.textContent = note;
+
+        card.append(heading, wave, copy);
+
+        if (effects.length) {
+          const tags = document.createElement("div");
+          tags.className = "effect-tags";
+          tags.setAttribute("aria-label", "Active cleanup effects");
+          for (const effect of effects) {
+            const tag = document.createElement("span");
+            tag.className = "effect-tag";
+            tag.textContent = effect;
+            tags.appendChild(tag);
+          }
+          card.appendChild(tags);
+        }
+
+        return card;
       }
 
       function renderChoice(choice) {
