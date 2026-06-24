@@ -251,6 +251,16 @@
       return focusSlotInput(zone);
     }
 
+    function firstMissingRequiredZone() {
+      return requiredSlots().find((zone) => {
+        return !zone.classList.contains("filled") && !zone.classList.contains("is-hidden");
+      }) || null;
+    }
+
+    function focusFirstMissingRequired() {
+      return focusSlotInput(firstMissingRequiredZone());
+    }
+
     function updateContinueState() {
       if (!continueLink) return;
       const required = requiredSlots();
@@ -482,6 +492,9 @@
     }
 
     function applyLayout(name) {
+      const previousVisible = new Set(
+        visibleSlots().map((zone) => zone.dataset.slot),
+      );
       const layout = layouts[name] || layouts.interview;
       currentLayout = layouts[name] ? name : "interview";
       const visible = new Set(layout.visibleSlots);
@@ -529,6 +542,14 @@
 
       syncInvalidError();
       updateSlotStatus();
+      const newlyVisibleRequired = requiredSlots().find((zone) => {
+        return !previousVisible.has(zone.dataset.slot)
+          && !zone.classList.contains("filled")
+          && !zone.classList.contains("is-hidden");
+      });
+      if (newlyVisibleRequired) {
+        focusSlotInput(newlyVisibleRequired);
+      }
     }
 
     layoutButtons.forEach((button) => {
@@ -579,6 +600,7 @@
         clearAllZones();
         setError("");
         updateSlotStatus();
+        focusFirstMissingRequired();
       });
     }
 
@@ -605,6 +627,8 @@
       duplicateBlockingZones,
       firstBlockingZone,
       focusFirstBlockingSlot,
+      firstMissingRequiredZone,
+      focusFirstMissingRequired,
       zonesBySlot,
       slotIndicators,
       updateSlotStatus,
