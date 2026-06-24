@@ -367,11 +367,14 @@
         const meta = el("div", { class: "layer-meta", text: metaBits.join(" · ") }, []);
         const main = el("div", { class: "layer-main" }, [nameRow, meta]);
 
+        // ▲/▼ are disabled at the stack ends and whenever the move is refused: a locked layer
+        // can't move, and an unlocked layer can't displace a locked neighbor (#1248). This keeps
+        // the buttons in step with reorderLayers so a locked layer never moves by accident.
         const up = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " up", text: "▲" }, []);
-        if (index === 0) { up.disabled = true; }
+        if (index === 0 || layer.locked || layers[index - 1].locked) { up.disabled = true; }
         up.addEventListener("click", function () { move(index, -1); });
         const down = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " down", text: "▼" }, []);
-        if (index === layers.length - 1) { down.disabled = true; }
+        if (index === layers.length - 1 || layer.locked || layers[index + 1].locked) { down.disabled = true; }
         down.addEventListener("click", function () { move(index, 1); });
 
         const vis = el("button", { type: "button", class: "tiny secondary", text: layer.visible ? "Hide" : "Show" }, []);
@@ -402,18 +405,33 @@
         return row;
       }
 
-      function move(index, delta) {
+      // Reorder a layer in the stack, refusing any move that would move a locked layer or
+      // displace a locked neighbor. Locking a layer is meant to keep it from moving by
+      // accident — the gate copy ("so it cannot move by accident while editing") and the Lock
+      // control both promise this — but only Remove was gated before, so ▲/▼ silently shuffled
+      // locked brand elements (#1248). Pure: returns a new list for a permitted move, or the
+      // SAME list reference when the move is out of range or refused, so callers detect a no-op.
+      function reorderLayers(list, index, delta) {
         const target = index + delta;
-        if (target < 0 || target >= layers.length) { return; }
-        const copy = layers.slice();
+        if (target < 0 || target >= list.length) { return list; }
+        // The moved layer can't be locked, and an unlocked layer can't be moved into a locked
+        // layer's slot — that displaces the locked layer exactly as if it had moved itself.
+        if (list[index].locked || list[target].locked) { return list; }
+        const copy = list.slice();
         const item = copy.splice(index, 1)[0];
         copy.splice(target, 0, item);
-        layers = copy;
+        return copy;
+      }
+
+      function move(index, delta) {
+        const next = reorderLayers(layers, index, delta);
+        if (next === layers) { return; }
+        layers = next;
         render();
       }
 
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature };
+        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature, reorderLayers: reorderLayers };
       }
 
       render();

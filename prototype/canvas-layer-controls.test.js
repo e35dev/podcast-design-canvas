@@ -122,4 +122,35 @@ if (typeof M.layoutSignature === "function") {
   );
 }
 
-console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker) verified");
+// Locking a layer must actually keep it from moving (#1248): reordering ignored `locked`
+// before, so ▲/▼ shuffled locked brand elements despite the lock's stated purpose.
+assert.ok(typeof M.reorderLayers === "function", "prototype exports reorderLayers()");
+
+// Mirrors the shipped sample: brand (index 3) unlocked, background (index 4) locked.
+const stack = [
+  { id: "l1", type: "captions", visible: true, locked: false },
+  { id: "l2", type: "lower-thirds", visible: true, locked: false },
+  { id: "l3", type: "speaker", visible: true, locked: false },
+  { id: "l4", type: "brand", visible: true, locked: false },
+  { id: "l5", type: "background", visible: true, locked: true },
+];
+
+// Repro 1: moving the locked background up is refused — the list is returned unchanged.
+const movedLocked = M.reorderLayers(stack, 4, -1);
+assert.strictEqual(movedLocked, stack, "moving a locked layer is refused (returns the same list)");
+
+// Repro 2: moving the unlocked brand down would displace the locked background — also refused.
+const displacedLocked = M.reorderLayers(stack, 3, 1);
+assert.strictEqual(displacedLocked, stack, "an unlocked layer cannot displace a locked neighbor");
+
+// An unlocked reorder away from the locked layer still works and does not mutate the input.
+const reordered = M.reorderLayers(stack, 0, 1);
+assert.notStrictEqual(reordered, stack, "a permitted reorder returns a new list");
+assert.deepStrictEqual(stack.map((l) => l.id), ["l1", "l2", "l3", "l4", "l5"], "reorderLayers does not mutate its input");
+assert.deepStrictEqual(reordered.map((l) => l.id), ["l2", "l1", "l3", "l4", "l5"], "an unlocked layer swaps with its unlocked neighbor");
+
+// Out-of-range moves at the stack ends are no-ops.
+assert.strictEqual(M.reorderLayers(stack, 0, -1), stack, "moving the top layer up is a no-op");
+assert.strictEqual(M.reorderLayers(stack, 4, 1), stack, "moving the bottom layer down is a no-op");
+
+console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker) and locked-layer reorder guard verified");
