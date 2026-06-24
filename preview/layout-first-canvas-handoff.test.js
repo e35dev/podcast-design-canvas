@@ -186,6 +186,8 @@ assert.equal(zones.find((zone) => zone.dataset.slot === "broll").classList.conta
 drop("broll", "broll");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
 assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
+assert.match(slotStatus.textContent, /Optional b-roll is in place\./);
+assert.match(continueNote.textContent, /Optional b-roll is in place\./);
 
 resetButton.click();
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");

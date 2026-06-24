@@ -983,6 +983,13 @@
         var continueLink = document.getElementById("canvas-continue");
         var continueNote = document.getElementById("canvas-continue-note");
 
+        function optionalBrollCopy() {
+          var brollZone = document.querySelector('.drop-zone[data-slot="broll"]');
+          return brollZone && brollZone.classList.contains("filled")
+            ? "Optional b-roll is in place."
+            : "Optional b-roll can be added later.";
+        }
+
         function requiredFilledCount() {
           var required = ["host", "guest"];
           return required.filter(function (slot) {
@@ -998,7 +1005,7 @@
             continueLink.setAttribute("aria-disabled", "false");
             continueLink.textContent = "Continue to speaker roles →";
             if (continueNote) {
-              continueNote.textContent = "Required speaker videos are ready. Continue into speaker roles. Optional b-roll can be added later.";
+              continueNote.textContent = "Required speaker videos are ready. Continue into speaker roles. " + optionalBrollCopy();
             }
             return;
           }
@@ -1007,7 +1014,7 @@
           continueLink.setAttribute("aria-disabled", "true");
           continueLink.textContent = "Fill required speaker slots to continue";
           if (continueNote) {
-            continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.";
+            continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. " + optionalBrollCopy();
           }
         }
 
@@ -1020,10 +1027,10 @@
           }
           var filled = requiredFilledCount();
           if (filled === 2) {
-            slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
+            slotStatus.textContent = "Required speaker videos ready. " + optionalBrollCopy();
             return;
           }
-          slotStatus.textContent = filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
+          slotStatus.textContent = filled + " of 2 required speaker videos ready. " + optionalBrollCopy();
         }
 
         // Shared by drag-and-drop and keyboard activation. A track only fits its own slot;
