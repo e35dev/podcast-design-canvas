@@ -7,9 +7,9 @@ const assert = require("assert");
 
 const handoff = require("./layout-handoff.js");
 
-function zone(slot, name, filled = true) {
+function zone(slot, name, filled = true, sig = "") {
   return {
-    dataset: { slot, fileName: name },
+    dataset: { slot, fileName: name, fileSig: sig },
     classList: {
       contains(className) {
         return className === "filled" && filled;
@@ -30,12 +30,13 @@ assert.deepEqual(
     ["host", "host-cam.mp4", "host"],
     ["guest", "guest-cam.mp4", "guest"],
   ],
-  "interview handoff keeps required speaker slots and ignores optional b-roll",
+  "interview handoff keeps required speaker slots separate from optional b-roll",
 );
+assert.equal(interview.optionalBroll.name, "intro-card.mp4", "optional b-roll is carried beside required slots");
 assert.equal(
   handoff.hrefWithState("./app.html#speaker-role-mapping?path=episode", interview),
-  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
-  "handoff href carries the chosen layout and required slots through the app hash",
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
+  "handoff href flags optional b-roll without adding it to required slots",
 );
 assert.equal(
   handoff.completeSlotQueryForLayout("interview", "host,guest,broll"),
@@ -62,9 +63,14 @@ const storage = {
 };
 handoff.save(storage, interview);
 assert.equal(
-  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest").slots[0].name,
+  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest&broll=placed").slots[0].name,
   "host-cam.mp4",
   "matching stored handoff restores the placed file names for the current layout-start URL",
+);
+assert.equal(
+  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest&broll=placed").optionalBroll.name,
+  "intro-card.mp4",
+  "stored optional b-roll is restored when the URL carries broll=placed",
 );
 handoff.clear(storage);
 assert.equal(
@@ -109,8 +115,8 @@ assert.equal(handoff.stateFromSlots("unknown", [{ slot: "host" }]), null);
 
 assert.equal(
   handoff.placementList(interview),
-  "Host (host-cam.mp4), Guest (guest-cam.mp4)",
-  "placement list shows the carried file name next to each placed slot",
+  "Host (host-cam.mp4), Guest (guest-cam.mp4), Optional b-roll (intro-card.mp4)",
+  "placement list shows optional b-roll when the creator placed it on the layout-first canvas",
 );
 assert.equal(
   handoff.placementList(handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }, { slot: "guest-b" }])),

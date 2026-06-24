@@ -65,6 +65,19 @@
     return normalized ? Object.keys(layouts[normalized].roles) : [];
   }
 
+  function optionalBrollFromEntries(entries) {
+    const entry = (entries || []).find((candidate) => candidate.slot === "broll");
+    if (!entry || !entry.name) {
+      return null;
+    }
+    return {
+      slot: "broll",
+      label: slotLabels.broll,
+      name: entry.name,
+      sig: entry.sig || "",
+    };
+  }
+
   function stateFromSlots(layout, slotEntries) {
     const normalizedLayout = normalizeLayout(layout);
     if (!normalizedLayout) {
@@ -93,11 +106,16 @@
       return null;
     }
 
-    return {
+    const optionalBroll = optionalBrollFromEntries(entries);
+    const state = {
       layout: normalizedLayout,
       layoutLabel: layouts[normalizedLayout].label,
       slots,
     };
+    if (optionalBroll) {
+      state.optionalBroll = optionalBroll;
+    }
+    return state;
   }
 
   function stateFromZones(layout, zones) {
@@ -122,6 +140,9 @@
     const params = new URLSearchParams();
     params.set("layout", state.layout);
     params.set("slots", slots.join(","));
+    if (state.optionalBroll && state.optionalBroll.name) {
+      params.set("broll", "placed");
+    }
     return params.toString();
   }
 
@@ -186,12 +207,24 @@
     }
     try {
       const stored = JSON.parse(storage.getItem(STORAGE_KEY) || "null");
-      const storedState = stateFromSlots(stored && stored.layout, stored && stored.slots);
+      const storedState = stored && stored.layout
+        ? stateFromSlots(stored.layout, stored.slots || [])
+        : null;
+      if (storedState && stored.optionalBroll) {
+        storedState.optionalBroll = clone(stored.optionalBroll);
+      }
       const storedSlots = storedState ? storedState.slots.map((slot) => slot.slot).join(",") : "";
       const querySlots = queryState.slots.map((slot) => slot.slot).join(",");
-      return storedState && storedState.layout === queryState.layout && storedSlots === querySlots
-        ? storedState
-        : queryState;
+      const brollMatches = Boolean(storedState && storedState.optionalBroll) === (params.get("broll") === "placed");
+      if (
+        storedState
+        && storedState.layout === queryState.layout
+        && storedSlots === querySlots
+        && brollMatches
+      ) {
+        return storedState;
+      }
+      return queryState;
     } catch (error) {
       return queryState;
     }
@@ -218,12 +251,14 @@
     if (!state || !state.slots || !state.slots.length) {
       return "";
     }
-    return state.slots
-      .map((slot) => {
-        const generic = `${slot.label} video`;
-        return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
-      })
-      .join(", ");
+    const parts = state.slots.map((slot) => {
+      const generic = `${slot.label} video`;
+      return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
+    });
+    if (state.optionalBroll && state.optionalBroll.name) {
+      parts.push(`Optional b-roll (${state.optionalBroll.name})`);
+    }
+    return parts.join(", ");
   }
 
   const api = {
@@ -233,6 +268,7 @@
     hrefWithState,
     load,
     normalizeLayout,
+    optionalBrollFromEntries,
     placementList,
     queryForState,
     requiredSlotsFor,
