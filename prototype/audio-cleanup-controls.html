@@ -611,21 +611,42 @@
         return wrap;
       }
 
-      function renderRollupMomentTags() {
+      function renderRollupMomentTags(needsWork) {
         const wrap = document.createElement("div");
         wrap.className = "rollup-moment-tags";
-        wrap.setAttribute("aria-label", "Suggested preview moments for active cleanup choices");
+        wrap.setAttribute("aria-label", "Suggested preview moments for speaker buckets needing review");
 
-        for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
-          const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
+        for (const speaker of needsWork) {
+          const moment = rollupPreviewMomentForSpeaker(speaker);
           if (!moment) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-moment-tag";
-          tag.textContent = `${choice.label} — ${moment.label}`;
+          tag.textContent = `${bucketLabel(speaker)} — ${moment.label}`;
           wrap.appendChild(tag);
         }
 
         return wrap;
+      }
+
+      function rollupPreviewMomentForSpeaker(speaker) {
+        const active = choices.filter((entry) => enabled.has(entry.id));
+        if (!active.length) return null;
+
+        const isGuest = speaker.id !== "host";
+        let momentId = preview;
+
+        if (isGuest && enabled.has("quiet")) {
+          momentId = "quiet-guest";
+        } else if (enabled.has("balance")) {
+          momentId = "exchange";
+        } else {
+          momentId = active[0].bestMoment;
+        }
+
+        return (
+          previewMoments.find((entry) => entry.id === momentId)
+          || previewMoments.find((entry) => entry.id === preview)
+        );
       }
 
       function renderRollupChoiceEffectTags() {
@@ -665,7 +686,7 @@
           if (choiceTags.childElementCount) {
             rollupElement.appendChild(choiceTags);
           }
-          const momentTags = renderRollupMomentTags();
+          const momentTags = renderRollupMomentTags(rollup.needsWork);
           if (momentTags.childElementCount) {
             rollupElement.appendChild(momentTags);
           }
