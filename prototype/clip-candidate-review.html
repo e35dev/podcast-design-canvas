@@ -289,7 +289,15 @@
       function approvedCount(list) {
         var count = 0;
         for (var i = 0; i < list.length; i++) {
-          if (list[i].status === "approved" || list[i].status === "adjusted") count++;
+          if ((list[i].status === "approved" || list[i].status === "adjusted") && list[i].captionReady) count++;
+        }
+        return count;
+      }
+
+      function pendingCaptionCount(list) {
+        var count = 0;
+        for (var i = 0; i < list.length; i++) {
+          if ((list[i].status === "approved" || list[i].status === "adjusted") && !list[i].captionReady) count++;
         }
         return count;
       }
@@ -449,8 +457,8 @@
         if (clip.status !== "dismissed") {
           var jumpLink = document.createElement("a");
           jumpLink.className = "routed-link";
-          jumpLink.href = "transcript-search-navigation.html";
-          jumpLink.textContent = "Jump to moment →";
+          jumpLink.href = "transcript-search-navigation.html#t=" + encodeURIComponent(clip.start);
+          jumpLink.textContent = "Jump to " + clip.start + " →";
           jumpLink.style.marginTop = "2px";
           actions.appendChild(jumpLink);
         }
@@ -517,10 +525,20 @@
 
         readinessEl.appendChild(row);
 
+        var pending = pendingCaptionCount(candidates);
+        if (pending > 0) {
+          var captBadge = document.createElement("span");
+          captBadge.className = "badge adjusted";
+          captBadge.textContent = pending + " approved but captions need review";
+          row.appendChild(captBadge);
+        }
+
         var note = document.createElement("p");
         note.className = "summary-note";
-        if (approved > 0 && s.suggested === 0) {
-          note.textContent = "All candidates reviewed. Approved and adjusted clips are ready for short-form export. The long-form episode is unchanged.";
+        if (approved > 0 && s.suggested === 0 && pending === 0) {
+          note.textContent = "All candidates reviewed. Approved clips with clean captions are ready for short-form export. The long-form episode is unchanged.";
+        } else if (pending > 0) {
+          note.textContent = pending + " approved clip(s) still need caption review before export. Fix captions on the caption quality review screen.";
         } else if (approved > 0) {
           note.textContent = approved + " clip(s) ready for export. Review remaining suggestions or dismiss ones that do not fit.";
         } else {
@@ -580,6 +598,7 @@
           statusLabel: statusLabel,
           candidateSummary: candidateSummary,
           approvedCount: approvedCount,
+          pendingCaptionCount: pendingCaptionCount,
         };
       }
     </script>
