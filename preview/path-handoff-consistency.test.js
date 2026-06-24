@@ -14,7 +14,7 @@ const previewDir = __dirname;
 const expectedHandoffs = [
   {
     script: "ingest-nav.js",
-    href: 'start.href = "source-media-health.html"',
+    href: 'start.href = shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html"',
     text: "Continue: Source media health",
     note: "ingest setup hands off to the episode path",
   },

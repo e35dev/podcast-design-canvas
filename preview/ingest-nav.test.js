@@ -146,6 +146,10 @@ assert.ok(
   "episode shell path at speaker roles skips social context",
 );
 assert.ok(
+  episodeRoleNav.nodes.some((node) => node.href === "source-media-health.html?path=episode"),
+  "episode shell path hands off into the episode flow context",
+);
+assert.ok(
   !episodeRoleNav.nodes.some((node) => node.textContent === "Next: Social links"),
   "episode shell path does not link to social context from speaker roles",
 );
@@ -154,6 +158,10 @@ const lastNav = renderNavFor("social-context-intake.html", "social-context-intak
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
   "last ingest screen hands off to source media health",
+);
+assert.ok(
+  lastNav.nodes.some((node) => node.href === "source-media-health.html?path=episode"),
+  "ingest setup hands off into the episode flow context",
 );
 assert.ok(
   !lastNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Next:")),

@@ -26,6 +26,11 @@ function isEpisodeShellPath() {
   return new URLSearchParams(window.location.search).get("path") === "episode";
 }
 
+function shouldHandoffToEpisodePath() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return path === "episode" || path === "ingest";
+}
+
 function hrefWithPath(file) {
   const suffix = pathQuerySuffix();
   return suffix ? `${file}${suffix}` : file;
@@ -150,7 +155,7 @@ function renderIngestNav() {
     wrap.appendChild(nextLink);
   } else if (episodeHandoff || !next) {
     const start = document.createElement("a");
-    start.href = "source-media-health.html";
+    start.href = shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html";
     start.textContent = "Continue: Source media health";
     wrap.appendChild(start);
   }
