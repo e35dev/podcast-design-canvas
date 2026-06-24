@@ -140,7 +140,7 @@
     const params = new URLSearchParams();
     params.set("layout", state.layout);
     params.set("slots", slots.join(","));
-    if (state.optionalBroll && state.optionalBroll.name) {
+    if (state.optionalBroll) {
       params.set("broll", "placed");
     }
     return params.toString();
@@ -196,14 +196,30 @@
     }
   }
 
+  function withOptionalBrollFlag(state, placed) {
+    if (!state || !placed || state.optionalBroll) {
+      return state;
+    }
+    const flagged = clone(state);
+    flagged.optionalBroll = {
+      slot: "broll",
+      label: slotLabels.broll,
+      name: "",
+      sig: "",
+    };
+    return flagged;
+  }
+
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
     const queryState = stateFromSlots(params.get("layout"), slotsFromQuery(params.get("slots")).map((slot) => ({ slot })));
     if (!queryState) {
       return null;
     }
+    const queryHasBroll = params.get("broll") === "placed";
+    const queryStateWithBroll = withOptionalBrollFlag(queryState, queryHasBroll);
     if (!storage) {
-      return queryState;
+      return queryStateWithBroll;
     }
     try {
       const stored = JSON.parse(storage.getItem(STORAGE_KEY) || "null");
@@ -219,7 +235,7 @@
       // for an out-of-order placement and drop the carried file names, so sort before comparing.
       const storedSlots = storedState ? storedState.slots.map((slot) => slot.slot).sort().join(",") : "";
       const querySlots = queryState.slots.map((slot) => slot.slot).sort().join(",");
-      const brollMatches = Boolean(storedState && storedState.optionalBroll) === (params.get("broll") === "placed");
+      const brollMatches = Boolean(storedState && storedState.optionalBroll) === queryHasBroll;
       if (
         storedState
         && storedState.layout === queryState.layout
@@ -228,9 +244,9 @@
       ) {
         return storedState;
       }
-      return queryState;
+      return queryStateWithBroll;
     } catch (error) {
-      return queryState;
+      return queryStateWithBroll;
     }
   }
 
@@ -259,8 +275,8 @@
       const generic = `${slot.label} video`;
       return slot.name && slot.name !== generic ? `${slot.label} (${slot.name})` : slot.label;
     });
-    if (state.optionalBroll && state.optionalBroll.name) {
-      parts.push(`Optional b-roll (${state.optionalBroll.name})`);
+    if (state.optionalBroll) {
+      parts.push(state.optionalBroll.name ? `Optional b-roll (${state.optionalBroll.name})` : "Optional b-roll");
     }
     return parts.join(", ");
   }

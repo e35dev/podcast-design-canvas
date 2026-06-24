@@ -72,6 +72,22 @@ assert.equal(
   "intro-card.mp4",
   "stored optional b-roll is restored when the URL carries broll=placed",
 );
+const queryOnlyBroll = handoff.load(null, "?path=episode&layout=interview&slots=host,guest&broll=placed");
+assert.deepEqual(
+  queryOnlyBroll.optionalBroll,
+  { slot: "broll", label: "Optional b-roll", name: "", sig: "" },
+  "the URL broll flag is preserved when storage is unavailable",
+);
+assert.equal(
+  handoff.placementList(queryOnlyBroll),
+  "Host, Guest, Optional b-roll",
+  "query-only layout handoff still tells role mapping that optional b-roll was placed",
+);
+assert.equal(
+  handoff.queryForState(queryOnlyBroll),
+  "layout=interview&slots=host%2Cguest&broll=placed",
+  "query-only optional b-roll state can round-trip through handoff URLs",
+);
 handoff.clear(storage);
 assert.equal(
   handoff.load(storage, "?path=episode&layout=interview&slots=host,guest").slots[0].name,
@@ -94,6 +110,11 @@ assert.equal(
   handoff.load(storage, "?path=episode&layout=panel&slots=host,guest"),
   null,
   "invalid query slots are rejected instead of falling back to stale stored state",
+);
+assert.equal(
+  handoff.placementList(handoff.load(storage, "?path=episode&layout=panel&slots=host,guest,guest-b&broll=placed")),
+  "Host, Guest, Guest 2, Optional b-roll",
+  "a stale stored layout does not erase the URL's placed optional b-roll flag",
 );
 
 const reorderedPlacement = handoff.stateFromZones("interview", [
