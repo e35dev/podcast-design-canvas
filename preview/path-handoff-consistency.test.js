@@ -38,7 +38,7 @@ const expectedHandoffs = [
   },
   {
     script: "cleanup-nav.js",
-    href: 'start.href = "contextual-broll-moments.html"',
+    href: 'start.href = "contextual-broll-moments.html?from=cleanup"',
     text: "Continue: Contextual b-roll moments",
     note: "cleanup helpers hand off to contextual visuals",
   },
@@ -77,9 +77,15 @@ const expectedEntryBacklinks = [
   },
   {
     script: "visuals-nav.js",
+    href: 'VISUALS_STYLE_ENTRY = { file: "canvas-layer-controls.html"',
+    text: 'label: "Canvas layer controls"',
+    note: "contextual visuals link back to visual direction by default",
+  },
+  {
+    script: "visuals-nav.js",
     href: 'cleanup.href = "on-screen-correction-note.html"',
     text: "Previous: On-screen correction note",
-    note: "contextual visuals link back to cleanup helpers",
+    note: "contextual visuals link back to cleanup helpers when entered from cleanup",
   },
 ];
 

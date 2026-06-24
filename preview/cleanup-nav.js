@@ -184,8 +184,8 @@ function renderCleanupNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "contextual-broll-moments.html";
-    setCleanupScreenLink(start, "contextual-broll-moments.html");
+    start.href = "contextual-broll-moments.html?from=cleanup";
+    setCleanupScreenLink(start, "contextual-broll-moments.html?from=cleanup");
     start.textContent = "Continue: Contextual b-roll moments";
     wrap.appendChild(start);
   }

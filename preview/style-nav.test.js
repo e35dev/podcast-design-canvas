@@ -15,7 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "style nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "style nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "style nav links to the preview app");
-assert.ok(navScript.includes("contextual-broll-moments.html"), "style nav hands off to the contextual visuals path");
+assert.ok(navScript.includes("?from=style"), "style nav tags the visuals handoff with the style entry path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "style nav builds the DOM without innerHTML");
@@ -120,7 +120,7 @@ assert.ok(
   "last visual direction screen hands off to the contextual visuals path",
 );
 assert.ok(
-  lastNav.nodes.some((node) => node.href === "contextual-broll-moments.html"),
+  lastNav.nodes.some((node) => node.href === "contextual-broll-moments.html?from=style"),
   "last visual direction screen links to contextual b-roll moments",
 );
 

@@ -15,7 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "cleanup nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "cleanup nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "cleanup nav links to the preview app");
-assert.ok(navScript.includes("contextual-broll-moments.html"), "cleanup nav hands off to the visuals stage");
+assert.ok(navScript.includes("contextual-broll-moments.html?from=cleanup"), "cleanup nav tags the visuals handoff with the cleanup entry path");
 assert.ok(navScript.includes('document.querySelector(".cleanup-nav")'), "cleanup nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "cleanup nav builds the DOM without innerHTML");
 
@@ -134,7 +134,7 @@ const lastNav = renderNavFor("on-screen-correction-note.html", "on-screen-correc
 const visualsHandoff = linkWithText(lastNav, "Continue: Contextual b-roll moments");
 assert.equal(
   visualsHandoff.href,
-  "contextual-broll-moments.html",
+  "contextual-broll-moments.html?from=cleanup",
   "last cleanup screen hands off to contextual visuals",
 );
 

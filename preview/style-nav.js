@@ -185,7 +185,7 @@ function renderStyleNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    setStyleScreenLink(start, STYLE_HANDOFF.file);
+    setStyleScreenLink(start, `${STYLE_HANDOFF.file}?from=style`);
     start.textContent = `Continue: ${STYLE_HANDOFF.label}`;
     wrap.appendChild(start);
   }

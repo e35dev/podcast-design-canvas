@@ -11,11 +11,18 @@ const VISUALS_FLOW = [
   { id: "sensitive-moment-review", file: "sensitive-moment-review.html", label: "Sensitive moment review" },
 ];
 
+const VISUALS_STYLE_ENTRY = { file: "canvas-layer-controls.html", label: "Canvas layer controls" };
+
 const PREVIEW_APP_VISUALS_TARGETS = new Set([
+  screenIdFromFile(VISUALS_STYLE_ENTRY.file),
   "on-screen-correction-note",
   ...VISUALS_FLOW.map((step) => step.id),
   "show-segment-system",
 ]);
+
+function isCleanupPathEntry() {
+  return new URLSearchParams(window.location.search).get("from") === "cleanup";
+}
 
 function currentVisualsIndex() {
   const fromBody = document.body.dataset.visualsStep;
@@ -164,12 +171,18 @@ function renderVisualsNav() {
     setVisualsScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
-  } else {
+  } else if (isCleanupPathEntry()) {
     const cleanup = document.createElement("a");
     cleanup.href = "on-screen-correction-note.html";
     setVisualsScreenLink(cleanup, "on-screen-correction-note.html");
     cleanup.textContent = "Previous: On-screen correction note";
     wrap.appendChild(cleanup);
+  } else {
+    const style = document.createElement("a");
+    style.href = VISUALS_STYLE_ENTRY.file;
+    setVisualsScreenLink(style, VISUALS_STYLE_ENTRY.file);
+    style.textContent = `Previous: ${VISUALS_STYLE_ENTRY.label}`;
+    wrap.appendChild(style);
   }
 
   if (next) {
