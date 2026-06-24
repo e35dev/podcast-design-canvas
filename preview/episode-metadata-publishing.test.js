@@ -43,7 +43,8 @@ fn(mockDoc, mockMod);
 
 const {
   episode, DESTINATIONS, DEST_REQUIRED_FIELDS, INITIAL_FIELDS,
-  state, fieldStatus, readinessChecks, isReadyForExport, statusLabel,
+  state, fieldDefinition, fieldState, fieldIsRequired, fieldValue,
+  fieldStatus, readinessChecks, isReadyForExport, statusLabel, previewModel,
 } = mockMod.exports;
 
 // 1. Episode context is grounded.
@@ -68,6 +69,10 @@ assert.strictEqual(statusLabel("needs-review"), "Needs review");
 assert.strictEqual(statusLabel("not-needed"), "Not needed for destination");
 
 // 5. fieldStatus gates on destination requirements.
+assert.strictEqual(fieldDefinition("thumbnail").label, "Thumbnail frame", "field definitions are found by id");
+assert.strictEqual(fieldState("title").id, "title", "field state is found by id");
+assert.strictEqual(fieldIsRequired("sponsor", "youtube"), true, "sponsor is required for youtube");
+assert.strictEqual(fieldIsRequired("sponsor", "archive"), false, "sponsor is not required for archive");
 assert.strictEqual(fieldStatus("title", "youtube"), "needs-review", "title is required for youtube");
 assert.strictEqual(fieldStatus("sponsor", "archive"), "not-needed", "sponsor is not needed for archive");
 
@@ -81,9 +86,31 @@ assert.ok(archiveChecks.length <= 3, "archive has fewer required fields");
 assert.strictEqual(isReadyForExport("youtube"), true, "ready when all required fields have values");
 
 // Simulate missing title.
-var origTitle = state.fields[0].value;
-state.fields[0].value = "";
+var origTitle = fieldState("title").value;
+fieldState("title").value = "";
 assert.strictEqual(isReadyForExport("youtube"), false, "not ready when title is missing");
-state.fields[0].value = origTitle;
+assert.strictEqual(previewModel("youtube").title, "Untitled episode", "preview uses title fallback when the title is blank");
+fieldState("title").value = origTitle;
+
+// 8. The preview reads fields by id, not by their position in state.fields.
+var originalOrder = state.fields.slice();
+state.fields = [
+  originalOrder.find((field) => field.id === "thumbnail"),
+  originalOrder.find((field) => field.id === "sponsor"),
+  originalOrder.find((field) => field.id === "chapters"),
+  originalOrder.find((field) => field.id === "description"),
+  originalOrder.find((field) => field.id === "show-name"),
+  originalOrder.find((field) => field.id === "guest-links"),
+  originalOrder.find((field) => field.id === "title"),
+];
+
+var ytPreview = previewModel("youtube");
+assert.strictEqual(ytPreview.title, "Episode 24 — The Rewrite Nobody Asked For", "preview title survives field reorder");
+assert.match(ytPreview.description, /deploy pipeline/, "preview description survives field reorder");
+assert.strictEqual(ytPreview.thumbnail, "Selected: Maya and Dev at 14:30", "preview thumbnail survives field reorder");
+assert.match(ytPreview.chapters, /08:14 Architecture walkthrough/, "preview chapters survive field reorder");
+assert.strictEqual(ytPreview.sponsor, "Presented by Turborepo", "preview sponsor survives field reorder");
+assert.strictEqual(fieldValue("missing-field", "Fallback"), "Fallback", "missing field values use a fallback");
+assert.ok(!/state\.fields\[\d+\]/.test(html), "preview and tests do not depend on numeric field indexes");
 
 console.log("episode-metadata-publishing: all behavior tests passed");

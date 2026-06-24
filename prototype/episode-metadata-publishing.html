@@ -195,16 +195,55 @@
 
       // --- Pure logic (exported for tests) ---
 
-      function fieldStatus(fieldId, destination) {
-        var required = DEST_REQUIRED_FIELDS[destination] || [];
-        var isRequired = required.indexOf(fieldId) >= 0;
-        var fieldState = null;
-        for (var i = 0; i < state.fields.length; i++) {
-          if (state.fields[i].id === fieldId) { fieldState = state.fields[i]; break; }
+      function fieldDefinition(fieldId) {
+        for (var i = 0; i < INITIAL_FIELDS.length; i++) {
+          if (INITIAL_FIELDS[i].id === fieldId) {
+            return INITIAL_FIELDS[i];
+          }
         }
+        return null;
+      }
+
+      function fieldState(fieldId) {
+        for (var i = 0; i < state.fields.length; i++) {
+          if (state.fields[i].id === fieldId) {
+            return state.fields[i];
+          }
+        }
+        return null;
+      }
+
+      function ensureFieldState(fieldId) {
+        var existing = fieldState(fieldId);
+        if (existing) {
+          return existing;
+        }
+
+        var def = fieldDefinition(fieldId);
+        var created = { id: fieldId, value: def ? def.value : "", edited: false };
+        state.fields.push(created);
+        return created;
+      }
+
+      function fieldIsRequired(fieldId, destination) {
+        var required = DEST_REQUIRED_FIELDS[destination] || [];
+        return required.indexOf(fieldId) >= 0;
+      }
+
+      function fieldValue(fieldId, fallback) {
+        var field = fieldState(fieldId);
+        if (!field || field.value === undefined || field.value === null || String(field.value).trim() === "") {
+          return fallback;
+        }
+        return field.value;
+      }
+
+      function fieldStatus(fieldId, destination) {
+        var isRequired = fieldIsRequired(fieldId, destination);
+        var current = fieldState(fieldId);
         if (!isRequired) return "not-needed";
-        if (!fieldState || !fieldState.value || fieldState.value.trim() === "") return "missing";
-        if (!fieldState.edited) return "needs-review";
+        if (!current || !current.value || current.value.trim() === "") return "missing";
+        if (!current.edited) return "needs-review";
         return "complete";
       }
 
@@ -213,10 +252,7 @@
         var checks = [];
         for (var i = 0; i < required.length; i++) {
           var status = fieldStatus(required[i], destination);
-          var def = null;
-          for (var j = 0; j < INITIAL_FIELDS.length; j++) {
-            if (INITIAL_FIELDS[j].id === required[i]) { def = INITIAL_FIELDS[j]; break; }
-          }
+          var def = fieldDefinition(required[i]);
           checks.push({ id: required[i], label: def ? def.label : required[i], status: status });
         }
         return checks;
@@ -238,6 +274,23 @@
           "not-needed": "Not needed for destination",
         };
         return labels[status] || status;
+      }
+
+      function previewModel(destination) {
+        var required = DEST_REQUIRED_FIELDS[destination] || [];
+        var chapters = fieldValue("chapters", "");
+        var sponsor = fieldValue("sponsor", "");
+
+        return {
+          thumbnail: fieldValue("thumbnail", "No thumbnail selected"),
+          title: fieldValue("title", "Untitled episode"),
+          description: fieldValue("description", "No description"),
+          meta: fieldValue("show-name", episode.show + " · Episode " + episode.number) + " · " + episode.guests.join(", "),
+          showChapters: required.indexOf("chapters") >= 0 && chapters !== "",
+          chapters: chapters,
+          showSponsor: required.indexOf("sponsor") >= 0 && sponsor !== "",
+          sponsor: sponsor,
+        };
       }
 
       // --- DOM rendering ---
@@ -269,9 +322,9 @@
         fieldsEl.innerHTML = "";
         var required = DEST_REQUIRED_FIELDS[state.destination] || [];
         for (var i = 0; i < INITIAL_FIELDS.length; i++) {
-          (function (def, idx) {
+          (function (def) {
             var isRequired = required.indexOf(def.id) >= 0;
-            var st = state.fields[idx];
+            var st = ensureFieldState(def.id);
             var status = fieldStatus(def.id, state.destination);
 
             var card = document.createElement("div");
@@ -358,19 +411,19 @@
 
             card.appendChild(actions);
             fieldsEl.appendChild(card);
-          })(INITIAL_FIELDS[i], i);
+          })(INITIAL_FIELDS[i]);
         }
       }
 
       function renderPreview() {
         previewEl.innerHTML = "";
+        var model = previewModel(state.destination);
         var card = document.createElement("div");
         card.className = "preview-card";
 
         var thumb = document.createElement("div");
         thumb.className = "preview-thumb";
-        var thumbField = state.fields[6];
-        thumb.textContent = thumbField.value || "No thumbnail selected";
+        thumb.textContent = model.thumbnail;
         card.appendChild(thumb);
 
         var body = document.createElement("div");
@@ -378,34 +431,33 @@
 
         var title = document.createElement("div");
         title.className = "preview-title";
-        title.textContent = state.fields[0].value || "Untitled episode";
+        title.textContent = model.title;
         body.appendChild(title);
 
         var desc = document.createElement("div");
         desc.className = "preview-desc";
-        desc.textContent = state.fields[2].value || "No description";
+        desc.textContent = model.description;
         body.appendChild(desc);
 
         var meta = document.createElement("div");
         meta.className = "preview-meta";
-        meta.textContent = state.fields[1].value + " · " + episode.guests.join(", ");
+        meta.textContent = model.meta;
         body.appendChild(meta);
 
         // Chapters preview if destination supports them
-        var required = DEST_REQUIRED_FIELDS[state.destination] || [];
-        if (required.indexOf("chapters") >= 0) {
+        if (model.showChapters) {
           var chapters = document.createElement("div");
           chapters.className = "preview-chapters";
-          chapters.textContent = state.fields[3].value;
+          chapters.textContent = model.chapters;
           body.appendChild(chapters);
         }
 
         // Sponsor if needed
-        if (required.indexOf("sponsor") >= 0 && state.fields[5].value) {
+        if (model.showSponsor) {
           var sponsor = document.createElement("div");
           sponsor.className = "preview-meta";
           sponsor.style.marginTop = "6px";
-          sponsor.textContent = state.fields[5].value;
+          sponsor.textContent = model.sponsor;
           body.appendChild(sponsor);
         }
 
@@ -452,10 +504,15 @@
           DEST_REQUIRED_FIELDS: DEST_REQUIRED_FIELDS,
           INITIAL_FIELDS: INITIAL_FIELDS,
           state: state,
+          fieldDefinition: fieldDefinition,
+          fieldState: fieldState,
+          fieldIsRequired: fieldIsRequired,
+          fieldValue: fieldValue,
           fieldStatus: fieldStatus,
           readinessChecks: readinessChecks,
           isReadyForExport: isReadyForExport,
           statusLabel: statusLabel,
+          previewModel: previewModel,
         };
       }
     </script>
