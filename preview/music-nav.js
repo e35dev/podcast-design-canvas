@@ -12,6 +12,7 @@ const MUSIC_FLOW = [
 
 const MUSIC_ENTRY = { file: "audio-cleanup-controls.html", label: "Audio cleanup" };
 const MUSIC_HANDOFF = { file: "pause-crosstalk-cleanup.html", label: "Pause & cross-talk cleanup" };
+const MUSIC_HANDOFF_EPISODE_PATH = "episode";
 
 // Music screens hand off to these owning screens when a review item needs a fix.
 const MUSIC_FIX_PATHS = {
@@ -95,6 +96,27 @@ function pathQuerySuffix() {
   return path === "episode" ? "?path=episode" : "";
 }
 
+function isMusicHandoffTarget(file) {
+  return screenIdFromFile(file) === screenIdFromFile(MUSIC_HANDOFF.file);
+}
+
+// Episode-path handoff: music screens finish on pause cleanup while preserving the
+// guided episode context the creator entered from (#583).
+function musicHandoffHref(file) {
+  if (!isMusicHandoffTarget(file)) {
+    return null;
+  }
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== MUSIC_HANDOFF_EPISODE_PATH) {
+    return file;
+  }
+  const existing = pathFromQuery(queryWithoutHash(file));
+  if (existing === MUSIC_HANDOFF_EPISODE_PATH) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: MUSIC_HANDOFF_EPISODE_PATH });
+}
+
 function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
@@ -126,6 +148,10 @@ function linkBase(href) {
 }
 
 function resolveMusicLink(file) {
+  const handoff = musicHandoffHref(file);
+  if (handoff) {
+    return handoff;
+  }
   const base = linkBase(file);
   if (Object.prototype.hasOwnProperty.call(MUSIC_FIX_PATHS, base)) {
     return mergeRouteSearch(file, { path: MUSIC_FIX_PATHS[base] });
@@ -161,6 +187,7 @@ function isLocalScreenHref(href) {
 function shouldNormalizeMusicHref(href) {
   return isLocalScreenHref(href) && (
     isPreviewAppMusicTarget(href) ||
+    isMusicHandoffTarget(href) ||
     Object.prototype.hasOwnProperty.call(MUSIC_FIX_PATHS, linkBase(href))
   );
 }

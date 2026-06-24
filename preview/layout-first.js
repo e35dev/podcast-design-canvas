@@ -387,6 +387,21 @@
 
     zones.forEach((zone) => {
       const input = zone.querySelector("[data-file-input]");
+      // Make the whole empty slot a click target for choosing a video, so a creator can place
+      // media by clicking the slot in the layout instead of aiming at the small file input.
+      // A filled slot leaves clicks to its video and Remove control, and a click on the input
+      // itself already opens the picker (so it must not re-trigger one here).
+      zone.addEventListener("click", (event) => {
+        if (zone.classList.contains("filled") || zone.classList.contains("is-hidden")) {
+          return;
+        }
+        if (event && event.target === input) {
+          return;
+        }
+        if (input && typeof input.click === "function") {
+          input.click();
+        }
+      });
       zone.addEventListener("dragover", (event) => {
         event.preventDefault();
         zone.classList.add("drag-over");

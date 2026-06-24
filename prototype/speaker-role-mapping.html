@@ -454,6 +454,17 @@
           }
         }
 
+        // Count how many tracks carry each source recording identity (from the layout
+        // handoff). The same recording in two speaker slots means one person would fill
+        // two frames — flag it here so the production gate reflects it, not just the start
+        // page. Tracks without a carried identity (empty sig) are never flagged.
+        const sigCount = {};
+        for (const track of list) {
+          if (track.sig) {
+            sigCount[track.sig] = (sigCount[track.sig] || 0) + 1;
+          }
+        }
+
         const results = list.map((track) => {
           const role = roles[track.role] ? track.role : "";
           const signal = signals[track.signal] || signals.manual;
@@ -466,6 +477,13 @@
               title: `${track.name || "This track"} has no role yet`,
               action: "Pick a podcast role so this speaker is placed and labelled correctly.",
               tone: "blocker",
+            };
+          } else if (track.sig && sigCount[track.sig] > 1) {
+            state = "review";
+            issue = {
+              title: `Two speakers use the same recording`,
+              action: `${roles[role].label} shares one recording with another speaker. Give each speaker a separate video — one recording can't fill two speaker frames.`,
+              tone: "review",
             };
           } else if (roles[role].single && seatCount[role] > 1) {
             state = "review";

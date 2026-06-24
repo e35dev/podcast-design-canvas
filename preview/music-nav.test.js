@@ -404,4 +404,13 @@ assert.equal(
   "embedded music nav normalizes dynamically rendered fix links before navigation",
 );
 
+assert.ok(navScript.includes("musicHandoffHref"), "music nav centralizes episode-path handoff resolution");
+
+const embeddedPathHandoff = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", true, [], "?path=episode");
+assert.equal(
+  linkWithText(embeddedPathHandoff, "Continue: Pause & cross-talk cleanup").href,
+  "../preview/app.html#pause-crosstalk-cleanup?path=episode",
+  "embedded music nav preserves episode path context on the cleanup handoff",
+);
+
 console.log("music nav: two-step music path links audio cleanup to pause cleanup");

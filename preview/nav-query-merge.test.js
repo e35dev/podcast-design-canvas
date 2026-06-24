@@ -82,6 +82,13 @@ assertCanonicalPathMerge(
 );
 
 assertCanonicalPathMerge(
+  "music-nav.js",
+  "?path=episode",
+  "music-cue-setup.html?path=reuse&draft=cue",
+  "music-cue-setup.html?path=episode&draft=cue",
+);
+
+assertCanonicalPathMerge(
   "cleanup-nav.js",
   "?path=publish",
   "transcript-glossary.html?path=episode&draft=terms",

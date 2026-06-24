@@ -82,6 +82,9 @@
           label: slotLabels[slot],
           role: roles[slot],
           name: entry.name || `${slotLabels[slot]} video`,
+          // Carry the recording's identity so production can tell whether two speaker
+          // slots hold the SAME source recording (a different problem than a name clash).
+          sig: entry.sig || "",
         };
       });
 
@@ -103,6 +106,7 @@
       .map((zone) => ({
         slot: zone.dataset && zone.dataset.slot,
         name: zone.dataset && zone.dataset.fileName,
+        sig: zone.dataset && zone.dataset.fileSig,
       }));
     return stateFromSlots(layout, entries);
   }
@@ -201,6 +205,7 @@
       id: `layout-${slot.slot}-${index + 1}`,
       name: slot.name || `${slot.label} video`,
       role: slot.role,
+      sig: slot.sig || "",
       signal: "file-name",
       decision: slot.role === "host" ? "confirmed" : "suggested",
     }));
