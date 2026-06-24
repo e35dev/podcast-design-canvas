@@ -320,21 +320,33 @@
         outro: "Outro",
       };
 
-      // Whether the segment is part of this episode. "needs" means it's included but still
-      // missing the episode-specific detail it asks for (a guest, topic, or sponsor).
+      // Whether the segment is part of this episode.
       const plans = {
         include: "In this episode",
-        needs: "Needs a topic or guest",
         skip: "Skip this episode",
       };
 
+      // The episode-specific detail some segment types need before they're ready. A
+      // segment whose type needs a detail isn't ready until that detail is actually
+      // filled in — readiness is derived from the field, not toggled by hand.
+      const detailNeeded = {
+        "cold-open": null,
+        "host-intro": null,
+        "guest-intro": { label: "Guest", placeholder: "Who's the guest?" },
+        "main": null,
+        "qa": { label: "Question source", placeholder: "Where do questions come from?" },
+        "sponsor": { label: "Sponsor", placeholder: "Which sponsor?" },
+        "teaching": { label: "Topic", placeholder: "What's the topic?" },
+        outro: null,
+      };
+
       const sampleSegments = [
-        { id: "s1", type: "cold-open", plan: "include" },
-        { id: "s2", type: "host-intro", plan: "include" },
-        { id: "s3", type: "guest-intro", plan: "needs" },
-        { id: "s4", type: "main", plan: "include" },
-        { id: "s5", type: "sponsor", plan: "include" },
-        { id: "s6", type: "outro", plan: "include" },
+        { id: "s1", type: "cold-open", plan: "include", detail: "" },
+        { id: "s2", type: "host-intro", plan: "include", detail: "" },
+        { id: "s3", type: "guest-intro", plan: "include", detail: "" },
+        { id: "s4", type: "main", plan: "include", detail: "" },
+        { id: "s5", type: "sponsor", plan: "include", detail: "Riverside" },
+        { id: "s6", type: "outro", plan: "include", detail: "" },
       ];
 
       let segments = structuredClone(sampleSegments);
@@ -368,21 +380,23 @@
         render();
       });
 
-      // Single source of truth: a segment is ready when it's in the episode with its
-      // detail set, settled when skipped, and needs review when it's included but still
-      // missing an episode-specific topic or guest.
+      // Single source of truth: a segment is settled when skipped, ready when it's in the
+      // episode and either needs no detail or has its detail filled in, and needs review
+      // only when an included segment's required detail is still empty. Readiness is
+      // derived from the actual detail field — it can't be cleared by a status toggle.
       function evaluate() {
         const results = segments.map((segment) => {
           let state;
           let issue = null;
           const label = types[segment.type] || "Segment";
+          const needs = detailNeeded[segment.type];
           if (segment.plan === "skip") {
             state = "skipped";
-          } else if (segment.plan === "needs") {
+          } else if (needs && !segment.detail.trim()) {
             state = "review";
             issue = {
-              title: `${label} needs a topic or guest`,
-              action: "Add the episode-specific detail for this segment, or skip it this episode.",
+              title: `${label} needs a ${needs.label.toLowerCase()}`,
+              action: `Add the ${needs.label.toLowerCase()} for this segment, or skip it this episode.`,
               tone: "review",
             };
           } else {
@@ -428,6 +442,20 @@
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every segment is set. The run of show is ready to apply." })]),
         );
+      }
+
+      // Light update used while typing a detail: refresh each card's badge and the
+      // summary in place, without rebuilding the input the creator is typing in.
+      function refreshStates() {
+        const evaluation = evaluate();
+        Array.from(segmentsElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+        });
+        updateSummary(evaluation);
       }
 
       // After applying, show the ordered run of show for this episode — the outcome of the
@@ -482,10 +510,15 @@
         const planOptions = Object.entries(plans)
           .map(([value, label]) => `<option value="${value}" ${value === segment.plan ? "selected" : ""}>${label}</option>`)
           .join("");
+        // Only segment types that need an episode-specific detail show a detail field.
+        const needs = detailNeeded[segment.type];
+        const detailMarkup = needs && segment.plan !== "skip"
+          ? `<label>${needs.label}<input data-field="detail" aria-label="${needs.label}" placeholder="${needs.placeholder}"></label>`
+          : "";
 
-        // Every value here is a controlled key or its fixed label, and there is no
-        // user-editable free text in this prototype, so the scaffold is safe to build
-        // with innerHTML.
+        // The scaffold holds only controlled values (type/plan keys and fixed labels,
+        // fixed states, and a fixed detail label/placeholder). The editable detail value
+        // is written via .value below, so typed text can never inject markup.
         article.innerHTML = `
           <div class="order">${order === null ? "&mdash;" : order}</div>
           <div class="fields">
@@ -501,21 +534,38 @@
                 <select data-field="plan" aria-label="Plan for this episode">${planOptions}</select>
               </label>
             </div>
+            ${detailMarkup}
           </div>
         `;
 
-        article.addEventListener("change", (event) => onChange(event, index));
+        if (needs && segment.plan !== "skip") {
+          article.querySelector('[data-field="detail"]').value = segment.detail;
+        }
+
+        // Typing the detail updates live (badge + summary) without rebuilding the field,
+        // so it keeps focus; selects re-render fully on change.
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
         return article;
       }
 
-      function onChange(event, index) {
+      function onEdit(event, index, full) {
         const field = event.target.dataset.field;
         if (!field) {
           return;
         }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so typing a detail never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
         segments[index][field] = event.target.value;
         applied = false;
-        render();
+        if (full) {
+          render();
+        } else {
+          refreshStates();
+        }
       }
 
       function renderIssue(issue) {
