@@ -265,6 +265,26 @@
         line-height: 1.4;
       }
 
+      .slot-state {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        padding: 0 10px;
+      }
+
+      .slot-state[hidden] { display: none; }
+      .slot-state.is-missing { background: #fbe4d2; color: #9a4b12; }
+      .slot-state.is-ready { background: #d6f3ea; color: #075246; }
+      .slot-state.is-optional { background: rgba(246, 251, 249, 0.92); color: #5e6b67; }
+
       .track-palette {
         display: flex;
         flex-wrap: wrap;
@@ -1023,6 +1043,31 @@
           }).length;
         }
 
+        function updateSlotIndicators() {
+          document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+            var indicator = zone.querySelector(".slot-state");
+            if (!indicator) {
+              indicator = document.createElement("span");
+              indicator.className = "slot-state";
+              zone.appendChild(indicator);
+            }
+            indicator.classList.remove("is-ready", "is-missing", "is-optional");
+            var slot = zone.dataset.slot;
+            var required = slot === "host" || slot === "guest";
+            indicator.hidden = false;
+            if (zone.classList.contains("filled")) {
+              indicator.textContent = "Ready";
+              indicator.classList.add("is-ready");
+            } else if (required) {
+              indicator.textContent = "Needs video";
+              indicator.classList.add("is-missing");
+            } else {
+              indicator.textContent = "Optional";
+              indicator.classList.add("is-optional");
+            }
+          });
+        }
+
         function updateContinueLink(filled) {
           if (!continueLink) return;
           if (filled === 2) {
@@ -1044,6 +1089,7 @@
         }
 
         function updateSlotStatus(message) {
+          updateSlotIndicators();
           if (!slotStatus) return;
           updateContinueLink(requiredFilledCount());
           if (message) {
@@ -1138,6 +1184,7 @@
         }
 
         updateContinueLink(requiredFilledCount());
+        updateSlotIndicators();
       }());
     </script>
   </body>
