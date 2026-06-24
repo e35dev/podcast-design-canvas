@@ -71,14 +71,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}`, search: "" } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search: search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, styleStep, embedded = false) {
+function renderNavFor(fileName, styleStep, embedded = false, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   if (styleStep) {
@@ -104,7 +104,7 @@ function renderNavFor(fileName, styleStep, embedded = false) {
   };
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
     URLSearchParams,
   });
   return { nodes: [...flatten(head), ...flatten(body)] };
@@ -209,5 +209,21 @@ assert.equal(
   "embedded style nav routes the contextual visuals handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
+
+// Path context: a creator on the guided episode path keeps ?path=episode on style links.
+const pathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", false, "?path=episode");
+assert.ok(
+  linkWithText(pathNav.nodes, "Previous: Preset pacing").href.includes("?path=episode"),
+  "style nav keeps the episode path context on the previous link",
+);
+assert.ok(
+  linkWithText(pathNav.nodes, "Next: Speaker framing safety").href.includes("?path=episode"),
+  "style nav keeps the episode path context on the next link",
+);
+const noPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", false, "");
+assert.ok(
+  !linkWithText(noPathNav.nodes, "Previous: Preset pacing").href.includes("?path="),
+  "style nav adds no path suffix when there is no path context",
+);
 
 console.log("style nav: visual direction screens connected back to the preview shell");

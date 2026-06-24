@@ -76,6 +76,25 @@ function setTopTargetWhenEmbedded(link) {
   }
 }
 
+// Keep the episode workflow path (?path=...) on visual-direction links so a creator
+// who entered the style steps from the guided episode path stays in that context,
+// matching the other flow navs (ingest, speaker setup, reuse, episode flow).
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  if (path === "episode") {
+    return "?path=episode";
+  }
+  if (path === "style") {
+    return "?path=style";
+  }
+  return "";
+}
+
+function hrefWithPath(file) {
+  const suffix = pathQuerySuffix();
+  return suffix ? `${file}${suffix}` : file;
+}
+
 function setStyleScreenLink(link, file) {
   if (isEmbeddedInPreviewApp() && isPreviewAppStyleTarget(file)) {
     link.href = previewAppHref(file);
@@ -83,7 +102,7 @@ function setStyleScreenLink(link, file) {
     return;
   }
 
-  link.href = file;
+  link.href = hrefWithPath(file);
 }
 
 function renderStyleNav() {
