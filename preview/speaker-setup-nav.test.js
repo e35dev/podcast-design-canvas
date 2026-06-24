@@ -42,6 +42,7 @@ function createElement(tagName) {
     className: "",
     href: "",
     id: "",
+    target: "",
     textContent: "",
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -68,7 +69,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName, setupStep) {
+function makeWindow(fileName, embedded = false) {
+  const window = { location: { pathname: `/prototype/${fileName}`, search: "" } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  return window;
+}
+
+function renderNavFor(fileName, setupStep, embedded = false) {
   const head = createElement("head");
   const body = createElement("body");
   if (setupStep) {
@@ -80,22 +88,43 @@ function renderNavFor(fileName, setupStep) {
     body,
     createElement,
     getElementById(id) {
-      return flatten(head).find((node) => node.id === id) || null;
+      return [...flatten(head), ...flatten(body)].find((node) => node.id === id) || null;
     },
     querySelector(selector) {
-      if (selector === ".speaker-setup-nav") {
-        return flatten(body).find((node) => node.className === "speaker-setup-nav") || null;
-      }
-      return null;
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return (
+        [...flatten(head), ...flatten(body)].find((node) =>
+          node.className.split(" ").includes(className),
+        ) || null
+      );
     },
     addEventListener() {},
   };
   vm.runInNewContext(navScript, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}`, search: "" } },
+    window: makeWindow(fileName, embedded),
   });
   return { nodes: [...flatten(head), ...flatten(body)] };
 }
+
+function linkWithText(nodes, text) {
+  const link = nodes.find((node) => node.tagName === "a" && node.textContent === text);
+  assert.ok(link, `Missing link: ${text}`);
+  return link;
+}
+
+const firstNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review");
+assert.equal(
+  linkWithText(firstNav.nodes, "Previous: Speaker roles").href,
+  "speaker-role-mapping.html?path=episode",
+  "first speaker setup screen links back to speaker roles",
+);
+assert.equal(
+  linkWithText(firstNav.nodes, "Next: Guest profile reuse").href,
+  "guest-profile-reuse.html",
+  "first speaker setup screen links to the next setup step",
+);
 
 const lastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence");
 assert.ok(
@@ -110,5 +139,47 @@ assert.ok(
   !lastNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Next:")),
   "last speaker setup screen does not render a next link",
 );
+
+const embeddedFirstNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review", true);
+const embeddedHome = linkWithText(embeddedFirstNav.nodes, "← Preview shell");
+assert.equal(embeddedHome.href, "../preview/", "embedded speaker setup nav keeps the shell-home href");
+assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedGuided = linkWithText(embeddedFirstNav.nodes, "Guided episode flow");
+assert.equal(embeddedGuided.target, "_top", "embedded guided-flow link targets the parent app");
+const embeddedRolesBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
+assert.equal(
+  embeddedRolesBack.href,
+  "../preview/app.html#speaker-role-mapping",
+  "embedded speaker setup nav routes the roles back-link through the preview app hash",
+);
+assert.equal(embeddedRolesBack.target, "_top", "embedded roles back-link targets the parent app");
+const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Guest profile reuse");
+assert.equal(
+  embeddedNext.href,
+  "../preview/app.html#guest-profile-reuse",
+  "embedded speaker setup nav routes next setup steps through the preview app hash",
+);
+assert.equal(embeddedNext.target, "_top", "embedded speaker setup next link targets the parent app");
+
+const embeddedMiddleNav = renderNavFor("guest-profile-reuse.html", "guest-profile-reuse", true);
+assert.equal(
+  linkWithText(embeddedMiddleNav.nodes, "Previous: Speaker attribution review").href,
+  "../preview/app.html#speaker-attribution-review",
+  "embedded speaker setup nav routes previous setup steps through the preview app hash",
+);
+assert.equal(
+  linkWithText(embeddedMiddleNav.nodes, "Next: Speaker visual match").href,
+  "../preview/app.html#speaker-visual-match",
+  "embedded speaker setup nav routes middle next steps through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence", true);
+const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Pick a preset style");
+assert.equal(
+  embeddedHandoff.href,
+  "../preview/app.html#preset-style-picker",
+  "embedded speaker setup nav routes the style handoff through the preview app hash",
+);
+assert.equal(embeddedHandoff.target, "_top", "embedded speaker setup handoff targets the parent app");
 
 console.log("speaker setup nav: speaker-setup screens connected back to the preview shell");

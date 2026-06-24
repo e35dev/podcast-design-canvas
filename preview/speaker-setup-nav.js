@@ -13,6 +13,15 @@ const SPEAKER_SETUP_FLOW = [
   { id: "speaker-eye-line-coherence", file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" },
 ];
 
+const SPEAKER_SETUP_ENTRY = { file: "speaker-role-mapping.html?path=episode", label: "Speaker roles" };
+const SPEAKER_SETUP_HANDOFF = { file: "preset-style-picker.html" };
+
+const PREVIEW_APP_SETUP_TARGETS = new Set([
+  screenIdFromFile(SPEAKER_SETUP_ENTRY.file),
+  screenIdFromFile(SPEAKER_SETUP_HANDOFF.file),
+  ...SPEAKER_SETUP_FLOW.map((step) => step.id),
+]);
+
 function currentSetupIndex() {
   const fromBody = document.body.dataset.setupStep;
   if (fromBody) {
@@ -24,6 +33,44 @@ function currentSetupIndex() {
 
   const name = window.location.pathname.split("/").pop() || "";
   return SPEAKER_SETUP_FLOW.findIndex((step) => step.file === name);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppSetupTarget(file) {
+  return PREVIEW_APP_SETUP_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setSetupScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppSetupTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = file;
 }
 
 function renderSpeakerSetupNav() {
@@ -104,11 +151,13 @@ function renderSpeakerSetupNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "← Preview shell";
   wrap.appendChild(home);
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
@@ -120,23 +169,27 @@ function renderSpeakerSetupNav() {
   if (previous) {
     const prevLink = document.createElement("a");
     prevLink.href = previous.file;
+    setSetupScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const roles = document.createElement("a");
     roles.href = "speaker-role-mapping.html?path=episode";
-    roles.textContent = "Previous: Speaker roles";
+    setSetupScreenLink(roles, SPEAKER_SETUP_ENTRY.file);
+    roles.textContent = `Previous: ${SPEAKER_SETUP_ENTRY.label}`;
     wrap.appendChild(roles);
   }
 
   if (next) {
     const nextLink = document.createElement("a");
     nextLink.href = next.file;
+    setSetupScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
     start.href = "preset-style-picker.html";
+    setSetupScreenLink(start, SPEAKER_SETUP_HANDOFF.file);
     start.textContent = "Continue: Pick a preset style";
     wrap.appendChild(start);
   }
