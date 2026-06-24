@@ -218,7 +218,37 @@ function normalizePublishLinkClick(event) {
     : null;
   if (link) {
     normalizePublishScreenLink(link);
+    setPublishChecklistFixLink(link);
   }
+}
+
+const PUBLISH_CHECKLIST_FIX_PATHS = {
+  "audio-caption-quality-review.html": "publish",
+  "episode-chapter-markers.html": "publish",
+  "source-media-health.html": "publish",
+};
+
+function checklistFixBase(href) {
+  return ((href || "").split("#")[0].split("?")[0].split("/").pop() || "");
+}
+
+// Cross-flow checklist fixes (caption review, chapters, source media) are not publish-flow
+// screens, so the publish-link normalizer skips them and drops the workflow context. Keep
+// the publish path on these hand-offs so the creator returns to the publish checklist.
+function setPublishChecklistFixLink(link) {
+  const href = link.getAttribute("href") || "";
+  const base = checklistFixBase(href);
+  if (!Object.prototype.hasOwnProperty.call(PUBLISH_CHECKLIST_FIX_PATHS, base)) {
+    return;
+  }
+  link.href = mergeRouteSearch(href, { path: PUBLISH_CHECKLIST_FIX_PATHS[base] });
+}
+
+function normalizePublishChecklistFixLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+  root.querySelectorAll("a[href]").forEach(setPublishChecklistFixLink);
 }
 
 function renderPublishNav() {
@@ -344,6 +374,7 @@ function renderPublishNav() {
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
   normalizePublishScreenLinks(document);
+  normalizePublishChecklistFixLinks(document);
   document.addEventListener("click", normalizePublishLinkClick);
 }
 
