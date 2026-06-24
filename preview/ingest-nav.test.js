@@ -25,6 +25,7 @@ const ingestScreens = [
   "episode-readiness.html",
   "speaker-role-mapping.html",
   "social-context-intake.html",
+  "slot-assignment-review.html",
 ];
 
 const forbidden = [
@@ -311,7 +312,7 @@ assert.ok(
   "ingest path at speaker roles links forward to social context",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Setup step 2 of 3 · Speaker roles",
+  node.textContent === "Setup step 2 of 4 · Speaker roles",
 );
 assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
@@ -330,7 +331,13 @@ assert.ok(
   "episode shell path does not link to social context from speaker roles",
 );
 
-const lastNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest");
+const socialContextNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest");
+assert.ok(
+  socialContextNav.nodes.some((node) => node.textContent === "Next: Slot review"),
+  "social context intake links forward to slot assignment review",
+);
+
+const lastNav = renderNavFor("slot-assignment-review.html", "slot-assignment-review", "?path=ingest");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
   "last ingest screen hands off to source media health",
@@ -380,7 +387,14 @@ assert.equal(
   "embedded ingest nav routes middle next steps through the preview app hash with ingest context",
 );
 
-const embeddedLastNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest", true);
+const embeddedSocialContextNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest", true);
+assert.equal(
+  linkWithText(embeddedSocialContextNav.nodes, "Next: Slot review").href,
+  "../preview/app.html#slot-assignment-review?path=ingest",
+  "embedded ingest nav routes social context next step through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("slot-assignment-review.html", "slot-assignment-review", "?path=ingest", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Source media health");
 assert.equal(
   embeddedHandoff.href,
