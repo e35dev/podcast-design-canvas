@@ -119,6 +119,11 @@ function renderCleanupNav() {
     prevLink.href = previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
+  } else {
+    const prep = document.createElement("a");
+    prep.href = "publish-checklist.html";
+    prep.textContent = "Previous: Publish checklist";
+    wrap.appendChild(prep);
   }
 
   if (next) {
