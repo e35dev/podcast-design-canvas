@@ -600,6 +600,15 @@
       const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
       if (files.some(isVideoFile)) {
         setError("There's no open slot left. Remove a video to make room for another.");
+        return;
+      }
+      // A full layout still needs to explain a stray non-video drop — the document guard
+      // prevents navigation (#1213), but silence here would feel like the file vanished.
+      const skippedNonVideo = files.filter((file) => !isVideoFile(file)).length;
+      if (skippedNonVideo > 0) {
+        const noun = skippedNonVideo === 1 ? "file" : "files";
+        const wasWere = skippedNonVideo === 1 ? "wasn't a video, so it was" : "weren't videos, so they were";
+        setError(`${skippedNonVideo} ${noun} in that drop ${wasWere} skipped. Only video files can fill a slot.`);
       }
     }
 

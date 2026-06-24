@@ -849,4 +849,113 @@ documentStub.listeners.drop({
 assert.equal(offSlotDropPrevented, true, "a drop outside the slots is prevented, so the browser never navigates away and loses placements");
 assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a near-miss drop still routes the video into the first open slot");
 
+// A page-level drop when every visible slot is full must still prevent navigation (#1213)
+// and tell the creator there's no room — the same feedback as a canvas-wide drop (#1026).
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 });
+controller.placeVideoFile(controller.zonesBySlot.guest, { name: "g.mp4", type: "video/mp4", size: 12, lastModified: 12 });
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "b.mp4", type: "video/mp4", size: 13, lastModified: 13 });
+let fullLayoutPageDropPrevented = false;
+documentStub.listeners.drop({
+  preventDefault() { fullLayoutPageDropPrevented = true; },
+  dataTransfer: { files: [{ name: "extra.mp4", type: "video/mp4", size: 14, lastModified: 14 }] },
+});
+assert.equal(fullLayoutPageDropPrevented, true, "a page-level drop on a full layout is prevented so the browser never navigates away");
+assert.match(
+  elementsById["layout-error"].textContent,
+  /no open slot left/i,
+  "a page-level drop on a full layout reports there's no room",
+);
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "a page-level drop on a full layout leaves existing placements untouched");
+
+// A page-level drop of only non-video files on a full layout still gets creator-facing
+// feedback — navigation is blocked (#1213) but the drop should not feel like a no-op.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 });
+controller.placeVideoFile(controller.zonesBySlot.guest, { name: "g.mp4", type: "video/mp4", size: 12, lastModified: 12 });
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "b.mp4", type: "video/mp4", size: 13, lastModified: 13 });
+documentStub.listeners.drop({
+  preventDefault() {},
+  dataTransfer: { files: [{ name: "notes.txt", type: "text/plain", size: 2, lastModified: 2 }] },
+});
+assert.match(
+  elementsById["layout-error"].textContent,
+  /wasn't a video, so it was skipped/i,
+  "a page-level non-video drop on a full layout explains the file was skipped",
+);
+
+// Multi-file page-level drops spill into the next open slots, same as canvas-wide drops.
+controller.resetVideos();
+controller.applyLayout("interview");
+documentStub.listeners.drop({
+  preventDefault() {},
+  dataTransfer: {
+    files: [
+      { name: "first.mp4", type: "video/mp4", size: 1, lastModified: 1 },
+      { name: "second.mp4", type: "video/mp4", size: 2, lastModified: 2 },
+    ],
+  },
+});
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a multi-file page-level drop fills the first empty slot");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "extra page-level dropped videos fill the next empty slots");
+
+// Canvas drops stop propagation so the document guard does not route the same files twice.
+const canvasElementsById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+  "layout-canvas": new Element("div", { id: "layout-canvas" }),
+};
+const canvasZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const canvasButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+let documentDropInvoked = false;
+const canvasDoc = {
+  listeners: {},
+  addEventListener(type, handler) {
+    this.listeners[type] = (event) => {
+      if (type === "drop") documentDropInvoked = true;
+      handler(event);
+    };
+  },
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return canvasElementsById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return canvasButtons;
+    if (selector === ".drop-zone[data-slot]") return canvasZones;
+    return [];
+  },
+};
+const canvasCtl = createLayoutFirstController(canvasDoc, { URL: urlApi });
+canvasCtl.applyLayout("interview");
+const canvas = canvasElementsById["layout-canvas"];
+const canvasDropEvent = {
+  preventDefault() {},
+  stopPropagation() { canvasDropEvent.propagationStopped = true; },
+  dataTransfer: { files: [{ name: "canvas-only.mp4", type: "video/mp4", size: 3, lastModified: 3 }] },
+};
+documentDropInvoked = false;
+canvas.listeners.drop(canvasDropEvent);
+if (!canvasDropEvent.propagationStopped) {
+  canvasDoc.listeners.drop(canvasDropEvent);
+}
+assert.equal(canvasDropEvent.propagationStopped, true, "a canvas drop stops propagation before the document guard");
+assert.equal(documentDropInvoked, false, "a canvas drop does not also invoke the document-level drop handler");
+assert.equal(canvasCtl.zonesBySlot.host.classList.contains("filled"), true, "the canvas drop still places the video once");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
