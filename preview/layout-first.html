@@ -25,6 +25,29 @@
       .back-link { margin: 0 0 20px; font-size: 13px; font-weight: 700; }
       .back-link a { color: var(--accent); }
 
+      .entry-context {
+        margin: 0 0 18px;
+        padding: 12px 14px;
+        border: 1px solid #bfd0ca;
+        border-radius: 12px;
+        background: #f0f7f4;
+      }
+
+      .entry-context[hidden] { display: none; }
+
+      .entry-context strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      .entry-context p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
       .layout-stage {
         display: grid;
         gap: 18px;
@@ -318,7 +341,11 @@
   </head>
   <body>
     <main aria-label="Layout-first podcast landing">
-      <p class="back-link"><a href="./index.html">← Preview shell</a></p>
+      <p class="back-link"><a href="./index.html" id="layout-back-link">← Preview shell</a></p>
+      <div class="entry-context" id="layout-entry-context" hidden>
+        <strong id="layout-entry-title"></strong>
+        <p id="layout-entry-detail"></p>
+      </div>
       <h1>Start with a podcast layout</h1>
       <p class="lede">Choose the episode shape first, place the required speaker videos into the visible slots, preview the result, then continue into the production workspace.</p>
 
@@ -395,6 +422,17 @@
       </section>
     </main>
     <script src="./layout-handoff.js"></script>
+    <script src="./layout-first-entry-context.js"></script>
     <script src="./layout-first.js"></script>
+    <script>
+      if (typeof applyLayoutEntryContext === "function") {
+        applyLayoutEntryContext({
+          bannerElement: document.getElementById("layout-entry-context"),
+          titleElement: document.getElementById("layout-entry-title"),
+          detailElement: document.getElementById("layout-entry-detail"),
+          backLinkElement: document.getElementById("layout-back-link"),
+        });
+      }
+    </script>
   </body>
 </html>
