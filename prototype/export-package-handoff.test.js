@@ -103,6 +103,14 @@ assert.strictEqual(sandbox.module.exports.destinationHasRequiredBlock(sandbox.mo
 assert.strictEqual(sandbox.module.exports.destinationHasRequiredBlock(sandbox.module.exports.destinations.review), true);
 assert.strictEqual(sandbox.module.exports.completePackageCount(sandbox.module.exports.destinations.youtube), 4);
 assert.strictEqual(sandbox.module.exports.ignoredWarningCount(sandbox.module.exports.destinations.youtube), 1);
+assert.strictEqual(
+  sandbox.module.exports.destinationTitle({ title: "" }, "review"),
+  "Client review copy package",
+);
+assert.strictEqual(
+  sandbox.module.exports.destinationButtonLabel({ title: "" }, "archive"),
+  "Archive master",
+);
 assert.strictEqual(sandbox.module.exports.destinationTemplate(sandbox.module.exports.destinations.youtube), "Interview split-screen");
 assert.strictEqual(sandbox.module.exports.destinationTemplate({ meta: [["Duration", "3 min"]] }), "Selected template");
 assert.strictEqual(sandbox.module.exports.packageStatusText("blocked"), "missing required item");
@@ -124,6 +132,14 @@ assert.match(noteText(), /Review copy created/);
 
 elements.startNextEpisode.click();
 assert.match(noteText(), /Next episode started/);
+
+assert.match(
+  sandbox.module.exports.actionMessage("download", {
+    title: "",
+    packages: [["Final video file", "Included", "ready"]],
+  }).detail,
+  /YouTube full episode package is ready with 1 completed item/,
+);
 
 destinationButton("Client review copy").click();
 assert.match(elements.status.textContent, /missing required item/);

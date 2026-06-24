@@ -212,6 +212,24 @@
         return destination.packages.filter(([, , tone]) => tone === "review").length;
       }
 
+      function destinationTitle(destination, key = selected) {
+        const title = destination?.title;
+        if (typeof title === "string" && title.trim().length) {
+          return title;
+        }
+
+        const fallbackTitles = {
+          youtube: "YouTube full episode package",
+          archive: "Archive master package",
+          review: "Client review copy package",
+        };
+        return fallbackTitles[key] || "Selected destination package";
+      }
+
+      function destinationButtonLabel(destination, key) {
+        return destinationTitle(destination, key).replace(/ package$/, "");
+      }
+
       function destinationTemplate(destination) {
         return destination.meta.find(([label]) => label === "Template")?.[1] || "Selected template";
       }
@@ -224,7 +242,7 @@
         if (action === "download") {
           return {
             title: "Package download prepared",
-            detail: `${destination.title} is ready with ${completeCount} completed item${completeCount === 1 ? "" : "s"}${warningCount ? ` and ${warningCount} visible warning report${warningCount === 1 ? "" : "s"}` : ""}.`,
+            detail: `${destinationTitle(destination)} is ready with ${completeCount} completed item${completeCount === 1 ? "" : "s"}${warningCount ? ` and ${warningCount} visible warning report${warningCount === 1 ? "" : "s"}` : ""}.`,
           };
         }
 
@@ -243,7 +261,7 @@
               }
             : {
                 title: "Review copy created",
-                detail: `${destination.title} now has a reviewer-facing copy with destination context and ignored warning consequences attached.`,
+                detail: `${destinationTitle(destination)} now has a reviewer-facing copy with destination context and ignored warning consequences attached.`,
               };
         }
 
@@ -287,7 +305,7 @@
           button.type = "button";
           button.className = key === selected ? "active" : "";
           button.setAttribute("aria-pressed", String(key === selected));
-          button.textContent = value.title.replace(" package", "");
+          button.textContent = destinationButtonLabel(value, key);
           button.addEventListener("click", () => {
             selected = key;
             handoffAction = "ready";
@@ -300,7 +318,7 @@
       function render() {
         renderButtons();
         const destination = destinations[selected];
-        titleEl.textContent = destination.title;
+        titleEl.textContent = destinationTitle(destination);
         subtitleEl.textContent = destination.subtitle;
         statusEl.className = `badge ${destination.status[0]}`;
         statusEl.textContent = destination.status[1];
@@ -369,6 +387,8 @@
           destinationHasRequiredBlock,
           completePackageCount,
           ignoredWarningCount,
+          destinationTitle,
+          destinationButtonLabel,
           destinationTemplate,
           actionMessage,
           packageStatusText,
