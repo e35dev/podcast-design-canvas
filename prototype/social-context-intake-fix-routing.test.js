@@ -11,6 +11,9 @@ const assert = require("assert");
 const dir = __dirname;
 const html = fs.readFileSync(path.join(dir, "social-context-intake.html"), "utf8");
 
+assert.ok(html.includes("contextRequestFromSearch(search)"), "context intake reads B-roll handoff query context");
+assert.ok(html.includes('handle: `Context for ${request.moment}`'), "context intake pre-populates the incoming moment row");
+assert.ok(html.includes("requestReason"), "context intake shows why the B-roll moment needs context");
 assert.ok(html.includes('openLink = document.createElement("a")'), "context intake issues render an open-fix-screen link");
 assert.ok(html.includes("openLink.href = issue.fixScreen"), "open link routes to the owning fix screen");
 

@@ -325,6 +325,7 @@
         }
       }
     </style>
+      <script src="broll-context-scorer.js"></script>
       <script src="../preview/visuals-nav.js" defer></script>
   </head>
   <body data-visuals-step="contextual-broll-moments">
@@ -375,6 +376,7 @@
       const sources = {
         manual: { label: "I added this", weak: false },
         transcript: { label: "From a transcript topic", weak: false },
+        "weak-transcript": { label: "Needs transcript context", weak: true },
         social: { label: "From approved social context", weak: false },
         reference: { label: "From a low-confidence reference", weak: true },
       };
@@ -387,12 +389,45 @@
         rejected: "Reject",
       };
 
-      const sampleMoments = [
-        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
-        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
-        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
-        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
+      const transcriptSegments = [
+        {
+          id: "m1",
+          timestamp: "03:12",
+          speaker: "Priya",
+          topic: "Priya explains the Northwind Labs product launch",
+          transcript: "Priya explains how Northwind Labs launched the migration dashboard for agency customers.",
+          visualType: "product",
+          decision: "approved",
+        },
+        {
+          id: "m2",
+          timestamp: "08:40",
+          speaker: "Host",
+          topic: "Host introduces the build-vs-buy segment",
+          transcript: "Host Dana introduces the build versus buy segment for the platform team.",
+          visualType: "title",
+          decision: "suggested",
+        },
+        {
+          id: "m3",
+          timestamp: "14:22",
+          topic: "Guest mentions that thing from earlier",
+          transcript: "Yeah, that thing we discussed earlier probably matters here.",
+          strength: "prominent",
+          decision: "suggested",
+        },
+        {
+          id: "m4",
+          timestamp: "21:05",
+          speaker: "Dana",
+          topic: "Dana quotes the calm launch principle",
+          transcript: "Dana says, keep the launch calm enough that customers can follow the story.",
+          visualType: "quote",
+          strength: "subtle",
+          decision: "approved",
+        },
       ];
+      const sampleMoments = BrollContextScorer.classifySegments(transcriptSegments);
 
       let moments = structuredClone(sampleMoments);
 
@@ -419,13 +454,7 @@
         // A visual that repeats the same treatment immediately after another live one
         // breaks the "don't make a long episode visually noisy" rule, so the second
         // one asks for a second look.
-        const repeats = list.map((moment, index) => {
-          if (!isLive(moment.decision) || index === 0) {
-            return false;
-          }
-          const prev = list[index - 1];
-          return isLive(prev.decision) && prev.type === moment.type;
-        });
+        const repeats = BrollContextScorer.titleRepeatFlags(list);
 
         const results = list.map((moment, index) => {
           const source = sources[moment.source] || sources.manual;
@@ -453,9 +482,9 @@
             state = "review";
             issue = {
               title: `Check the context for "${moment.reason}"`,
-              action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
+              action: `${moment.contextReason || "This needs more context"}. Confirm it fits before it appears on screen, or reject it.`,
               tone: "review",
-              fixScreen: "social-context-intake.html",
+              fixScreen: BrollContextScorer.socialContextHref(moment),
               fixLabel: "social context intake",
             };
           } else if (moment.decision === "adjusted") {

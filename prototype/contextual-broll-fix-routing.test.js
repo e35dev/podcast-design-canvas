@@ -11,13 +11,17 @@ const assert = require("assert");
 const dir = __dirname;
 const html = fs.readFileSync(path.join(dir, "contextual-broll-moments.html"), "utf8");
 
+assert.ok(html.includes("broll-context-scorer.js"), "B-roll screen loads the context scorer");
+assert.ok(html.includes("BrollContextScorer.classifySegments"), "B-roll moments are classified from transcript context");
+assert.ok(html.includes("BrollContextScorer.socialContextHref(moment)"), "weak-context handoff carries context payload");
 assert.ok(html.includes('openLink = document.createElement("a")'), "B-roll issues render an open-fix-screen link");
 assert.ok(html.includes("openLink.href = issue.fixScreen"), "open link routes to the owning fix screen");
 
-const fixScreens = [...html.matchAll(/fixScreen:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+const fixScreens = [...html.matchAll(/fixScreen:\s*(?:"([a-z0-9-]+\.html)"|BrollContextScorer\.socialContextHref\(moment\))/g)]
+  .map((m) => m[1] || "social-context-intake.html");
 assert.ok(fixScreens.length >= 2, "B-roll issues declare fix screens");
 for (const file of fixScreens) {
-  assert.ok(fs.existsSync(path.join(dir, file)), `fix screen exists: ${file}`);
+  assert.ok(fs.existsSync(path.join(dir, file.split("?")[0])), `fix screen exists: ${file}`);
 }
 
 assert.ok(

@@ -288,6 +288,12 @@
         margin: 14px 0 0;
       }
 
+      .handoff-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -386,7 +392,33 @@
         { id: "k3", handle: "priya.codes", platform: "instagram", bucket: "", visibility: "screen" },
       ];
 
-      let links = structuredClone(sampleLinks);
+      function contextRequestFromSearch(search) {
+        const params = new URLSearchParams(search || "");
+        const moment = params.get("moment");
+        const reason = params.get("reason");
+        if (!moment) return null;
+        return {
+          moment,
+          reason: reason ? reason.replace(/,/g, ", ") : "speaker and topic context",
+        };
+      }
+
+      function linksForRoute(search) {
+        const next = structuredClone(sampleLinks);
+        const request = contextRequestFromSearch(search);
+        if (!request) return next;
+        next.unshift({
+          id: "context-request",
+          handle: `Context for ${request.moment}`,
+          platform: "website",
+          bucket: "",
+          visibility: "screen",
+          requestReason: `B-roll needs ${request.reason} before this moment appears on screen.`,
+        });
+        return next;
+      }
+
+      let links = linksForRoute(window.location.search);
 
       const linksElement = document.querySelector("#links");
       const statusElement = document.querySelector("#status");
@@ -399,7 +431,7 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        links = structuredClone(sampleLinks);
+        links = linksForRoute(window.location.search);
         render();
       });
 
@@ -560,6 +592,12 @@
 
         article.querySelector('[data-field="handle"]').value = link.handle;
         article.querySelector("[data-initial]").textContent = initial(link.handle);
+        if (link.requestReason) {
+          const note = document.createElement("p");
+          note.className = "handoff-note";
+          note.textContent = link.requestReason;
+          article.querySelector(".fields").appendChild(note);
+        }
 
         // Text fields update live on input but only refresh badges/summary, so the field
         // keeps focus. Selects re-render fully on change (safe — no caret).
