@@ -156,8 +156,13 @@ assert.equal(
 buttonWithText(screen["#trackList"], "Keep automatic match").click();
 assert.equal(
   links(screen["#issues"]).length,
-  0,
-  "settled speaker match no longer shows a preset comparison fix link",
+  1,
+  "settled speaker match shows the preset styling fix link on the ready card",
+);
+assert.equal(
+  linkWithText(screen["#issues"], "Open preset styling").href,
+  nextVisualSurface,
+  "preset-ready card links directly to preset-style-picker",
 );
 assert.equal(
   screen["#continuePreset"].href,
@@ -169,8 +174,8 @@ screen["#resetSample"].click();
 buttonWithText(screen["#trackList"], "Try stronger match").click();
 assert.equal(
   links(screen["#issues"]).length,
-  0,
-  "limit warnings stay local after the speaker match is settled",
+  1,
+  "limit warning is local but preset-ready card still links to preset styling",
 );
 
 console.log("speaker visual match: preset handoff links to the visual direction screen");
