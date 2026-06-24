@@ -15,6 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "visuals nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "visuals nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "visuals nav links to the preview app");
+assert.ok(navScript.includes('previewApp.textContent = "Preview app"'), "visuals nav exposes a preview app link");
 assert.ok(navScript.includes("show-segment-system.html"), "visuals nav hands off to the reuse path");
 assert.ok(navScript.includes("on-screen-correction-note.html"), "visuals nav links back to the cleanup path");
 assert.ok(navScript.includes('document.querySelector(".visuals-nav")'), "visuals nav guards against double render");
