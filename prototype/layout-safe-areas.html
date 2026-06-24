@@ -279,6 +279,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -475,6 +491,16 @@
               action: check.suggest,
               tone: "review",
             };
+            // A conflict whose fix lives on another screen routes to that owning
+            // screen: a face overlap is resolved in framing review, a crop overflow
+            // in destination crop preview. Other conflicts are fixed here.
+            if (row.check === "face-area") {
+              issue.fixScreen = "speaker-framing-safety.html";
+              issue.fixLabel = "speaker framing safety";
+            } else if (row.check === "outside-crop") {
+              issue.fixScreen = "destination-crop-preview.html";
+              issue.fixLabel = "destination crop preview";
+            }
           }
 
           return { id: row.id, state, issue };
@@ -596,7 +622,18 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = "Open " + issue.fixLabel + " →";
+          article.append(openLink);
+        }
         return article;
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate: evaluate };
       }
 
       render();
