@@ -56,6 +56,12 @@ function createElement(tagName) {
       if (name === "id") this.id = value;
       if (name === "class") this.className = value;
     },
+    getAttribute(name) {
+      return this.attributes[name] || "";
+    },
+    closest(selector) {
+      return selector === "a[href]" && this.tagName === "a" && this.getAttribute("href") ? this : null;
+    },
     appendChild(child) {
       this.children.push(child);
       return child;
@@ -72,6 +78,15 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
+function appendStaticLink(body, href, text = href) {
+  const link = createElement("a");
+  link.href = href;
+  link.textContent = text;
+  link.attributes.href = href;
+  body.appendChild(link);
+  return link;
+}
+
 function makeWindow(fileName, embedded = false) {
   const window = { location: { pathname: `/prototype/${fileName}` } };
   window.self = window;
@@ -79,12 +94,14 @@ function makeWindow(fileName, embedded = false) {
   return window;
 }
 
-function renderNavFor(fileName, musicStep, embedded = false) {
+function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = []) {
   const head = createElement("head");
   const body = createElement("body");
+  const listeners = {};
   if (musicStep) {
     body.dataset = { musicStep };
   }
+  staticHrefs.forEach((href) => appendStaticLink(body, href));
   const document = {
     readyState: "complete",
     head,
@@ -98,6 +115,13 @@ function renderNavFor(fileName, musicStep, embedded = false) {
       const className = selector.slice(1);
       return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
     },
+    querySelectorAll(selector) {
+      if (selector !== "a[href]") return [];
+      return flatten(body).filter((node) => node.tagName === "a" && node.getAttribute("href"));
+    },
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    },
   };
 
   vm.runInNewContext(navScript, {
@@ -105,7 +129,9 @@ function renderNavFor(fileName, musicStep, embedded = false) {
     window: makeWindow(fileName, embedded),
   });
 
-  return flatten(body);
+  const nodes = flatten(body);
+  nodes.listeners = listeners;
+  return nodes;
 }
 
 function linkWithText(nodes, text) {
@@ -155,5 +181,74 @@ assert.equal(
   "../preview/app.html#music-ducking-under-speech",
   "embedded music nav keeps preview app on the active ducking step",
 );
+
+const standaloneMusicLinks = renderNavFor(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  false,
+  [
+    "music-ducking-under-speech.html",
+    "intro-outro-builder.html",
+    "#readiness",
+    "https://example.com/music-cue-setup.html",
+  ],
+);
+assert.equal(
+  linkWithText(standaloneMusicLinks, "music-ducking-under-speech.html").href,
+  "music-ducking-under-speech.html",
+  "standalone music nav leaves in-page music links as direct prototype links",
+);
+assert.equal(
+  linkWithText(standaloneMusicLinks, "intro-outro-builder.html").href,
+  "intro-outro-builder.html",
+  "music nav leaves non-music in-page links alone",
+);
+assert.equal(
+  linkWithText(standaloneMusicLinks, "#readiness").href,
+  "#readiness",
+  "music nav leaves same-page anchors alone",
+);
+assert.equal(
+  linkWithText(standaloneMusicLinks, "https://example.com/music-cue-setup.html").href,
+  "https://example.com/music-cue-setup.html",
+  "music nav leaves external links alone",
+);
+
+const embeddedMusicLinks = renderNavFor(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  true,
+  ["music-ducking-under-speech.html", "audio-cleanup-controls.html", "pause-crosstalk-cleanup.html"],
+);
+assert.equal(
+  linkWithText(embeddedMusicLinks, "music-ducking-under-speech.html").href,
+  "../preview/app.html#music-ducking-under-speech",
+  "embedded music nav routes in-page music links through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedMusicLinks, "audio-cleanup-controls.html").href,
+  "../preview/app.html#audio-cleanup-controls",
+  "embedded music nav routes entry-screen links through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedMusicLinks, "pause-crosstalk-cleanup.html").href,
+  "../preview/app.html#pause-crosstalk-cleanup",
+  "embedded music nav routes handoff-screen links through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedMusicLinks, "music-ducking-under-speech.html").target,
+  "_top",
+  "embedded in-page music links target the parent app",
+);
+
+const dynamicMusicLinks = renderNavFor("music-cue-setup.html", "music-cue-setup", true);
+const dynamicDuckingLink = appendStaticLink(dynamicMusicLinks[0], "music-ducking-under-speech.html", "Review ducking");
+dynamicMusicLinks.listeners.click({ target: dynamicDuckingLink });
+assert.equal(
+  dynamicDuckingLink.href,
+  "../preview/app.html#music-ducking-under-speech",
+  "embedded music nav normalizes dynamically rendered music links before navigation",
+);
+assert.equal(dynamicDuckingLink.target, "_top", "dynamic embedded music links target the parent app");
 
 console.log("music nav: two-step music path links audio cleanup to pause cleanup");

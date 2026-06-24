@@ -74,6 +74,38 @@ function setMusicScreenLink(link, file) {
   link.href = file;
 }
 
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeMusicHref(href) {
+  return isLocalScreenHref(href) && isPreviewAppMusicTarget(href);
+}
+
+function normalizeMusicScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeMusicHref(href)) {
+    setMusicScreenLink(link, href);
+  }
+}
+
+function normalizeMusicScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeMusicScreenLink);
+}
+
+function normalizeMusicLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeMusicScreenLink(link);
+  }
+}
+
 function renderMusicNav() {
   if (document.querySelector(".music-nav")) {
     return;
@@ -200,6 +232,8 @@ function renderMusicNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeMusicScreenLinks(document);
+  document.addEventListener("click", normalizeMusicLinkClick);
 }
 
 if (document.readyState === "loading") {
