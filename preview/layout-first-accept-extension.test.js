@@ -151,6 +151,15 @@ ctl = buildController();
 ctl.placeVideoFile(ctl.zonesBySlot.guest, { name: "guest.webm", type: "", size: 2048 });
 assert.ok(ctl.zonesBySlot.guest.classList.contains("filled"), "a typeless .webm is accepted");
 
+// application/octet-stream (common on drag-and-drop) with a video extension is accepted too.
+ctl = buildController();
+ctl.placeVideoFile(ctl.zonesBySlot.host, { name: "host-cam.mp4", type: "application/octet-stream", size: 2048 });
+assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "an octet-stream file with a video extension is accepted");
+ctl = buildController();
+ctl.placeVideoFile(ctl.zonesBySlot.host, { name: "notes.txt", type: "application/octet-stream", size: 2048 });
+assert.ok(!ctl.zonesBySlot.host.classList.contains("filled"), "an octet-stream file without a video extension is rejected");
+assert.ok(ctl.zonesBySlot.host.classList.contains("is-invalid"), "a rejected octet-stream file flags the slot");
+
 // A typeless file that is NOT a known video extension is still rejected.
 ctl = buildController();
 ctl.placeVideoFile(ctl.zonesBySlot.host, { name: "notes.txt", type: "", size: 2048 });

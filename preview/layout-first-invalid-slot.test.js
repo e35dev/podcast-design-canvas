@@ -158,6 +158,7 @@ ctl.placeVideoFile(host, notVideo("poster.png"));
 assert.ok(host.classList.contains("is-invalid"), "a non-video file flags the slot it was dropped on");
 assert.ok(!host.classList.contains("filled"), "a rejected file does not fill the slot");
 assert.match(errorText.textContent, /Host/, "the error names the slot that rejected the file");
+assert.doesNotMatch(errorText.textContent, /\bneeds\b/i, "the rejection error does not use needs wording");
 assert.equal(slotState("host").textContent, "Invalid file", "a rejected slot badge does not read Needs video");
 assert.ok(slotState("host").classList.contains("is-invalid"), "the rejected slot badge carries the invalid state");
 assert.doesNotMatch(
@@ -196,7 +197,14 @@ assert.doesNotMatch(
   "a filled guest plus invalid host does not list host in Still need",
 );
 
+// Switching layout while a slot stays invalid keeps its error visible (not cleared by applyLayout).
+ctl.applyLayout("solo");
+assert.ok(host.classList.contains("is-invalid"), "layout switch keeps invalid state on a still-visible slot");
+assert.match(errorText.textContent, /Host/, "layout switch keeps the invalid-slot error visible");
+assert.ok(errorCard.hidden === false, "the error card stays open after layout switch");
+
 // Removing/clearing the slot clears the flag (reset path goes through clearZone).
+ctl.applyLayout("interview");
 ctl.placeVideoFile(guest, notVideo("guest.png"));
 assert.ok(guest.classList.contains("is-invalid"), "guest re-flagged before reset");
 ctl.resetVideos();

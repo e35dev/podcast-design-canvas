@@ -67,7 +67,9 @@
     if (!file) return false;
     const type = typeof file.type === "string" ? file.type : "";
     if (type.indexOf("video/") === 0) return true;
-    if (type === "") return hasVideoExtension(file.name);
+    // Drag-and-drop often reports application/octet-stream for a real recording; treat it like
+    // a missing type and fall back to the file extension, but never loosen a positive non-video type.
+    if (type === "" || type === "application/octet-stream") return hasVideoExtension(file.name);
     return false;
   }
 
@@ -333,7 +335,7 @@
       }
 
       if (!isVideoFile(file)) {
-        flagInvalidSlot(zone, "The " + slotName(zone) + " slot needs an MP4, MOV, or WebM video.");
+        flagInvalidSlot(zone, "The " + slotName(zone) + " slot accepts only MP4, MOV, or WebM video.");
         updateSlotStatus();
         return;
       }
@@ -441,7 +443,7 @@
         if (label) label.textContent = active ? buttonLayout.activeLabel : buttonLayout.readyLabel;
       });
 
-      setError("");
+      syncInvalidError();
       updateSlotStatus();
     }
 
