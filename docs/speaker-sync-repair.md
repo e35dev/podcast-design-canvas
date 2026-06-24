@@ -35,6 +35,19 @@ Flag issues that affect the finished episode:
 
 Warnings should describe the visible or audible problem, not internal timing data.
 
+## Preview Moments
+
+Before applying a sync repair across the episode, creators should compare the current and repaired timing on moments that reveal whether lip sync, speaker switches, and captions still feel trustworthy:
+
+- episode start, so intro alignment and the first host frame do not look delayed
+- first guest response, so the handoff between speakers shows whether one track started early or late
+- midpoint, so gradual drift is visible before it compounds through the rest of the conversation
+- final exchange, so a guest track that ends early or duplicate audio does not surprise the viewer at the close
+- a detected drift point flagged by the product, so the creator confirms the repair at the exact moment sync broke down
+- a caption-sensitive exchange, so speaker attribution still matches who appears to be speaking after the repair
+
+Every preview should play the affected speaker bucket with host and guest visible together when possible, so the creator judges one honest tradeoff instead of trusting a single isolated track.
+
 ## Review States
 
 The product should use sync status to drive repair and export readiness:
@@ -57,7 +70,7 @@ Offer simple actions:
 - add visible gap
 - replace track
 - mark as audio-only
-- preview repair at episode start, first guest response, midpoint, final exchange, or a detected drift point
+- preview repair on a suggested moment before applying it across the episode
 - mark timing as intentional
 - ignore for this episode
 
