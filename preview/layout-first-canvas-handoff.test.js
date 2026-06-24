@@ -37,6 +37,10 @@ class Element {
     }
   }
 
+  getAttribute(name) {
+    return this.attributes[name];
+  }
+
   addEventListener(type, handler) {
     this.listeners[type] = handler;
   }
@@ -91,6 +95,15 @@ class Element {
       },
       contains(name) {
         return split().includes(name);
+      },
+      toggle(name, force) {
+        const shouldAdd = force === undefined ? !split().includes(name) : Boolean(force);
+        if (shouldAdd) {
+          this.add(name);
+        } else {
+          this.remove(name);
+        }
+        return shouldAdd;
       },
     };
   }
@@ -170,6 +183,51 @@ function drop(slot, track) {
   });
 }
 
+function pressKey(node, key) {
+  node.listeners.keydown({
+    key,
+    preventDefault() {},
+    target: node,
+  });
+}
+
+const hostChip = chips.find((chip) => chip.dataset.track === "host");
+const guestChip = chips.find((chip) => chip.dataset.track === "guest");
+const brollChip = chips.find((chip) => chip.dataset.track === "broll");
+const hostZone = zones.find((zone) => zone.dataset.slot === "host");
+const guestZone = zones.find((zone) => zone.dataset.slot === "guest");
+const brollZone = zones.find((zone) => zone.dataset.slot === "broll");
+
+hostZone.listeners.click({ target: hostZone });
+assert.match(slotStatus.textContent, /Pick a track first/);
+
+hostChip.listeners.click({ target: hostChip });
+assert.equal(hostChip.getAttribute("aria-pressed"), "true");
+assert.match(slotStatus.textContent, /Choose its matching slot/);
+
+guestZone.listeners.click({ target: guestZone });
+assert.match(slotStatus.textContent, /different slot/);
+assert.equal(hostChip.getAttribute("aria-pressed"), "true");
+
+hostZone.listeners.click({ target: hostZone });
+assert.equal(hostChip.getAttribute("aria-pressed"), "false");
+assert.match(slotStatus.textContent, /1 of 2 required speaker videos ready/);
+
+pressKey(guestChip, "Enter");
+assert.equal(guestChip.getAttribute("aria-pressed"), "true");
+pressKey(guestZone, " ");
+assert.equal(guestChip.getAttribute("aria-pressed"), "false");
+assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
+assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
+
+resetButton.click();
+assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
+assert.strictEqual(continueLink.href, "");
+assert.strictEqual(slotStatus.textContent, "0 of 2 required speaker videos ready. Optional b-roll can be added later.");
+assert.equal(hostChip.getAttribute("aria-pressed"), "false");
+assert.equal(guestChip.getAttribute("aria-pressed"), "false");
+assert.equal(brollChip.getAttribute("aria-pressed"), "false");
+
 drop("host", "guest");
 assert.match(slotStatus.textContent, /different slot/);
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
@@ -181,15 +239,13 @@ assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=epis
 assert.strictEqual(continueLink.textContent, "Continue to speaker roles →");
 assert.match(slotStatus.textContent, /Required speaker videos ready/);
 assert.match(continueNote.textContent, /Optional b-roll can be added later/);
-assert.equal(zones.find((zone) => zone.dataset.slot === "broll").classList.contains("filled"), false);
+assert.equal(brollZone.classList.contains("filled"), false);
 
-drop("broll", "broll");
+pressKey(brollChip, "Enter");
+assert.equal(brollChip.getAttribute("aria-pressed"), "true");
+pressKey(brollZone, "Enter");
+assert.equal(brollChip.getAttribute("aria-pressed"), "false");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
 assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
 
-resetButton.click();
-assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
-assert.strictEqual(continueLink.href, "");
-assert.strictEqual(slotStatus.textContent, "0 of 2 required speaker videos ready. Optional b-roll can be added later.");
-
-console.log("layout-first canvas handoff: continue unlocks after required speaker videos while b-roll stays optional");
+console.log("layout-first canvas handoff: keyboard, click, and drag placement all unlock continue correctly");

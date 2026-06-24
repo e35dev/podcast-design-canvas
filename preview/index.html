@@ -292,6 +292,12 @@
         cursor: grabbing;
       }
 
+      .drag-chip.is-selected {
+        border-color: #123d35;
+        background: #123d35;
+        color: #ffffff;
+      }
+
       .drag-chip:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
@@ -478,9 +484,9 @@
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
             <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
             <div class="track-palette" aria-label="Drag speaker tracks onto the layout">
-              <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
-              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
-              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
+              <span class="drag-chip" draggable="true" data-track="host" tabindex="0" role="button" aria-pressed="false">Host track · Dana Brooks</span>
+              <span class="drag-chip" draggable="true" data-track="guest" tabindex="0" role="button" aria-pressed="false">Guest track · Marcus Lee</span>
+              <span class="drag-chip" draggable="true" data-track="broll" tabindex="0" role="button" aria-pressed="false">B-roll clip · intro beat</span>
             </div>
             <div class="canvas-toolbar">
               <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 2 required speaker videos ready. Optional b-roll can be added later.</p>
@@ -490,11 +496,11 @@
               <span class="canvas-chip scene">Interview scene · intro beat</span>
               <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
               <div class="speaker-row">
-                <div class="drop-zone host" data-slot="host">
+                <div class="drop-zone host" data-slot="host" tabindex="0" role="button" aria-label="Place the selected track into the host video slot">
                   <span class="slot-label">Host video slot</span>
                   <span class="slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
                 </div>
-                <div class="drop-zone guest" data-slot="guest">
+                <div class="drop-zone guest" data-slot="guest" tabindex="0" role="button" aria-label="Place the selected track into the guest video slot">
                   <span class="slot-label">Guest video slot</span>
                   <span class="slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
                 </div>
@@ -504,7 +510,7 @@
                   <span class="slot-label">Caption area</span>
                   <div class="slot-note">Reserved for readable long-form captions and lower-thirds that never cover a speaker.</div>
                 </div>
-                <div class="title-slot drop-zone broll" data-slot="broll">
+                <div class="title-slot drop-zone broll" data-slot="broll" tabindex="0" role="button" aria-label="Place the selected track into the b-roll drop zone">
                   <span class="slot-label">B-roll drop zone</span>
                   <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
                 </div>
@@ -972,6 +978,33 @@
         var resetButton = document.getElementById("canvas-reset");
         var continueLink = document.getElementById("canvas-continue");
         var continueNote = document.getElementById("canvas-continue-note");
+        var selectedTrack = "";
+        var selectedChip = null;
+
+        function activationKey(event) {
+          return event.key === "Enter" || event.key === " " || event.key === "Spacebar";
+        }
+
+        function updateChipSelection() {
+          document.querySelectorAll(".drag-chip").forEach(function (chip) {
+            var active = chip === selectedChip;
+            chip.classList.toggle("is-selected", active);
+            chip.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+        }
+
+        function clearSelectedTrack() {
+          selectedTrack = "";
+          selectedChip = null;
+          updateChipSelection();
+        }
+
+        function selectTrack(chip) {
+          selectedTrack = chip.dataset.track || "";
+          selectedChip = chip;
+          updateChipSelection();
+          updateSlotStatus("Selected " + chip.textContent + ". Choose its matching slot.");
+        }
 
         function requiredFilledCount() {
           var required = ["host", "guest"];
@@ -1016,6 +1049,23 @@
           slotStatus.textContent = filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
         }
 
+        function placeTrackInZone(zone, track) {
+          if (track !== zone.dataset.slot) {
+            updateSlotStatus("That track belongs in a different slot.");
+            return;
+          }
+          zone.classList.add("filled");
+          var placed = zone.querySelector(".placed-track");
+          if (!placed) {
+            placed = document.createElement("span");
+            placed.className = "placed-track";
+            zone.insertBefore(placed, zone.firstChild);
+          }
+          placed.textContent = trackLabels[track];
+          clearSelectedTrack();
+          updateSlotStatus();
+        }
+
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
           zone.addEventListener("dragover", function (event) {
             event.preventDefault();
@@ -1028,19 +1078,38 @@
             event.preventDefault();
             zone.classList.remove("drag-over");
             var track = event.dataTransfer.getData("text/plain");
-            if (track !== zone.dataset.slot) {
-              updateSlotStatus("That track belongs in a different slot.");
+            if (!track) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
               return;
             }
-            zone.classList.add("filled");
-            var placed = zone.querySelector(".placed-track");
-            if (!placed) {
-              placed = document.createElement("span");
-              placed.className = "placed-track";
-              zone.insertBefore(placed, zone.firstChild);
+            placeTrackInZone(zone, track);
+          });
+          zone.addEventListener("click", function () {
+            if (!selectedTrack) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
+              return;
             }
-            placed.textContent = trackLabels[track];
-            updateSlotStatus();
+            placeTrackInZone(zone, selectedTrack);
+          });
+          zone.addEventListener("keydown", function (event) {
+            if (!activationKey(event)) return;
+            event.preventDefault();
+            if (!selectedTrack) {
+              updateSlotStatus("Pick a track first, then choose its slot.");
+              return;
+            }
+            placeTrackInZone(zone, selectedTrack);
+          });
+        });
+
+        document.querySelectorAll(".drag-chip").forEach(function (chip) {
+          chip.addEventListener("click", function () {
+            selectTrack(chip);
+          });
+          chip.addEventListener("keydown", function (event) {
+            if (!activationKey(event)) return;
+            event.preventDefault();
+            selectTrack(chip);
           });
         });
 
@@ -1051,10 +1120,12 @@
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
             });
+            clearSelectedTrack();
             updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
           });
         }
 
+        updateChipSelection();
         updateContinueLink(requiredFilledCount());
       }());
     </script>
