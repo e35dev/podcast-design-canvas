@@ -455,12 +455,17 @@
         return { overall, results };
       }
 
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
+      // a caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(moments);
         momentsElement.replaceChildren(
           ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
         );
+        updateSummary(evaluation);
+      }
 
+      function updateSummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready" ? "Conversation ready" : "Moments to review";
 
@@ -470,6 +475,21 @@
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every detected moment is settled. The conversation is ready." })]),
         );
+      }
+
+      // Light update: used while typing in a text field. Refreshes each card's state
+      // badge and the summary in place, without replacing the input the creator is
+      // typing in (which would drop focus and the caret).
+      function refreshStates() {
+        const evaluation = evaluate(moments);
+        Array.from(momentsElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+        });
+        updateSummary(evaluation);
       }
 
       function badgeClass(state) {
@@ -549,14 +569,21 @@
 
         article.querySelector('[data-field="at"]').value = moment.at;
 
-        article.addEventListener("input", (event) => updateMoment(event, index));
-        article.addEventListener("change", (event) => updateMoment(event, index));
+        // Text fields update live on input but only refresh badges/summary, so the
+        // field keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
         return article;
       }
 
-      function updateMoment(event, index) {
+      function onEdit(event, index, full) {
         const field = event.target.dataset.field;
         if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so a text field's input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
           return;
         }
         const moment = moments[index];
@@ -567,7 +594,12 @@
         if (field === "kind" && !kinds[moment.kind].steps.includes(moment.choice)) {
           moment.choice = "review";
         }
-        render();
+
+        if (full) {
+          render();
+        } else {
+          refreshStates();
+        }
       }
 
       function renderIssue(issue) {
