@@ -1171,10 +1171,17 @@
 
     if (resetButton) {
       resetButton.addEventListener("click", () => {
+        // Reset is a discrete action like move / swap / remove, so name what it did for a
+        // screen-reader user instead of leaving only the recomputed readiness line. Announce
+        // only when videos were actually cleared (Reset is disabled while every slot is empty).
+        const hadPlacement = zones.some((zone) => zone.classList.contains("filled"));
         clearAllZones();
         setError("");
         updateSlotStatus();
         focusFirstMissingRequired();
+        if (hadPlacement) {
+          announceAction("Cleared all placed videos.");
+        }
       });
     }
 

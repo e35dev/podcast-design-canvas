@@ -203,6 +203,11 @@ assert.equal(elementsById["layout-reset"].getAttribute("aria-disabled"), "false"
 assert.equal(elementsById["layout-reset"].disabled, false, "Reset clears its disabled property once a video is placed");
 elementsById["layout-reset"].listeners.click();
 assert.equal(elementsById["layout-reset"].getAttribute("aria-disabled"), "true", "Reset disables again after everything is cleared");
+assert.match(
+  elementsById["layout-action-status"].textContent,
+  /Cleared all placed videos/,
+  "resetting names the action for screen readers, like move / swap / remove do",
+);
 
 // The placement canvas names the chosen layout, so a screen-reader user moving into it hears
 // which layout they are filling instead of a generic region name that never changes.
