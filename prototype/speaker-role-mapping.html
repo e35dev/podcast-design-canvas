@@ -591,21 +591,30 @@
         tracksElement.replaceChildren(
           ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
         );
+        renderSummary(evaluation);
+        renderLayoutHandoff();
+      }
 
-        statusElement.className = `status ${evaluation.overall}`;
-        statusElement.textContent = evaluation.overall === "ready"
+      // Refresh only the summary (status banner + issue list) without rebuilding the track rows.
+      // A speaker-name edit can only change the summary copy (issue titles); it never changes a
+      // row's badge or the readiness gate, which depend on role/signal/decision. Leaving the rows
+      // intact keeps the focused name <input> (and its caret) alive while the creator types — the
+      // full rebuild would replace the very field being typed in after each character (#1277).
+      function renderSummary(evaluation) {
+        const result = evaluation || evaluate(tracks);
+        statusElement.className = `status ${result.overall}`;
+        statusElement.textContent = result.overall === "ready"
           ? "Roles confirmed"
-          : evaluation.overall === "blocked"
+          : result.overall === "blocked"
             ? "Some tracks need a role"
             : "Review suggested roles";
 
-        const issues = evaluation.issues;
+        const issues = result.issues;
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every track has a confirmed role. Ready for preset selection." })]),
         );
-        renderLayoutHandoff();
       }
 
       function renderLayoutHandoff() {
@@ -708,7 +717,13 @@
           track.signal = "manual";
           track.decision = "suggested";
         }
-        render();
+        // A name edit refreshes only the summary so the focused name field survives each
+        // keystroke; role/signal/decision changes rebuild the rows (their badges/options change).
+        if (field === "name") {
+          renderSummary();
+        } else {
+          render();
+        }
       }
 
       function renderIssue(issue) {
@@ -725,6 +740,12 @@
       }
 
       render();
+
+      // Exported only for the committed Node test (speaker-role-mapping-name-focus.test.js).
+      // In the page `module` is undefined, so this block is skipped and nothing changes.
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, updateTrack, render, renderSummary };
+      }
     </script>
   </body>
 </html>
