@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contextual Title Cards Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .cards {
+        display: grid;
+        gap: 14px;
+      }
+
+      .card {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.approved {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.suggested {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.rejected {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .frame {
+        position: relative;
+        width: 140px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame .speaker {
+        position: absolute;
+        top: 14%;
+        left: 50%;
+        width: 30%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .title {
+        position: absolute;
+        color: #16211f;
+        font-weight: 800;
+        font-size: 11px;
+        line-height: 1.2;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 3px;
+        padding: 3px 5px;
+        max-width: 80%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .frame.lower-third .title {
+        left: 8%;
+        bottom: 12%;
+      }
+
+      .frame.full-card {
+        background: linear-gradient(160deg, #14403a, #0c2622);
+      }
+
+      .frame.full-card .speaker {
+        opacity: 0.25;
+      }
+
+      .frame.full-card .title {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: transparent;
+        color: #ffffff;
+        font-size: 13px;
+        white-space: normal;
+        text-align: center;
+        max-width: 86%;
+      }
+
+      .frame.corner .title {
+        right: 7%;
+        top: 12%;
+        font-size: 10px;
+      }
+
+      .frame.rejected {
+        filter: grayscale(0.7) brightness(0.92);
+      }
+
+      .frame.rejected .title {
+        display: none;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .card {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Contextual title cards</h1>
+      <p class="lede">Review the title moments we suggest from the conversation, edit the wording, and approve the ones that fit. Titles preview on the real episode frame, and low-confidence suggestions ask for a quick check before they appear.</p>
+
+      <section class="workspace" aria-label="Contextual title cards workspace">
+        <div class="panel">
+          <h2>Title moments</h2>
+          <div class="cards" id="cards"></div>
+          <div class="actions">
+            <button type="button" id="addCard">Add a title moment</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Title review summary">
+          <h2>Title review summary</h2>
+          <div id="status" class="status ready">Titles reviewed</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Only approved titles appear in the export. Rejected suggestions stay out and won't be offered again this episode.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Where the title can be placed on the frame. "preview" styles the sample frame.
+      const placements = {
+        "lower-third": "Lower-third",
+        "full-card": "Full title card",
+        corner: "Corner overlay",
+      };
+
+      // Where the suggestion came from. "weak" sources are low-confidence context that
+      // should be confirmed before the title appears on screen.
+      const sources = {
+        manual: { label: "I wrote this", weak: false },
+        topic: { label: "From a transcript topic", weak: false },
+        chapter: { label: "From a chapter opening", weak: false },
+        intro: { label: "From a guest introduction", weak: false },
+        reference: { label: "From a low-confidence reference", weak: true },
+      };
+
+      // The creator's decision on a suggested title.
+      const decisions = {
+        suggested: "Keep as suggested",
+        approved: "Approve",
+        rejected: "Reject",
+      };
+
+      const sampleCards = [
+        { id: "c1", text: "The launch story", placement: "lower-third", source: "topic", decision: "approved" },
+        { id: "c2", text: "Why they almost quit", placement: "full-card", source: "chapter", decision: "suggested" },
+        { id: "c3", text: "Acme's Series B", placement: "corner", source: "reference", decision: "suggested" },
+      ];
+
+      let cards = structuredClone(sampleCards);
+
+      const cardsElement = document.querySelector("#cards");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addCard").addEventListener("click", () => {
+        const next = cards.length + 1;
+        cards.push({ id: `c${next}-${cards.length}`, text: "", placement: "lower-third", source: "manual", decision: "suggested" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        cards = structuredClone(sampleCards);
+        render();
+      });
+
+      // Single source of truth: map each title's text + source + decision to a review
+      // state and a plain-language issue.
+      function evaluate(list) {
+        const results = list.map((card) => {
+          const source = sources[card.source] || sources.manual;
+          let state;
+          let issue = null;
+
+          if (card.decision === "rejected") {
+            state = "rejected";
+            issue = {
+              title: `"${card.text || "Untitled"}" won't appear`,
+              action: "Rejected — it stays out of the export and won't be suggested again this episode.",
+              tone: "info",
+            };
+          } else if (!card.text.trim()) {
+            state = "review";
+            issue = {
+              title: "A title moment has no text",
+              action: "Add the wording for this title, or reject the moment.",
+              tone: "review",
+            };
+          } else if (card.decision === "suggested" && source.weak) {
+            state = "review";
+            issue = {
+              title: `Check "${card.text}" before it shows`,
+              action: "This came from low-confidence context. Confirm the wording fits, edit it, or reject it.",
+              tone: "review",
+            };
+          } else if (card.decision === "approved") {
+            state = "approved";
+          } else {
+            state = "suggested";
+            issue = {
+              title: `Approve "${card.text}"?`,
+              action: "Approve it to include the title, edit the wording, or reject it.",
+              tone: "info",
+            };
+          }
+
+          return { id: card.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review" || result.state === "suggested");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
+      // a caret, so replacing them is safe).
+      function render() {
+        const evaluation = evaluate(cards);
+        cardsElement.replaceChildren(
+          ...cards.map((card, index) => renderCard(card, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Titles reviewed" : "Titles need review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every title moment is settled. Approved titles are ready for export." })]),
+        );
+      }
+
+      // Light update: used while typing the title text. Refreshes each card's badge, its
+      // frame preview text, and the summary in place, without replacing the input.
+      function refreshStates() {
+        const evaluation = evaluate(cards);
+        Array.from(cardsElement.children).forEach((node, index) => {
+          const badge = node.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+          // The frame preview shows the editable title — set via textContent, never HTML.
+          const preview = node.querySelector("[data-title]");
+          if (preview && cards[index]) {
+            preview.textContent = cards[index].text || "Title";
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function badgeClass(state) {
+        if (state === "approved") {
+          return "approved";
+        }
+        if (state === "rejected") {
+          return "rejected";
+        }
+        if (state === "review") {
+          return "review";
+        }
+        return "suggested";
+      }
+
+      function badgeLabel(state) {
+        return state === "review" ? "needs review" : state;
+      }
+
+      function renderCard(card, index, result) {
+        const article = document.createElement("article");
+        article.className = "card";
+
+        const frameClass = card.decision === "rejected" ? "rejected" : card.placement;
+        const placementOptions = Object.entries(placements)
+          .map(([value, label]) => `<option value="${value}" ${value === card.placement ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const sourceOptions = Object.entries(sources)
+          .map(([value, item]) => `<option value="${value}" ${value === card.source ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const decisionOptions = Object.entries(decisions)
+          .map(([value, label]) => `<option value="${value}" ${value === card.decision ? "selected" : ""}>${label}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled values (placement/source/decision keys and
+        // their fixed labels, fixed states). The editable title is written via .value and
+        // textContent below, so typed text can never inject markup into the page.
+        article.innerHTML = `
+          <div class="frame ${frameClass}">
+            <span class="speaker"></span>
+            <span class="title" data-title></span>
+          </div>
+          <div class="fields">
+            <div class="head">
+              <strong>Title moment</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <label>Title text<input data-field="text" aria-label="Title text"></label>
+            <div class="fields-row">
+              <label>Placement
+                <select data-field="placement" aria-label="Title placement">${placementOptions}</select>
+              </label>
+              <label>Suggested from
+                <select data-field="source" aria-label="Where the suggestion came from">${sourceOptions}</select>
+              </label>
+            </div>
+            <label>Decision
+              <select data-field="decision" aria-label="Approve, keep, or reject">${decisionOptions}</select>
+            </label>
+          </div>
+        `;
+
+        article.querySelector('[data-field="text"]').value = card.text;
+        article.querySelector("[data-title]").textContent = card.text || "Title";
+
+        // Text fields update live on input but only refresh badges/preview/summary, so the
+        // field keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so a text field's input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        cards[index][field] = event.target.value;
+
+        if (full) {
+          render();
+        } else {
+          refreshStates();
+        }
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title embeds the editable title text, so build it with textContent.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
