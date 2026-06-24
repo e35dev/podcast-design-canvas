@@ -5,6 +5,6 @@
   "scripts": {
     "preview": "python3 -m http.server 8080",
     "test": "node scripts/run-tests.mjs",
-    "test:preview": "node preview/preview.test.js && node preview/episode-flow.test.js"
+    "test:preview": "node scripts/run-tests.mjs preview"
   }
 }

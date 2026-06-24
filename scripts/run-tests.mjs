@@ -2,7 +2,10 @@ import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const testDirs = ["preview", "prototype"];
+const testDirs = process.argv.slice(2);
+if (testDirs.length === 0) {
+  testDirs.push("preview", "prototype");
+}
 
 const testFiles = testDirs.flatMap((dir) =>
   readdirSync(dir)
