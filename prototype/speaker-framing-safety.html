@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Framing Safety Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .frames {
+        display: grid;
+        gap: 14px;
+      }
+
+      .frame-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.clear {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.fixed {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.accepted {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .frame {
+        position: relative;
+        width: 128px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .face {
+        position: absolute;
+        top: 18%;
+        left: 50%;
+        width: 36%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+        transition: all 0.15s ease;
+      }
+
+      .frame.tight .face {
+        top: 4%;
+        width: 64%;
+      }
+
+      .frame.panel .face {
+        top: 34%;
+        width: 18%;
+      }
+
+      .frame.mobile::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 34%;
+        background: repeating-linear-gradient(135deg, rgba(165, 40, 40, 0.35), rgba(165, 40, 40, 0.35) 6px, transparent 6px, transparent 12px);
+      }
+
+      .cover {
+        position: absolute;
+        display: none;
+      }
+
+      .frame.captions .cover.captions,
+      .frame.lower .cover.lower,
+      .frame.broll .cover.broll {
+        display: block;
+      }
+
+      .cover.captions {
+        left: 12%;
+        right: 12%;
+        top: 30%;
+        height: 22%;
+        border-radius: 4px;
+        background: rgba(16, 24, 22, 0.82);
+      }
+
+      .cover.lower {
+        left: 8%;
+        right: 30%;
+        bottom: 10%;
+        height: 26%;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .cover.broll {
+        inset: 10% 8% 10% 46%;
+        border-radius: 5px;
+        background: rgba(20, 60, 54, 0.92);
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .frame-row {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker framing safety</h1>
+      <p class="lede">Make sure every speaker stays visible and well framed before export &mdash; no faces hidden behind captions, lower-thirds, or b-roll, and no one cropped out on mobile. We only flag what would affect the finished video; deliberate choices are fine.</p>
+
+      <section class="workspace" aria-label="Speaker framing safety workspace">
+        <div class="panel">
+          <h2>Speaker frames</h2>
+          <div class="frames" id="frames"></div>
+          <div class="actions">
+            <button type="button" id="addFrame">Add a speaker</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Framing summary">
+          <h2>Framing summary</h2>
+          <div id="status" class="status ready">Framing looks good</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">A framing choice you make on purpose &mdash; like keeping a tight crop &mdash; won't block your export once you accept it.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // What the framing check found. "preview" picks how the sample frame is drawn,
+      // and "fixes" lists only the resolutions that make sense for that problem.
+      const checks = {
+        clear: { label: "Well framed", preview: "", fixes: ["keep"] },
+        captions: {
+          label: "Captions cover the face",
+          preview: "captions",
+          fixes: ["review", "move", "switch", "accept"],
+          title: (name) => `Captions cover ${name}'s face`,
+          suggest: "Move the captions for this moment, switch to a layout with room, or accept it.",
+        },
+        lower: {
+          label: "Lower-third covers the face",
+          preview: "lower",
+          fixes: ["review", "move", "switch", "accept"],
+          title: (name) => `The lower-third covers ${name}'s face`,
+          suggest: "Move the lower-third, switch the layout, or accept it.",
+        },
+        broll: {
+          label: "B-roll covers the speaker",
+          preview: "broll",
+          fixes: ["review", "shorten", "switch", "accept"],
+          title: (name) => `B-roll hides ${name} while they speak`,
+          suggest: "Shorten the b-roll over this moment, switch to a side-by-side layout, or accept it.",
+        },
+        tight: {
+          label: "Cropped too tight",
+          preview: "tight",
+          fixes: ["review", "recrop", "switch", "accept"],
+          title: (name) => `${name} is cropped too tight for the destination`,
+          suggest: "Loosen the crop, switch the layout, or accept the close framing.",
+        },
+        panel: {
+          label: "Too small in the panel",
+          preview: "panel",
+          fixes: ["review", "feature", "switch", "accept"],
+          title: (name) => `${name} is too small to read in the panel layout`,
+          suggest: "Feature this speaker while they talk, switch the layout, or accept it.",
+        },
+        mobile: {
+          label: "Cut off on mobile",
+          preview: "mobile",
+          fixes: ["review", "recrop", "switch", "accept"],
+          title: (name) => `${name} is cut off in the mobile crop`,
+          suggest: "Re-center the mobile crop, switch to a stacked layout, or accept it.",
+        },
+      };
+
+      // The creator's resolution. "accept" keeps a deliberate choice; the rest fix it.
+      const fixes = {
+        keep: "Looks good",
+        review: "Decide later",
+        move: "Move the overlay",
+        shorten: "Shorten the b-roll",
+        recrop: "Adjust the crop",
+        switch: "Switch the layout",
+        feature: "Feature this speaker",
+        accept: "Keep it on purpose",
+      };
+
+      const sampleFrames = [
+        { id: "f1", name: "Host — Dana Brooks", check: "clear", fix: "keep" },
+        { id: "f2", name: "Guest 1 — Marcus Lee", check: "captions", fix: "review" },
+        { id: "f3", name: "Guest 2 — Priya Anand", check: "tight", fix: "accept" },
+      ];
+
+      let frames = structuredClone(sampleFrames);
+
+      const framesElement = document.querySelector("#frames");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addFrame").addEventListener("click", () => {
+        const next = frames.length + 1;
+        frames.push({ id: `f${next}-${frames.length}`, name: `Guest ${next - 1}`, check: "captions", fix: "review" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        frames = structuredClone(sampleFrames);
+        render();
+      });
+
+      // Single source of truth: map each frame's detected check + the creator's fix to a
+      // review state and a plain-language issue. Accepting a deliberate framing is always
+      // valid and never blocks export.
+      function evaluate(list) {
+        const results = list.map((frame) => {
+          const check = checks[frame.check];
+          // Honour only a fix the check actually offers, so a stale value can never act
+          // as an option the UI would not show for this frame.
+          const allowed = check.fixes;
+          const fix = allowed.includes(frame.fix) ? frame.fix : (frame.check === "clear" ? "keep" : "review");
+          let state;
+          let issue = null;
+
+          if (frame.check === "clear") {
+            state = "clear";
+          } else if (fix === "accept") {
+            state = "accepted";
+            issue = {
+              title: `${frame.name || "This speaker"}: kept on purpose`,
+              action: "You've accepted this framing — it won't block export.",
+              tone: "info",
+            };
+          } else if (fix !== "review") {
+            state = "fixed";
+            issue = {
+              title: `${frame.name || "This speaker"}: ${fixes[fix].toLowerCase()}`,
+              action: "Resolved for the finished episode.",
+              tone: "info",
+            };
+          } else {
+            state = "review";
+            issue = {
+              title: check.title(frame.name || "This speaker"),
+              action: check.suggest,
+              tone: "review",
+            };
+          }
+
+          return { id: frame.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
+      // a caret, so replacing them is safe).
+      function render() {
+        const evaluation = evaluate(frames);
+        framesElement.replaceChildren(
+          ...frames.map((frame, index) => renderFrame(frame, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Framing looks good" : "Frames to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every speaker is well framed and ready for export." })]),
+        );
+      }
+
+      // Light update: used while typing a name. Refreshes each card's badge and the
+      // summary in place, without replacing the input the creator is typing in.
+      function refreshStates() {
+        const evaluation = evaluate(frames);
+        Array.from(framesElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function badgeClass(state) {
+        if (state === "clear") {
+          return "clear";
+        }
+        if (state === "fixed") {
+          return "fixed";
+        }
+        if (state === "accepted") {
+          return "accepted";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        return state === "review" ? "needs review" : state;
+      }
+
+      function renderFrame(frame, index, result) {
+        const check = checks[frame.check];
+        const article = document.createElement("article");
+        article.className = "frame-row";
+
+        const checkOptions = Object.entries(checks)
+          .map(([value, item]) => `<option value="${value}" ${value === frame.check ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const allowed = check.fixes;
+        const fixOptions = allowed
+          .map((value) => `<option value="${value}" ${value === frame.fix ? "selected" : ""}>${fixes[value]}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled values (check/fix keys and their fixed
+        // labels, fixed states). The editable speaker name is written via .value and
+        // textContent below, so a typed name can never inject markup into the page.
+        article.innerHTML = `
+          <div class="frame ${check.preview}">
+            <span class="face"></span>
+            <span class="cover captions"></span>
+            <span class="cover lower"></span>
+            <span class="cover broll"></span>
+          </div>
+          <div class="fields">
+            <div class="head">
+              <strong data-name></strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <label>Speaker name<input data-field="name" aria-label="Speaker name"></label>
+            <div class="fields-row">
+              <label>What we found
+                <select data-field="check" aria-label="Detected framing issue">${checkOptions}</select>
+              </label>
+              <label>What to do
+                <select data-field="fix" aria-label="How to resolve it" ${allowed.length <= 1 ? "disabled" : ""}>${fixOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        article.querySelector("[data-name]").textContent = frame.name;
+        article.querySelector('[data-field="name"]').value = frame.name;
+
+        // Text fields update live on input but only refresh badges/summary, so the field
+        // keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so a text field's input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        const frame = frames[index];
+        frame[field] = event.target.value;
+
+        // When the detected check changes, drop any fix the new check does not offer so
+        // the dropdown never keeps a stale, non-working action.
+        if (field === "check" && !checks[frame.check].fixes.includes(frame.fix)) {
+          frame.fix = frame.check === "clear" ? "keep" : "review";
+        }
+
+        if (full) {
+          render();
+        } else {
+          // Keep the editable name's heading in sync via textContent, never innerHTML.
+          const card = framesElement.children[index];
+          if (card) {
+            card.querySelector("[data-name]").textContent = frame.name;
+          }
+          refreshStates();
+        }
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title and issue.action embed the editable speaker name, so build them
+        // with textContent rather than innerHTML.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
