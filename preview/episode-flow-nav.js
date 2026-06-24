@@ -34,12 +34,11 @@ const EXPORT_READINESS_FIX_PATHS = {
   "thumbnail-cover-frame.html": "publish",
 };
 
-// Caption quality routes each flagged line to the screen that owns the fix.
-// Glossary and cross-talk cleanup stay on the cleanup path; layout collisions
-// keep episode path context on the style screen.
+// Glossary and cross-talk cleanup stay on the cleanup path (no episode path
+// param); carry cleanup entry context so the cleanup nav preserves from=cleanup.
 const CAPTION_QUALITY_FIX_PATHS = {
-  "transcript-glossary.html": null,
-  "pause-crosstalk-cleanup.html": null,
+  "transcript-glossary.html": { from: "cleanup" },
+  "pause-crosstalk-cleanup.html": { from: "cleanup" },
   "layout-safe-areas.html": "episode",
   "speaker-attribution-review.html": "episode",
 };
@@ -111,12 +110,19 @@ function pathQuerySuffix() {
 }
 
 function routeSearchFromFile(file) {
-  const filePath = pathFromQuery(queryWithoutHash(file));
+  const params = new URLSearchParams(queryWithoutHash(file));
+  const from = params.get("from");
+  const filePath = params.get("path");
   const path = filePath || shellPath();
-  if (path === "episode" || path === "publish") {
-    return `?path=${path}`;
+  const out = new URLSearchParams();
+  if (from === "cleanup") {
+    out.set("from", from);
   }
-  return "";
+  if (path === "episode" || path === "publish") {
+    out.set("path", path);
+  }
+  const search = out.toString();
+  return search ? `?${search}` : "";
 }
 
 function mergeRouteSearch(file, overrides = {}) {
@@ -244,19 +250,27 @@ function normalizeEpisodeLinkClick(event) {
   }
 }
 
+function episodeFlowFixOverrides(href) {
+  const entry = EPISODE_FLOW_FIX_PATHS[episodeFlowFixBase(href)];
+  if (entry === null || entry === undefined) {
+    return null;
+  }
+  if (typeof entry === "string") {
+    return { path: entry };
+  }
+  return entry;
+}
+
 function setEpisodeFlowFixLink(link) {
   const href = link.getAttribute("href") || "";
   if (!isEpisodeFlowFixHref(href)) {
     return;
   }
 
-  const path = EPISODE_FLOW_FIX_PATHS[episodeFlowFixBase(href)];
-  const resolved = path === null ? href : mergeRouteSearch(href, { path });
+  const overrides = episodeFlowFixOverrides(href);
+  const resolved = overrides ? mergeRouteSearch(href, overrides) : href;
   if (isEmbeddedInPreviewApp() && PREVIEW_APP_FIX_TARGETS.has(screenIdFromFile(href))) {
-    const screen = screenIdFromFile(href);
-    link.href = path === null
-      ? `../preview/app.html#${screen}`
-      : previewAppHref(resolved);
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
