@@ -683,6 +683,11 @@
         return summary ? `${summary} at ${issue.moment.toLowerCase()}.` : "Repair confirmed.";
       }
 
+      function issueDescription(issue, trackName) {
+        const copy = typeof issue?.description === "function" ? issue.description(trackName) : "";
+        return typeof copy === "string" && copy.trim() ? copy : "Review sync timing at this moment.";
+      }
+
       function hasConfirmedRepair(track) {
         return Boolean(track.repairConfirmed || track.resolution === "repaired");
       }
@@ -698,7 +703,7 @@
           } else if (track.resolution === null) {
             state = issue.blocksExport ? "blocked for export" : "flagged";
             summary = {
-              title: issue.description(track.name),
+              title: issueDescription(issue, track.name),
               action: issue.blocksExport
                 ? `Preview at ${issue.moment.toLowerCase()} and confirm a repair before export.`
                 : `Preview at ${issue.moment.toLowerCase()}, choose a repair, then confirm it.`,
@@ -715,7 +720,7 @@
             state = "accepted";
             summary = {
               title: `${track.name}: timing kept on purpose`,
-              action: issue.description(track.name),
+              action: issueDescription(issue, track.name),
               tone: "info",
             };
           } else if (track.resolution === "needs attribution review") {
@@ -1011,7 +1016,7 @@
         momentTitle.textContent = `Preview: ${selectedMoment?.label ?? issue.moment}`;
         const momentCopy = document.createElement("span");
         momentCopy.className = "moment-note";
-        momentCopy.textContent = issue.description(track.name);
+        momentCopy.textContent = issueDescription(issue, track.name);
         moment.append(momentTitle, momentCopy);
 
         article.append(head, moment);
@@ -1210,9 +1215,7 @@
         const effect = repairEffects[track.proposedRepair];
         const effectCopy = typeof effect === "string" && effect.length ? effect : null;
         const issue = issues[track.issue];
-        const beforeNote = typeof issue?.description === "function"
-          ? issue.description(track.name)
-          : "Review sync timing at this moment.";
+        const beforeNote = issueDescription(issue, track.name);
         const selectedMoment = previewMoments.find((entry) => entry.id === track.previewMoment);
         const momentLabel = selectedMoment?.label;
 
