@@ -1050,7 +1050,7 @@
         const buttonLayout = layouts[button.dataset.layout] || layouts.interview;
         const active = button.dataset.layout === currentLayout;
         const label = button.querySelector("[data-layout-label]");
-        button.setAttribute("aria-pressed", active ? "true" : "false");
+        button.setAttribute("aria-checked", active ? "true" : "false");
         // Roving tabindex: the arrow keys navigate within the picker (#1295), so the group is a
         // single tab stop — Tab lands on the active layout and moves on, instead of stopping on
         // each of the three buttons. Only the active option is tabbable; the others are reached

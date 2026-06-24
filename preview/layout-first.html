@@ -61,13 +61,13 @@
       .layout-choice strong { font-size: 14px; }
       .layout-choice span { color: var(--muted); font-size: 12px; line-height: 1.35; }
 
-      .layout-choice[aria-pressed="true"] {
+      .layout-choice[aria-checked="true"] {
         border-color: var(--accent);
         background: #123d35;
         color: #ffffff;
       }
 
-      .layout-choice[aria-pressed="true"] span { color: rgba(255, 255, 255, 0.82); }
+      .layout-choice[aria-checked="true"] span { color: rgba(255, 255, 255, 0.82); }
 
       .layout-choice:focus-visible,
       .slot-file:focus-visible,
@@ -328,16 +328,16 @@
         <div>
           <h2 class="section-title" id="layout-picker-title">1. Choose a layout</h2>
           <p class="section-lede">Each layout keeps captions readable and reserves optional space for b-roll or title cards without making it mandatory.</p>
-          <div class="layout-picker" role="group" aria-label="Podcast layout options">
-            <button type="button" class="layout-choice" data-layout="interview" aria-pressed="true">
+          <div class="layout-picker" role="radiogroup" aria-label="Podcast layout options">
+            <button type="button" class="layout-choice" data-layout="interview" role="radio" aria-checked="true">
               <strong data-layout-label>Using interview</strong>
               <span>Host and guest side by side. Needs 2 speaker videos.</span>
             </button>
-            <button type="button" class="layout-choice" data-layout="solo" aria-pressed="false">
+            <button type="button" class="layout-choice" data-layout="solo" role="radio" aria-checked="false">
               <strong data-layout-label>Use solo</strong>
               <span>One speaker with room for captions and visuals. Needs 1 speaker video.</span>
             </button>
-            <button type="button" class="layout-choice" data-layout="panel" aria-pressed="false">
+            <button type="button" class="layout-choice" data-layout="panel" role="radio" aria-checked="false">
               <strong data-layout-label>Use panel</strong>
               <span>Host plus two guests in a balanced grid. Needs 3 speaker videos.</span>
             </button>

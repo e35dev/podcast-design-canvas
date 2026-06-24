@@ -221,6 +221,12 @@ assert.match(html, /Start with a podcast layout/, "layout-first landing opens wi
 assert.match(html, /data-layout="interview"/, "layout-first offers an interview layout");
 assert.match(html, /data-layout="solo"/, "layout-first offers a solo layout");
 assert.match(html, /data-layout="panel"/, "layout-first offers a panel layout");
+// The picker is single-select with roving-tabindex arrow-key navigation, so it must carry
+// radio-group semantics (not toggle-button aria-pressed) for assistive technology.
+assert.match(html, /class="layout-picker" role="radiogroup"/, "layout picker is a radio group, matching its single-select arrow-key behavior");
+assert.match(html, /data-layout="interview" role="radio" aria-checked="true"/, "the active layout option is a checked radio");
+assert.match(html, /data-layout="solo" role="radio" aria-checked="false"/, "an inactive layout option is an unchecked radio");
+assert.doesNotMatch(html, /aria-pressed/, "the picker no longer uses toggle-button aria-pressed semantics");
 assert.match(html, /data-slot="broll" data-optional="true"/, "layout-first marks b-roll as optional");
 assert.match(html, /Continue to production workspace/, "layout-first has a production workspace handoff");
 assert.match(html, /data-ready-href=".\/app.html#speaker-role-mapping\?path=episode"/, "layout-first stores the ready handoff target separately");
@@ -1237,22 +1243,22 @@ assert.equal(layoutButtons[0].getAttribute("tabindex"), "0", "the active layout 
 assert.equal(layoutButtons[1].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
 assert.equal(layoutButtons[2].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
 layoutButtons[0].listeners.keydown({ key: "ArrowRight", preventDefault() {} });
-assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowRight applies the next layout (solo)");
+assert.equal(layoutButtons[1].getAttribute("aria-checked"), "true", "ArrowRight applies the next layout (solo)");
 assert.equal(lastFocused, layoutButtons[1], "ArrowRight moves focus to the next layout option");
 assert.equal(layoutButtons[1].getAttribute("tabindex"), "0", "the newly active layout option becomes tabbable after navigation");
 assert.equal(layoutButtons[0].getAttribute("tabindex"), "-1", "the previously active layout option leaves the tab order");
 layoutButtons[1].listeners.keydown({ key: "ArrowDown", preventDefault() {} });
-assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "ArrowDown also advances to the next layout (panel)");
+assert.equal(layoutButtons[2].getAttribute("aria-checked"), "true", "ArrowDown also advances to the next layout (panel)");
 layoutButtons[2].listeners.keydown({ key: "ArrowUp", preventDefault() {} });
-assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowUp steps back to the previous layout");
+assert.equal(layoutButtons[1].getAttribute("aria-checked"), "true", "ArrowUp steps back to the previous layout");
 layoutButtons[1].listeners.keydown({ key: "ArrowLeft", preventDefault() {} });
-assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "ArrowLeft steps back to the previous layout");
+assert.equal(layoutButtons[0].getAttribute("aria-checked"), "true", "ArrowLeft steps back to the previous layout");
 layoutButtons[0].listeners.keydown({ key: "End", preventDefault() {} });
-assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "End applies the last layout (panel)");
+assert.equal(layoutButtons[2].getAttribute("aria-checked"), "true", "End applies the last layout (panel)");
 layoutButtons[2].listeners.keydown({ key: "Home", preventDefault() {} });
-assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "Home applies the first layout (interview)");
+assert.equal(layoutButtons[0].getAttribute("aria-checked"), "true", "Home applies the first layout (interview)");
 layoutButtons[0].listeners.keydown({ key: "Enter", preventDefault() {} });
-assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "a non-navigation key leaves the layout selection unchanged");
+assert.equal(layoutButtons[0].getAttribute("aria-checked"), "true", "a non-navigation key leaves the layout selection unchanged");
 controller.applyLayout("interview");
 
 // The gated Continue stays keyboard-reachable: an <a> with no href falls out of the tab order,
