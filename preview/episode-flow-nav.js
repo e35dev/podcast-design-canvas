@@ -91,7 +91,7 @@ function renderEpisodeFlowNav() {
   wrap.className = "wrap";
 
   const home = document.createElement("a");
-  home.href = "../preview/";
+  home.href = "../preview/index.html";
   home.textContent = "Episode flow home";
 
   const guided = document.createElement("a");
