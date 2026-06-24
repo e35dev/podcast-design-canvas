@@ -305,6 +305,23 @@
         font-size: 13px;
       }
 
+      .handoff a.handoff-link {
+        justify-self: start;
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .handoff a.handoff-link:hover {
+        text-decoration: underline;
+      }
+
+      .handoff a.handoff-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .marker-head {
         display: flex;
         justify-content: space-between;
@@ -503,7 +520,7 @@
           <div id="markers" class="markers"></div>
           <div id="handoff"></div>
 
-          <p class="summary-note">Notes are reminders to revisit moments; they do not block export. Opening a note should take the creator to the review surface that owns the fix.</p>
+          <p class="summary-note">Notes are reminders to revisit moments; they do not block export. Opening a note takes you to the review screen where that fix belongs.</p>
         </aside>
       </section>
     </main>
@@ -523,6 +540,15 @@
         visuals: "Visual moment review",
         audio: "Audio cleanup",
         framing: "Speaker framing",
+      };
+
+      // The real review screen each soft note hands off to, so acting on a note
+      // opens the screen that already owns that element instead of a dead panel.
+      const ownerScreens = {
+        captions: "audio-caption-quality-review.html",
+        visuals: "contextual-broll-moments.html",
+        audio: "audio-cleanup-controls.html",
+        framing: "speaker-framing-safety.html",
       };
 
       const chapters = [
@@ -902,7 +928,19 @@
         title.textContent = `${ownerOptions[activeHandoff.owner]} opens at ${formatTime(activeHandoff.time)}`;
         const copy = document.createElement("span");
         copy.textContent = activeHandoff.note || "Review this finished episode moment.";
-        handoffElement.replaceChildren(title, copy);
+
+        const children = [title, copy];
+        // A real link to the review screen that owns this element, so the note
+        // hand-off actually opens that screen.
+        const fixScreen = ownerScreens[activeHandoff.owner];
+        if (fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "handoff-link";
+          openLink.href = fixScreen;
+          openLink.textContent = `Open ${ownerOptions[activeHandoff.owner]}`;
+          children.push(openLink);
+        }
+        handoffElement.replaceChildren(...children);
       }
 
       function stateLabel(state) {
