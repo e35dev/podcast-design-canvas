@@ -23,6 +23,9 @@ assert.ok(
 assert.ok(navScript.includes("contextual-broll-moments.html"), "style nav hands off to the contextual visuals path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
+assert.ok(navScript.includes("layout-first.html"), "style nav links to layout-first video placement");
+assert.ok(navScript.includes("layoutFirstPlacementSearch"), "style nav builds layout-first placement query with URLSearchParams");
+assert.ok(navScript.includes("Place videos in layout"), "style nav offers layout-first placement on canvas layer controls");
 assert.ok(!/innerHTML/.test(navScript), "style nav builds the DOM without innerHTML");
 
 const styleScreens = [
@@ -154,6 +157,12 @@ assert.equal(
 );
 
 const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+const stylePlacementLink = linkWithText(lastNav.nodes, "Place videos in layout");
+assert.equal(
+  stylePlacementLink.href,
+  "../preview/layout-first.html?from=style",
+  "canvas layer controls links to layout-first placement with style context",
+);
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Contextual b-roll moments"),
   "last visual direction screen hands off to the contextual visuals path",
@@ -161,6 +170,12 @@ assert.ok(
 assert.ok(
   lastNav.nodes.some((node) => node.href === "contextual-broll-moments.html?from=style"),
   "last visual direction screen links to contextual b-roll moments",
+);
+
+const firstStyleNav = renderNavFor("preset-style-picker.html", "preset-style-picker");
+assert.ok(
+  !firstStyleNav.nodes.some((node) => node.textContent === "Place videos in layout"),
+  "first style screen does not offer layout-first placement before canvas layer controls",
 );
 
 const embeddedFirstNav = renderNavFor("preset-style-picker.html", "preset-style-picker", true);
@@ -221,6 +236,13 @@ assert.equal(
   "embedded style nav routes the contextual visuals handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
+const embeddedPlacement = linkWithText(embeddedLastNav.nodes, "Place videos in layout");
+assert.equal(
+  embeddedPlacement.href,
+  "../preview/layout-first.html?from=style",
+  "embedded style nav opens layout-first placement from canvas layer controls",
+);
+assert.equal(embeddedPlacement.target, "_top", "embedded layout-first placement link targets the parent app");
 assert.equal(
   linkWithText(embeddedLastNav.nodes, "Preview app").href,
   "../preview/app.html#canvas-layer-controls",
@@ -251,6 +273,11 @@ assert.equal(
 );
 
 const handoffPathNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
+assert.equal(
+  linkWithText(handoffPathNav.nodes, "Place videos in layout").href,
+  "../preview/layout-first.html?path=episode&from=style",
+  "style nav keeps episode path context on the layout-first placement link",
+);
 assert.equal(
   linkWithText(handoffPathNav.nodes, "Continue: Contextual b-roll moments").href,
   "contextual-broll-moments.html?from=style&path=episode",

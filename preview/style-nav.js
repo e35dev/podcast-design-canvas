@@ -35,6 +35,33 @@ const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
   Object.keys(STYLE_FIX_PATHS).map((file) => screenIdFromFile(file)),
 );
 
+const LAYOUT_FIRST_PLACEMENT_STEP = "canvas-layer-controls";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "episode" || shellPath === "style") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "style");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  setTopTargetWhenEmbedded(link);
+}
+
 function currentStyleIndex() {
   const fromBody = document.body.dataset.styleStep;
   if (fromBody) {
@@ -316,6 +343,13 @@ function renderStyleNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
