@@ -111,6 +111,11 @@ function renderVisualsNav() {
     prevLink.href = previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
+  } else {
+    const style = document.createElement("a");
+    style.href = "speaker-framing-safety.html";
+    style.textContent = "Previous: Speaker framing safety";
+    wrap.appendChild(style);
   }
 
   if (next) {

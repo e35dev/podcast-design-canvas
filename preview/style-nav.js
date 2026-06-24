@@ -121,8 +121,8 @@ function renderStyleNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "source-media-health.html";
-    start.textContent = "Continue: Source media health";
+    start.href = "contextual-broll-moments.html";
+    start.textContent = "Continue: Contextual b-roll moments";
     wrap.appendChild(start);
   }
 
