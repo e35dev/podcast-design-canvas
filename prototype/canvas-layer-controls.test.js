@@ -84,6 +84,17 @@ const hiddenSpeaker = M.evaluate([
 ]);
 assert.ok(hiddenSpeaker.checks.some((c) => /hidden/i.test(c.title) && c.tone === "info"), "hidden speaker is info");
 
+// The regression the first version missed: a hidden speaker must be flagged even
+// when another speaker frame is still visible (Host visible, Guest 1 hidden).
+const mixedSpeakers = M.evaluate([
+  { id: "host", type: "speaker", visible: true, locked: false },
+  { id: "guest", type: "speaker", visible: false, locked: false },
+]);
+assert.ok(
+  mixedSpeakers.checks.some((c) => /hidden/i.test(c.title)),
+  "a hidden speaker is flagged even when another speaker is visible",
+);
+
 // A clean stack is ready to save.
 const clean = M.evaluate([
   { id: "b", type: "captions", visible: true, locked: false },

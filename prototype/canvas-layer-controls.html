@@ -254,10 +254,11 @@
             });
           }
         });
-        if (speakerIdx < 0 && list.some(function (l) { return l.type === "speaker"; })) {
+        const hiddenSpeakers = list.filter(function (l) { return l.type === "speaker" && !l.visible; }).length;
+        if (hiddenSpeakers > 0) {
           checks.push({
-            title: "A speaker frame is hidden",
-            action: "That speaker will not appear in this layout. Show the frame or confirm they are audio-only.",
+            title: hiddenSpeakers + " speaker frame" + (hiddenSpeakers === 1 ? "" : "s") + " hidden",
+            action: "A hidden speaker will not appear in this layout. Show the frame or confirm they are audio-only.",
             tone: "info",
           });
         }
