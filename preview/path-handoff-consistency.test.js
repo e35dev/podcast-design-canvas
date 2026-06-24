@@ -64,6 +64,24 @@ for (const { script, href, text, note } of expectedHandoffs) {
 
 const expectedEntryBacklinks = [
   {
+    script: "speaker-setup-nav.js",
+    href: 'roles.href = "speaker-role-mapping.html?path=episode"',
+    text: "Previous: Speaker roles",
+    note: "speaker setup links back to ingest speaker roles on the episode path",
+  },
+  {
+    script: "style-nav.js",
+    href: 'setup.href = "speaker-eye-line-coherence.html"',
+    text: "Previous: Speaker eye-line coherence",
+    note: "visual direction links back to speaker setup",
+  },
+  {
+    script: "visuals-nav.js",
+    href: 'style.href = "speaker-framing-safety.html"',
+    text: "Previous: Speaker framing safety",
+    note: "contextual visuals link back to speaker framing safety",
+  },
+  {
     script: "cleanup-nav.js",
     href: 'prep.href = "publish-checklist.html"',
     text: "Previous: Publish checklist",
