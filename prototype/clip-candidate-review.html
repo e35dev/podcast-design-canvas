@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clip Candidate Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+      .panel + .panel { margin-top: 18px; }
+
+      .candidates { display: grid; gap: 14px; }
+
+      .clip-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .clip-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .clip-time { font-weight: 700; font-size: 14px; }
+      .clip-reason { font-size: 12px; color: var(--muted); margin-top: 2px; }
+      .clip-speaker { font-size: 12px; color: var(--muted); margin-top: 2px; }
+      .clip-excerpt {
+        font-size: 13px; color: var(--ink); margin-top: 8px;
+        padding: 8px 10px; background: var(--panel); border-radius: 6px;
+        border-left: 3px solid var(--accent); line-height: 1.45;
+      }
+      .clip-hook {
+        font-size: 12px; color: var(--accent); font-weight: 700;
+        margin-top: 6px;
+      }
+
+      .clip-trim {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 10px; font-size: 13px;
+      }
+      .clip-trim label { color: var(--muted); font-weight: 700; font-size: 12px; }
+      .clip-trim input[type="text"] {
+        width: 72px; padding: 4px 6px; border: 1px solid var(--line);
+        border-radius: 4px; font: inherit; font-size: 12px; text-align: center;
+      }
+      .clip-trim input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+      .clip-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+      .badge {
+        display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
+        padding: 0 10px; font-weight: 700; font-size: 12px; white-space: nowrap;
+      }
+      .badge.suggested { color: #075246; background: #dff5ef; }
+      .badge.approved { color: #075246; background: #c8f0e5; }
+      .badge.adjusted { color: #7a4400; background: #fff1d6; }
+      .badge.dismissed { color: var(--muted); background: #eee; }
+
+      button {
+        min-height: 34px; border: 1px solid var(--accent); border-radius: 6px;
+        background: var(--accent); color: #fff; font: inherit; font-size: 13px;
+        font-weight: 700; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+      }
+      button.secondary { background: #fff; color: var(--accent); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .routed-link {
+        font-size: 13px; font-weight: 700; color: var(--accent);
+        text-decoration: none; white-space: nowrap;
+      }
+      .routed-link:hover { text-decoration: underline; }
+      .routed-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .summary-row {
+        display: flex; align-items: center; gap: 10px;
+        flex-wrap: wrap; margin-bottom: 12px;
+      }
+      .summary-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+      .filter-row {
+        display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+      }
+      .filter-btn {
+        min-height: 30px; border: 1px solid var(--line); border-radius: 999px;
+        background: #fff; color: var(--muted); font: inherit; font-size: 12px;
+        font-weight: 700; padding: 4px 12px; cursor: pointer;
+      }
+      .filter-btn:hover { border-color: #b9c8c3; }
+      .filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .filter-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: #eef8f5; }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="clip-candidate-review">
+    <main>
+      <h1>Clip Candidate Review</h1>
+      <p class="lede">Review suggested short clips from the finished episode. Approve, adjust, or dismiss candidates — changes here never alter the long-form edit.</p>
+
+      <div class="workspace">
+        <div>
+          <div class="filter-row" id="filters" role="group" aria-label="Filter by status"></div>
+          <div class="candidates" id="candidates"></div>
+        </div>
+        <div>
+          <div class="panel" id="readiness"></div>
+          <div class="panel">
+            <h2 style="font-size:15px;margin-bottom:10px;">Episode Context</h2>
+            <div id="episode-info"></div>
+            <div style="margin-top:12px;">
+              <a class="routed-link" href="export-package-handoff.html">Export package handoff →</a>
+            </div>
+            <div style="margin-top:8px;">
+              <a class="routed-link" href="destination-crop-preview.html">Destination crop preview →</a>
+            </div>
+            <div style="margin-top:8px;">
+              <a class="routed-link" href="transcript-search-navigation.html">Search full transcript →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      var episode = {
+        title: "Design Systems in Practice",
+        host: "Ava Chen",
+        guest: "Marcus Rivera",
+        duration: "1:14:22",
+        chapters: 8,
+        exportStatus: "complete"
+      };
+
+      var INITIAL_CANDIDATES = [
+        {
+          id: 1,
+          start: "04:12",
+          end: "04:58",
+          speaker: "Marcus Rivera",
+          reason: "Strong guest answer",
+          excerpt: "The moment we stopped treating tokens as the source of truth and started treating them as a communication layer, everything clicked. Designers stopped fighting the system and started extending it.",
+          hook: "When tokens become communication, not control",
+          status: "suggested",
+          chapter: "Token architecture",
+          captionReady: true
+        },
+        {
+          id: 2,
+          start: "18:33",
+          end: "19:14",
+          speaker: "Ava Chen",
+          reason: "Clear teaching moment",
+          excerpt: "Most teams I talk to skip the naming conversation and go straight to building components. Six months later, they have three competing button variants and nobody remembers which is canonical.",
+          hook: "Why naming comes before building",
+          status: "suggested",
+          chapter: "Naming conventions",
+          captionReady: true
+        },
+        {
+          id: 3,
+          start: "27:45",
+          end: "28:31",
+          speaker: "Marcus Rivera",
+          reason: "High-energy exchange",
+          excerpt: "I had a designer push back on our spacing scale for weeks. Turns out she was right — we were optimizing for developer convenience, not visual rhythm. That argument made our system twice as good.",
+          hook: "The argument that made the system better",
+          status: "suggested",
+          chapter: "Spacing and layout",
+          captionReady: true
+        },
+        {
+          id: 4,
+          start: "42:08",
+          end: "42:52",
+          speaker: "Ava Chen",
+          reason: "Host summary",
+          excerpt: "So what you are saying is that adoption is not a metrics problem, it is a trust problem. If people do not trust the system reflects their needs, no amount of tooling fixes that.",
+          hook: "Adoption is trust, not tooling",
+          status: "suggested",
+          chapter: "Adoption strategies",
+          captionReady: false
+        },
+        {
+          id: 5,
+          start: "55:19",
+          end: "56:03",
+          speaker: "Marcus Rivera",
+          reason: "Chapter transition",
+          excerpt: "Let me tell you about the dashboard rewrite. We threw out eighteen months of component work and rebuilt from the user journey. Best decision we ever made, and the system came back stronger.",
+          hook: "Why we threw out eighteen months of work",
+          status: "suggested",
+          chapter: "Real-world rewrites",
+          captionReady: true
+        },
+        {
+          id: 6,
+          start: "1:03:40",
+          end: "1:04:18",
+          speaker: "Marcus Rivera",
+          reason: "Sponsor-safe moment",
+          excerpt: "The one thing I wish someone told me earlier: document your decisions, not your components. Components change every quarter. The reasoning behind them is what keeps a team aligned for years.",
+          hook: "Document decisions, not components",
+          status: "suggested",
+          chapter: "Lessons learned",
+          captionReady: true
+        }
+      ];
+
+      var candidates = [];
+      for (var i = 0; i < INITIAL_CANDIDATES.length; i++) {
+        candidates.push({
+          id: INITIAL_CANDIDATES[i].id,
+          start: INITIAL_CANDIDATES[i].start,
+          end: INITIAL_CANDIDATES[i].end,
+          speaker: INITIAL_CANDIDATES[i].speaker,
+          reason: INITIAL_CANDIDATES[i].reason,
+          excerpt: INITIAL_CANDIDATES[i].excerpt,
+          hook: INITIAL_CANDIDATES[i].hook,
+          status: INITIAL_CANDIDATES[i].status,
+          chapter: INITIAL_CANDIDATES[i].chapter,
+          captionReady: INITIAL_CANDIDATES[i].captionReady
+        });
+      }
+
+      var activeFilter = "all";
+
+      function statusLabel(status) {
+        var labels = {
+          "suggested": "Suggested",
+          "approved": "Approved",
+          "adjusted": "Adjusted",
+          "dismissed": "Dismissed"
+        };
+        return labels[status] || status;
+      }
+
+      function candidateSummary(list) {
+        var suggested = 0;
+        var approved = 0;
+        var adjusted = 0;
+        var dismissed = 0;
+        for (var i = 0; i < list.length; i++) {
+          var s = list[i].status;
+          if (s === "suggested") suggested++;
+          else if (s === "approved") approved++;
+          else if (s === "adjusted") adjusted++;
+          else if (s === "dismissed") dismissed++;
+        }
+        return { suggested: suggested, approved: approved, adjusted: adjusted, dismissed: dismissed, total: list.length };
+      }
+
+      function approvedCount(list) {
+        var count = 0;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].status === "approved" || list[i].status === "adjusted") count++;
+        }
+        return count;
+      }
+
+      function filteredCandidates() {
+        if (activeFilter === "all") return candidates;
+        var result = [];
+        for (var i = 0; i < candidates.length; i++) {
+          if (activeFilter === "dismissed" && candidates[i].status === "dismissed") result.push(candidates[i]);
+          else if (activeFilter === "active" && candidates[i].status !== "dismissed") result.push(candidates[i]);
+          else if (candidates[i].status === activeFilter) result.push(candidates[i]);
+        }
+        return result;
+      }
+
+      // --- DOM rendering ---
+
+      var candidatesEl = document.getElementById("candidates");
+      var readinessEl = document.getElementById("readiness");
+      var filtersEl = document.getElementById("filters");
+      var episodeInfoEl = document.getElementById("episode-info");
+
+      function renderClip(clip) {
+        var card = document.createElement("div");
+        card.className = "clip-card";
+
+        var head = document.createElement("div");
+        head.className = "clip-head";
+        var time = document.createElement("span");
+        time.className = "clip-time";
+        time.textContent = clip.start + " – " + clip.end;
+        var badge = document.createElement("span");
+        badge.className = "badge " + clip.status;
+        badge.textContent = statusLabel(clip.status);
+        head.appendChild(time);
+        head.appendChild(badge);
+        card.appendChild(head);
+
+        var speaker = document.createElement("div");
+        speaker.className = "clip-speaker";
+        speaker.textContent = clip.speaker + " · " + clip.chapter;
+        card.appendChild(speaker);
+
+        var reason = document.createElement("div");
+        reason.className = "clip-reason";
+        reason.textContent = "Why suggested: " + clip.reason;
+        card.appendChild(reason);
+
+        var excerpt = document.createElement("div");
+        excerpt.className = "clip-excerpt";
+        excerpt.textContent = clip.excerpt;
+        card.appendChild(excerpt);
+
+        var hookEl = document.createElement("div");
+        hookEl.className = "clip-hook";
+        hookEl.textContent = "Hook: " + clip.hook;
+        card.appendChild(hookEl);
+
+        if (!clip.captionReady) {
+          var captionWarn = document.createElement("div");
+          captionWarn.style.cssText = "font-size:12px;color:#a15c00;margin-top:6px;font-weight:700;";
+          captionWarn.textContent = "Captions need review before clip export";
+          var captionLink = document.createElement("a");
+          captionLink.className = "routed-link";
+          captionLink.href = "audio-caption-quality-review.html";
+          captionLink.textContent = " Review captions →";
+          captionLink.style.fontSize = "12px";
+          captionWarn.appendChild(captionLink);
+          card.appendChild(captionWarn);
+        }
+
+        // Trim controls for suggested/approved/adjusted
+        if (clip.status !== "dismissed") {
+          var trim = document.createElement("div");
+          trim.className = "clip-trim";
+
+          var startLabel = document.createElement("label");
+          startLabel.textContent = "Start";
+          startLabel.setAttribute("for", "start-" + clip.id);
+          var startInput = document.createElement("input");
+          startInput.type = "text";
+          startInput.id = "start-" + clip.id;
+          startInput.value = clip.start;
+          startInput.setAttribute("aria-label", "Clip start time");
+
+          var endLabel = document.createElement("label");
+          endLabel.textContent = "End";
+          endLabel.setAttribute("for", "end-" + clip.id);
+          var endInput = document.createElement("input");
+          endInput.type = "text";
+          endInput.id = "end-" + clip.id;
+          endInput.value = clip.end;
+          endInput.setAttribute("aria-label", "Clip end time");
+
+          startInput.addEventListener("change", (function (c) {
+            return function (e) {
+              c.start = e.target.value;
+              if (c.status === "approved" || c.status === "suggested") {
+                c.status = "adjusted";
+              }
+              render();
+            };
+          })(clip));
+
+          endInput.addEventListener("change", (function (c) {
+            return function (e) {
+              c.end = e.target.value;
+              if (c.status === "approved" || c.status === "suggested") {
+                c.status = "adjusted";
+              }
+              render();
+            };
+          })(clip));
+
+          trim.appendChild(startLabel);
+          trim.appendChild(startInput);
+          trim.appendChild(endLabel);
+          trim.appendChild(endInput);
+          card.appendChild(trim);
+        }
+
+        var actions = document.createElement("div");
+        actions.className = "clip-actions";
+
+        if (clip.status === "suggested" || clip.status === "adjusted") {
+          var approveBtn = document.createElement("button");
+          approveBtn.textContent = "Approve";
+          approveBtn.addEventListener("click", function () {
+            clip.status = "approved";
+            render();
+          });
+          actions.appendChild(approveBtn);
+        }
+
+        if (clip.status !== "dismissed") {
+          var dismissBtn = document.createElement("button");
+          dismissBtn.className = "secondary";
+          dismissBtn.textContent = "Dismiss";
+          dismissBtn.addEventListener("click", function () {
+            clip.status = "dismissed";
+            render();
+          });
+          actions.appendChild(dismissBtn);
+        }
+
+        if (clip.status === "dismissed") {
+          var restoreBtn = document.createElement("button");
+          restoreBtn.className = "secondary";
+          restoreBtn.textContent = "Restore";
+          restoreBtn.addEventListener("click", function () {
+            clip.status = "suggested";
+            render();
+          });
+          actions.appendChild(restoreBtn);
+        }
+
+        if (clip.status !== "dismissed") {
+          var jumpLink = document.createElement("a");
+          jumpLink.className = "routed-link";
+          jumpLink.href = "transcript-search-navigation.html";
+          jumpLink.textContent = "Jump to moment →";
+          jumpLink.style.marginTop = "2px";
+          actions.appendChild(jumpLink);
+        }
+
+        card.appendChild(actions);
+        return card;
+      }
+
+      function renderFilters() {
+        filtersEl.innerHTML = "";
+        var filters = [
+          { id: "all", label: "All" },
+          { id: "active", label: "Active" },
+          { id: "approved", label: "Approved" },
+          { id: "adjusted", label: "Adjusted" },
+          { id: "dismissed", label: "Dismissed" }
+        ];
+        for (var i = 0; i < filters.length; i++) {
+          (function (f) {
+            var btn = document.createElement("button");
+            btn.className = "filter-btn";
+            btn.textContent = f.label;
+            btn.setAttribute("aria-pressed", String(activeFilter === f.id));
+            btn.addEventListener("click", function () {
+              activeFilter = f.id;
+              render();
+            });
+            filtersEl.appendChild(btn);
+          })(filters[i]);
+        }
+      }
+
+      function renderReadiness() {
+        readinessEl.innerHTML = "";
+        var s = candidateSummary(candidates);
+        var approved = approvedCount(candidates);
+
+        var title = document.createElement("h2");
+        title.style.cssText = "font-size:15px;margin:0 0 10px;";
+        title.textContent = "Clip Readiness";
+        readinessEl.appendChild(title);
+
+        var row = document.createElement("div");
+        row.className = "summary-row";
+
+        var totalBadge = document.createElement("span");
+        totalBadge.style.cssText = "font-weight:700;font-size:14px;";
+        totalBadge.textContent = s.total + " candidates";
+        row.appendChild(totalBadge);
+
+        if (approved > 0) {
+          var appBadge = document.createElement("span");
+          appBadge.className = "badge approved";
+          appBadge.textContent = approved + " ready for clip export";
+          row.appendChild(appBadge);
+        }
+
+        if (s.suggested > 0) {
+          var sugBadge = document.createElement("span");
+          sugBadge.className = "badge suggested";
+          sugBadge.textContent = s.suggested + " awaiting review";
+          row.appendChild(sugBadge);
+        }
+
+        readinessEl.appendChild(row);
+
+        var note = document.createElement("p");
+        note.className = "summary-note";
+        if (approved > 0 && s.suggested === 0) {
+          note.textContent = "All candidates reviewed. Approved and adjusted clips are ready for short-form export. The long-form episode is unchanged.";
+        } else if (approved > 0) {
+          note.textContent = approved + " clip(s) ready for export. Review remaining suggestions or dismiss ones that do not fit.";
+        } else {
+          note.textContent = "Review each candidate and approve the strongest moments for short-form export. Dismissed clips stay hidden unless restored.";
+        }
+        readinessEl.appendChild(note);
+      }
+
+      function renderEpisodeInfo() {
+        episodeInfoEl.innerHTML = "";
+        var lines = [
+          { label: "Episode", value: episode.title },
+          { label: "Host", value: episode.host },
+          { label: "Guest", value: episode.guest },
+          { label: "Duration", value: episode.duration },
+          { label: "Chapters", value: String(episode.chapters) },
+          { label: "Export", value: episode.exportStatus }
+        ];
+        for (var i = 0; i < lines.length; i++) {
+          var row = document.createElement("div");
+          row.style.cssText = "font-size:13px;margin-bottom:4px;";
+          var lbl = document.createElement("span");
+          lbl.style.cssText = "color:#5e6b67;font-weight:700;";
+          lbl.textContent = lines[i].label + ": ";
+          var val = document.createElement("span");
+          val.textContent = lines[i].value;
+          row.appendChild(lbl);
+          row.appendChild(val);
+          episodeInfoEl.appendChild(row);
+        }
+      }
+
+      function render() {
+        candidatesEl.innerHTML = "";
+        var visible = filteredCandidates();
+        for (var i = 0; i < visible.length; i++) {
+          candidatesEl.appendChild(renderClip(visible[i]));
+        }
+        if (visible.length === 0) {
+          var empty = document.createElement("p");
+          empty.className = "summary-note";
+          empty.textContent = "No clips match this filter.";
+          candidatesEl.appendChild(empty);
+        }
+        renderFilters();
+        renderReadiness();
+        renderEpisodeInfo();
+      }
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          episode: episode,
+          INITIAL_CANDIDATES: INITIAL_CANDIDATES,
+          candidates: candidates,
+          statusLabel: statusLabel,
+          candidateSummary: candidateSummary,
+          approvedCount: approvedCount,
+        };
+      }
+    </script>
+  </body>
+</html>
