@@ -109,4 +109,27 @@ assert.ok(
   "last visual direction screen links to watch-through preview",
 );
 
+function linkWithText(nodes, text) {
+  return nodes.find((node) => node.tagName === "a" && node.textContent === text);
+}
+
+const firstNav = renderNavFor("preset-style-picker.html", "preset-style-picker");
+const setupBackLink = linkWithText(firstNav.nodes, "Previous: Speaker eye-line coherence");
+assert.ok(setupBackLink, "first style screen renders speaker eye-line as its previous step");
+assert.equal(
+  setupBackLink.href,
+  "speaker-eye-line-coherence.html",
+  "first style screen previous link returns to speaker eye-line coherence",
+);
+
+const middleNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas");
+assert.ok(
+  linkWithText(middleNav.nodes, "Previous: Preset comparison"),
+  "middle style screen renders the previous style step",
+);
+assert.ok(
+  !linkWithText(middleNav.nodes, "Previous: Speaker eye-line coherence"),
+  "middle style screen does not reuse the speaker setup back link",
+);
+
 console.log("style nav: visual direction screens connected back to the preview shell");
