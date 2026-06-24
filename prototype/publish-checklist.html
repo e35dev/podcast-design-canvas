@@ -465,10 +465,12 @@
         const warnings = relevantItems
           .map((item) => ({ item, state: states[item.id] }))
           .filter(({ state }) => state !== "ready" && state !== "not-needed");
+        const unresolvedWarnings = warnings.filter(({ state }) => stateRequiresAction(state));
+        const ignoredCount = warnings.filter(({ state }) => state === "ignored").length;
 
-        const status = warnings.some(({ state }) => state === "blocked")
+        const status = unresolvedWarnings.some(({ state }) => state === "blocked")
           ? "blocked"
-          : warnings.length
+          : unresolvedWarnings.length
             ? "review"
             : "ready";
 
@@ -476,11 +478,22 @@
           status,
           warnings,
           nextAction: status === "ready"
-            ? `Export ${destinations[selectedDestination]}.`
+            ? readyNextAction(ignoredCount)
             : status === "blocked"
               ? "Fix blocked checklist items before export."
               : "Review or ignore warnings before final export.",
         };
+      }
+
+      function stateRequiresAction(state) {
+        return state === "review" || state === "blocked";
+      }
+
+      function readyNextAction(ignoredCount) {
+        if (!ignoredCount) {
+          return `Export ${destinations[selectedDestination]}.`;
+        }
+        return `Export ${destinations[selectedDestination]} with ${ignoredCount} ignored ${ignoredCount === 1 ? "warning" : "warnings"} recorded.`;
       }
 
       function renderWarning({ item, state }) {
