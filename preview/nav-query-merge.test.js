@@ -81,6 +81,13 @@ assertCanonicalPathMerge(
   "show-segment-system.html?path=episode&draft=segments",
 );
 
+assertCanonicalPathMerge(
+  "cleanup-nav.js",
+  "?path=publish",
+  "transcript-glossary.html?path=episode&draft=terms",
+  "transcript-glossary.html?path=publish&draft=terms",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -203,4 +210,53 @@ assert.equal(
   "visuals nav preserves from=cleanup and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest, publish, speaker setup, reuse, style, and visuals path merges are canonical and non-ambiguous");
+const cleanupSource = fs.readFileSync(path.join(previewDir, "cleanup-nav.js"), "utf8");
+function cleanupHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/on-screen-correction-note.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${cleanupSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+function cleanupFlowContextFor(file, search) {
+  const window = { location: { pathname: "/prototype/transcript-glossary.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${cleanupSource}\nglobalThis.result = withCleanupFlowContext(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const cleanupWithHash = cleanupHrefWithPathFor(
+  "contextual-broll-moments.html?from=cleanup#moment",
+  "?path=publish",
+);
+assert.equal(
+  cleanupWithHash,
+  "contextual-broll-moments.html?from=cleanup&path=publish#moment",
+  "cleanup nav preserves from=cleanup and hash segments when merging path context",
+);
+
+const cleanupFlowWithHash = cleanupFlowContextFor(
+  "transcript-glossary.html?draft=terms#review",
+  "?path=publish&from=cleanup",
+);
+assert.equal(
+  cleanupFlowWithHash,
+  "transcript-glossary.html?draft=terms&from=cleanup&path=publish#review",
+  "cleanup nav preserves unrelated flags and hash segments when merging cleanup flow context",
+);
+
+console.log("nav query merge: ingest, publish, speaker setup, reuse, style, visuals, and cleanup path merges are canonical and non-ambiguous");

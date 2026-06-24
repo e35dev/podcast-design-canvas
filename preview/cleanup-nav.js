@@ -60,22 +60,37 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
-function currentPreviewAppHref(step) {
-  return previewAppHref(hrefWithCleanupContext(step.file));
+function pathFromQuery(query) {
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
 }
 
-function supportedRouteSearch(params) {
-  const from = params.get("from");
-  if (CLEANUP_ENTRY_CONTEXTS.has(from)) {
-    return `?from=${from}`;
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
   }
 
-  const path = params.get("path");
-  if (CLEANUP_RETURN_PATHS.has(path)) {
-    return `?path=${path}`;
-  }
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
+}
 
-  return "";
+function currentPreviewAppHref(step) {
+  return previewAppHref(hrefWithCleanupContext(step.file));
 }
 
 function cleanupEntrySearchFromWindow() {
@@ -83,23 +98,70 @@ function cleanupEntrySearchFromWindow() {
   return CLEANUP_ENTRY_CONTEXTS.has(from) ? `?from=${from}` : "";
 }
 
+function cleanupEntryContextFromWindow() {
+  const from = new URLSearchParams(window.location.search).get("from");
+  return CLEANUP_ENTRY_CONTEXTS.has(from) ? from : "";
+}
+
+function isCleanupFlowFile(file) {
+  const base = (file || "").split("?")[0].split("#")[0];
+  return CLEANUP_FLOW.some((step) => step.file === base);
+}
+
 function routeSearchFromFile(file, fallbackSearch = cleanupEntrySearchFromWindow()) {
-  const query = ((file || "").split("#")[0].split("?")[1] || "");
-  const explicit = supportedRouteSearch(new URLSearchParams(query));
-  if (explicit) return explicit;
-  return fallbackSearch;
+  const params = new URLSearchParams(queryWithoutHash(file));
+  const from = params.get("from");
+  const filePath = params.get("path");
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const fallbackFrom = new URLSearchParams((fallbackSearch || "").replace(/^\?/, "")).get("from");
+
+  const out = new URLSearchParams();
+  if (CLEANUP_ENTRY_CONTEXTS.has(from)) {
+    out.set("from", from);
+  } else if (CLEANUP_ENTRY_CONTEXTS.has(fallbackFrom)) {
+    out.set("from", fallbackFrom);
+  }
+  if (CLEANUP_RETURN_PATHS.has(filePath)) {
+    out.set("path", filePath);
+  } else if (CLEANUP_RETURN_PATHS.has(shellPath)) {
+    out.set("path", shellPath);
+  }
+  const search = out.toString();
+  return search ? `?${search}` : "";
+}
+
+function hrefWithPath(file) {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== "publish") {
+    return file;
+  }
+  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: shellPath });
+}
+
+function withCleanupFlowContext(file) {
+  const context = cleanupEntryContextFromWindow();
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const overrides = {};
+  if (context) {
+    overrides.from = context;
+  }
+  if (shellPath === "publish" && pathFromQuery(queryWithoutHash(file)) !== shellPath) {
+    overrides.path = shellPath;
+  }
+  if (Object.keys(overrides).length === 0) {
+    return file;
+  }
+  return mergeRouteSearch(file, overrides);
 }
 
 function hrefWithCleanupContext(file) {
-  const base = (file || "").split("?")[0];
-  if (routeSearchFromFile(file, "")) {
-    return file;
+  if (isCleanupFlowFile(file)) {
+    return withCleanupFlowContext(file);
   }
-  const suffix = cleanupEntrySearchFromWindow();
-  if (suffix && CLEANUP_FLOW.some((step) => step.file === base)) {
-    return `${base}${suffix}`;
-  }
-  return file;
+  return hrefWithPath(file);
 }
 
 function setTopTargetWhenEmbedded(link) {
