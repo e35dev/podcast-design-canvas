@@ -14,6 +14,7 @@ const navScript = fs.readFileSync(path.join(__dirname, "reuse-nav.js"), "utf8");
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "reuse nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "reuse nav links to the guided episode flow");
+assert.ok(navScript.includes("app.html"), "reuse nav links to the preview app");
 assert.ok(navScript.includes("episode-watch-through-preview.html"), "reuse nav hands off to the review stage");
 assert.ok(navScript.includes('document.querySelector(".reuse-nav")'), "reuse nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "reuse nav builds the DOM without innerHTML");
