@@ -178,4 +178,34 @@ assert.equal(
   "standalone episode flow nav keeps episode path context between core flow screens",
 );
 
+function episodeFlowHrefWithPath(file, search) {
+  const window = makeWindow("audio-cleanup-controls.html", false, search);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  episodeFlowHrefWithPath("audio-caption-quality-review.html?path=ingest&draft=notes", "?path=episode"),
+  "audio-caption-quality-review.html?path=episode&draft=notes",
+  "episode flow nav replaces conflicting path values with the shell episode context",
+);
+assert.equal(
+  episodeFlowHrefWithPath("export-readiness-review.html?draft=final#checks", "?path=publish"),
+  "export-readiness-review.html?draft=final&path=publish#checks",
+  "episode flow nav preserves unrelated flags and hash segments when merging publish context",
+);
+assert.equal(
+  (episodeFlowHrefWithPath("speaker-sync-repair.html?path=episode", "?path=episode").match(/path=/g) || []).length,
+  1,
+  "episode flow nav emits one canonical path query param after merge",
+);
+
 console.log("episode flow nav: core episode screens connected to the preview shell and app");

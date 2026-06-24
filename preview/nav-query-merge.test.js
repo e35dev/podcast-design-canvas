@@ -53,6 +53,13 @@ assertCanonicalPathMerge(
   "episode-metadata-publishing.html?path=publish&draft=notes",
 );
 
+assertCanonicalPathMerge(
+  "episode-flow-nav.js",
+  "?path=episode",
+  "audio-caption-quality-review.html?path=ingest&draft=notes",
+  "audio-caption-quality-review.html?path=episode&draft=notes",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -75,4 +82,4 @@ assert.equal(
   "ingest nav preserves unrelated flags and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest and publish path merges are canonical and non-ambiguous");
+console.log("nav query merge: ingest, publish, and episode flow path merges are canonical");

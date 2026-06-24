@@ -45,25 +45,54 @@ function isEmbeddedInPreviewApp() {
 }
 
 function pathFromQuery(query) {
-  const part = (query || "").split("&").find((item) => item.startsWith("path="));
-  return part ? part.split("=")[1] : "";
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function shellPath() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  if (path === "episode" || path === "publish") {
+    return path;
+  }
+  return "";
 }
 
 function pathQuerySuffix() {
-  const path = new URLSearchParams(window.location.search).get("path");
-  return path === "episode" ? "?path=episode" : "";
+  const path = shellPath();
+  return path ? `?path=${path}` : "";
 }
 
 function routeSearchFromFile(file) {
-  const query = (file || "").split("?")[1] || "";
-  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  if (path === "episode") {
-    return "?path=episode";
-  }
-  if (path === "publish") {
-    return "?path=publish";
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  const path = filePath || shellPath();
+  if (path === "episode" || path === "publish") {
+    return `?path=${path}`;
   }
   return "";
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
 function previewAppHref(file) {
@@ -71,17 +100,18 @@ function previewAppHref(file) {
 }
 
 function currentPreviewAppHref(step) {
-  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+  return previewAppHref(mergeRouteSearch(step.file, shellPath() ? { path: shellPath() } : {}));
 }
 
 function hrefWithPath(file) {
-  const base = (file || "").split("?")[0];
-  const filePath = pathFromQuery((file || "").split("?")[1] || "");
-  if (filePath === "episode" || filePath === "publish") {
+  const path = shellPath();
+  if (!path) {
     return file;
   }
-  const suffix = pathQuerySuffix();
-  return suffix ? `${base}${suffix}` : file;
+  if (pathFromQuery(queryWithoutHash(file)) === path) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path });
 }
 
 function setTopTargetWhenEmbedded(link) {
