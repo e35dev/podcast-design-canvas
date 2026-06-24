@@ -43,6 +43,7 @@ function createElement(tagName) {
     className: "",
     href: "",
     id: "",
+    target: "",
     textContent: "",
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -64,7 +65,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName) {
+function makeWindow(fileName, embedded = false) {
+  const window = { location: { pathname: `/prototype/${fileName}` } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  return window;
+}
+
+function renderNavFor(fileName, embedded = false) {
   const head = createElement("head");
   const body = createElement("body");
   body.dataset = {};
@@ -85,7 +93,7 @@ function renderNavFor(fileName) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}` } },
+    window: makeWindow(fileName, embedded),
   });
 
   return flatten(body);
@@ -144,6 +152,27 @@ assert.ok(
   "last publish screen does not render a next link",
 );
 
+const embeddedFirstNav = renderNavFor("episode-watch-through-preview.html", true);
+const embeddedBackLink = linkWithText(embeddedFirstNav, "Previous: Export readiness");
+assert.equal(
+  embeddedBackLink.href,
+  "../preview/app.html#export-readiness-review",
+  "embedded publish nav routes previous through the preview app hash",
+);
+assert.equal(embeddedBackLink.target, "_top", "embedded previous link targets the parent app");
+const embeddedNextLink = linkWithText(embeddedFirstNav, "Next: Destination crop preview");
+assert.equal(
+  embeddedNextLink.href,
+  "../preview/app.html#destination-crop-preview",
+  "embedded publish nav routes next through the preview app hash",
+);
+assert.equal(embeddedNextLink.target, "_top", "embedded next link targets the parent app");
+
+const embeddedLastNav = renderNavFor("publish-checklist.html", true);
+const embeddedFinish = linkWithText(embeddedLastNav, "Finish: back to the preview shell");
+assert.equal(embeddedFinish.href, "../preview/", "embedded finish still returns to the preview shell");
+assert.equal(embeddedFinish.target, "_top", "embedded finish opens the preview shell at top level");
+
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
 const body = createElement("body");
@@ -162,7 +191,7 @@ const ctx = {
     return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
   },
 };
-const win = { location: { pathname: "/prototype/destination-crop-preview.html" } };
+const win = makeWindow("destination-crop-preview.html");
 vm.runInNewContext(navScript, { document: ctx, window: win });
 vm.runInNewContext(navScript, { document: ctx, window: win });
 assert.equal(
