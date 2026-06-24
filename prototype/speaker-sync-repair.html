@@ -141,6 +141,24 @@
         background: #fff1d6;
       }
 
+      .rollup-repair-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-repair-tags .rollup-repair-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #075246;
+        background: #dff5ef;
+      }
+
       .track.jump-highlight {
         box-shadow: 0 0 0 2px #136f63;
       }
@@ -770,6 +788,24 @@
         return wrap;
       }
 
+      function renderRollupRepairTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-repair-tags";
+        wrap.setAttribute("aria-label", "Proposed sync repairs needing review");
+
+        for (const result of needsWork) {
+          if (!result.proposedRepair || result.issue === "none") continue;
+          const repairLabel = repairs[result.proposedRepair];
+          if (!repairLabel) continue;
+          const tag = document.createElement("span");
+          tag.className = "rollup-repair-tag";
+          tag.textContent = `${trackBucketLabel(result.name)} — ${repairLabel}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(evaluation, reviewCount) {
         const rollup = buildRollup(evaluation);
         rollupElement.className = `track-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -788,6 +824,10 @@
 
         if (rollup.needsWork.length) {
           rollupElement.appendChild(renderRollupIssueTags(rollup.needsWork));
+          const repairTags = renderRollupRepairTags(rollup.needsWork);
+          if (repairTags.childElementCount) {
+            rollupElement.appendChild(repairTags);
+          }
         }
 
         if (reviewCount > 0) {
