@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Destination Presets Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .dests {
+        display: grid;
+        gap: 10px;
+      }
+
+      .dest {
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px 14px;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink);
+        display: grid;
+        gap: 2px;
+      }
+
+      .dest[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        background: #f1f9f6;
+      }
+
+      .dest b {
+        font-size: 14px;
+      }
+
+      .dest span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .preview-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #46665f, #18302b);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+        margin-bottom: 14px;
+      }
+
+      .preview-frame .face {
+        position: absolute;
+        top: 22%;
+        left: 50%;
+        width: 26%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .preview-frame .cap {
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        bottom: 10%;
+        height: 13%;
+        border-radius: 3px;
+        background: rgba(16, 24, 22, 0.85);
+        display: none;
+      }
+
+      .preview-frame.captions .cap {
+        display: block;
+      }
+
+      .preview-frame .logo {
+        position: absolute;
+        right: 6%;
+        top: 8%;
+        width: 12%;
+        aspect-ratio: 1;
+        border-radius: 4px;
+        background: #f4d35e;
+        display: none;
+      }
+
+      .preview-frame.thumbtext .logo {
+        display: block;
+      }
+
+      .preview-frame .mark {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.32);
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        transform: rotate(-12deg);
+      }
+
+      .preview-frame.watermark .mark {
+        display: flex;
+      }
+
+      .preview-frame.audio {
+        background: repeating-linear-gradient(135deg, #1b3a34, #1b3a34 10px, #14302b 10px, #14302b 20px);
+      }
+
+      .preview-frame.audio .face,
+      .preview-frame.audio .cap {
+        display: none;
+      }
+
+      .preview-frame.audio .wave {
+        position: absolute;
+        inset: 40% 12% auto;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .preview-frame .wave {
+        display: none;
+      }
+
+      .preview-frame.audio .wave {
+        display: flex;
+      }
+
+      .preview-frame .wave i {
+        flex: 1;
+        height: 14px;
+        background: #6ee0c8;
+        border-radius: 1px;
+      }
+
+      .package {
+        display: grid;
+        gap: 6px;
+      }
+
+      .package .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .package .row span {
+        color: var(--muted);
+      }
+
+      .package .row strong {
+        text-align: right;
+      }
+
+      .package .row .off {
+        color: #8a948f;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Publish destination presets</h1>
+      <p class="lede">Choose where the episode is going and get sensible defaults for video, captions, thumbnail, and packaging &mdash; described as publishing outcomes, not encoder menus. Pick a destination and the preview shows exactly what will be in that export.</p>
+
+      <section class="workspace" aria-label="Publish destination workspace">
+        <div class="panel">
+          <h2>Where is this episode going?</h2>
+          <div class="dests" id="dests" role="group" aria-label="Publish destinations"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Export preview">
+          <h2>This export will include</h2>
+          <div class="preview-frame" id="preview" aria-hidden="true">
+            <span class="face"></span>
+            <span class="cap"></span>
+            <span class="logo"></span>
+            <span class="mark" data-mark></span>
+            <span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="package" id="package"></div>
+          <p class="summary-note">Changing the destination after other review work reopens the items it affects, so an export never ships with the wrong package for where it's going.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Each destination is described by the publishing outcome it produces: the format,
+      // whether captions/thumbnail are included, any review watermark, and the file. These
+      // drive both the preview frame and the package list.
+      const destinations = {
+        youtube: {
+          label: "YouTube full episode",
+          note: "Public long-form upload",
+          format: "Full video, 1080p",
+          captions: "Burned-in + caption track",
+          thumbnail: "Required",
+          watermark: null,
+          extras: "Chapters in description",
+          file: "episode-full.mp4",
+          preview: ["captions", "thumbtext"],
+        },
+        client: {
+          label: "Private client review",
+          note: "Shareable review link",
+          format: "Full video, 1080p",
+          captions: "Caption track",
+          thumbnail: "Optional",
+          watermark: "REVIEW",
+          extras: "Review link, no public metadata",
+          file: "episode-review.mp4",
+          preview: ["captions", "watermark"],
+        },
+        archive: {
+          label: "Archive master",
+          note: "High-quality keep copy",
+          format: "Master quality, .mov",
+          captions: "Caption sidecar file",
+          thumbnail: "Not included",
+          watermark: null,
+          extras: "Full-resolution master",
+          file: "episode-master.mov",
+          preview: ["captions"],
+        },
+        audio: {
+          label: "Audio-only backup",
+          note: "Podcast feed backup",
+          format: "Audio only, .m4a",
+          captions: "Transcript file",
+          thumbnail: "Cover art",
+          watermark: null,
+          extras: "Chapters as audio markers",
+          file: "episode-audio.m4a",
+          preview: ["audio"],
+        },
+        sponsor: {
+          label: "Sponsor approval copy",
+          note: "Sponsor sign-off",
+          format: "Full video, 1080p",
+          captions: "Caption track",
+          thumbnail: "Optional",
+          watermark: "SPONSOR COPY",
+          extras: "Sponsor disclosure shown",
+          file: "sponsor-copy.mp4",
+          preview: ["captions", "watermark"],
+        },
+      };
+
+      let chosen = "youtube";
+
+      const destsElement = document.querySelector("#dests");
+      const previewElement = document.querySelector("#preview");
+      const markElement = document.querySelector("[data-mark]");
+      const packageElement = document.querySelector("#package");
+
+      function render() {
+        destsElement.replaceChildren(
+          ...Object.entries(destinations).map(([key, dest]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "dest";
+            button.setAttribute("aria-pressed", String(key === chosen));
+            const name = document.createElement("b");
+            name.textContent = dest.label;
+            const note = document.createElement("span");
+            note.textContent = dest.note;
+            button.append(name, note);
+            button.addEventListener("click", () => {
+              chosen = key;
+              render();
+            });
+            return button;
+          }),
+        );
+        renderPreview();
+        renderPackage();
+      }
+
+      function renderPreview() {
+        const dest = destinations[chosen];
+        // Only controlled preview class names reach className; the watermark label is set
+        // via textContent.
+        previewElement.className = `preview-frame ${dest.preview.join(" ")}`;
+        markElement.textContent = dest.watermark || "";
+      }
+
+      function renderPackage() {
+        const dest = destinations[chosen];
+        const rows = [
+          ["Format", dest.format, true],
+          ["Captions", dest.captions, true],
+          ["Thumbnail", dest.thumbnail, dest.thumbnail !== "Not included"],
+          ["Review watermark", dest.watermark || "None", Boolean(dest.watermark)],
+          ["Also includes", dest.extras, true],
+          ["File", dest.file, true],
+        ];
+        packageElement.replaceChildren(
+          ...rows.map(([term, value, on]) => {
+            const row = document.createElement("div");
+            row.className = "row";
+            const label = document.createElement("span");
+            label.textContent = term;
+            const strong = document.createElement("strong");
+            strong.textContent = value;
+            if (!on) {
+              strong.className = "off";
+            }
+            row.append(label, strong);
+            return row;
+          }),
+        );
+      }
+
+      render();
+    </script>
+  </body>
+</html>
