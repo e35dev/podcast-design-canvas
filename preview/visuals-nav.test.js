@@ -163,6 +163,9 @@ const embeddedFirstNav = renderNavFor("contextual-broll-moments.html", "contextu
 const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded visuals nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
+assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded visuals nav keeps the preview app href");
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedCleanupBack = linkWithText(embeddedFirstNav, "Previous: On-screen correction note");
 assert.equal(
   embeddedCleanupBack.href,

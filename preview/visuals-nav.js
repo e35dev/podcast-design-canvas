@@ -81,7 +81,10 @@ function setVisualsScreenLink(link, file) {
   if (isEmbeddedInPreviewApp() && isPreviewAppVisualsTarget(file)) {
     link.href = previewAppHref(file);
     link.target = "_top";
+    return;
   }
+
+  link.href = file;
 }
 
 function visualsEntryContext() {
@@ -197,20 +200,19 @@ function renderVisualsNav() {
 
   const previewApp = document.createElement("a");
   previewApp.href = "../preview/app.html";
+  setTopTargetWhenEmbedded(previewApp);
   previewApp.textContent = "Preview app";
   wrap.appendChild(previewApp);
 
   if (previous) {
     const prevLink = document.createElement("a");
     const previousFile = withVisualsContext(previous.file);
-    prevLink.href = previousFile;
     setVisualsScreenLink(prevLink, previousFile);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const entry = entryBacklink();
     const cleanup = document.createElement("a");
-    cleanup.href = entry.href;
     setVisualsScreenLink(cleanup, entry.href);
     cleanup.textContent = `Previous: ${entry.label}`;
     wrap.appendChild(cleanup);
@@ -219,13 +221,11 @@ function renderVisualsNav() {
   if (next) {
     const nextLink = document.createElement("a");
     const nextFile = withVisualsContext(next.file);
-    nextLink.href = nextFile;
     setVisualsScreenLink(nextLink, nextFile);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "show-segment-system.html";
     setVisualsScreenLink(start, "show-segment-system.html");
     start.textContent = "Continue: Show segment system";
     wrap.appendChild(start);

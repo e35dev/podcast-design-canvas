@@ -20,7 +20,7 @@ const expectedHandoffs = [
   },
   {
     script: "speaker-setup-nav.js",
-    href: 'start.href = "preset-style-picker.html"',
+    href: "setSetupScreenLink(start, SPEAKER_SETUP_HANDOFF.file)",
     text: "Continue: Pick a preset style",
     note: "speaker setup hands off to visual direction",
   },
@@ -44,7 +44,7 @@ const expectedHandoffs = [
   },
   {
     script: "visuals-nav.js",
-    href: 'start.href = "show-segment-system.html"',
+    href: 'setVisualsScreenLink(start, "show-segment-system.html")',
     text: "Continue: Show segment system",
     note: "contextual visuals hand off to reuse",
   },

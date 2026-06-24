@@ -168,18 +168,17 @@ function renderSpeakerSetupNav() {
 
   const app = document.createElement("a");
   app.href = "../preview/app.html";
+  setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
     setSetupScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const roles = document.createElement("a");
-    roles.href = "speaker-role-mapping.html?path=episode";
     setSetupScreenLink(roles, SPEAKER_SETUP_ENTRY.file);
     roles.textContent = `Previous: ${SPEAKER_SETUP_ENTRY.label}`;
     wrap.appendChild(roles);
@@ -187,13 +186,11 @@ function renderSpeakerSetupNav() {
 
   if (next) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
     setSetupScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "preset-style-picker.html";
     setSetupScreenLink(start, SPEAKER_SETUP_HANDOFF.file);
     start.textContent = "Continue: Pick a preset style";
     wrap.appendChild(start);

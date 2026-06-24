@@ -146,6 +146,9 @@ assert.equal(embeddedHome.href, "../preview/", "embedded speaker setup nav keeps
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
 const embeddedGuided = linkWithText(embeddedFirstNav.nodes, "Guided episode flow");
 assert.equal(embeddedGuided.target, "_top", "embedded guided-flow link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav.nodes, "Preview app");
+assert.equal(embeddedPreviewApp.href, "../preview/app.html", "embedded speaker setup nav keeps the preview app href");
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedRolesBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
 assert.equal(
   embeddedRolesBack.href,
