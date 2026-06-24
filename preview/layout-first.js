@@ -463,6 +463,32 @@
       syncInvalidError();
     }
 
+    // Place several recordings from one drop or file pick: fill the slot they landed on,
+    // then spill the remaining videos into the next empty visible slots in order (required
+    // slots first, optional b-roll last). This lets a creator drop all of their speaker
+    // recordings at once instead of one slot at a time.
+    function placeVideoFiles(zone, fileList) {
+      const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
+      if (files.length === 0) {
+        return;
+      }
+      placeVideoFile(zone, files[0]);
+      // Only spill the extra files that are actually videos, so a stray non-video in the
+      // batch never flags a slot the creator didn't aim at.
+      const extras = files.slice(1).filter(isVideoFile);
+      if (extras.length === 0) {
+        return;
+      }
+      const openSlots = visibleSlots().filter(
+        (candidate) => candidate !== zone && !candidate.classList.contains("filled"),
+      );
+      extras.forEach((file, index) => {
+        if (openSlots[index]) {
+          placeVideoFile(openSlots[index], file);
+        }
+      });
+    }
+
     // Clear a single placed video without disturbing the other slots, so a creator who
     // picks the wrong file can fix just that slot instead of resetting the whole layout.
     function removeVideo(zone) {
@@ -564,12 +590,11 @@
       zone.addEventListener("drop", (event) => {
         event.preventDefault();
         zone.classList.remove("drag-over");
-        const file = event.dataTransfer.files && event.dataTransfer.files[0];
-        placeVideoFile(zone, file);
+        placeVideoFiles(zone, event.dataTransfer && event.dataTransfer.files);
       });
       if (input) {
         input.addEventListener("change", () => {
-          placeVideoFile(zone, input.files && input.files[0]);
+          placeVideoFiles(zone, input.files);
         });
       }
     });
@@ -596,6 +621,7 @@
     return {
       applyLayout,
       placeVideoFile,
+      placeVideoFiles,
       removeVideo,
       resetVideos: clearAllZones,
       requiredSlots,

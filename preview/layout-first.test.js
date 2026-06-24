@@ -696,4 +696,32 @@ assert.equal(
 assert.equal(reuse.zonesBySlot.host.classList.contains("filled"), true, "the reused source stays in its new slot");
 assert.deepEqual(reuse.duplicateFileNames(), [], "no duplicate recording across slots after switching back");
 
+// Multi-file placement: dropping several recordings at once fills the slot they land on
+// and spills the rest into the next empty visible slots in order, so a creator can drop
+// all their speaker videos together instead of one slot at a time (#1026).
+controller.resetVideos();
+controller.applyLayout("panel");
+controller.placeVideoFiles(controller.zonesBySlot.host, [
+  { name: "panel-host.mp4", type: "video/mp4", size: 11, lastModified: 101 },
+  { name: "panel-guest-a.mp4", type: "video/mp4", size: 22, lastModified: 202 },
+  { name: "panel-guest-b.mp4", type: "video/mp4", size: 33, lastModified: 303 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "the dropped slot takes the first recording");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "the next empty required slot takes the second recording");
+assert.equal(controller.zonesBySlot["guest-b"].classList.contains("filled"), true, "the following empty required slot takes the third recording");
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "panel is ready to continue after one multi-file drop fills every required slot",
+);
+
+// A single-file drop is unchanged: only the slot it lands on is filled.
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFiles(controller.zonesBySlot.host, [
+  { name: "just-host.mp4", type: "video/mp4", size: 9, lastModified: 9 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "a single dropped file fills its slot");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), false, "a single dropped file does not touch other slots");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
