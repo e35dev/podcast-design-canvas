@@ -75,4 +75,35 @@ assert.strictEqual(
   "guided flow keeps core step order after any ingest preamble",
 );
 
+// 6) Export readiness hands forward into publish prep across nav and guided flow (#689).
+const handoffMatch = navJs.match(/const EPISODE_HANDOFF = \{([^}]+)\};/);
+assert.ok(handoffMatch, "nav script declares EPISODE_HANDOFF");
+const handoffFile = handoffMatch[1].match(/file:\s*"([a-z0-9-]+\.html)"/)?.[1];
+assert.equal(
+  handoffFile,
+  "episode-watch-through-preview.html",
+  "episode flow nav publish handoff opens watch-through preview",
+);
+assert.ok(
+  navJs.includes("EPISODE_HANDOFF.label"),
+  "episode flow nav builds publish prep handoff copy from EPISODE_HANDOFF",
+);
+assert.ok(
+  handoffMatch[1].includes('label: "Watch-through preview"'),
+  "episode flow nav publish handoff uses watch-through preview label",
+);
+
+const publishPrepBlock = flowPage.match(/const publishPrepHandoff = \{([\s\S]*?)\};/);
+assert.ok(publishPrepBlock, "guided flow declares publish prep handoff");
+const flowHandoffFile = publishPrepBlock[1].match(/file:\s*"\.\.\/prototype\/([a-z0-9-]+\.html)"/)?.[1];
+assert.equal(
+  flowHandoffFile,
+  handoffFile,
+  "guided flow and nav script share the same publish prep target",
+);
+assert.ok(
+  fs.existsSync(path.join(root, "prototype", handoffFile)),
+  "publish prep handoff target exists",
+);
+
 console.log(`flow consistency: ${navFlow.length} core steps aligned across shell, nav, and flow page`);
