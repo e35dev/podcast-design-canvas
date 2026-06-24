@@ -646,16 +646,22 @@
       }
       // Every visible slot is already filled or flagged, so a canvas-wide drop has nowhere
       // to land. Tell the creator how to make room instead of silently ignoring the drop,
-      // matching the multi-file overflow guidance — but only when a real video was dropped,
-      // so a stray non-video stays quiet.
+      // matching the multi-file spill guidance — prioritize placeable overflow, then empty
+      // exports, then non-video files (#1231 extended this path for non-video only).
       const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
-      if (files.some(isVideoFile)) {
+      const placeableCount = files.filter(isPlaceableVideo).length;
+      const skippedEmpty = files.filter((file) => isVideoFile(file) && isEmptyExport(file)).length;
+      const skippedNonVideo = files.filter((file) => !isVideoFile(file)).length;
+      if (placeableCount > 0) {
         setError("There's no open slot left. Remove a video to make room for another.");
         return;
       }
-      // A full layout still needs to explain a stray non-video drop — the document guard
-      // prevents navigation (#1213), but silence here would feel like the file vanished.
-      const skippedNonVideo = files.filter((file) => !isVideoFile(file)).length;
+      if (skippedEmpty > 0) {
+        const noun = skippedEmpty === 1 ? "video" : "videos";
+        const wasWere = skippedEmpty === 1 ? "was an empty export, so it was" : "were empty exports, so they were";
+        setError(`${skippedEmpty} ${noun} in that drop ${wasWere} skipped. Re-export and drop the finished file.`);
+        return;
+      }
       if (skippedNonVideo > 0) {
         const noun = skippedNonVideo === 1 ? "file" : "files";
         const wasWere = skippedNonVideo === 1 ? "wasn't a video, so it was" : "weren't videos, so they were";
