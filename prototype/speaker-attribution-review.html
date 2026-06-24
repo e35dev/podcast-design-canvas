@@ -287,6 +287,14 @@
         margin: 0;
       }
 
+      .bulk-flag {
+        display: block;
+        margin-top: 8px;
+        color: var(--warn);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -602,6 +610,10 @@
         return moments.filter((moment) => moment.decision !== "not-exported" && moment.assignedSpeaker === bulk.from).length;
       }
 
+      function countUnassignedExported() {
+        return moments.filter((moment) => moment.decision !== "not-exported" && !moment.assignedSpeaker).length;
+      }
+
       function render() {
         renderSpeakerOptions(bulkFromElement, bulk.from, true);
         renderSpeakerOptions(bulkToElement, bulk.to, true);
@@ -788,6 +800,16 @@
 
         bulkStatusElement.className = bulk.status === "applied" ? "issue done" : "issue info";
         bulkStatusElement.append(title, detail);
+
+        const stillUnassigned = countUnassignedExported();
+        if ((bulk.status === "previewing changes" || bulk.status === "applied") && stillUnassigned > 0) {
+          const flag = document.createElement("span");
+          flag.className = "bulk-flag";
+          flag.textContent = stillUnassigned === 1
+            ? "Leaves 1 exported caption line still unassigned — assign it before captions are marked ready."
+            : `Leaves ${stillUnassigned} exported caption lines still unassigned — assign them before captions are marked ready.`;
+          bulkStatusElement.append(flag);
+        }
 
         applyBulkElement.disabled = bulk.status !== "previewing changes" || bulk.from === bulk.to || bulk.previewCount === 0;
         revertBulkElement.disabled = !bulk.previousMoments;
