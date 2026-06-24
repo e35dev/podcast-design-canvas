@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      @media (max-width: 860px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+
+      .switch-styles {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .switch-style {
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px 14px;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink);
+        display: grid;
+        gap: 2px;
+      }
+
+      .switch-style:hover {
+        border-color: var(--accent);
+      }
+
+      .switch-style:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .switch-style[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        background: #f1f9f6;
+      }
+
+      .switch-style b {
+        font-size: 14px;
+      }
+
+      .switch-style span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .controls label {
+        display: grid;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .controls select {
+        font: inherit;
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+      }
+
+      .preview-area {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #1a1a2e;
+        aspect-ratio: 16 / 9;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .preview-area .speaker {
+        position: absolute;
+        border-radius: 6px;
+        transition: all 0.4s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .preview-area .speaker.host {
+        background: #136f63;
+      }
+
+      .preview-area .speaker.guest {
+        background: #1a5276;
+      }
+
+      .preview-area .active-badge {
+        position: absolute;
+        bottom: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--accent);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        white-space: nowrap;
+      }
+
+      .timeline {
+        margin-top: 18px;
+      }
+
+      .timeline h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 8px;
+      }
+
+      .moment {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+        align-items: start;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .moment:hover {
+        border-color: var(--accent);
+      }
+
+      .moment:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .moment[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #f1f9f6;
+      }
+
+      .moment .time {
+        font-size: 12px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .moment .desc {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .moment .state {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        white-space: nowrap;
+        align-self: center;
+      }
+
+      .state-ready {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .state-needs-review {
+        background: #fff3e0;
+        color: var(--warn);
+      }
+
+      .state-overridden {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+
+      .state-conflict {
+        background: #fce4ec;
+        color: #c62828;
+      }
+
+      .override-controls {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        display: grid;
+        gap: 10px;
+      }
+
+      .override-controls h3 {
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+
+      .override-controls label {
+        display: grid;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .override-controls select {
+        font: inherit;
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        border-color: var(--accent);
+      }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+      }
+
+      .btn-primary:hover {
+        background: #0e5a50;
+      }
+
+      .direction {
+        margin-top: 18px;
+      }
+
+      .direction h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .direction .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+
+      .direction .row span {
+        color: var(--muted);
+      }
+
+      .direction .row strong {
+        text-align: right;
+      }
+
+      .count-note {
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        font-size: 13px;
+        color: var(--warn);
+      }
+
+      .count-note[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <script src="../preview/style-nav.js" defer></script>
+  <body data-style-step="speaker-switch-framing">
+    <main>
+      <h1>Speaker Switch Framing</h1>
+      <p class="lede">Control how your episode reframes between speakers. Choose a default switch style from your preset, then override individual moments where the auto-framing needs a different feel.</p>
+
+      <div class="workspace">
+        <div>
+          <div class="panel">
+            <h2>Switch style</h2>
+            <div class="switch-styles" id="switch-styles" role="group" aria-label="Speaker switch styles"></div>
+
+            <h2>Transition controls</h2>
+            <div class="controls" id="controls"></div>
+          </div>
+
+          <div class="timeline">
+            <h2>Episode moments</h2>
+            <div class="moments" id="moments" role="list" aria-label="Speaker switch moments"></div>
+            <div class="override-controls" id="override-controls" hidden>
+              <h3 id="override-heading">Override this moment</h3>
+              <label>
+                Style for this moment
+                <select id="override-style" aria-label="Override switch style"></select>
+              </label>
+              <label>
+                Speed for this moment
+                <select id="override-speed" aria-label="Override transition speed">
+                  <option value="default">Use default</option>
+                  <option value="instant">Instant</option>
+                  <option value="smooth">Smooth</option>
+                  <option value="slow">Slow</option>
+                </select>
+              </label>
+              <div class="btn-row">
+                <button type="button" class="btn btn-primary" id="apply-override">Apply override</button>
+                <button type="button" class="btn" id="reset-override">Reset to preset default</button>
+                <button type="button" class="btn" id="pin-speaker">Pin speaker for segment</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <h2>Live preview</h2>
+            <div class="preview-area" id="preview" role="img" aria-label="Speaker switch framing preview"></div>
+            <div class="count-note" id="count-note" hidden></div>
+          </div>
+
+          <div class="direction" id="direction">
+            <h2>Current direction</h2>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      "use strict";
+
+      var switchStyles = {
+        featured: {
+          label: "Featured speaker",
+          note: "Active speaker fills the main frame, others shrink",
+        },
+        equal: {
+          label: "Equal presence",
+          note: "All speakers stay the same size regardless of who talks",
+        },
+        sideBySide: {
+          label: "Side by side",
+          note: "Two speakers share the frame with a subtle highlight on the active one",
+        },
+        pip: {
+          label: "Picture in picture",
+          note: "Active speaker large, others in a small inset",
+        },
+        reactionAware: {
+          label: "Reaction aware",
+          note: "Briefly hold on a listener\u2019s visible reaction before switching",
+        },
+      };
+
+      var speedOptions = {
+        instant: "Instant",
+        smooth: "Smooth",
+        slow: "Slow",
+      };
+
+      var moments = [
+        { id: "m1", time: "00:00", speaker: "Host", to: "Guest 1", desc: "Episode opens \u2014 host introduces guest", baseState: "ready", override: null, segment: 0 },
+        { id: "m2", time: "03:42", speaker: "Guest 1", to: "Host", desc: "Guest finishes intro, host responds", baseState: "ready", override: null, segment: 0 },
+        { id: "m3", time: "12:18", speaker: "Host", to: "Guest 1", desc: "Deep-dive question \u2014 long guest answer", baseState: "needs-review", override: null, segment: 1 },
+        { id: "m4", time: "24:05", speaker: "Guest 1", to: "Host", desc: "Host reacts to a surprising claim", baseState: "ready", override: null, segment: 1 },
+        { id: "m5", time: "31:50", speaker: "Host", to: "Guest 1", desc: "Sponsor transition \u2014 overlaps with b-roll moment", baseState: "conflict", override: null, segment: 2 },
+        { id: "m6", time: "45:12", speaker: "Guest 1", to: "Host", desc: "Segment change \u2014 new topic begins", baseState: "ready", override: null, segment: 2 },
+        { id: "m7", time: "52:30", speaker: "Host", to: "Guest 1", desc: "Guest solo segment \u2014 host off-camera", baseState: "needs-review", override: null, segment: 3 },
+        { id: "m8", time: "01:05:44", speaker: "Guest 1", to: "Host", desc: "Closing thoughts \u2014 host wraps up", baseState: "ready", override: null, segment: 3 },
+      ];
+
+      var state = {
+        switchStyle: "featured",
+        speed: "smooth",
+        selectedMoment: null,
+        pinnedSegments: {},
+      };
+
+      var stylesEl = document.getElementById("switch-styles");
+      var controlsEl = document.getElementById("controls");
+      var momentsEl = document.getElementById("moments");
+      var previewEl = document.getElementById("preview");
+      var directionEl = document.getElementById("direction");
+      var overrideEl = document.getElementById("override-controls");
+      var overrideHeading = document.getElementById("override-heading");
+      var overrideStyleSelect = document.getElementById("override-style");
+      var overrideSpeedSelect = document.getElementById("override-speed");
+      var applyOverrideBtn = document.getElementById("apply-override");
+      var resetOverrideBtn = document.getElementById("reset-override");
+      var pinSpeakerBtn = document.getElementById("pin-speaker");
+      var countNoteEl = document.getElementById("count-note");
+
+      function chooseSwitchStyle(key) {
+        state.switchStyle = key;
+        render();
+      }
+
+      function setSpeed(value) {
+        state.speed = value;
+        render();
+      }
+
+      function selectMoment(id) {
+        state.selectedMoment = state.selectedMoment === id ? null : id;
+        render();
+      }
+
+      function momentState(moment) {
+        if (moment.baseState === "conflict" || moment.baseState === "needs-review") {
+          return moment.baseState;
+        }
+        if (moment.override) return "overridden";
+        return moment.baseState;
+      }
+
+      function applyOverride() {
+        var moment = moments.find(function (m) { return m.id === state.selectedMoment; });
+        if (!moment) return;
+        var style = overrideStyleSelect.value;
+        var speed = overrideSpeedSelect.value;
+        moment.override = {
+          style: style === "default" ? null : style,
+          speed: speed === "default" ? null : speed,
+        };
+        if (moment.override.style === null && moment.override.speed === null) {
+          moment.override = null;
+        }
+        render();
+      }
+
+      function resetOverride() {
+        var moment = moments.find(function (m) { return m.id === state.selectedMoment; });
+        if (!moment) return;
+        moment.override = null;
+        render();
+      }
+
+      function pinnedSpeakerForSegment(segment) {
+        return state.pinnedSegments[segment] || null;
+      }
+
+      function pinSpeaker() {
+        var moment = moments.find(function (m) { return m.id === state.selectedMoment; });
+        if (!moment) return;
+        var seg = moment.segment;
+        if (state.pinnedSegments[seg] === moment.speaker) {
+          delete state.pinnedSegments[seg];
+        } else {
+          state.pinnedSegments[seg] = moment.speaker;
+        }
+        render();
+      }
+
+      function effectiveStyle(moment) {
+        if (moment.override && moment.override.style) return moment.override.style;
+        return state.switchStyle;
+      }
+
+      function effectiveSpeed(moment) {
+        if (moment.override && moment.override.speed) return moment.override.speed;
+        return state.speed;
+      }
+
+      function speakerPositions(style, activeSpeaker) {
+        var isHostActive = activeSpeaker === "Host";
+        var positions = { host: {}, guest: {} };
+
+        if (style === "featured") {
+          if (isHostActive) {
+            positions.host = { top: "8%", left: "5%", width: "60%", height: "84%" };
+            positions.guest = { top: "10%", right: "5%", width: "28%", height: "35%" };
+          } else {
+            positions.guest = { top: "8%", left: "5%", width: "60%", height: "84%" };
+            positions.host = { top: "10%", right: "5%", width: "28%", height: "35%" };
+          }
+        } else if (style === "equal") {
+          positions.host = { top: "8%", left: "3%", width: "45%", height: "84%" };
+          positions.guest = { top: "8%", right: "3%", width: "45%", height: "84%" };
+        } else if (style === "sideBySide") {
+          if (isHostActive) {
+            positions.host = { top: "8%", left: "3%", width: "47%", height: "84%", opacity: "1" };
+            positions.guest = { top: "10%", right: "3%", width: "44%", height: "80%", opacity: "0.8" };
+          } else {
+            positions.guest = { top: "8%", left: "3%", width: "47%", height: "84%", opacity: "1" };
+            positions.host = { top: "10%", right: "3%", width: "44%", height: "80%", opacity: "0.8" };
+          }
+        } else if (style === "pip") {
+          if (isHostActive) {
+            positions.host = { top: "4%", left: "3%", width: "70%", height: "92%" };
+            positions.guest = { bottom: "6%", right: "4%", width: "22%", height: "28%", borderRadius: "8px" };
+          } else {
+            positions.guest = { top: "4%", left: "3%", width: "70%", height: "92%" };
+            positions.host = { bottom: "6%", right: "4%", width: "22%", height: "28%", borderRadius: "8px" };
+          }
+        } else if (style === "reactionAware") {
+          if (isHostActive) {
+            positions.host = { top: "8%", left: "5%", width: "55%", height: "84%" };
+            positions.guest = { top: "12%", right: "5%", width: "33%", height: "50%" };
+          } else {
+            positions.guest = { top: "8%", left: "5%", width: "55%", height: "84%" };
+            positions.host = { top: "12%", right: "5%", width: "33%", height: "50%" };
+          }
+        }
+
+        return positions;
+      }
+
+      function render() {
+        renderStyles();
+        renderControls();
+        renderMoments();
+        renderPreview();
+        renderOverride();
+        renderDirection();
+      }
+
+      function renderStyles() {
+        stylesEl.replaceChildren(
+          ...Object.entries(switchStyles).map(function (entry) {
+            var key = entry[0];
+            var style = entry[1];
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "switch-style";
+            button.setAttribute("aria-pressed", String(key === state.switchStyle));
+            var name = document.createElement("b");
+            name.textContent = style.label;
+            var note = document.createElement("span");
+            note.textContent = style.note;
+            button.append(name, note);
+            button.addEventListener("click", function () { chooseSwitchStyle(key); });
+            return button;
+          })
+        );
+      }
+
+      function renderControls() {
+        controlsEl.replaceChildren(
+          (function () {
+            var label = document.createElement("label");
+            label.textContent = "Transition speed";
+            var select = document.createElement("select");
+            select.setAttribute("aria-label", "Transition speed");
+            Object.entries(speedOptions).forEach(function (entry) {
+              var option = document.createElement("option");
+              option.value = entry[0];
+              option.textContent = entry[1];
+              option.selected = entry[0] === state.speed;
+              select.append(option);
+            });
+            select.addEventListener("change", function (e) { setSpeed(e.target.value); });
+            label.append(select);
+            return label;
+          })()
+        );
+      }
+
+      function renderMoments() {
+        momentsEl.replaceChildren(
+          ...moments.map(function (m) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "moment";
+            button.setAttribute("role", "listitem");
+            button.setAttribute("aria-pressed", String(m.id === state.selectedMoment));
+
+            var info = document.createElement("div");
+            var time = document.createElement("div");
+            time.className = "time";
+            time.textContent = m.time + " \u00b7 " + m.speaker + " \u2192 " + m.to;
+            var desc = document.createElement("div");
+            desc.className = "desc";
+            desc.textContent = m.desc;
+            info.append(time, desc);
+
+            var currentState = momentState(m);
+            var badge = document.createElement("span");
+            badge.className = "state state-" + currentState;
+            var stateLabel = currentState.replace("-", " ");
+            if (m.override && (m.baseState === "conflict" || m.baseState === "needs-review")) {
+              stateLabel += " (overridden)";
+            }
+            badge.textContent = stateLabel;
+
+            button.append(info, badge);
+            button.addEventListener("click", function () { selectMoment(m.id); });
+            return button;
+          })
+        );
+      }
+
+      function renderPreview() {
+        var selected = moments.find(function (m) { return m.id === state.selectedMoment; });
+        var activeSpeaker = selected ? selected.to : "Host";
+        var currentStyle = selected ? effectiveStyle(selected) : state.switchStyle;
+        var pinned = selected ? pinnedSpeakerForSegment(selected.segment) : null;
+
+        if (pinned) {
+          activeSpeaker = pinned;
+        }
+
+        var pos = speakerPositions(currentStyle, activeSpeaker);
+
+        previewEl.replaceChildren();
+
+        var hostEl = document.createElement("div");
+        hostEl.className = "speaker host";
+        hostEl.textContent = "Host";
+        Object.assign(hostEl.style, pos.host);
+        if (activeSpeaker === "Host") {
+          var hostBadge = document.createElement("div");
+          hostBadge.className = "active-badge";
+          hostBadge.textContent = "Speaking";
+          hostEl.appendChild(hostBadge);
+        }
+
+        var guestEl = document.createElement("div");
+        guestEl.className = "speaker guest";
+        guestEl.textContent = "Guest 1";
+        Object.assign(guestEl.style, pos.guest);
+        if (activeSpeaker === "Guest 1") {
+          var guestBadge = document.createElement("div");
+          guestBadge.className = "active-badge";
+          guestBadge.textContent = "Speaking";
+          guestEl.appendChild(guestBadge);
+        }
+
+        previewEl.append(hostEl, guestEl);
+
+        if (pinned) {
+          countNoteEl.hidden = false;
+          countNoteEl.textContent = pinned + " is pinned as featured for this segment. Other speakers adapt around the pinned framing.";
+        } else {
+          countNoteEl.hidden = true;
+          countNoteEl.textContent = "";
+        }
+      }
+
+      function renderOverride() {
+        var selected = moments.find(function (m) { return m.id === state.selectedMoment; });
+        if (!selected) {
+          overrideEl.hidden = true;
+          return;
+        }
+
+        overrideEl.hidden = false;
+        overrideHeading.textContent = "Override: " + selected.time + " \u2014 " + selected.desc;
+
+        overrideStyleSelect.replaceChildren();
+        var defaultOpt = document.createElement("option");
+        defaultOpt.value = "default";
+        defaultOpt.textContent = "Use preset default (" + switchStyles[state.switchStyle].label + ")";
+        defaultOpt.selected = !selected.override || !selected.override.style;
+        overrideStyleSelect.append(defaultOpt);
+
+        Object.entries(switchStyles).forEach(function (entry) {
+          var option = document.createElement("option");
+          option.value = entry[0];
+          option.textContent = entry[1].label;
+          option.selected = selected.override && selected.override.style === entry[0];
+          overrideStyleSelect.append(option);
+        });
+
+        overrideSpeedSelect.value = (selected.override && selected.override.speed) || "default";
+
+        var segPin = pinnedSpeakerForSegment(selected.segment);
+        pinSpeakerBtn.textContent = segPin === selected.speaker
+          ? "Unpin " + selected.speaker
+          : "Pin " + selected.speaker + " for segment";
+      }
+
+      function renderDirection() {
+        var selected = moments.find(function (m) { return m.id === state.selectedMoment; });
+        var currentStyle = selected ? effectiveStyle(selected) : state.switchStyle;
+        var currentSpeed = selected ? effectiveSpeed(selected) : state.speed;
+
+        var overrideCount = moments.filter(function (m) { return m.override !== null; }).length;
+        var reviewCount = moments.filter(function (m) { var s = momentState(m); return s === "needs-review" || s === "conflict"; }).length;
+        var pinnedCount = Object.keys(state.pinnedSegments).length;
+        var pinnedLabel = pinnedCount > 0
+          ? pinnedCount + " segment" + (pinnedCount === 1 ? "" : "s")
+          : "None";
+
+        var rows = [
+          ["Default style", switchStyles[state.switchStyle].label],
+          ["Active style", switchStyles[currentStyle] ? switchStyles[currentStyle].label : currentStyle],
+          ["Transition speed", speedOptions[currentSpeed] || currentSpeed],
+          ["Pinned segments", pinnedLabel],
+          ["Moment overrides", overrideCount + " of " + moments.length],
+          ["Needs review", reviewCount + " moment" + (reviewCount === 1 ? "" : "s")],
+        ];
+
+        var heading = directionEl.querySelector("h2");
+        var children = [heading];
+        rows.forEach(function (row) {
+          var div = document.createElement("div");
+          div.className = "row";
+          var label = document.createElement("span");
+          label.textContent = row[0];
+          var value = document.createElement("strong");
+          value.textContent = row[1];
+          div.append(label, value);
+          children.push(div);
+        });
+
+        directionEl.replaceChildren.apply(directionEl, children);
+      }
+
+      applyOverrideBtn.addEventListener("click", applyOverride);
+      resetOverrideBtn.addEventListener("click", resetOverride);
+      pinSpeakerBtn.addEventListener("click", pinSpeaker);
+
+      render();
+    </script>
+  </body>
+</html>

@@ -28,6 +28,7 @@ function createPreviewAppRouting(order) {
     "preset-pacing-controls",
     "layout-safe-areas",
     "speaker-framing-safety",
+    "speaker-switch-framing",
     "canvas-layer-controls",
   ];
   const reuseScreens = [
