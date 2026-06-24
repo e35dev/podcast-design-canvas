@@ -57,5 +57,6 @@ assert.ok(/try\s*\{[\s\S]*sessionStorage/.test(app), "session storage access is 
 // The shell links to the app so it's discoverable.
 const shell = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 assert.ok(shell.includes("app.html"), "the preview shell links to the unified app");
+assert.ok(app.includes("episode-flow.html"), "the preview app links to the guided episode flow");
 
 console.log(`preview app: ${screens.length} screens routed, stepped, and progress-tracked through one shell URL`);
