@@ -179,6 +179,17 @@
       }
 
       setError("");
+      // A source recording belongs to one slot. If this exact file is already placed in
+      // another slot, move it here instead of leaving it in both — otherwise one video
+      // becomes two separate speakers when the layout is carried into role mapping.
+      const incomingName = file.name || "";
+      if (incomingName) {
+        zones.forEach((other) => {
+          if (other !== zone && other.dataset.fileName === incomingName) {
+            clearZone(other);
+          }
+        });
+      }
       clearZone(zone);
       zone.classList.add("filled");
       zone.dataset.fileName = file.name || "";

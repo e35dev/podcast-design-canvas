@@ -382,4 +382,75 @@ assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "swit
 assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
 assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
 
+// Placing the same source video into a second slot MOVES it rather than duplicating it,
+// so one recording never becomes two separate speakers downstream (#1026). Fresh controller.
+const moveZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const moveButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const moveById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const moveDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return moveById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return moveButtons;
+    if (selector === ".drop-zone[data-slot]") return moveZones;
+    return [];
+  },
+};
+const move = createLayoutFirstController(moveDoc, { URL: urlApi });
+move.placeVideoFile(move.zonesBySlot.host, video("shared-take.mp4"));
+move.placeVideoFile(move.zonesBySlot.guest, video("shared-take.mp4"));
+assert.equal(
+  move.zonesBySlot.host.classList.contains("filled"),
+  false,
+  "placing the same video in a second slot moves it out of the first slot",
+);
+assert.equal(
+  move.zonesBySlot.guest.classList.contains("filled"),
+  true,
+  "the moved video now occupies the second slot",
+);
+assert.equal(
+  move.zonesBySlot.guest.dataset.fileName,
+  "shared-take.mp4",
+  "the second slot holds the moved file",
+);
+assert.equal(
+  move.zonesBySlot.host.dataset.fileName,
+  "",
+  "the vacated slot no longer references the moved file",
+);
+assert.ok(
+  revokedUrls.includes("blob:shared-take.mp4"),
+  "moving a video revokes the vacated slot's object URL",
+);
+assert.equal(
+  moveById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "moving the host video out re-gates Continue until the host slot is refilled",
+);
+move.placeVideoFile(move.zonesBySlot.host, video("host-only.mp4"));
+assert.equal(
+  moveById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "filling the vacated host slot with a different video restores Continue",
+);
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");
