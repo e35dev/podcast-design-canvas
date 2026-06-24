@@ -217,6 +217,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       @media (max-width: 860px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -261,15 +277,40 @@
       const checks = {
         wide: [],
         mobile: [
-          ["Guest frame is cropped", "Use a one-speaker focus crop or switch to stacked mobile layout."],
-          ["Caption competes with speaker frame", "Move captions higher for vertical export."],
+          {
+            title: "Guest frame is cropped",
+            action: "Use a one-speaker focus crop or switch to stacked mobile layout.",
+            fixScreen: "speaker-framing-safety.html",
+            fixLabel: "speaker framing safety",
+          },
+          {
+            title: "Caption competes with speaker frame",
+            action: "Move captions higher for vertical export.",
+            fixScreen: "layout-safe-areas.html",
+            fixLabel: "layout safe areas",
+          },
         ],
         square: [
-          ["Logo is close to crop edge", "Use safer logo position for square previews."],
+          {
+            title: "Logo is close to crop edge",
+            action: "Use safer logo position for square previews.",
+            fixScreen: "layout-safe-areas.html",
+            fixLabel: "layout safe areas",
+          },
         ],
         thumbnail: [
-          ["Title may be small at thumbnail size", "Shorten title text or use a dedicated cover frame."],
-          ["Captions are not useful in thumbnail", "Hide captions for thumbnail export."],
+          {
+            title: "Title may be small at thumbnail size",
+            action: "Shorten title text or use a dedicated cover frame.",
+            fixScreen: "thumbnail-cover-frame.html",
+            fixLabel: "thumbnail cover frame",
+          },
+          {
+            title: "Captions are not useful in thumbnail",
+            action: "Hide captions for thumbnail export.",
+            fixScreen: "layout-safe-areas.html",
+            fixLabel: "layout safe areas",
+          },
         ],
       };
 
@@ -298,16 +339,27 @@
         const currentChecks = checks[selectedSurface];
         issues.replaceChildren(
           ...(currentChecks.length
-            ? currentChecks.map(([title, action]) => renderIssue(title, action))
+            ? currentChecks.map((issue) => renderIssue(issue))
             : [Object.assign(document.createElement("p"), { textContent: "No crop issues for this destination." })]),
         );
       }
 
-      function renderIssue(title, action) {
-        const issue = document.createElement("article");
-        issue.className = "issue";
-        issue.innerHTML = `<strong>${title}</strong><span>${action}</span>`;
-        return issue;
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = "issue";
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
+        return article;
       }
 
       render();
