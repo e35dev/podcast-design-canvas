@@ -982,4 +982,20 @@ assert.equal(canvasDropEvent.propagationStopped, true, "a canvas drop stops prop
 assert.equal(documentDropInvoked, false, "a canvas drop does not also invoke the document-level drop handler");
 assert.equal(canvasCtl.zonesBySlot.host.classList.contains("filled"), true, "the canvas drop still places the video once");
 
+// The whole canvas shows a steady drag affordance while a file is dragged over it (#1216 makes
+// it a drop target). Enter/leave depth keeps it from flickering as the cursor crosses the slots
+// inside, and the highlight clears on leave or drop.
+assert.match(html, /\.canvas-frame\.drag-over/, "the layout canvas has a drag-over affordance style");
+canvasCtl.resetVideos();
+canvas.listeners.dragenter({ preventDefault() {} });
+assert.equal(canvas.classList.contains("drag-over"), true, "dragging onto the canvas shows the whole layout is a drop target");
+canvas.listeners.dragenter({ preventDefault() {} }); // cursor crosses into a slot inside the canvas
+canvas.listeners.dragleave({ preventDefault() {} });
+assert.equal(canvas.classList.contains("drag-over"), true, "crossing the slots inside keeps the canvas affordance steady");
+canvas.listeners.dragleave({ preventDefault() {} });
+assert.equal(canvas.classList.contains("drag-over"), false, "leaving the canvas clears the affordance");
+canvas.listeners.dragenter({ preventDefault() {} });
+canvas.listeners.drop({ preventDefault() {}, stopPropagation() {}, dataTransfer: { files: [] } });
+assert.equal(canvas.classList.contains("drag-over"), false, "a drop clears the canvas affordance");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

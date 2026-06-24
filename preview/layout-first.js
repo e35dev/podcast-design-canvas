@@ -866,8 +866,23 @@
     });
 
     if (layoutCanvas) {
+      // Show the whole canvas as a drop target while a file is dragged over it. A canvas drop
+      // routes to the next open slot (#1216), but without a cue the creator can't tell the
+      // layout — not only the small slots — accepts a drop. Track enter/leave depth so crossing
+      // the slots inside the canvas doesn't flicker the highlight, mirroring the per-slot cue.
+      let canvasDragDepth = 0;
+      layoutCanvas.addEventListener("dragenter", () => {
+        canvasDragDepth += 1;
+        layoutCanvas.classList.add("drag-over");
+      });
       layoutCanvas.addEventListener("dragover", (event) => {
         event.preventDefault();
+      });
+      layoutCanvas.addEventListener("dragleave", () => {
+        canvasDragDepth = Math.max(0, canvasDragDepth - 1);
+        if (canvasDragDepth === 0) {
+          layoutCanvas.classList.remove("drag-over");
+        }
       });
       layoutCanvas.addEventListener("drop", (event) => {
         event.preventDefault();
@@ -876,6 +891,8 @@
         if (typeof event.stopPropagation === "function") {
           event.stopPropagation();
         }
+        canvasDragDepth = 0;
+        layoutCanvas.classList.remove("drag-over");
         // A placed-video dragged between slots is handled by the target slot; the canvas-wide
         // handler only routes real file drops to the next empty slot.
         if (draggingFromSlot) {
