@@ -409,6 +409,35 @@
         font-size: 12px;
       }
 
+      .batch-priority {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .batch-priority-card {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 10px;
+      }
+
+      .batch-priority-card strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .batch-priority-card span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .batch-toolbar button[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #e0f3ee;
+        color: var(--accent);
+      }
+
       .batch-links {
         display: grid;
         gap: 8px;
@@ -487,9 +516,20 @@
               <span id="batchStatus" class="batch-status all-clear">All clear</span>
               <p id="batchDetail" class="batch-detail"></p>
             </div>
+            <div class="batch-priority" id="batchPriority" hidden aria-label="Source media priority counts">
+              <article class="batch-priority-card">
+                <strong id="batchBlockerCount">0 blockers</strong>
+                <span>files that must be replaced before styling</span>
+              </article>
+              <article class="batch-priority-card">
+                <strong id="batchReviewCount">0 to review</strong>
+                <span>files that can continue with a creator decision</span>
+              </article>
+            </div>
             <div class="batch-condition-tags" id="batchConditionTags" hidden></div>
             <div class="batch-toolbar" id="batchToolbar"></div>
-            <p class="batch-filter-note" id="batchFilterNote" hidden>Showing only files that need work; ready files stay hidden until you show all.</p>
+            <p class="batch-filter-note" id="batchFilterNote" hidden>Showing only files that need work; ready files stay hidden until you clear the filter.</p>
+            <p class="batch-filter-note" id="batchBlockingFilterNote" hidden>Showing only files that block styling; softer warnings and ready files stay hidden until you clear the filter.</p>
             <div class="batch-links" id="batchLinks"></div>
           </div>
           <div class="speakers" id="speakers"></div>
@@ -611,7 +651,7 @@
       ];
 
       let speakers = structuredClone(sampleSpeakers);
-      let showFlaggedOnly = false;
+      let batchFilter = "all";
 
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
@@ -619,10 +659,14 @@
       const batchImportElement = document.querySelector("#batchImport");
       const batchStatusElement = document.querySelector("#batchStatus");
       const batchDetailElement = document.querySelector("#batchDetail");
+      const batchPriorityElement = document.querySelector("#batchPriority");
+      const batchBlockerCountElement = document.querySelector("#batchBlockerCount");
+      const batchReviewCountElement = document.querySelector("#batchReviewCount");
       const batchToolbarElement = document.querySelector("#batchToolbar");
       const batchLinksElement = document.querySelector("#batchLinks");
       const batchConditionTagsElement = document.querySelector("#batchConditionTags");
       const batchFilterNoteElement = document.querySelector("#batchFilterNote");
+      const batchBlockingFilterNoteElement = document.querySelector("#batchBlockingFilterNote");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -638,7 +682,7 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         speakers = structuredClone(sampleSpeakers);
-        showFlaggedOnly = false;
+        batchFilter = "all";
         render();
       });
 
@@ -795,21 +839,37 @@
           batchDetailElement.textContent = `${batch.attentionCount} ${batch.attentionCount === 1 ? "track wants" : "tracks want"} a look. ${batch.clearCount} ${batch.clearCount === 1 ? "track is" : "tracks are"} already clear.`;
         }
 
+        batchPriorityElement.hidden = batch.flaggedCount === 0;
+        batchBlockerCountElement.textContent = `${batch.actionCount} ${batch.actionCount === 1 ? "blocker" : "blockers"}`;
+        batchReviewCountElement.textContent = `${batch.attentionCount} to review`;
+
         batchToolbarElement.replaceChildren();
         if (batch.flaggedCount > 0) {
           const filterButton = document.createElement("button");
           filterButton.type = "button";
           filterButton.className = "secondary";
-          filterButton.textContent = showFlaggedOnly
-            ? `Show all ${results.length} tracks`
-            : `Show tracks that need work (${batch.flaggedCount})`;
+          filterButton.textContent = `Show tracks that need work (${batch.flaggedCount})`;
+          filterButton.setAttribute("aria-pressed", batchFilter === "needs-work" ? "true" : "false");
           filterButton.addEventListener("click", () => {
-            showFlaggedOnly = !showFlaggedOnly;
+            batchFilter = batchFilter === "needs-work" ? "all" : "needs-work";
             render();
           });
           batchToolbarElement.append(filterButton);
         }
-        batchFilterNoteElement.hidden = !(batch.flaggedCount > 0 && showFlaggedOnly);
+        if (batch.actionCount > 0) {
+          const blockerButton = document.createElement("button");
+          blockerButton.type = "button";
+          blockerButton.className = "secondary";
+          blockerButton.textContent = `Show files blocking styling (${batch.actionCount})`;
+          blockerButton.setAttribute("aria-pressed", batchFilter === "blocking" ? "true" : "false");
+          blockerButton.addEventListener("click", () => {
+            batchFilter = batchFilter === "blocking" ? "all" : "blocking";
+            render();
+          });
+          batchToolbarElement.append(blockerButton);
+        }
+        batchFilterNoteElement.hidden = !(batchFilter === "needs-work" && batch.flaggedCount > 0);
+        batchBlockingFilterNoteElement.hidden = !(batchFilter === "blocking" && batch.actionCount > 0);
 
         const flagged = results.filter((result) => batchCategory(result.state) !== "clear");
         renderBatchConditionTags(flagged);
@@ -837,7 +897,7 @@
       }
 
       function jumpToSpeaker(id) {
-        showFlaggedOnly = false;
+        batchFilter = "all";
         render();
         const target = speakersElement.querySelector(`[data-speaker-id="${id}"]`);
         if (!target) {
@@ -851,16 +911,22 @@
       function render() {
         const evaluation = evaluate(speakers);
         const batch = summarizeBatch(evaluation.results);
-        if (showFlaggedOnly && batch.flaggedCount === 0) {
-          showFlaggedOnly = false;
+        const filterHasNoResults =
+          (batchFilter === "needs-work" && batch.flaggedCount === 0)
+          || (batchFilter === "blocking" && batch.actionCount === 0);
+        if (filterHasNoResults) {
+          batchFilter = "all";
         }
         renderBatchSummary(batch, evaluation.results);
 
         speakersElement.replaceChildren(
           ...speakers.map((speaker, index) => {
             const result = evaluation.results[index];
-            const flagged = batchCategory(result.state) !== "clear";
-            return renderSpeaker(speaker, index, result, showFlaggedOnly && !flagged);
+            const category = batchCategory(result.state);
+            const filteredOut =
+              (batchFilter === "needs-work" && category === "clear")
+              || (batchFilter === "blocking" && category !== "action");
+            return renderSpeaker(speaker, index, result, filteredOut);
           }),
         );
 
