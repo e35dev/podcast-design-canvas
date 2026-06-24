@@ -812,7 +812,7 @@
 
         const labels = active.flatMap((choice) => {
           const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
-          if (!moment?.label) return [];
+          if (typeof choice.label !== "string" || !choice.label.length || !moment?.label) return [];
           return [`${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`];
         });
 
