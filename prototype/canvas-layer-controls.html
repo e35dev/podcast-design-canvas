@@ -367,11 +367,14 @@
         const meta = el("div", { class: "layer-meta", text: metaBits.join(" · ") }, []);
         const main = el("div", { class: "layer-main" }, [nameRow, meta]);
 
+        // The ▲/▼ controls are disabled at the stack ends, and also when this layer is locked or
+        // the neighbor in that direction is locked — a locked layer never moves and never gets
+        // displaced, so the buttons reflect what reorderLayers will actually allow.
         const up = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " up", text: "▲" }, []);
-        if (index === 0) { up.disabled = true; }
+        if (index === 0 || layer.locked || (layers[index - 1] && layers[index - 1].locked)) { up.disabled = true; }
         up.addEventListener("click", function () { move(index, -1); });
         const down = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " down", text: "▼" }, []);
-        if (index === layers.length - 1) { down.disabled = true; }
+        if (index === layers.length - 1 || layer.locked || (layers[index + 1] && layers[index + 1].locked)) { down.disabled = true; }
         down.addEventListener("click", function () { move(index, 1); });
 
         const vis = el("button", { type: "button", class: "tiny secondary", text: layer.visible ? "Hide" : "Show" }, []);
@@ -402,18 +405,28 @@
         return row;
       }
 
-      function move(index, delta) {
+      // A locked layer holds its place: it cannot be moved, and it cannot be displaced by moving
+      // a neighbor into its slot. This makes locking actually keep a layer "from moving by
+      // accident" — the contract the lock control and the production-gate check both promise.
+      // Returns a new array (unchanged order when the move is blocked or out of range).
+      function reorderLayers(list, index, delta) {
         const target = index + delta;
-        if (target < 0 || target >= layers.length) { return; }
-        const copy = layers.slice();
+        if (index < 0 || index >= list.length) { return list.slice(); }
+        if (target < 0 || target >= list.length) { return list.slice(); }
+        if (list[index].locked || list[target].locked) { return list.slice(); }
+        const copy = list.slice();
         const item = copy.splice(index, 1)[0];
         copy.splice(target, 0, item);
-        layers = copy;
+        return copy;
+      }
+
+      function move(index, delta) {
+        layers = reorderLayers(layers, index, delta);
         render();
       }
 
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature };
+        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature, reorderLayers: reorderLayers, sampleLayers: sampleLayers };
       }
 
       render();
