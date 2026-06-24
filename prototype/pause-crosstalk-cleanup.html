@@ -351,6 +351,29 @@
         background: #ffe0e0;
       }
 
+      .rollup-suggest-tags {
+        display: grid;
+        gap: 8px;
+      }
+
+      .rollup-suggest-tags .rollup-suggest-tag {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #f7faf8;
+        border: 1px solid var(--line);
+      }
+
+      .rollup-suggest-tags .rollup-suggest-tag strong {
+        display: block;
+        color: var(--ink);
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
       .rollup-toolbar,
       .rollup-links {
         display: flex;
@@ -615,6 +638,31 @@
         return wrap;
       }
 
+      function renderRollupSuggestTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-suggest-tags";
+        wrap.setAttribute("aria-label", "Suggested next steps for moments needing a decision");
+
+        for (const entry of needsWork) {
+          const kind = kinds[entry.kindKey];
+          const suggest = kind?.suggest;
+          if (typeof suggest !== "string" || !suggest.length) continue;
+
+          const tag = document.createElement("p");
+          tag.className = "rollup-suggest-tag";
+          const label = kindDisplayLabel(entry.kindKey);
+          const at = typeof entry.at === "string" && entry.at.length ? entry.at : null;
+          const lead = document.createElement("strong");
+          lead.textContent = at && label ? `${at} · ${label}` : label || at || "Moment";
+          const copy = document.createElement("span");
+          copy.textContent = suggest;
+          tag.append(lead, copy);
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderMomentRollup(evaluation) {
         const rollup = buildMomentRollup(evaluation);
         const reviewCount = rollup.needsWork.length;
@@ -636,6 +684,10 @@
           const kindTags = renderRollupKindTags(rollup.needsWork);
           if (kindTags.childElementCount) {
             rollupElement.appendChild(kindTags);
+          }
+          const suggestTags = renderRollupSuggestTags(rollup.needsWork);
+          if (suggestTags.childElementCount) {
+            rollupElement.appendChild(suggestTags);
           }
         }
 
