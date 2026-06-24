@@ -1048,4 +1048,24 @@ canvas.listeners.dragenter({ preventDefault() {} });
 canvas.listeners.drop({ preventDefault() {}, stopPropagation() {}, dataTransfer: { files: [] } });
 assert.equal(canvas.classList.contains("drag-over"), false, "a drop clears the canvas affordance");
 
+// Moving a placed video between slots must not trigger the external-file canvas affordance (#1233).
+canvasCtl.placeVideoFile(canvasCtl.zonesBySlot.host, { name: "host.mp4", type: "video/mp4", size: 3, lastModified: 3 });
+const placedWrap = canvasCtl.zonesBySlot.host.querySelector(".placed-video");
+placedWrap.listeners.dragstart({
+  dataTransfer: {
+    setData() {},
+    effectAllowed: "move",
+  },
+});
+canvas.listeners.dragenter({ preventDefault() {} });
+assert.equal(
+  canvas.classList.contains("drag-over"),
+  false,
+  "dragging a placed video between slots does not show the external-file canvas affordance",
+);
+// Target slots still accept the move via their own drag-over cue.
+const guestZone = canvasCtl.zonesBySlot.guest;
+guestZone.listeners.dragenter({ preventDefault() {} });
+assert.equal(guestZone.classList.contains("drag-over"), true, "the destination slot still highlights while repositioning a placed video");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

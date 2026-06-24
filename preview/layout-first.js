@@ -878,6 +878,12 @@
       // the slots inside the canvas doesn't flicker the highlight, mirroring the per-slot cue.
       let canvasDragDepth = 0;
       layoutCanvas.addEventListener("dragenter", () => {
+        // The canvas affordance is for external file drops (#1216 / #1237). A placed video being
+        // dragged between slots (#1233) must not light up the whole layout as if new files belong
+        // here — only the target slot should highlight.
+        if (draggingFromSlot) {
+          return;
+        }
         canvasDragDepth += 1;
         layoutCanvas.classList.add("drag-over");
       });
