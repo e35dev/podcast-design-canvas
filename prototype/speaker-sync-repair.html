@@ -808,10 +808,21 @@
         return name.split(" — ")[0];
       }
 
+      function repairDisplayLabel(repairKey) {
+        if (!repairKey) return null;
+        const label = repairs[repairKey];
+        return typeof label === "string" && label.length ? label : null;
+      }
+
       function rollupOpenLinkLabel(result) {
         const bucket = trackBucketLabel(result.name);
         const issueLabel = issues[result.issue]?.label;
-        return issueLabel ? `Open ${bucket} · ${issueLabel}` : `Open ${bucket}`;
+        const repairLabel = repairDisplayLabel(result.proposedRepair);
+        if (issueLabel && repairLabel) {
+          return `Open ${bucket} · ${issueLabel} → ${repairLabel}`;
+        }
+        const detail = issueLabel || repairLabel;
+        return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
       }
 
       function renderRollupIssueTags(needsWork) {
