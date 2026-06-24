@@ -257,6 +257,24 @@
         return true;
       }
 
+      function skipMoment(moment) {
+        if (moment.status === "hidden" || moment.status === "skipped") {
+          return;
+        }
+
+        moment.restoreStatus = moment.status;
+        moment.status = "skipped";
+      }
+
+      function restoreMoment(moment) {
+        if (moment.status === "skipped" && moment.restoreStatus && moment.restoreStatus !== "skipped") {
+          moment.status = moment.restoreStatus;
+        } else {
+          moment.status = "ready";
+        }
+        delete moment.restoreStatus;
+      }
+
       // --- DOM rendering ---
 
       var momentsEl = document.getElementById("moments");
@@ -336,7 +354,7 @@
           skipBtn.className = "secondary";
           skipBtn.textContent = "Skip this moment";
           skipBtn.addEventListener("click", function () {
-            moment.status = "skipped";
+            skipMoment(moment);
             render();
           });
           actions.appendChild(skipBtn);
@@ -347,7 +365,7 @@
           restoreBtn.className = "secondary";
           restoreBtn.textContent = "Restore";
           restoreBtn.addEventListener("click", function () {
-            moment.status = "ready";
+            restoreMoment(moment);
             render();
           });
           actions.appendChild(restoreBtn);
@@ -425,6 +443,8 @@
           statusLabel: statusLabel,
           momentSummary: momentSummary,
           isReadyForExport: isReadyForExport,
+          skipMoment: skipMoment,
+          restoreMoment: restoreMoment,
         };
       }
     </script>

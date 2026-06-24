@@ -44,7 +44,7 @@ const mockMod = { exports: {} };
 const fn = new Function("document", "module", match[1]);
 fn(mockDoc, mockMod);
 
-const { episode, LAYOUTS, INITIAL_MOMENTS, statusLabel, momentSummary, isReadyForExport } = mockMod.exports;
+const { episode, LAYOUTS, INITIAL_MOMENTS, statusLabel, momentSummary, isReadyForExport, skipMoment, restoreMoment } = mockMod.exports;
 
 // 1. Episode context is grounded.
 assert.ok(episode.show, "episode has a show name");
@@ -105,5 +105,18 @@ assert.strictEqual(isReadyForExport(allReady), true, "ready when all moments are
 // Hidden/skipped don't block.
 var hiddenOnly = [{ id: "x", status: "hidden" }, { id: "y", status: "skipped" }];
 assert.strictEqual(isReadyForExport(hiddenOnly), true, "hidden and skipped moments do not block export");
+
+var skippedReview = { id: "x", status: "needs-focus" };
+skipMoment(skippedReview);
+assert.strictEqual(skippedReview.status, "skipped", "unresolved moments can be skipped out of export");
+assert.strictEqual(isReadyForExport([skippedReview]), true, "a skipped unresolved moment no longer blocks export");
+restoreMoment(skippedReview);
+assert.strictEqual(skippedReview.status, "needs-focus", "restoring a skipped issue brings back its unresolved status");
+assert.strictEqual(isReadyForExport([skippedReview]), false, "restored unresolved moments block export again");
+
+var skippedReady = { id: "y", status: "ready" };
+skipMoment(skippedReady);
+restoreMoment(skippedReady);
+assert.strictEqual(skippedReady.status, "ready", "restoring a skipped ready moment keeps it ready");
 
 console.log("screen-share-moment-review: all behavior tests passed");
