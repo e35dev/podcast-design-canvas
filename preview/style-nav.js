@@ -17,8 +17,8 @@ const STYLE_ENTRY = { file: "speaker-eye-line-coherence.html", label: "Speaker e
 const STYLE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Watch the finished episode" };
 
 const PREVIEW_APP_STYLE_TARGETS = new Set([
-  "speaker-eye-line-coherence",
-  "episode-watch-through-preview",
+  screenIdFromFile(STYLE_ENTRY.file),
+  screenIdFromFile(STYLE_HANDOFF.file),
   ...STYLE_FLOW.map((step) => step.id),
 ]);
 
@@ -180,9 +180,8 @@ function renderStyleNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "episode-watch-through-preview.html";
-    setStyleScreenLink(start, start.href);
-    start.textContent = "Continue: Watch the finished episode";
+    setStyleScreenLink(start, STYLE_HANDOFF.file);
+    start.textContent = `Continue: ${STYLE_HANDOFF.label}`;
     wrap.appendChild(start);
   }
 
