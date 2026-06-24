@@ -270,6 +270,12 @@
         margin-bottom: 18px;
       }
 
+      .compare-moment-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: -10px 0 14px;
+      }
+
       .preview-card {
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -428,6 +434,7 @@
           <p class="moment-hint" id="moment-hint" aria-live="polite"></p>
 
           <h2>Compare on this moment</h2>
+          <p class="compare-moment-note" id="compare-moment-note" aria-live="polite"></p>
           <div class="compare" id="compare" aria-live="polite"></div>
 
           <h2>Speaker balance</h2>
@@ -490,6 +497,7 @@
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
       const momentHintElement = document.querySelector("#moment-hint");
+      const compareMomentNoteElement = document.querySelector("#compare-moment-note");
 
       document.querySelector("#apply").addEventListener("click", () => {
         applied = true;
@@ -514,6 +522,7 @@
         controlsElement.replaceChildren(...choices.map(renderChoice));
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
         renderCompare();
+        renderCompareMomentNote();
         speakersElement.replaceChildren(
           ...speakers.map((speaker, index) => {
             const filteredOut = showReviewOnly && !needsReviewState(speaker.state);
@@ -837,6 +846,11 @@
         return heights
           .map((height) => `<i class="${cleaned ? "soft" : ""}" style="height:${height}%"></i>`)
           .join("");
+      }
+
+      function renderCompareMomentNote() {
+        const moment = previewMoments.find((entry) => entry.id === preview);
+        compareMomentNoteElement.textContent = moment?.note ?? "";
       }
 
       function renderCompare() {
