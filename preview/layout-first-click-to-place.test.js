@@ -86,6 +86,7 @@ function matches(node, selector) {
   if (selector === "[data-layout-label]") return Object.prototype.hasOwnProperty.call(node.dataset, "layoutLabel");
   if (selector === "[data-file-input]") return Boolean(node.dataset.fileInput);
   if (selector === ".placed-video") return node.className === "placed-video";
+  if (selector === ".placed-remove") return node.className === "placed-remove";
   return false;
 }
 
@@ -151,13 +152,18 @@ assert.equal(hostOpened, 1, "clicking an empty slot opens its file picker");
 ctl.zonesBySlot.host.listeners.click({ target: hostInput });
 assert.equal(hostOpened, 1, "clicking the file input itself does not double-open the picker");
 
-// A filled slot leaves clicks to its video and Remove control (no hijack).
+// A filled slot opens the picker when the creator clicks the slot chrome, but not when they
+// click the placed preview or Remove control.
 ctl.placeVideoFile(ctl.zonesBySlot.guest, video("guest.mp4"));
 const guestInput = ctl.zonesBySlot.guest.querySelector("[data-file-input]");
 let guestOpened = 0;
 guestInput.click = () => { guestOpened += 1; };
 ctl.zonesBySlot.guest.listeners.click({ target: ctl.zonesBySlot.guest });
-assert.equal(guestOpened, 0, "a filled slot does not hijack clicks to open the picker");
+assert.equal(guestOpened, 1, "clicking filled slot chrome opens the replacement picker");
+const placedGuest = ctl.zonesBySlot.guest.querySelector(".placed-video");
+const guestRemove = placedGuest.querySelector(".placed-remove");
+ctl.zonesBySlot.guest.listeners.click({ target: guestRemove });
+assert.equal(guestOpened, 1, "clicking Remove on a filled slot does not open the picker");
 
 // A slot hidden by the current layout opens nothing on a stray click.
 const hiddenInput = ctl.zonesBySlot["guest-b"].querySelector("[data-file-input]");
@@ -168,4 +174,4 @@ assert.equal(hiddenOpened, 0, "a hidden slot does not open a picker");
 
 assert.match(html, /\.drop-zone:not\(\.filled\) \{ cursor: pointer/, "empty slots show a clickable cursor");
 
-console.log("layout-first click-to-place: empty slots open their picker; input/filled/hidden slots are handled");
+console.log("layout-first click-to-place: slots open their picker; filled chrome replaces; input/hidden/controls are handled");

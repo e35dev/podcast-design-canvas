@@ -287,6 +287,43 @@
       return false;
     }
 
+    // Clicks on a placed video's preview or Remove control should stay on that control.
+    // Clicks on the slot chrome (label, padding) on a filled slot open the file picker
+    // so the creator can replace the recording without clearing the slot first.
+    function isPlacedVideoControl(target) {
+      if (!target) {
+        return false;
+      }
+      function hasClass(node, name) {
+        if (!node) {
+          return false;
+        }
+        if (node.classList && node.classList.contains(name)) {
+          return true;
+        }
+        return typeof node.className === "string"
+          && node.className.split(/\s+/).filter(Boolean).indexOf(name) !== -1;
+      }
+      if (typeof target.closest === "function") {
+        let node = target;
+        while (node) {
+          if (hasClass(node, "placed-remove") || (node.tagName && node.tagName.toUpperCase() === "VIDEO")) {
+            return true;
+          }
+          node = node.parentNode;
+        }
+        return false;
+      }
+      let node = target;
+      while (node) {
+        if (hasClass(node, "placed-remove") || (node.tagName && node.tagName.toUpperCase() === "VIDEO")) {
+          return true;
+        }
+        node = node.parentNode;
+      }
+      return false;
+    }
+
     // When Continue is gated, send the creator to the first slot that still blocks
     // progress — invalid rejection, missing required video, or duplicate recording.
     function firstBlockingZone() {
@@ -817,15 +854,18 @@
 
     zones.forEach((zone) => {
       const input = zone.querySelector("[data-file-input]");
-      // Make the whole empty slot a click target for choosing a video, so a creator can place
-      // media by clicking the slot in the layout instead of aiming at the small file input.
-      // A filled slot leaves clicks to its video and Remove control, and a click on the input
-      // itself already opens the picker (so it must not re-trigger one here).
+      // Make the whole slot a click target for choosing a video, so a creator can place or
+      // replace media by clicking the slot chrome instead of aiming at the small file input.
+      // A filled slot still leaves its video preview and Remove control alone; a click on the
+      // input itself already opens the picker (so it must not re-trigger one here).
       zone.addEventListener("click", (event) => {
-        if (zone.classList.contains("filled") || zone.classList.contains("is-hidden")) {
+        if (zone.classList.contains("is-hidden")) {
           return;
         }
         if (event && event.target === input) {
+          return;
+        }
+        if (zone.classList.contains("filled") && isPlacedVideoControl(event && event.target)) {
           return;
         }
         if (input && typeof input.click === "function") {
