@@ -123,6 +123,24 @@
         gap: 8px;
       }
 
+      .rollup-issue-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-issue-tags .rollup-issue-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
       .track.jump-highlight {
         box-shadow: 0 0 0 2px #136f63;
       }
@@ -732,6 +750,26 @@
         };
       }
 
+      function trackBucketLabel(name) {
+        return name.split(" — ")[0];
+      }
+
+      function renderRollupIssueTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-issue-tags";
+        wrap.setAttribute("aria-label", "Detected sync issues needing review");
+
+        for (const result of needsWork) {
+          const issue = issues[result.issue];
+          const tag = document.createElement("span");
+          tag.className = "rollup-issue-tag";
+          tag.textContent = `${trackBucketLabel(result.name)} — ${issue.label}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(evaluation, reviewCount) {
         const rollup = buildRollup(evaluation);
         rollupElement.className = `track-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -747,6 +785,10 @@
         detail.textContent = rollup.detail;
         head.append(status, detail);
         rollupElement.appendChild(head);
+
+        if (rollup.needsWork.length) {
+          rollupElement.appendChild(renderRollupIssueTags(rollup.needsWork));
+        }
 
         if (reviewCount > 0) {
           const toolbar = document.createElement("div");
@@ -772,7 +814,7 @@
             const jump = document.createElement("button");
             jump.type = "button";
             jump.className = "secondary";
-            jump.textContent = `Open ${result.name.split(" — ")[0]}`;
+            jump.textContent = `Open ${trackBucketLabel(result.name)}`;
             jump.addEventListener("click", () => focusTrack(result.id));
             links.appendChild(jump);
           }
