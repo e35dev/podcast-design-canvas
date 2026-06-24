@@ -348,6 +348,48 @@ assert.equal(
   "embedded publish nav routes in-page backward publish links through the preview app with publish context",
 );
 
+// Cross-stage fix-link hand-offs from publish-prep screens (e.g. metadata's chapter
+// and social links) also route through the preview app when embedded, keeping their
+// own owning-stage context instead of nesting inside the iframe.
+const embeddedHandoffLinks = renderNavFor(
+  "episode-metadata-publishing.html",
+  true,
+  "?path=publish",
+  ["episode-chapter-markers.html", "social-context-intake.html", "audio-caption-quality-review.html"],
+);
+const embeddedChapterLink = linkWithText(embeddedHandoffLinks, "episode-chapter-markers.html");
+assert.equal(
+  embeddedChapterLink.href,
+  "../preview/app.html#episode-chapter-markers",
+  "embedded publish nav routes cross-stage chapter hand-offs through the preview app",
+);
+assert.equal(embeddedChapterLink.target, "_top", "embedded cross-stage hand-off links target the parent app");
+assert.equal(
+  linkWithText(embeddedHandoffLinks, "audio-caption-quality-review.html").href,
+  "../preview/app.html#audio-caption-quality-review",
+  "embedded publish nav routes cross-stage caption hand-offs through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedHandoffLinks, "social-context-intake.html").href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded publish nav opens social context hand-offs in its owning ingest context",
+);
+
+const dynamicHandoffLink = normalizePublishClickFor("episode-chapter-markers.html", "?path=publish", true);
+assert.equal(
+  dynamicHandoffLink.href,
+  "../preview/app.html#episode-chapter-markers",
+  "embedded publish nav normalizes dynamically rendered cross-stage hand-offs before navigation",
+);
+assert.equal(dynamicHandoffLink.target, "_top", "dynamic embedded cross-stage hand-offs target the parent app");
+
+const standaloneHandoffLink = normalizePublishClickFor("episode-chapter-markers.html", "?path=publish");
+assert.equal(
+  standaloneHandoffLink.href,
+  "episode-chapter-markers.html",
+  "standalone publish nav leaves cross-stage hand-offs as direct links (no publish context imposed on other stages)",
+);
+
 const dynamicChecklistLink = normalizePublishClickFor("publish-checklist.html", "?path=publish", true);
 assert.equal(
   dynamicChecklistLink.href,

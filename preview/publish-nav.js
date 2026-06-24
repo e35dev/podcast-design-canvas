@@ -27,6 +27,20 @@ const PREVIEW_APP_PUBLISH_TARGETS = new Set([
   ...PUBLISH_FLOW.map((step) => step.id),
 ]);
 
+// Cross-stage fix screens that publish-prep screens hand off to (e.g. metadata's
+// chapter/social links, the publish checklist's caption/source/attribution fixes).
+// These are owned by other stages, so they keep their own context when opened from
+// the assembled preview app — matching the cleanup-nav handoff treatment.
+const PREVIEW_APP_PUBLISH_HANDOFFS = new Map([
+  ["audio-caption-quality-review", ""],
+  ["source-media-health", ""],
+  ["speaker-attribution-review", ""],
+  ["speaker-framing-safety", ""],
+  ["layout-safe-areas", ""],
+  ["episode-chapter-markers", ""],
+  ["social-context-intake", "?path=ingest"],
+]);
+
 function currentPublishIndex() {
   const fromBody = document.body.dataset.publishStep;
   if (fromBody) {
@@ -53,6 +67,19 @@ function screenIdFromFile(file) {
 
 function isPreviewAppPublishTarget(file) {
   return PREVIEW_APP_PUBLISH_TARGETS.has(screenIdFromFile(file));
+}
+
+function publishHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_PUBLISH_HANDOFFS.has(screen) ? PREVIEW_APP_PUBLISH_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppPublishHandoff(file) {
+  return publishHandoffSearch(file) !== null;
+}
+
+function isPreviewAppPublishRoute(file) {
+  return isPreviewAppPublishTarget(file) || isPreviewAppPublishHandoff(file);
 }
 
 function isEmbeddedInPreviewApp() {
@@ -111,7 +138,12 @@ function mergeRouteSearch(file, overrides = {}) {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = publishHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
@@ -136,9 +168,17 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setPublishScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppPublishTarget(file)) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppPublishRoute(file)) {
     link.href = previewAppHref(file);
     link.target = "_top";
+    return;
+  }
+
+  // Standalone: cross-stage hand-offs stay direct links to their owning screen — the
+  // publish path context only applies to publish-prep screens, not the fix screens
+  // they hand off to.
+  if (isPreviewAppPublishHandoff(file)) {
+    link.href = file;
     return;
   }
 
@@ -150,7 +190,7 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizePublishHref(href) {
-  return isLocalScreenHref(href) && isPreviewAppPublishTarget(href);
+  return isLocalScreenHref(href) && isPreviewAppPublishRoute(href);
 }
 
 function normalizePublishScreenLink(link) {
