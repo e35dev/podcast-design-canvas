@@ -28,9 +28,12 @@ const SETUP_IN_PAGE_TARGETS = new Set([
 ]);
 
 // Core episode flow screens that speaker setup prototypes hand off to when
-// attribution review finds sync timing problems.
+// attribution review finds sync timing problems or guest/off-camera reviews
+// need social context or preset comparison fixes.
 const PREVIEW_APP_SETUP_HANDOFFS = new Map([
   ["speaker-sync-repair", "?path=episode"],
+  ["social-context-intake", "?path=ingest"],
+  ["preset-comparison-preview", "?path=episode"],
 ]);
 
 function currentSetupIndex() {
@@ -138,6 +141,16 @@ function hrefWithPath(file) {
   return mergeRouteSearch(file, { path: "episode" });
 }
 
+function resolveSetupLink(file) {
+  const screen = screenIdFromFile(file);
+  if (PREVIEW_APP_SETUP_HANDOFFS.has(screen)) {
+    const handoffSearch = PREVIEW_APP_SETUP_HANDOFFS.get(screen);
+    const path = new URLSearchParams(handoffSearch.replace(/^\?/, "")).get("path");
+    return mergeRouteSearch(file, { path });
+  }
+  return hrefWithPath(file);
+}
+
 function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
@@ -145,7 +158,7 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setSetupScreenLink(link, file) {
-  const resolved = hrefWithPath(file);
+  const resolved = resolveSetupLink(file);
   if (isEmbeddedInPreviewApp() && isPreviewAppSetupRoute(resolved)) {
     link.href = previewAppHref(resolved);
     link.target = "_top";
