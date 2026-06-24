@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+
+      input, select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      input[type="color"] {
+        min-height: 40px;
+        padding: 4px;
+        cursor: pointer;
+      }
+
+      .color-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .swatch {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .swatch-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+
+      /* Preview card */
+      .preview-area {
+        display: grid;
+        gap: 18px;
+      }
+
+      .preview-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .preview-header {
+        padding: 14px 16px;
+        font-weight: 700;
+        font-size: 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .preview-body {
+        padding: 16px;
+        min-height: 120px;
+        position: relative;
+      }
+
+      .speaker-frame {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 24px;
+        color: #ffffff;
+        margin-right: 10px;
+        vertical-align: top;
+      }
+
+      .caption-preview {
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        display: inline-block;
+        margin-top: 10px;
+        max-width: 400px;
+      }
+
+      .lower-third-preview {
+        padding: 8px 14px;
+        border-radius: 0 6px 6px 0;
+        font-size: 13px;
+        display: inline-block;
+        margin-top: 10px;
+        border-left: 3px solid;
+      }
+
+      .lower-third-preview .name {
+        font-weight: 700;
+        display: block;
+      }
+
+      .lower-third-preview .role {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .title-moment {
+        padding: 14px 18px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 18px;
+        margin-top: 12px;
+      }
+
+      .logo-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        border: 2px dashed;
+        margin: 0 10px 10px 0;
+        vertical-align: top;
+      }
+
+      /* Guardrails */
+      .guardrails {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .guardrail {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+        font-size: 13px;
+      }
+
+      .guardrail.warn {
+        border-left-color: var(--warn);
+      }
+
+      .guardrail strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .guardrail .suggestion {
+        color: var(--muted);
+      }
+
+      .guardrail-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .guardrail-actions button {
+        min-height: 30px;
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+
+      /* Status */
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .status.defaults { color: var(--muted); background: var(--panel); border: 1px solid var(--line); }
+      .status.previewing { color: #075246; background: #dff5ef; }
+      .status.conflict { color: #7a4400; background: #fff1d6; }
+      .status.accepted { color: #075246; background: #dff5ef; }
+
+      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+        border-color: #bfcbc7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .section-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .template-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+        padding: 10px;
+        background: var(--panel);
+        border-radius: 6px;
+        border: 1px solid var(--line);
+      }
+
+      .template-note a {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/reuse-nav.js" defer></script>
+  </head>
+  <body data-reuse-step="show-brand-kit-setup">
+    <main>
+      <h1>Show brand kit</h1>
+      <p class="lede">Add your show's visual identity once and see how it appears across presets, captions, lower-thirds, and thumbnails. Every input is optional — start from strong defaults and refine over time.</p>
+
+      <section class="workspace" aria-label="Brand kit workspace">
+        <div class="panel" id="inputs">
+          <h2>Brand inputs</h2>
+          <div id="brandStatus"></div>
+
+          <label>
+            Show name
+            <input type="text" id="showName" value="The Offbeat Hour">
+          </label>
+
+          <div class="section-title">Show colors</div>
+          <div class="color-row">
+            <label>
+              Primary
+              <input type="color" id="colorPrimary" value="#136f63">
+            </label>
+            <label>
+              Secondary
+              <input type="color" id="colorSecondary" value="#1a1a2e">
+            </label>
+          </div>
+
+          <label>
+            Type style
+            <select id="typeStyle">
+              <option value="modern">Modern sans-serif</option>
+              <option value="editorial">Editorial serif</option>
+              <option value="bold">Bold display</option>
+              <option value="mono">Monospaced</option>
+            </select>
+          </label>
+
+          <label>
+            Lower-third style
+            <select id="lowerThirdStyle">
+              <option value="bar">Accent bar</option>
+              <option value="pill">Rounded pill</option>
+              <option value="minimal">Minimal text</option>
+            </select>
+          </label>
+
+          <label>
+            Caption emphasis
+            <select id="captionEmphasis">
+              <option value="subtle">Subtle — small, translucent</option>
+              <option value="standard">Standard — readable, balanced</option>
+              <option value="bold">Bold — large, high contrast</option>
+            </select>
+          </label>
+
+          <label>
+            Background treatment
+            <select id="bgTreatment">
+              <option value="solid">Solid color</option>
+              <option value="gradient">Subtle gradient</option>
+              <option value="texture">Textured overlay</option>
+            </select>
+          </label>
+
+          <div class="actions">
+            <button type="button" id="resetDefaults" class="secondary">Reset to defaults</button>
+          </div>
+
+          <div class="template-note" id="templateNote">
+            Brand inputs saved here feed into <a href="show-template-adaptation.html">show template adaptation</a> for future episodes.
+          </div>
+        </div>
+
+        <div class="preview-area" id="previews">
+          <!-- Rendered by script -->
+        </div>
+      </section>
+    </main>
+
+    <script>
+      var speakers = [
+        { name: "Dana Brooks", role: "Host", initials: "DB" },
+        { name: "Marcus Lee", role: "Guest", initials: "ML" },
+        { name: "Priya Anand", role: "Guest", initials: "PA" }
+      ];
+
+      var defaults = {
+        showName: "The Offbeat Hour",
+        colorPrimary: "#136f63",
+        colorSecondary: "#1a1a2e",
+        typeStyle: "modern",
+        lowerThirdStyle: "bar",
+        captionEmphasis: "standard",
+        bgTreatment: "solid"
+      };
+
+      var kit = Object.assign({}, defaults);
+      var conflicts = {};
+      var isCustomized = false;
+
+      var showNameEl = document.getElementById("showName");
+      var colorPrimaryEl = document.getElementById("colorPrimary");
+      var colorSecondaryEl = document.getElementById("colorSecondary");
+      var typeStyleEl = document.getElementById("typeStyle");
+      var lowerThirdStyleEl = document.getElementById("lowerThirdStyle");
+      var captionEmphasisEl = document.getElementById("captionEmphasis");
+      var bgTreatmentEl = document.getElementById("bgTreatment");
+      var previewsEl = document.getElementById("previews");
+      var brandStatusEl = document.getElementById("brandStatus");
+
+      function readInputs() {
+        kit.showName = showNameEl.value;
+        kit.colorPrimary = colorPrimaryEl.value;
+        kit.colorSecondary = colorSecondaryEl.value;
+        kit.typeStyle = typeStyleEl.value;
+        kit.lowerThirdStyle = lowerThirdStyleEl.value;
+        kit.captionEmphasis = captionEmphasisEl.value;
+        kit.bgTreatment = bgTreatmentEl.value;
+
+        isCustomized = Object.keys(defaults).some(function(k) {
+          return kit[k] !== defaults[k];
+        });
+      }
+
+      function fontFamily() {
+        switch (kit.typeStyle) {
+          case "editorial": return "Georgia, 'Times New Roman', serif";
+          case "bold": return "'Impact', 'Arial Black', sans-serif";
+          case "mono": return "'Courier New', monospace";
+          default: return "Inter, ui-sans-serif, system-ui, sans-serif";
+        }
+      }
+
+      function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+      }
+
+      function relativeLuminance(rgb) {
+        var rs = rgb.r / 255;
+        var gs = rgb.g / 255;
+        var bs = rgb.b / 255;
+        var r = rs <= 0.03928 ? rs / 12.92 : Math.pow((rs + 0.055) / 1.055, 2.4);
+        var g = gs <= 0.03928 ? gs / 12.92 : Math.pow((gs + 0.055) / 1.055, 2.4);
+        var b = bs <= 0.03928 ? bs / 12.92 : Math.pow((bs + 0.055) / 1.055, 2.4);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(hex1, hex2) {
+        var l1 = relativeLuminance(hexToRgb(hex1));
+        var l2 = relativeLuminance(hexToRgb(hex2));
+        var lighter = Math.max(l1, l2);
+        var darker = Math.min(l1, l2);
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      function textColorOn(bgHex) {
+        var lum = relativeLuminance(hexToRgb(bgHex));
+        return lum > 0.179 ? "#16211f" : "#ffffff";
+      }
+
+      function evaluateGuardrails() {
+        var issues = [];
+
+        var captionContrast = contrastRatio(kit.colorSecondary, "#ffffff");
+        if (captionContrast < 4.5) {
+          issues.push({
+            key: "caption-contrast",
+            title: "Caption background may reduce readability",
+            detail: "Contrast ratio " + captionContrast.toFixed(1) + ":1 is below 4.5:1 for normal text.",
+            suggestion: "Use a darker secondary color or switch caption emphasis to Bold for larger text.",
+            fixAction: "darken-secondary"
+          });
+        }
+
+        var lowerThirdContrast = contrastRatio(kit.colorPrimary, "#ffffff");
+        if (lowerThirdContrast < 3) {
+          issues.push({
+            key: "lower-third-contrast",
+            title: "Lower-third text may be hard to read",
+            detail: "Contrast ratio " + lowerThirdContrast.toFixed(1) + ":1 against white text.",
+            suggestion: "Darken the primary color or switch to a higher-contrast lower-third style.",
+            fixAction: "darken-primary"
+          });
+        }
+
+        if (kit.captionEmphasis === "bold" && kit.lowerThirdStyle === "pill") {
+          issues.push({
+            key: "caption-crowd",
+            title: "Bold captions may crowd rounded lower-thirds",
+            detail: "Both elements compete for space near the bottom of the frame.",
+            suggestion: "Use Standard caption emphasis or Accent bar lower-thirds to keep the frame clear.",
+            fixAction: null
+          });
+        }
+
+        return issues;
+      }
+
+      function applyFix(action) {
+        if (action === "darken-secondary") {
+          var rgb = hexToRgb(kit.colorSecondary);
+          var darker = "#" +
+            Math.max(0, rgb.r - 40).toString(16).padStart(2, "0") +
+            Math.max(0, rgb.g - 40).toString(16).padStart(2, "0") +
+            Math.max(0, rgb.b - 40).toString(16).padStart(2, "0");
+          colorSecondaryEl.value = darker;
+          kit.colorSecondary = darker;
+        } else if (action === "darken-primary") {
+          var rgb = hexToRgb(kit.colorPrimary);
+          var darker = "#" +
+            Math.max(0, rgb.r - 40).toString(16).padStart(2, "0") +
+            Math.max(0, rgb.g - 40).toString(16).padStart(2, "0") +
+            Math.max(0, rgb.b - 40).toString(16).padStart(2, "0");
+          colorPrimaryEl.value = darker;
+          kit.colorPrimary = darker;
+        }
+        render();
+      }
+
+      function acceptConflict(key) {
+        conflicts[key] = "accepted";
+        render();
+      }
+
+      document.getElementById("resetDefaults").addEventListener("click", function() {
+        showNameEl.value = defaults.showName;
+        colorPrimaryEl.value = defaults.colorPrimary;
+        colorSecondaryEl.value = defaults.colorSecondary;
+        typeStyleEl.value = defaults.typeStyle;
+        lowerThirdStyleEl.value = defaults.lowerThirdStyle;
+        captionEmphasisEl.value = defaults.captionEmphasis;
+        bgTreatmentEl.value = defaults.bgTreatment;
+        conflicts = {};
+        render();
+      });
+
+      [showNameEl, colorPrimaryEl, colorSecondaryEl, typeStyleEl,
+       lowerThirdStyleEl, captionEmphasisEl, bgTreatmentEl].forEach(function(el) {
+        el.addEventListener("input", function() { render(); });
+        el.addEventListener("change", function() { render(); });
+      });
+
+      function render() {
+        readInputs();
+        renderStatus();
+        renderPreviews();
+      }
+
+      function renderStatus() {
+        var issues = evaluateGuardrails();
+        var unresolvedCount = issues.filter(function(i) { return !conflicts[i.key]; }).length;
+
+        var statusClass = !isCustomized ? "defaults"
+          : unresolvedCount > 0 ? "conflict"
+          : "previewing";
+        var statusText = !isCustomized ? "Using defaults"
+          : unresolvedCount > 0 ? unresolvedCount + " readability " + (unresolvedCount === 1 ? "concern" : "concerns")
+          : "Previewing brand kit";
+
+        brandStatusEl.innerHTML = "";
+        var badge = document.createElement("span");
+        badge.className = "status " + statusClass;
+        badge.textContent = statusText;
+        brandStatusEl.appendChild(badge);
+
+        if (issues.length > 0) {
+          var guardrails = document.createElement("div");
+          guardrails.className = "guardrails";
+
+          issues.forEach(function(issue) {
+            var item = document.createElement("div");
+            item.className = "guardrail" + (conflicts[issue.key] ? "" : " warn");
+
+            var title = document.createElement("strong");
+            title.textContent = issue.title;
+            item.appendChild(title);
+
+            var detail = document.createElement("span");
+            detail.className = "suggestion";
+            detail.textContent = conflicts[issue.key]
+              ? "Accepted — this will remain visible in export readiness review."
+              : issue.suggestion;
+            item.appendChild(detail);
+
+            if (!conflicts[issue.key]) {
+              var actions = document.createElement("div");
+              actions.className = "guardrail-actions";
+
+              if (issue.fixAction) {
+                var fixBtn = document.createElement("button");
+                fixBtn.textContent = "Apply suggested fix";
+                fixBtn.addEventListener("click", (function(a) {
+                  return function() { applyFix(a); };
+                })(issue.fixAction));
+                actions.appendChild(fixBtn);
+              }
+
+              var acceptBtn = document.createElement("button");
+              acceptBtn.className = "secondary";
+              acceptBtn.textContent = "Keep with warning";
+              acceptBtn.addEventListener("click", (function(k) {
+                return function() { acceptConflict(k); };
+              })(issue.key));
+              actions.appendChild(acceptBtn);
+
+              item.appendChild(actions);
+            }
+
+            guardrails.appendChild(item);
+          });
+
+          brandStatusEl.appendChild(guardrails);
+        }
+      }
+
+      function renderPreviews() {
+        previewsEl.innerHTML = "";
+
+        renderSpeakerFrames();
+        renderCaptionPreview();
+        renderLowerThirdPreview();
+        renderTitleMoment();
+        renderThumbnailPreview();
+      }
+
+      function renderSpeakerFrames() {
+        var card = makePreviewCard("Speaker frames");
+        var body = card.querySelector(".preview-body");
+
+        var bg = kit.bgTreatment === "gradient"
+          ? "linear-gradient(135deg, " + kit.colorSecondary + ", " + kit.colorPrimary + ")"
+          : kit.bgTreatment === "texture"
+            ? kit.colorSecondary
+            : kit.colorSecondary;
+        body.style.background = bg;
+        if (kit.bgTreatment === "texture") {
+          body.style.backgroundImage = "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 16px)";
+        }
+
+        speakers.forEach(function(s) {
+          var frame = document.createElement("div");
+          frame.className = "speaker-frame";
+          frame.style.background = kit.colorPrimary;
+          frame.style.color = textColorOn(kit.colorPrimary);
+          frame.style.fontFamily = fontFamily();
+          frame.textContent = s.initials;
+          body.appendChild(frame);
+        });
+
+        var logo = document.createElement("div");
+        logo.className = "logo-placeholder";
+        logo.style.borderColor = kit.colorPrimary;
+        logo.style.color = kit.colorPrimary;
+        logo.textContent = "Logo";
+        body.appendChild(logo);
+
+        previewsEl.appendChild(card);
+      }
+
+      function renderCaptionPreview() {
+        var card = makePreviewCard("Captions");
+        var body = card.querySelector(".preview-body");
+
+        var sizes = { subtle: "12px", standard: "14px", bold: "18px" };
+        var opacities = { subtle: "0.7", standard: "0.85", bold: "1" };
+
+        var caption = document.createElement("div");
+        caption.className = "caption-preview";
+        caption.style.background = kit.colorSecondary;
+        caption.style.color = textColorOn(kit.colorSecondary);
+        caption.style.fontFamily = fontFamily();
+        caption.style.fontSize = sizes[kit.captionEmphasis];
+        caption.style.opacity = opacities[kit.captionEmphasis];
+        caption.textContent = "Today we're joined by Marcus Lee to talk about the launch.";
+        body.appendChild(caption);
+
+        var caption2 = document.createElement("div");
+        caption2.className = "caption-preview";
+        caption2.style.background = kit.colorSecondary;
+        caption2.style.color = textColorOn(kit.colorSecondary);
+        caption2.style.fontFamily = fontFamily();
+        caption2.style.fontSize = sizes[kit.captionEmphasis];
+        caption2.style.opacity = opacities[kit.captionEmphasis];
+        caption2.textContent = "The team really came together on this one, Dana.";
+        caption2.style.marginLeft = "20px";
+        body.appendChild(caption2);
+
+        previewsEl.appendChild(card);
+      }
+
+      function renderLowerThirdPreview() {
+        var card = makePreviewCard("Lower-thirds");
+        var body = card.querySelector(".preview-body");
+
+        speakers.forEach(function(s) {
+          var lt = document.createElement("div");
+          lt.className = "lower-third-preview";
+          lt.style.fontFamily = fontFamily();
+
+          if (kit.lowerThirdStyle === "pill") {
+            lt.style.borderLeft = "none";
+            lt.style.borderRadius = "999px";
+            lt.style.background = kit.colorPrimary;
+            lt.style.color = textColorOn(kit.colorPrimary);
+            lt.style.padding = "6px 16px";
+          } else if (kit.lowerThirdStyle === "minimal") {
+            lt.style.borderLeft = "none";
+            lt.style.background = "transparent";
+            lt.style.color = kit.colorPrimary;
+            lt.style.padding = "6px 0";
+          } else {
+            lt.style.borderLeftColor = kit.colorPrimary;
+            lt.style.background = kit.colorSecondary;
+            lt.style.color = textColorOn(kit.colorSecondary);
+          }
+
+          var name = document.createElement("span");
+          name.className = "name";
+          name.textContent = s.name;
+
+          var role = document.createElement("span");
+          role.className = "role";
+          role.textContent = s.role;
+
+          lt.appendChild(name);
+          lt.appendChild(role);
+          body.appendChild(lt);
+        });
+
+        previewsEl.appendChild(card);
+      }
+
+      function renderTitleMoment() {
+        var card = makePreviewCard("Title moment");
+        var body = card.querySelector(".preview-body");
+
+        var title = document.createElement("div");
+        title.className = "title-moment";
+        title.style.background = kit.colorPrimary;
+        title.style.color = textColorOn(kit.colorPrimary);
+        title.style.fontFamily = fontFamily();
+        title.textContent = kit.showName || "Show Title";
+        body.appendChild(title);
+
+        var subtitle = document.createElement("div");
+        subtitle.style.textAlign = "center";
+        subtitle.style.marginTop = "8px";
+        subtitle.style.color = "#5e6b67";
+        subtitle.style.fontSize = "13px";
+        subtitle.textContent = "Episode 47 — The Launch Story";
+        body.appendChild(subtitle);
+
+        previewsEl.appendChild(card);
+      }
+
+      function renderThumbnailPreview() {
+        var card = makePreviewCard("Thumbnail / cover frame");
+        var body = card.querySelector(".preview-body");
+
+        var bg = kit.bgTreatment === "gradient"
+          ? "linear-gradient(135deg, " + kit.colorSecondary + ", " + kit.colorPrimary + ")"
+          : kit.colorSecondary;
+        body.style.background = bg;
+        body.style.borderRadius = "6px";
+        body.style.minHeight = "140px";
+        body.style.display = "flex";
+        body.style.flexDirection = "column";
+        body.style.alignItems = "center";
+        body.style.justifyContent = "center";
+        body.style.gap = "8px";
+
+        var logo = document.createElement("div");
+        logo.className = "logo-placeholder";
+        logo.style.borderColor = textColorOn(kit.colorSecondary);
+        logo.style.color = textColorOn(kit.colorSecondary);
+        logo.textContent = "Logo";
+        body.appendChild(logo);
+
+        var showTitle = document.createElement("div");
+        showTitle.style.fontFamily = fontFamily();
+        showTitle.style.fontWeight = "700";
+        showTitle.style.fontSize = "16px";
+        showTitle.style.color = textColorOn(kit.colorSecondary);
+        showTitle.textContent = kit.showName || "Show Title";
+        body.appendChild(showTitle);
+
+        var ep = document.createElement("div");
+        ep.style.color = textColorOn(kit.colorSecondary);
+        ep.style.opacity = "0.7";
+        ep.style.fontSize = "12px";
+        ep.textContent = "with Dana Brooks, Marcus Lee & Priya Anand";
+        body.appendChild(ep);
+
+        previewsEl.appendChild(card);
+      }
+
+      function makePreviewCard(title) {
+        var card = document.createElement("div");
+        card.className = "preview-card";
+        var header = document.createElement("div");
+        header.className = "preview-header";
+        header.textContent = title;
+        var body = document.createElement("div");
+        body.className = "preview-body";
+        card.appendChild(header);
+        card.appendChild(body);
+        return card;
+      }
+
+      render();
+    </script>
+  </body>
+</html>

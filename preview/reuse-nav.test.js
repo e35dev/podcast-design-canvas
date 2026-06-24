@@ -21,6 +21,7 @@ assert.ok(!/innerHTML/.test(navScript), "reuse nav builds the DOM without innerH
 
 const reuseScreens = [
   "show-segment-system.html",
+  "show-brand-kit-setup.html",
   "show-template-adaptation.html",
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
@@ -125,7 +126,7 @@ assert.equal(
 
 const middleNav = renderNavFor("show-template-adaptation.html", "show-template-adaptation");
 assert.ok(
-  linkWithText(middleNav, "Previous: Show segment system"),
+  linkWithText(middleNav, "Previous: Show brand kit"),
   "middle reuse screen renders the previous reuse step",
 );
 assert.ok(
@@ -159,10 +160,10 @@ assert.equal(
   "embedded reuse nav routes the contextual-visuals back-link through the preview app hash",
 );
 assert.equal(embeddedVisualsBack.target, "_top", "embedded contextual-visuals back-link targets the parent app");
-const embeddedNext = linkWithText(embeddedFirstNav, "Next: Show template adaptation");
+const embeddedNext = linkWithText(embeddedFirstNav, "Next: Show brand kit");
 assert.equal(
   embeddedNext.href,
-  "../preview/app.html#show-template-adaptation",
+  "../preview/app.html#show-brand-kit-setup",
   "embedded reuse nav routes next reuse steps through the preview app hash",
 );
 assert.equal(embeddedNext.target, "_top", "embedded reuse next link targets the parent app");
@@ -218,7 +219,7 @@ function renderNavWithSearch(fileName, reuseStep, search) {
 
 const pathNav = renderNavWithSearch("show-template-adaptation.html", "show-template-adaptation", "?path=episode");
 assert.ok(
-  linkWithText(pathNav, "Previous: Show segment system").href.includes("?path=episode"),
+  linkWithText(pathNav, "Previous: Show brand kit").href.includes("?path=episode"),
   "reuse nav keeps the episode path context on the previous link",
 );
 assert.ok(
@@ -227,7 +228,7 @@ assert.ok(
 );
 const noPathNav = renderNavWithSearch("show-template-adaptation.html", "show-template-adaptation", "");
 assert.ok(
-  !linkWithText(noPathNav, "Previous: Show segment system").href.includes("?path="),
+  !linkWithText(noPathNav, "Previous: Show brand kit").href.includes("?path="),
   "reuse nav adds no path suffix when there is no path context",
 );
 

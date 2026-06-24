@@ -7,6 +7,7 @@
 
 const REUSE_FLOW = [
   { id: "show-segment-system", file: "show-segment-system.html", label: "Show segment system" },
+  { id: "show-brand-kit-setup", file: "show-brand-kit-setup.html", label: "Show brand kit" },
   { id: "show-template-adaptation", file: "show-template-adaptation.html", label: "Show template adaptation" },
   { id: "start-from-previous-episode", file: "start-from-previous-episode.html", label: "Start from previous episode" },
   { id: "episode-chapter-markers", file: "episode-chapter-markers.html", label: "Episode chapter markers" },
