@@ -15,6 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "cleanup nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "cleanup nav links to the guided episode flow");
 assert.ok(navScript.includes("contextual-broll-moments.html"), "cleanup nav hands off to the visuals stage");
+assert.ok(navScript.includes('document.querySelector(".cleanup-nav")'), "cleanup nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "cleanup nav builds the DOM without innerHTML");
 
 const cleanupScreens = [

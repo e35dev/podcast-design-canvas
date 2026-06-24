@@ -40,7 +40,15 @@ assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell k
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
 assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
 assert.match(shell, /Episode ingest setup/, "shell documents the ingest setup path");
+assert.ok(
+  shell.indexOf("Episode ingest setup") < shell.indexOf("Speaker setup"),
+  "ingest setup section precedes speaker setup in shell workflow order",
+);
 assert.match(shell, /Speaker setup/, "shell documents the speaker setup path");
+assert.ok(
+  shell.indexOf("Speaker setup") < shell.indexOf("Choose a visual direction"),
+  "speaker setup section precedes visual direction in shell workflow order",
+);
 assert.match(shell, /Choose a visual direction/, "shell documents the visual direction path");
 assert.match(shell, /Publish prep after export/, "shell documents the publish prep path");
 assert.ok(
@@ -69,6 +77,14 @@ assert.ok(shell.includes("pause-crosstalk-cleanup.html"), "shell links to pause 
 assert.ok(shell.includes("on-screen-correction-note.html"), "shell links to correction note in helper path");
 assert.match(shell, /Add contextual visuals/, "shell documents the contextual visuals path");
 assert.match(shell, /Make it reusable/, "shell documents the reuse path");
+assert.ok(
+  shell.indexOf("Add contextual visuals") < shell.indexOf("Make it reusable"),
+  "contextual visuals section precedes reuse path in shell workflow order",
+);
+assert.ok(
+  shell.indexOf("Make it reusable") < shell.indexOf("More tools"),
+  "reuse path section precedes secondary tools in shell workflow order",
+);
 assert.ok(shell.includes("contextual-broll-moments.html"), "shell links to b-roll in visuals path");
 assert.ok(shell.includes("show-segment-system.html"), "shell links to show segments in reuse path");
 
