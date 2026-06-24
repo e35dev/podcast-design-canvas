@@ -9,6 +9,7 @@ const INGEST_FLOW = [
   { id: "episode-readiness", file: "episode-readiness.html", label: "Episode readiness" },
   { id: "speaker-role-mapping", file: "speaker-role-mapping.html", label: "Speaker roles" },
   { id: "social-context-intake", file: "social-context-intake.html", label: "Social links" },
+  { id: "slot-assignment-review", file: "slot-assignment-review.html", label: "Slot review" },
 ];
 
 const PREVIEW_APP_INGEST_TARGETS = new Set([

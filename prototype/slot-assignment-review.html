@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slot assignment review</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg: #0f1a18;
+        --surface: #172320;
+        --border: #2a3d38;
+        --text: #e8f0ee;
+        --muted: #8da89f;
+        --accent: #075246;
+        --accent-fg: #ffffff;
+        --ready: #1b4d38;
+        --ready-fg: #7ed4aa;
+        --review: #3d3010;
+        --review-fg: #f0c040;
+        --conflict: #3d1010;
+        --conflict-fg: #f08080;
+        --overridden: #1a2835;
+        --overridden-fg: #80b8f0;
+        --radius: 8px;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text);
+      }
+      .lede {
+        color: var(--muted);
+        margin-bottom: 32px;
+        max-width: 600px;
+      }
+      .layout-badge {
+        display: inline-block;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        padding: 2px 8px;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .slots {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .slot-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px 24px;
+        align-items: start;
+      }
+      .slot-card.state-ready { border-left: 3px solid var(--ready-fg); }
+      .slot-card.state-needs-review { border-left: 3px solid var(--review-fg); }
+      .slot-card.state-conflict { border-left: 3px solid var(--conflict-fg); }
+      .slot-card.state-overridden { border-left: 3px solid var(--overridden-fg); opacity: 0.8; }
+      .slot-meta { display: flex; flex-direction: column; gap: 6px; }
+      .slot-role {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .slot-speaker {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .slot-file {
+        font-size: 13px;
+        color: var(--muted);
+        font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+      }
+      .slot-details {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 12px;
+        margin-top: 2px;
+      }
+      .slot-badge {
+        display: inline-block;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        margin-top: 4px;
+      }
+      .badge-ready { background: var(--ready); color: var(--ready-fg); }
+      .badge-needs-review { background: var(--review); color: var(--review-fg); }
+      .badge-conflict { background: var(--conflict); color: var(--conflict-fg); }
+      .badge-overridden { background: var(--overridden); color: var(--overridden-fg); }
+      .slot-issue {
+        grid-column: 1 / -1;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .slot-issue-msg { color: var(--review-fg); font-size: 13px; }
+      .slot-issue.is-conflict .slot-issue-msg { color: var(--conflict-fg); }
+      .slot-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      a.fix-link {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent-fg);
+        background: var(--accent);
+        padding: 5px 14px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      a.fix-link:hover { opacity: 0.88; }
+      a.fix-link:focus-visible { outline: 2px solid var(--ready-fg); outline-offset: 2px; }
+      button.override-btn {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      button.override-btn:hover { border-color: var(--muted); color: var(--text); }
+      button.override-btn:focus-visible { outline: 2px solid var(--ready-fg); outline-offset: 2px; }
+      .slot-actions-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .summary-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        margin-bottom: 28px;
+      }
+      .summary-panel h2 {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .summary-status {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .summary-status.is-ready { color: var(--ready-fg); }
+      .summary-status.is-review { color: var(--review-fg); }
+      .summary-status.is-conflict { color: var(--conflict-fg); }
+      .summary-note { color: var(--muted); font-size: 13px; }
+      .continue-row {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      a.primary {
+        background: var(--accent);
+        color: var(--accent-fg);
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 24px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      a.primary:hover { opacity: 0.88; }
+      a.primary:focus-visible { outline: 2px solid var(--ready-fg); outline-offset: 2px; }
+      a.primary[aria-disabled="true"] {
+        opacity: 0.4;
+        pointer-events: none;
+        cursor: not-allowed;
+      }
+      .continue-note { color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+  <body data-ingest-step="slot-assignment-review">
+    <div class="wrap">
+      <h1>Slot assignment review</h1>
+      <p class="lede">Confirm that each video file landed in the right slot before the episode enters the production workspace. Filename signals and orientation are checked automatically — override any warning you've already verified.</p>
+
+      <div class="layout-badge" id="layout-label">Interview layout</div>
+
+      <div class="slots" id="slot-list"></div>
+
+      <div class="summary-panel" id="summary-panel">
+        <h2>Assignment summary</h2>
+        <p class="summary-status" id="summary-status"></p>
+        <p class="summary-note" id="summary-note"></p>
+      </div>
+
+      <div class="continue-row">
+        <a class="primary" id="continue-link" href="source-media-health.html">Continue to source media health →</a>
+        <span class="continue-note" id="continue-note"></span>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var slots = [
+          {
+            id: "host-1",
+            slot: "host",
+            role: "Host",
+            optional: false,
+            speakerName: "Dana Brooks",
+            fileName: "host-cam-dana-ep042.mp4",
+            durationLabel: "58:22",
+            orientation: "landscape",
+            overridden: false,
+          },
+          {
+            id: "guest-1",
+            slot: "guest",
+            role: "Guest",
+            optional: false,
+            speakerName: "Marcus Lee",
+            fileName: "host-backup-take2.mp4",
+            durationLabel: "57:48",
+            orientation: "landscape",
+            overridden: false,
+          },
+          {
+            id: "broll-1",
+            slot: "broll",
+            role: "B-roll",
+            optional: true,
+            speakerName: null,
+            fileName: "intro-portrait-clip.mp4",
+            durationLabel: "0:32",
+            orientation: "portrait",
+            overridden: false,
+          },
+          {
+            id: "host-2",
+            slot: "host",
+            role: "Host",
+            optional: false,
+            speakerName: "Dana Brooks",
+            fileName: "panel-host-cam.mp4",
+            durationLabel: "61:04",
+            orientation: "landscape",
+            overridden: false,
+          },
+          {
+            id: "guest-2",
+            slot: "guest",
+            role: "Guest",
+            optional: false,
+            speakerName: "Marcus Lee",
+            fileName: "riverside-guest-marcus.mp4",
+            durationLabel: "60:50",
+            orientation: "landscape",
+            overridden: false,
+          },
+          {
+            id: "guest-b-1",
+            slot: "guest-b",
+            role: "Guest 2",
+            optional: false,
+            speakerName: "Alex Kim",
+            fileName: "alex-mobile-portrait.mp4",
+            durationLabel: "60:15",
+            orientation: "portrait",
+            overridden: false,
+          },
+          {
+            id: "broll-2",
+            slot: "broll",
+            role: "B-roll",
+            optional: true,
+            speakerName: null,
+            fileName: "guest-sponsor-clip.mp4",
+            durationLabel: "0:18",
+            orientation: "landscape",
+            overridden: false,
+          },
+          {
+            id: "host-3",
+            slot: "host",
+            role: "Host",
+            optional: false,
+            speakerName: "Dana Brooks",
+            fileName: "dana-solo-ep043.mp4",
+            durationLabel: "42:30",
+            orientation: "landscape",
+            overridden: false,
+          },
+        ];
+
+        function fileNameSignal(name) {
+          if (!name) return null;
+          var lower = name.toLowerCase();
+          if (/\bhost\b/.test(lower)) return "host";
+          if (/\bguest\b/.test(lower)) return "guest";
+          return null;
+        }
+
+        function evaluate(list) {
+          var results = list.map(function (s) {
+            var state = "ready";
+            var issue = null;
+
+            if (s.overridden) {
+              state = "overridden";
+            } else if (!s.fileName && !s.optional) {
+              state = "conflict";
+              issue = {
+                fixScreen: "../preview/layout-first.html",
+                fixLabel: "layout first",
+                message: "The " + s.role + " slot has no video. Place a recording in the layout first.",
+              };
+            } else if (s.orientation === "portrait") {
+              state = "needs-review";
+              issue = {
+                fixScreen: "source-media-health.html",
+                fixLabel: "source media health",
+                message: s.fileName + " was recorded sideways and won’t fill a widescreen layout slot.",
+              };
+            } else {
+              var signal = fileNameSignal(s.fileName);
+              if (signal !== null && signal !== s.slot && s.slot !== "broll") {
+                state = "needs-review";
+                issue = {
+                  fixScreen: "../preview/layout-first.html",
+                  fixLabel: "layout first",
+                  message: s.fileName + " looks like a " + signal + " recording placed in the " + s.role + " slot.",
+                };
+              }
+            }
+
+            return Object.assign({}, s, { state: state, issue: issue });
+          });
+
+          var hasConflict = results.some(function (r) { return r.state === "conflict"; });
+          var hasReview = results.some(function (r) { return r.state === "needs-review"; });
+          var overall = hasConflict ? "conflict" : hasReview ? "needs-review" : "ready";
+          return { overall: overall, results: results };
+        }
+
+        function badgeClass(state) {
+          if (state === "ready") return "badge-ready";
+          if (state === "needs-review") return "badge-needs-review";
+          if (state === "conflict") return "badge-conflict";
+          return "badge-overridden";
+        }
+
+        function badgeLabel(state) {
+          if (state === "ready") return "Ready";
+          if (state === "needs-review") return "Needs review";
+          if (state === "conflict") return "Conflict";
+          return "Overridden";
+        }
+
+        function render() {
+          var assessment = evaluate(slots);
+          var list = document.getElementById("slot-list");
+          if (!list) return;
+
+          while (list.firstChild) {
+            list.removeChild(list.firstChild);
+          }
+
+          assessment.results.forEach(function (s) {
+            var card = document.createElement("div");
+            card.className = "slot-card state-" + s.state;
+
+            var meta = document.createElement("div");
+            meta.className = "slot-meta";
+
+            var role = document.createElement("span");
+            role.className = "slot-role";
+            role.textContent = s.role + (s.optional ? " — optional" : "");
+            meta.appendChild(role);
+
+            if (s.speakerName) {
+              var speaker = document.createElement("span");
+              speaker.className = "slot-speaker";
+              speaker.textContent = s.speakerName;
+              meta.appendChild(speaker);
+            }
+
+            if (s.fileName) {
+              var file = document.createElement("span");
+              file.className = "slot-file";
+              file.textContent = s.fileName;
+              meta.appendChild(file);
+            }
+
+            var details = document.createElement("div");
+            details.className = "slot-details";
+
+            var dur = document.createElement("span");
+            dur.textContent = s.durationLabel;
+            details.appendChild(dur);
+
+            var orient = document.createElement("span");
+            orient.textContent = s.orientation === "portrait" ? "Portrait (sideways)" : "Landscape";
+            details.appendChild(orient);
+            meta.appendChild(details);
+
+            card.appendChild(meta);
+
+            var right = document.createElement("div");
+            right.className = "slot-actions-right";
+            var badge = document.createElement("span");
+            badge.className = "slot-badge " + badgeClass(s.state);
+            badge.textContent = badgeLabel(s.state);
+            right.appendChild(badge);
+            card.appendChild(right);
+
+            if (s.issue) {
+              var issueBox = document.createElement("div");
+              issueBox.className = "slot-issue" + (s.state === "conflict" ? " is-conflict" : "");
+
+              var msg = document.createElement("p");
+              msg.className = "slot-issue-msg";
+              msg.textContent = s.issue.message;
+              issueBox.appendChild(msg);
+
+              var actions = document.createElement("div");
+              actions.className = "slot-actions";
+
+              var issue = s.issue;
+              if (issue.fixScreen && issue.fixLabel) {
+                var action = document.createElement("a");
+                action.className = "fix-link";
+                action.href = issue.fixScreen;
+                action.textContent = "Open " + issue.fixLabel;
+                actions.appendChild(action);
+              }
+
+              var overrideBtn = document.createElement("button");
+              overrideBtn.className = "override-btn";
+              overrideBtn.type = "button";
+              overrideBtn.textContent = "Mark as confirmed";
+              overrideBtn.setAttribute("data-slot-id", s.id);
+              overrideBtn.addEventListener("click", function (event) {
+                var slotId = event.currentTarget.getAttribute("data-slot-id");
+                var target = slots.find(function (x) { return x.id === slotId; });
+                if (target) {
+                  target.overridden = true;
+                  render();
+                }
+              });
+              actions.appendChild(overrideBtn);
+              issueBox.appendChild(actions);
+              card.appendChild(issueBox);
+            }
+
+            list.appendChild(card);
+          });
+
+          updateSummary(assessment);
+        }
+
+        function updateSummary(assessment) {
+          var statusEl = document.getElementById("summary-status");
+          var noteEl = document.getElementById("summary-note");
+          var continueLink = document.getElementById("continue-link");
+          var continueNote = document.getElementById("continue-note");
+
+          if (!statusEl || !noteEl) return;
+
+          statusEl.className = "summary-status";
+          if (assessment.overall === "ready") {
+            statusEl.classList.add("is-ready");
+            statusEl.textContent = "All slots confirmed — ready to continue";
+            noteEl.textContent = "Every slot is assigned and no mismatches were found. Source media health is the next check.";
+          } else if (assessment.overall === "needs-review") {
+            statusEl.classList.add("is-review");
+            statusEl.textContent = "Some slots need a second look";
+            var reviewCount = assessment.results.filter(function (r) { return r.state === "needs-review"; }).length;
+            noteEl.textContent = reviewCount + " slot" + (reviewCount > 1 ? "s have" : " has") + " a warning. Open layout first to reassign, or mark each warning as confirmed to continue.";
+          } else {
+            statusEl.classList.add("is-conflict");
+            statusEl.textContent = "Required slot is missing a video";
+            noteEl.textContent = "At least one required slot has no video. Return to layout first and place all required speaker files before continuing.";
+          }
+
+          if (continueLink) {
+            var hasConflict = assessment.overall === "conflict";
+            var hasUnresolvedReview = assessment.results.some(function (r) { return r.state === "needs-review"; });
+            if (hasConflict || hasUnresolvedReview) {
+              continueLink.removeAttribute("href");
+              continueLink.setAttribute("aria-disabled", "true");
+            } else {
+              continueLink.href = "source-media-health.html";
+              continueLink.setAttribute("aria-disabled", "false");
+            }
+            if (continueNote) {
+              if (hasConflict) {
+                continueNote.textContent = "Place required speaker videos in layout first before continuing.";
+              } else if (hasUnresolvedReview) {
+                continueNote.textContent = "Warnings present — confirm or fix each before continuing.";
+              } else {
+                continueNote.textContent = "";
+              }
+            }
+          }
+        }
+
+        render();
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports = { evaluate, fileNameSignal };
+        }
+      }());
+    </script>
+    <script src="../preview/ingest-nav.js" defer></script>
+  </body>
+</html>

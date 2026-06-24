@@ -37,6 +37,7 @@ const ingestFlow = new Set([
   "episode-readiness.html",
   "speaker-role-mapping.html",
   "social-context-intake.html",
+  "slot-assignment-review.html",
 ]);
 
 const publishFlow = new Set([
