@@ -51,7 +51,9 @@ const document = {
   createElement: (tag) => makeNode(tag),
   querySelector: (selector) => byId[selector] || makeNode(),
 };
-const window = { PodcastLayoutHandoff: handoffApi, location: { search: "" }, sessionStorage: undefined };
+// Arrive with a real layout-first handoff in the URL so renderLayoutHandoff() actually renders
+// the placed-video summary — that lets the test prove a name edit keeps the handoff current.
+const window = { PodcastLayoutHandoff: handoffApi, location: { search: "?layout=interview&slots=host,guest" }, sessionStorage: undefined };
 const sandbox = { document, window, structuredClone: globalThis.structuredClone, URLSearchParams, console, module: { exports: {} } };
 vm.createContext(sandbox);
 vm.runInContext(script, sandbox); // runs the initial render against the stub — must not throw
@@ -62,13 +64,19 @@ assert.equal(typeof M.renderSummary, "function", "the screen splits out a summar
 
 const tracksEl = byId["#tracks"];
 const issuesEl = byId["#issues"];
+const handoffEl = byId["#layout-handoff"];
 const rebuildsAfterLoad = tracksEl._replaceCount; // the initial render rebuilt the rows once
+assert.ok(handoffEl._replaceCount > 0, "the layout handoff summary rendered on load (handoff was provided)");
 
-// Editing the Speaker name must NOT rebuild the track rows, so the focused <input> survives.
+// Editing the Speaker name must NOT rebuild the track rows, so the focused <input> survives,
+// but it must still refresh the summary AND the layout-handoff/preview state (which can carry
+// speaker names) so nothing downstream goes stale while the creator types.
 const issuesBefore = issuesEl._replaceCount;
+const handoffBefore = handoffEl._replaceCount;
 M.updateTrack({ target: { dataset: { field: "name" }, value: "Dana Brooks" } }, 0);
 assert.equal(tracksEl._replaceCount, rebuildsAfterLoad, "typing a speaker name does not rebuild the track rows");
 assert.ok(issuesEl._replaceCount > issuesBefore, "typing a name still refreshes the summary (issue titles use the name)");
+assert.ok(handoffEl._replaceCount > handoffBefore, "typing a name keeps the layout handoff/preview state current");
 
 // Every further keystroke also leaves the rows intact — the bug dropped focus after the first.
 M.updateTrack({ target: { dataset: { field: "name" }, value: "Dana Brooks!" } }, 0);

@@ -717,10 +717,14 @@
           track.signal = "manual";
           track.decision = "suggested";
         }
-        // A name edit refreshes only the summary so the focused name field survives each
-        // keystroke; role/signal/decision changes rebuild the rows (their badges/options change).
+        // A name edit refreshes the summary and the layout-handoff/preview state, but NOT the
+        // track rows — both the summary and the handoff live in their own elements, so the
+        // focused name field survives each keystroke, while any downstream state that carries
+        // speaker names stays current. Role/signal/decision changes rebuild the rows (their
+        // badges/options change).
         if (field === "name") {
           renderSummary();
+          renderLayoutHandoff();
         } else {
           render();
         }
