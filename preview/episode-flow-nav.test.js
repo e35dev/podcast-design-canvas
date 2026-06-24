@@ -205,8 +205,8 @@ assert.equal(
   "episode flow nav preserves unrelated flags and hash segments when merging publish context",
 );
 
-function normalizeExportReadinessFixLink(href, search, embedded = false) {
-  const window = makeWindow("export-readiness-review.html", embedded, search);
+function normalizeEpisodeFlowFixLink(href, search, embedded = false, fileName = "export-readiness-review.html") {
+  const window = makeWindow(fileName, embedded, search);
   const link = createElement("a");
   link.className = "fix-link";
   link.setAttribute("href", href);
@@ -219,7 +219,7 @@ function normalizeExportReadinessFixLink(href, search, embedded = false) {
   };
   const navDefinitions = navScript.replace(/\nif \(document\.readyState[\s\S]*$/m, "");
   vm.runInNewContext(
-    `${navDefinitions}\nnormalizeExportReadinessFixLinks(rootNode);`,
+    `${navDefinitions}\nnormalizeEpisodeFlowFixLinks(rootNode);`,
     {
       document: { readyState: "complete", addEventListener() {} },
       window,
@@ -230,25 +230,80 @@ function normalizeExportReadinessFixLink(href, search, embedded = false) {
   return link;
 }
 
+function normalizeEpisodeFixLinkClickFor(href, search, embedded = false, fileName = "audio-caption-quality-review.html") {
+  const link = createLink(href);
+  link.className = "fix-link";
+  link.closest = (selector) => (selector === "a.fix-link[href]" ? link : null);
+  const window = makeWindow(fileName, embedded, search);
+  const navDefinitions = navScript.replace(/\nif \(document\.readyState[\s\S]*$/m, "");
+  const sandbox = {
+    document: { readyState: "complete", addEventListener() {} },
+    window,
+    URLSearchParams,
+    link,
+  };
+  vm.runInNewContext(
+    `${navDefinitions}\nnormalizeEpisodeFixLinkClick({ target: link });\nglobalThis.result = { href: link.href, target: link.target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
 assert.equal(
-  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode").href,
+  normalizeEpisodeFlowFixLink("music-cue-setup.html", "?path=episode").href,
   "music-cue-setup.html?path=episode",
   "export readiness music cue fix links keep episode path context",
 );
 assert.equal(
-  normalizeExportReadinessFixLink("thumbnail-cover-frame.html", "?path=episode").href,
+  normalizeEpisodeFlowFixLink("thumbnail-cover-frame.html", "?path=episode").href,
   "thumbnail-cover-frame.html?path=publish",
   "export readiness thumbnail fix links use publish path context",
 );
 assert.equal(
-  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode", true).href,
+  normalizeEpisodeFlowFixLink("music-cue-setup.html", "?path=episode", true).href,
   "../preview/app.html#music-cue-setup?path=episode",
   "embedded export readiness fix links route through the preview app",
 );
 assert.equal(
-  normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode", true).target,
+  normalizeEpisodeFlowFixLink("music-cue-setup.html", "?path=episode", true).target,
   "_top",
   "embedded export readiness fix links target the parent app",
+);
+
+assert.equal(
+  normalizeEpisodeFlowFixLink("transcript-glossary.html", "?path=episode", false, "audio-caption-quality-review.html").href,
+  "transcript-glossary.html",
+  "caption quality glossary fix links stay on the cleanup screen without episode path",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("pause-crosstalk-cleanup.html", "?path=episode", false, "audio-caption-quality-review.html").href,
+  "pause-crosstalk-cleanup.html",
+  "caption quality cross-talk fix links stay on the cleanup screen without episode path",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("layout-safe-areas.html", "?path=episode", false, "audio-caption-quality-review.html").href,
+  "layout-safe-areas.html?path=episode",
+  "caption quality layout fix links keep episode path context",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("transcript-glossary.html", "?path=episode", true, "audio-caption-quality-review.html").href,
+  "../preview/app.html#transcript-glossary",
+  "embedded caption quality glossary fix links route through the preview app",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("pause-crosstalk-cleanup.html", "?path=episode", true, "audio-caption-quality-review.html").href,
+  "../preview/app.html#pause-crosstalk-cleanup",
+  "embedded caption quality cross-talk fix links route through the preview app",
+);
+assert.equal(
+  normalizeEpisodeFlowFixLink("layout-safe-areas.html", "?path=episode", true, "audio-caption-quality-review.html").href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded caption quality layout fix links route through the preview app with episode context",
+);
+assert.equal(
+  normalizeEpisodeFixLinkClickFor("transcript-glossary.html", "?path=episode", true).href,
+  "../preview/app.html#transcript-glossary",
+  "embedded episode flow nav normalizes dynamic caption quality fix links before navigation",
 );
 
 function createLink(href) {

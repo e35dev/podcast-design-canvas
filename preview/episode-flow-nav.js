@@ -34,8 +34,22 @@ const EXPORT_READINESS_FIX_PATHS = {
   "thumbnail-cover-frame.html": "publish",
 };
 
+// Caption quality routes each flagged line to the screen that owns the fix.
+// Glossary and cross-talk cleanup stay on the cleanup path; layout collisions
+// keep episode path context on the style screen.
+const CAPTION_QUALITY_FIX_PATHS = {
+  "transcript-glossary.html": null,
+  "pause-crosstalk-cleanup.html": null,
+  "layout-safe-areas.html": "episode",
+};
+
+const EPISODE_FLOW_FIX_PATHS = {
+  ...EXPORT_READINESS_FIX_PATHS,
+  ...CAPTION_QUALITY_FIX_PATHS,
+};
+
 const PREVIEW_APP_FIX_TARGETS = new Set(
-  Object.keys(EXPORT_READINESS_FIX_PATHS).map((file) => screenIdFromFile(file)),
+  Object.keys(EPISODE_FLOW_FIX_PATHS).map((file) => screenIdFromFile(file)),
 );
 
 const EPISODE_FLOW_IN_PAGE_TARGETS = new Set([
@@ -162,14 +176,14 @@ function isLocalScreenHref(href) {
   return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
 }
 
-function exportReadinessFixBase(href) {
+function episodeFlowFixBase(href) {
   return (href || "").split("#")[0].split("?")[0];
 }
 
-function isExportReadinessFixHref(href) {
+function isEpisodeFlowFixHref(href) {
   return isLocalScreenHref(href) && Object.prototype.hasOwnProperty.call(
-    EXPORT_READINESS_FIX_PATHS,
-    exportReadinessFixBase(href),
+    EPISODE_FLOW_FIX_PATHS,
+    episodeFlowFixBase(href),
   );
 }
 
@@ -229,16 +243,19 @@ function normalizeEpisodeLinkClick(event) {
   }
 }
 
-function setExportReadinessFixLink(link) {
+function setEpisodeFlowFixLink(link) {
   const href = link.getAttribute("href") || "";
-  if (!isExportReadinessFixHref(href)) {
+  if (!isEpisodeFlowFixHref(href)) {
     return;
   }
 
-  const path = EXPORT_READINESS_FIX_PATHS[exportReadinessFixBase(href)];
-  const resolved = mergeRouteSearch(href, { path });
+  const path = EPISODE_FLOW_FIX_PATHS[episodeFlowFixBase(href)];
+  const resolved = path === null ? href : mergeRouteSearch(href, { path });
   if (isEmbeddedInPreviewApp() && PREVIEW_APP_FIX_TARGETS.has(screenIdFromFile(href))) {
-    link.href = previewAppHref(resolved);
+    const screen = screenIdFromFile(href);
+    link.href = path === null
+      ? `../preview/app.html#${screen}`
+      : previewAppHref(resolved);
     link.target = "_top";
     return;
   }
@@ -246,12 +263,21 @@ function setExportReadinessFixLink(link) {
   link.href = resolved;
 }
 
-function normalizeExportReadinessFixLinks(root) {
+function normalizeEpisodeFlowFixLinks(root) {
   if (!root || typeof root.querySelectorAll !== "function") {
     return;
   }
 
-  root.querySelectorAll("a.fix-link[href]").forEach(setExportReadinessFixLink);
+  root.querySelectorAll("a.fix-link[href]").forEach(setEpisodeFlowFixLink);
+}
+
+function normalizeEpisodeFixLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a.fix-link[href]")
+    : null;
+  if (link) {
+    setEpisodeFlowFixLink(link);
+  }
 }
 
 function renderEpisodeFlowNav() {
@@ -377,10 +403,11 @@ function renderEpisodeFlowNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
-  normalizeExportReadinessFixLinks(document);
+  normalizeEpisodeFlowFixLinks(document);
   normalizeEpisodeScreenLinks(document);
   if (typeof document.addEventListener === "function") {
     document.addEventListener("click", normalizeEpisodeLinkClick);
+    document.addEventListener("click", normalizeEpisodeFixLinkClick);
   }
 }
 
