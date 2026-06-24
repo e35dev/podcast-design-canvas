@@ -419,6 +419,65 @@ assert.equal(
   "embedded publish nav normalizes dynamic clip review transcript handoffs before navigation",
 );
 
+// Other cross-stage fix hand-offs from publish-prep screens (the publish checklist's
+// readiness fixes, metadata's chapter/social links, the export package's framing
+// owners) route the same way: publish context standalone, through the app embedded.
+const checklistFixLinks = renderNavFor(
+  "publish-checklist.html",
+  false,
+  "?path=publish",
+  ["audio-caption-quality-review.html", "source-media-health.html", "episode-chapter-markers.html"],
+);
+assert.equal(
+  linkWithText(checklistFixLinks, "audio-caption-quality-review.html").href,
+  "audio-caption-quality-review.html?path=publish",
+  "publish nav keeps publish context on checklist caption fix hand-offs",
+);
+assert.equal(
+  linkWithText(checklistFixLinks, "source-media-health.html").href,
+  "source-media-health.html?path=publish",
+  "publish nav keeps publish context on checklist source media fix hand-offs",
+);
+
+const embeddedChecklistFixLinks = renderNavFor(
+  "publish-checklist.html",
+  true,
+  "?path=publish",
+  ["audio-caption-quality-review.html", "episode-chapter-markers.html"],
+);
+const embeddedCaptionFix = linkWithText(embeddedChecklistFixLinks, "audio-caption-quality-review.html");
+assert.equal(
+  embeddedCaptionFix.href,
+  "../preview/app.html#audio-caption-quality-review?path=publish",
+  "embedded publish nav routes checklist caption fix hand-offs through the preview app",
+);
+assert.equal(embeddedCaptionFix.target, "_top", "embedded cross-stage fix hand-offs target the parent app");
+assert.equal(
+  linkWithText(embeddedChecklistFixLinks, "episode-chapter-markers.html").href,
+  "../preview/app.html#episode-chapter-markers?path=publish",
+  "embedded publish nav routes checklist chapter fix hand-offs through the preview app",
+);
+
+const embeddedMetadataSocial = renderNavFor(
+  "episode-metadata-publishing.html",
+  true,
+  "?path=publish",
+  ["social-context-intake.html"],
+);
+assert.equal(
+  linkWithText(embeddedMetadataSocial, "social-context-intake.html").href,
+  "../preview/app.html#social-context-intake?path=publish",
+  "embedded publish nav routes metadata social-context hand-offs through the preview app",
+);
+
+const dynamicCrossStageFix = normalizePublishClickFor("speaker-framing-safety.html", "?path=publish", true);
+assert.equal(
+  dynamicCrossStageFix.href,
+  "../preview/app.html#speaker-framing-safety?path=publish",
+  "embedded publish nav normalizes dynamic cross-stage fix hand-offs before navigation",
+);
+assert.equal(dynamicCrossStageFix.target, "_top", "dynamic embedded cross-stage fix hand-offs target the parent app");
+
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
 const body = createElement("body");

@@ -25,11 +25,12 @@ const PREVIEW_APP_VISUALS_TARGETS = new Set([
   "show-segment-system",
 ]);
 
-// Style and publish screens that contextual visuals prototypes hand off to when
-// screen-share review flags layout or crop problems.
+// Style, publish, and ingest screens that contextual visuals prototypes hand off to
+// when review flags layout, crop, or missing social context.
 const VISUALS_FIX_PATHS = {
   "layout-safe-areas.html": "episode",
   "destination-crop-preview.html": "episode",
+  "social-context-intake.html": "ingest",
 };
 
 const PREVIEW_APP_VISUALS_CROSS_PATH_TARGETS = new Set(
@@ -119,7 +120,7 @@ function routeSearchFromFile(file) {
   if (from === "style" || from === "cleanup") {
     out.set("from", from);
   }
-  if (path === "episode" || path === "reuse") {
+  if (path === "episode" || path === "reuse" || path === "ingest") {
     out.set("path", path);
   }
   const search = out.toString();
