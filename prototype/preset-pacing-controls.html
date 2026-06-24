@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Preset Pacing Controls Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .feels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .feel {
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink);
+        display: grid;
+        gap: 4px;
+      }
+
+      .feel[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        background: #f1f9f6;
+      }
+
+      .feel b {
+        font-size: 14px;
+      }
+
+      .feel span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .rhythm {
+        border-radius: 8px;
+        background: #10201d;
+        padding: 14px;
+      }
+
+      .rhythm h3 {
+        color: #cfe8e1;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 10px;
+      }
+
+      .track {
+        display: grid;
+        grid-template-columns: 70px 1fr;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .track-label {
+        color: #9fc4bc;
+        font-size: 12px;
+      }
+
+      .lane {
+        position: relative;
+        height: 16px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .lane i {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        width: 6px;
+        border-radius: 2px;
+        background: #6ee0c8;
+      }
+
+      .lane.titles i {
+        background: #f4d35e;
+      }
+
+      .lane.broll i {
+        background: #8bd0c2;
+      }
+
+      .lane.cuts i {
+        width: 3px;
+        background: #cfe8e1;
+      }
+
+      .meter {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #cfe8e1;
+        font-size: 12px;
+      }
+
+      .meter .bar {
+        flex: 1;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+      }
+
+      .meter .fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6ee0c8, #f4d35e);
+      }
+
+      .direction {
+        display: grid;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .direction .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+      }
+
+      .direction .row span {
+        color: var(--muted);
+      }
+
+      .applied {
+        border: 1px solid #bfe3d7;
+        border-radius: 8px;
+        background: #eef9f4;
+        color: #075246;
+        font-weight: 700;
+        padding: 12px;
+        margin-top: 14px;
+      }
+
+      .applied[hidden] {
+        display: none;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .feels {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Preset pacing controls</h1>
+      <p class="lede">Shape how energetic the episode feels &mdash; how often titles and b-roll appear, how strong the cuts are &mdash; without editing every moment by hand. Pick a pacing feel, fine-tune it, and watch the rhythm preview respond before you apply it.</p>
+
+      <section class="workspace" aria-label="Preset pacing workspace">
+        <div class="panel">
+          <h2>Choose a pacing feel</h2>
+          <div class="feels" id="feels" role="group" aria-label="Pacing feels"></div>
+
+          <div class="controls" id="controls"></div>
+
+          <div class="actions">
+            <button type="button" id="apply">Apply pacing to this episode</button>
+            <button type="button" class="secondary" id="reset">Reset</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Pacing preview">
+          <h2>Rhythm preview</h2>
+          <div class="rhythm" id="rhythm" aria-hidden="true"></div>
+          <div class="direction" id="direction"></div>
+          <div id="applied" class="applied" hidden></div>
+          <p class="summary-note">The preview shows a stretch of the episode: title cards, b-roll, and cuts get denser as the pacing gets more energetic. Applying never changes what is said &mdash; only the rhythm around it.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Pacing feels: each sets the four pacing controls, which drive how dense the
+      // rhythm preview is. Higher numbers mean more frequent titles/b-roll/cuts.
+      const feels = {
+        calm: { label: "Calm interview", note: "Steady, few interruptions", titles: "rare", broll: "light", cuts: "soft", energy: 1 },
+        balanced: { label: "Balanced conversation", note: "An even, natural rhythm", titles: "some", broll: "balanced", cuts: "smooth", energy: 2 },
+        punchy: { label: "Punchy commentary", note: "Fast and energetic", titles: "frequent", broll: "energetic", cuts: "sharp", energy: 4 },
+        teaching: { label: "Teaching focused", note: "Clear beats, light visuals", titles: "some", broll: "light", cuts: "smooth", energy: 2 },
+      };
+
+      // The pacing controls and their plain-language options. The order of options is the
+      // intensity scale used to size the rhythm preview.
+      const controlDefs = {
+        titles: { label: "Title moments", options: { rare: "Rare", some: "Some", frequent: "Frequent" } },
+        broll: { label: "B-roll", options: { light: "Light", balanced: "Balanced", energetic: "Energetic" } },
+        cuts: { label: "Cut strength", options: { soft: "Soft", smooth: "Smooth", sharp: "Sharp" } },
+      };
+
+      function feelState(key) {
+        const feel = feels[key];
+        return { feel: key, titles: feel.titles, broll: feel.broll, cuts: feel.cuts };
+      }
+
+      let state = feelState("balanced");
+      let applied = false;
+
+      const feelsElement = document.querySelector("#feels");
+      const controlsElement = document.querySelector("#controls");
+      const rhythmElement = document.querySelector("#rhythm");
+      const directionElement = document.querySelector("#direction");
+      const appliedElement = document.querySelector("#applied");
+      const applyButton = document.querySelector("#apply");
+
+      applyButton.addEventListener("click", () => {
+        applied = true;
+        renderApplied();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        state = feelState("balanced");
+        applied = false;
+        render();
+      });
+
+      function chooseFeel(key) {
+        state = feelState(key);
+        applied = false;
+        render();
+      }
+
+      function setControl(field, value) {
+        state[field] = value;
+        applied = false;
+        render();
+      }
+
+      // Map a control value to a count of markers for the rhythm preview.
+      function levelOf(field, value) {
+        const keys = Object.keys(controlDefs[field].options);
+        return keys.indexOf(value); // 0, 1, or 2
+      }
+
+      function render() {
+        renderFeels();
+        renderControls();
+        renderRhythm();
+        renderDirection();
+        renderApplied();
+      }
+
+      function renderFeels() {
+        feelsElement.replaceChildren(
+          ...Object.entries(feels).map(([key, feel]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "feel";
+            button.setAttribute("aria-pressed", String(key === state.feel));
+            const name = document.createElement("b");
+            name.textContent = feel.label;
+            const note = document.createElement("span");
+            note.textContent = feel.note;
+            button.append(name, note);
+            button.addEventListener("click", () => chooseFeel(key));
+            return button;
+          }),
+        );
+      }
+
+      function renderControls() {
+        controlsElement.replaceChildren(
+          ...Object.entries(controlDefs).map(([field, def]) => {
+            const label = document.createElement("label");
+            label.textContent = def.label;
+            const select = document.createElement("select");
+            select.setAttribute("aria-label", def.label);
+            for (const [value, text] of Object.entries(def.options)) {
+              const option = document.createElement("option");
+              option.value = value;
+              option.textContent = text;
+              option.selected = value === state[field];
+              select.append(option);
+            }
+            select.addEventListener("change", (event) => setControl(field, event.target.value));
+            label.append(select);
+            return label;
+          }),
+        );
+      }
+
+      // Build a lane of evenly spaced markers; more markers = denser pacing.
+      function laneMarkers(count) {
+        if (count <= 0) {
+          return "";
+        }
+        const markers = [];
+        for (let n = 0; n < count; n += 1) {
+          const left = ((n + 0.5) / count) * 100;
+          markers.push(`<i style="left:${left.toFixed(1)}%"></i>`);
+        }
+        return markers.join("");
+      }
+
+      function renderRhythm() {
+        const titleCount = 1 + levelOf("titles", state.titles) * 2; // 1, 3, 5
+        const brollCount = 2 + levelOf("broll", state.broll) * 2; // 2, 4, 6
+        const cutCount = 4 + levelOf("cuts", state.cuts) * 4; // 4, 8, 12
+        const energy = (levelOf("titles", state.titles) + levelOf("broll", state.broll) + levelOf("cuts", state.cuts)) / 6;
+        // Only fixed, controlled class names and numeric positions reach innerHTML here.
+        rhythmElement.innerHTML = `
+          <h3>About a minute of the episode</h3>
+          <div class="track"><span class="track-label">Titles</span><div class="lane titles">${laneMarkers(titleCount)}</div></div>
+          <div class="track"><span class="track-label">B-roll</span><div class="lane broll">${laneMarkers(brollCount)}</div></div>
+          <div class="track"><span class="track-label">Cuts</span><div class="lane cuts">${laneMarkers(cutCount)}</div></div>
+          <div class="meter"><span>Energy</span><div class="bar"><div class="fill" style="width:${Math.round(energy * 100)}%"></div></div></div>
+        `;
+      }
+
+      function renderDirection() {
+        const rows = [
+          [controlDefs.titles.label, controlDefs.titles.options[state.titles]],
+          [controlDefs.broll.label, controlDefs.broll.options[state.broll]],
+          [controlDefs.cuts.label, controlDefs.cuts.options[state.cuts]],
+        ];
+        directionElement.replaceChildren(
+          ...rows.map(([term, value]) => {
+            const row = document.createElement("div");
+            row.className = "row";
+            const label = document.createElement("span");
+            label.textContent = term;
+            const strong = document.createElement("strong");
+            strong.textContent = value;
+            row.append(label, strong);
+            return row;
+          }),
+        );
+      }
+
+      function renderApplied() {
+        applyButton.textContent = applied ? "Re-apply with changes" : "Apply pacing to this episode";
+        if (!applied) {
+          appliedElement.hidden = true;
+          appliedElement.textContent = "";
+          return;
+        }
+        appliedElement.hidden = false;
+        appliedElement.textContent = `Applied the "${feels[state.feel].label}" pacing to the whole episode.`;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
