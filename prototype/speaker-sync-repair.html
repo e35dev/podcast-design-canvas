@@ -387,6 +387,12 @@
         font-size: 13px;
       }
 
+      .compare-repair-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .preview-moments {
         display: flex;
         flex-wrap: wrap;
@@ -1229,6 +1235,13 @@
           issueNote.className = "compare-issue-note";
           issueNote.textContent = `Focus on: ${focusNote}`;
           wrap.appendChild(issueNote);
+        }
+        const repairLabel = repairDisplayLabel(track.proposedRepair);
+        if (repairLabel) {
+          const repairNote = document.createElement("p");
+          repairNote.className = "compare-repair-note";
+          repairNote.textContent = `Proposed repair: ${repairLabel}`;
+          wrap.appendChild(repairNote);
         }
         wrap.appendChild(compare);
         return wrap;
