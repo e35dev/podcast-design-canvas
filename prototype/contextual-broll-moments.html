@@ -261,6 +261,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -429,6 +445,9 @@
               title: "Two of the same visual back to back",
               action: `${types[moment.type]} repeats right after the previous moment. Space them out or change one so the episode doesn't feel busy.`,
               tone: "review",
+              ...(moment.type === "title"
+                ? { fixScreen: "contextual-title-cards.html", fixLabel: "title cards" }
+                : {}),
             };
           } else if (moment.decision === "suggested" && source.weak) {
             state = "review";
@@ -436,6 +455,8 @@
               title: `Check the context for "${moment.reason}"`,
               action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
               tone: "review",
+              fixScreen: "social-context-intake.html",
+              fixLabel: "social context intake",
             };
           } else if (moment.decision === "adjusted") {
             state = "approved";
@@ -606,6 +627,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
