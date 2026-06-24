@@ -347,8 +347,8 @@ assert.equal(
 );
 assert.equal(
   linkWithText(standaloneBrollLinks, "social-context-intake.html").href,
-  "social-context-intake.html",
-  "visuals nav leaves non-visuals in-page links alone",
+  "social-context-intake.html?path=ingest",
+  "visuals nav keeps ingest path context on social context fix links",
 );
 assert.equal(
   linkWithText(standaloneBrollLinks, "#preview").href,
@@ -399,6 +399,40 @@ assert.equal(
   "embedded visuals nav normalizes dynamically rendered visuals links before navigation",
 );
 assert.equal(dynamicTitleLink.target, "_top", "dynamic embedded visuals links target the parent app");
+
+const embeddedBrollSocialFix = renderNavFor(
+  "contextual-broll-moments.html",
+  "contextual-broll-moments",
+  true,
+  "?path=episode&from=style",
+  ["social-context-intake.html"],
+);
+const embeddedSocialFix = linkWithText(embeddedBrollSocialFix, "social-context-intake.html");
+assert.equal(
+  embeddedSocialFix.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded visuals nav routes social context fix links through the preview app",
+);
+assert.equal(embeddedSocialFix.target, "_top", "embedded social context fix links target the parent app");
+
+const dynamicBrollSocialLinks = renderNavFor(
+  "contextual-title-cards.html",
+  "contextual-title-cards",
+  true,
+  "?path=episode&from=style",
+);
+const dynamicSocialLink = appendStaticLink(
+  dynamicBrollSocialLinks[0],
+  "social-context-intake.html",
+  "Open social context",
+);
+dynamicBrollSocialLinks.listeners.click({ target: dynamicSocialLink });
+assert.equal(
+  dynamicSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded visuals nav normalizes dynamic social context fix links before navigation",
+);
+assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded social context fix links target the parent app");
 
 const screenShareFixLinks = renderNavFor(
   "screen-share-moment-review.html",
