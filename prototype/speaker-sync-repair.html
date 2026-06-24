@@ -374,6 +374,13 @@
         font-size: 14px;
       }
 
+      .compare-preview-now {
+        margin: 0;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
       .preview-moments {
         display: flex;
         flex-wrap: wrap;
@@ -1186,6 +1193,7 @@
         const effect = repairEffects[track.proposedRepair];
         const issue = issues[track.issue];
         const selectedMoment = previewMoments.find((entry) => entry.id === track.previewMoment);
+        const momentLabel = selectedMoment?.label;
 
         compare.append(
           renderPreviewCard("Before repair", before, false, issue.description(track.name), [], track),
@@ -1194,14 +1202,21 @@
             after,
             true,
             track.proposedRepair
-              ? `Preview after ${repairs[track.proposedRepair].toLowerCase()} at ${selectedMoment.label.toLowerCase()}.`
+              ? `Preview after ${repairDisplayLabel(track.proposedRepair)?.toLowerCase() ?? "repair"} at ${momentLabel?.toLowerCase() ?? "this moment"}.`
               : "Choose a repair to preview the difference.",
             effect ? [effect] : [],
             track,
           ),
         );
 
-        wrap.append(heading, compare);
+        wrap.appendChild(heading);
+        if (momentLabel) {
+          const previewNow = document.createElement("p");
+          previewNow.className = "compare-preview-now";
+          previewNow.textContent = `Previewing: ${momentLabel}`;
+          wrap.appendChild(previewNow);
+        }
+        wrap.appendChild(compare);
         return wrap;
       }
 
