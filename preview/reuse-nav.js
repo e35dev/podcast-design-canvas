@@ -23,6 +23,8 @@ const REUSE_FIX_PATHS = {
   "social-context-intake.html": "episode",
   "pause-crosstalk-cleanup.html": "episode",
   "transcript-search-navigation.html": "episode",
+  "speaker-role-mapping.html": "ingest",
+  "layout-safe-areas.html": "episode",
 };
 
 const PREVIEW_APP_REUSE_TARGETS = new Set([
@@ -107,7 +109,7 @@ function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   const path = filePath || shellPath;
-  return path === "episode" || path === "reuse" ? `?path=${path}` : "";
+  return path === "episode" || path === "reuse" || path === "ingest" ? `?path=${path}` : "";
 }
 
 function setTopTargetWhenEmbedded(link) {

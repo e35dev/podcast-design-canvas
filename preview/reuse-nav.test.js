@@ -360,4 +360,59 @@ assert.equal(
   "embedded reuse nav keeps the current screen in the preview app href",
 );
 
+const templateFixLinks = renderNavWithInPageLinks(
+  "show-template-adaptation.html",
+  "show-template-adaptation",
+  false,
+  "?path=episode",
+  ["speaker-role-mapping.html", "social-context-intake.html", "layout-safe-areas.html"],
+);
+assert.equal(
+  linkWithText(templateFixLinks.nodes, "speaker-role-mapping.html").href,
+  "speaker-role-mapping.html?path=ingest",
+  "reuse nav keeps ingest path context on template speaker-role fix links",
+);
+assert.equal(
+  linkWithText(templateFixLinks.nodes, "layout-safe-areas.html").href,
+  "layout-safe-areas.html?path=episode",
+  "reuse nav keeps episode path context on template layout fix links",
+);
+
+const embeddedTemplateFixLinks = renderNavWithInPageLinks(
+  "show-template-adaptation.html",
+  "show-template-adaptation",
+  true,
+  "?path=episode",
+  ["speaker-role-mapping.html", "layout-safe-areas.html"],
+);
+assert.equal(
+  linkWithText(embeddedTemplateFixLinks.nodes, "speaker-role-mapping.html").href,
+  "../preview/app.html#speaker-role-mapping?path=ingest",
+  "embedded reuse nav routes template speaker-role fix links through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedTemplateFixLinks.nodes, "layout-safe-areas.html").href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded reuse nav routes template layout fix links through the preview app",
+);
+
+const dynamicTemplateFix = renderNavWithInPageLinks(
+  "start-from-previous-episode.html",
+  "start-from-previous-episode",
+  true,
+  "?path=episode",
+  [],
+);
+const dynamicRoleLink = createElement("a");
+dynamicRoleLink.setAttribute("href", "speaker-role-mapping.html?path=ingest");
+dynamicRoleLink.getAttribute = function(name) { return this.attributes[name]; };
+dynamicRoleLink.closest = function(selector) { return selector === "a[href]" ? this : null; };
+dynamicTemplateFix.nodes[0].appendChild(dynamicRoleLink);
+dynamicTemplateFix.listeners.click({ target: dynamicRoleLink });
+assert.equal(
+  dynamicRoleLink.href,
+  "../preview/app.html#speaker-role-mapping?path=ingest",
+  "embedded reuse nav normalizes dynamic start-from-previous role fix links before navigation",
+);
+
 console.log("reuse nav: make-it-reusable screens connected into one path");
