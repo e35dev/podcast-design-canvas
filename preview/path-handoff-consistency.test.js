@@ -50,8 +50,8 @@ const expectedHandoffs = [
   },
   {
     script: "reuse-nav.js",
-    href: 'start.href = "episode-watch-through-preview.html"',
-    text: "Continue: Episode watch-through",
+    href: 'REUSE_HANDOFF = { file: "episode-watch-through-preview.html"',
+    text: 'label: "Episode watch-through"',
     note: "reuse path hands off to publish review",
   },
 ];
@@ -71,8 +71,8 @@ const expectedEntryBacklinks = [
   },
   {
     script: "reuse-nav.js",
-    href: 'review.href = "sensitive-moment-review.html"',
-    text: "Previous: Sensitive moment review",
+    href: 'REUSE_ENTRY = { file: "sensitive-moment-review.html"',
+    text: 'label: "Sensitive moment review"',
     note: "reuse path links back to contextual visuals",
   },
 ];

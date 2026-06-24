@@ -12,6 +12,15 @@ const REUSE_FLOW = [
   { id: "episode-chapter-markers", file: "episode-chapter-markers.html", label: "Episode chapter markers" },
 ];
 
+const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive moment review" };
+const REUSE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Episode watch-through" };
+
+const PREVIEW_APP_REUSE_TARGETS = new Set([
+  screenIdFromFile(REUSE_ENTRY.file),
+  screenIdFromFile(REUSE_HANDOFF.file),
+  ...REUSE_FLOW.map((step) => step.id),
+]);
+
 function currentReuseIndex() {
   const fromBody = document.body.dataset.reuseStep;
   if (fromBody) {
@@ -23,6 +32,44 @@ function currentReuseIndex() {
 
   const name = window.location.pathname.split("/").pop() || "";
   return REUSE_FLOW.findIndex((step) => step.file === name);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppReuseTarget(file) {
+  return PREVIEW_APP_REUSE_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setReuseScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppReuseTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = file;
 }
 
 function renderReuseNav() {
@@ -103,11 +150,13 @@ function renderReuseNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "← Preview shell";
   wrap.appendChild(home);
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
@@ -118,25 +167,25 @@ function renderReuseNav() {
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
+    setReuseScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   } else {
     const review = document.createElement("a");
-    review.href = "sensitive-moment-review.html";
-    review.textContent = "Previous: Sensitive moment review";
+    setReuseScreenLink(review, REUSE_ENTRY.file);
+    review.textContent = `Previous: ${REUSE_ENTRY.label}`;
     wrap.appendChild(review);
   }
 
   if (next) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
+    setReuseScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "episode-watch-through-preview.html";
-    start.textContent = "Continue: Episode watch-through";
+    setReuseScreenLink(start, REUSE_HANDOFF.file);
+    start.textContent = `Continue: ${REUSE_HANDOFF.label}`;
     wrap.appendChild(start);
   }
 
