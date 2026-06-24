@@ -47,6 +47,10 @@ assert.ok(
   shell.indexOf("Choose a visual direction") < shell.indexOf("Publish prep after export"),
   "visual direction section precedes publish prep in shell workflow order",
 );
+assert.ok(
+  shell.indexOf("Publish prep after export") < shell.indexOf("Clean up audio &amp; captions"),
+  "publish prep section precedes cleanup helper path in shell workflow order",
+);
 assert.ok(shell.includes("episode-readiness.html"), "shell links to episode readiness in setup path");
 assert.ok(shell.includes("social-context-intake.html"), "shell links to social context intake in ingest path");
 assert.ok(shell.includes("speaker-attribution-review.html"), "shell links to speaker attribution in setup path");

@@ -29,6 +29,10 @@ function currentCleanupIndex() {
 }
 
 function renderCleanupNav() {
+  if (document.querySelector(".cleanup-nav")) {
+    return;
+  }
+
   const index = currentCleanupIndex();
   if (index < 0) {
     return;
