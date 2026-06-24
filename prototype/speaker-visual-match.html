@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Visual Match Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      h2 { margin-bottom: 12px; }
+      .lede { color: var(--muted); max-width: 780px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.9fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px; }
+      .toolbar, .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .toolbar { margin-bottom: 16px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #ffffff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+      .speakers, .issues { display: grid; gap: 12px; }
+      .speaker-card, .issue, .summary-card {
+        border: 1px solid var(--line); border-radius: 8px; background: #ffffff; padding: 14px;
+      }
+      .speaker-card { display: grid; gap: 12px; }
+      .speaker-head, .summary-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+      .speaker-head strong, .issue strong, .summary-card strong { display: block; margin-bottom: 4px; }
+      .speaker-head span, .issue span, .summary-card span, .detail { color: var(--muted); font-size: 13px; line-height: 1.45; }
+      .mini-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .mini-frame, .stage-frame {
+        position: relative; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid #101816;
+        border-radius: 8px; background: #2a3c39;
+      }
+      .mini-frame span, .stage-frame .tag {
+        position: absolute; top: 8px; left: 8px; z-index: 2; border-radius: 999px;
+        background: rgba(246, 251, 249, 0.94); color: #14211d; font-size: 12px;
+        font-weight: 800; padding: 5px 8px;
+      }
+      .person {
+        position: absolute; top: 20%; left: 50%; width: 24%; aspect-ratio: 1;
+        transform: translateX(-50%); border-radius: 50%; background: #eef7f4;
+      }
+      .body {
+        position: absolute; right: 33%; bottom: 12%; left: 33%; height: 34%;
+        border-radius: 999px 999px 0 0; background: #dcefeb;
+      }
+      .host-look { background: linear-gradient(160deg, #8bc8bd, #1b5f56); }
+      .guest-original { background: linear-gradient(160deg, #93a5cf, #30415f); filter: brightness(0.84) saturate(0.8); }
+      .guest-balanced { background: linear-gradient(160deg, #9ebfca, #365d68); }
+      .guest-warm { background: linear-gradient(160deg, #b8c6b4, #48685e); }
+      .guest-soft { background: linear-gradient(160deg, #9ebfca, #365d68); }
+      .guest-soft::after {
+        content: ""; position: absolute; inset: 0; background: rgba(246, 251, 249, 0.12);
+        backdrop-filter: blur(1px);
+      }
+      .dim-moment { filter: brightness(0.76); }
+      .stage-frame { min-height: 250px; background: linear-gradient(135deg, #174f49, #315676 58%, #6d5d83); }
+      .stage-layout { position: absolute; inset: 16% 10% 20%; display: grid; grid-template-columns: 1fr 1fr; gap: 4%; }
+      .stage-speaker { position: relative; overflow: hidden; border-radius: 8px; }
+      .caption {
+        position: absolute; right: 14%; bottom: 10%; left: 14%; z-index: 3; border-radius: 6px;
+        background: rgba(16, 24, 22, 0.86); color: #ffffff; font-weight: 800;
+        line-height: 1.35; padding: 9px 12px; text-align: center;
+      }
+      .lower-third {
+        position: absolute; left: 10px; bottom: 10px; z-index: 2; border-radius: 5px;
+        background: rgba(16, 24, 22, 0.82); color: #ffffff; font-size: 12px;
+        font-weight: 800; padding: 5px 8px;
+      }
+
+      .badge, .status {
+        display: inline-flex; width: fit-content; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; white-space: nowrap;
+      }
+      .status { min-height: 32px; }
+      .badge { min-height: 28px; font-size: 13px; }
+      .ready { color: #075246; background: #dff5ef; }
+      .review { color: #7a4400; background: #fff1d6; }
+      .route { color: var(--info); background: #e2ebfb; }
+      .skipped { color: #58635f; background: #eceeed; }
+      .issue { border-left: 4px solid var(--warn); }
+      .issue.ready { border-left-color: var(--accent); }
+      .issue.route { border-left-color: var(--info); }
+      .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+      .summary-grid .summary-card strong { font-size: 24px; line-height: 1; }
+
+      @media (max-width: 920px) {
+        .workspace, .mini-compare { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker Visual Match Prototype</h1>
+      <p class="lede">
+        Compare speaker frames before preset styling and make simple visual matching choices that help separate recordings feel like one episode.
+      </p>
+
+      <section class="workspace" aria-label="Speaker visual match">
+        <div class="panel">
+          <div class="summary-head">
+            <div>
+              <h2>Speaker Match</h2>
+              <p class="detail">Plain-language corrections preview on real speaker frames. No technical color controls are exposed.</p>
+            </div>
+            <span class="status review" id="statusBadge">Needs review</span>
+          </div>
+
+          <div class="toolbar" id="previewModes"></div>
+          <div class="speakers" id="speakers"></div>
+          <div class="actions">
+            <button type="button" id="autoMatch">Auto-match speakers</button>
+            <button type="button" id="resetSample">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Preset Preview</h2>
+          <div class="stage-frame" id="stageFrame"></div>
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <h3>What Carries Forward</h3>
+          <div class="issues" id="issues"></div>
+
+          <div class="actions" style="margin-top: 16px;">
+            <button type="button" id="applyToPreset">Use matched look in preset preview</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const previewModes = {
+        side: "Side-by-side check",
+        split: "Split-screen exchange",
+        preset: "Preset with captions",
+        dim: "Darker guest moment",
+      };
+
+      const adjustments = {
+        none: {
+          label: "Original look",
+          className: "guest-original",
+          strength: "needs review",
+          note: "Guest looks cooler and darker than the host.",
+        },
+        brightness: {
+          label: "Match brightness",
+          className: "guest-balanced",
+          strength: "balanced",
+          note: "Guest lands closer to the host without looking pushed.",
+        },
+        warmth: {
+          label: "Warm the guest",
+          className: "guest-warm",
+          strength: "light touch",
+          note: "Skin tone feels closer while the room still looks natural.",
+        },
+        background: {
+          label: "Soften background difference",
+          className: "guest-soft",
+          strength: "heavy",
+          note: "Background is calmer, but the room starts to look softened.",
+        },
+      };
+
+      let state = freshState();
+
+      const previewModesElement = document.querySelector("#previewModes");
+      const speakersElement = document.querySelector("#speakers");
+      const statusBadge = document.querySelector("#statusBadge");
+      const stageFrame = document.querySelector("#stageFrame");
+      const summaryGrid = document.querySelector("#summaryGrid");
+      const issuesElement = document.querySelector("#issues");
+      const autoMatchButton = document.querySelector("#autoMatch");
+      const applyToPresetButton = document.querySelector("#applyToPreset");
+      const resetSampleButton = document.querySelector("#resetSample");
+
+      function freshState() {
+        return {
+          mode: "side",
+          guestAdjustment: "none",
+          guestState: "needs review",
+          guestLocked: false,
+          presetApplied: false,
+        };
+      }
+
+      function createText(tag, text, className) {
+        const element = document.createElement(tag);
+        if (className) {
+          element.className = className;
+        }
+        element.textContent = text;
+        return element;
+      }
+
+      function overallState() {
+        if (state.guestState === "needs review") return "needs review";
+        return state.presetApplied ? "matched in preset" : "ready for preset";
+      }
+
+      function setGuestAdjustment(adjustment, nextState) {
+        state.guestAdjustment = adjustment;
+        state.guestState = nextState;
+        state.guestLocked = false;
+        state.presetApplied = false;
+        render();
+      }
+
+      function guestLook() {
+        return adjustments[state.guestAdjustment];
+      }
+
+      function guestDecisionDetail() {
+        const guest = guestLook();
+        if (state.guestState === "needs review") {
+          return "Needs review: Guest looks cooler and darker than the host.";
+        }
+        if (state.guestState === "skipped") {
+          return "Skipped: Guest keeps the original look for this episode.";
+        }
+        const lockNote = state.guestLocked ? " Correction is locked for preset preview." : "";
+        return `${guest.strength}: ${guest.note}${lockNote}`;
+      }
+
+      function speakerFrame(label, className, dim) {
+        const frame = document.createElement("div");
+        frame.className = `mini-frame ${className}${dim ? " dim-moment" : ""}`;
+        frame.append(createText("span", label), createText("div", "", "person"), createText("div", "", "body"));
+        return frame;
+      }
+
+      function renderPreviewModes() {
+        previewModesElement.replaceChildren(
+          ...Object.entries(previewModes).map(([id, label]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = state.mode === id ? "active" : "";
+            button.textContent = label;
+            button.addEventListener("click", () => {
+              state.mode = id;
+              render();
+            });
+            return button;
+          }),
+        );
+      }
+
+      function renderSpeakerCards() {
+        const guest = guestLook();
+        const hostCard = document.createElement("article");
+        hostCard.className = "speaker-card";
+        const hostHead = document.createElement("div");
+        hostHead.className = "speaker-head";
+        hostHead.append(
+          createText("div", "Host"),
+          createText("span", "reference look", "badge ready"),
+        );
+        const hostCompare = document.createElement("div");
+        hostCompare.className = "mini-compare";
+        hostCompare.append(speakerFrame("Original", "host-look"), speakerFrame("Preset preview", "host-look"));
+        hostCard.append(hostHead, createText("span", "The host is the best-lit recording and stays as the reference.", "detail"), hostCompare);
+
+        const guestCard = document.createElement("article");
+        guestCard.className = "speaker-card";
+        const guestHead = document.createElement("div");
+        guestHead.className = "speaker-head";
+        const stateClass = state.guestState === "matched" ? "ready" : state.guestState === "skipped" ? "skipped" : "review";
+        guestHead.append(
+          createText("div", "Guest"),
+          createText("span", state.guestState, `badge ${stateClass}`),
+        );
+        const guestCompare = document.createElement("div");
+        guestCompare.className = "mini-compare";
+        guestCompare.append(
+          speakerFrame("Original", "guest-original", state.mode === "dim"),
+          speakerFrame(guest.label, guest.className, state.mode === "dim"),
+        );
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        [
+          ["Match brightness", "brightness", "matched"],
+          ["Warm guest look", "warmth", "matched"],
+          ["Soften background", "background", "matched"],
+          ["Skip matching", "none", "skipped"],
+          ["Reset guest", "none", "needs review"],
+        ].forEach(([label, adjustment, nextState]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = label;
+          button.addEventListener("click", () => setGuestAdjustment(adjustment, nextState));
+          actions.append(button);
+        });
+        const lockButton = document.createElement("button");
+        lockButton.type = "button";
+        lockButton.textContent = "Lock guest correction";
+        lockButton.disabled = state.guestState !== "matched" || state.guestLocked;
+        lockButton.addEventListener("click", () => {
+          state.guestLocked = true;
+          render();
+        });
+        actions.append(lockButton);
+        guestCard.append(
+          guestHead,
+          createText("span", guestDecisionDetail(), "detail"),
+          guestCompare,
+          actions,
+        );
+
+        speakersElement.replaceChildren(hostCard, guestCard);
+      }
+
+      function stageSpeaker(label, className, active) {
+        const speaker = document.createElement("div");
+        speaker.className = `stage-speaker ${className}`;
+        speaker.append(createText("span", label, "tag"), createText("div", "", "person"), createText("div", "", "body"));
+        if (active) {
+          speaker.append(createText("div", "speaking", "lower-third"));
+        }
+        return speaker;
+      }
+
+      function renderStage() {
+        const guest = guestLook();
+        const layout = document.createElement("div");
+        layout.className = "stage-layout";
+        layout.append(
+          stageSpeaker("Host", "host-look", state.mode === "split"),
+          stageSpeaker("Guest", state.guestState === "skipped" ? "guest-original" : guest.className, state.mode !== "split"),
+        );
+        const modeTag = createText("span", previewModes[state.mode], "tag");
+        const caption = createText(
+          "div",
+          state.mode === "preset" ? "Captions stay readable against the matched speaker frames." : "Compare the guest against the host before choosing a preset.",
+          "caption",
+        );
+        stageFrame.className = `stage-frame${state.mode === "dim" ? " dim-moment" : ""}`;
+        stageFrame.replaceChildren(modeTag, layout, caption);
+      }
+
+      function renderSummary() {
+        const guest = guestLook();
+        const cards = [
+          ["Guest state", state.guestState, "current review state"],
+          ["Correction", state.guestState === "skipped" ? "none" : guest.strength, "plain-language strength"],
+          ["Lock", state.guestLocked ? "locked" : "open", "preset handoff"],
+          ["Preset", state.presetApplied ? "updated" : "waiting", "what styling will see"],
+        ].map(([label, value, detail]) => {
+          const card = document.createElement("div");
+          card.className = "summary-card";
+          card.append(createText("span", label), createText("strong", value), createText("span", detail));
+          return card;
+        });
+        summaryGrid.replaceChildren(...cards);
+      }
+
+      function renderIssues() {
+        const guest = guestLook();
+        const issues = [];
+        if (state.guestState === "needs review") {
+          issues.push(["route", "Guest still needs a visual decision", "Match, skip, or reset the guest before the preset preview treats the look as settled."]);
+        } else if (state.guestState === "skipped") {
+          issues.push(["ready", "Skipped for this episode", "The original guest frame carries forward with the mismatch visible in preset review."]);
+        } else {
+          issues.push(["ready", "Guest look matched", `${guest.strength} correction is visible before preset styling continues.`]);
+        }
+        if (guest.strength === "heavy" && state.guestState === "matched") {
+          issues.push(["route", "Correction is working hard", "The softened background is calmer, but the creator should confirm the room still feels natural."]);
+        }
+        if (state.guestLocked) {
+          issues.push(["ready", "Guest correction locked", "Preset comparison will use this matched look without silently changing the source."]);
+        }
+        if (state.presetApplied) {
+          issues.push(["ready", "Preset preview refreshed", "The selected preset now compares speakers using the settled visual match state."]);
+        }
+        issuesElement.replaceChildren(
+          ...issues.map(([tone, title, detail]) => {
+            const issue = document.createElement("article");
+            issue.className = `issue ${tone}`;
+            issue.append(createText("strong", title), createText("span", detail));
+            return issue;
+          }),
+        );
+      }
+
+      function renderStatus() {
+        const stateText = overallState();
+        statusBadge.textContent = stateText;
+        statusBadge.className = `status ${stateText === "needs review" ? "review" : "ready"}`;
+        applyToPresetButton.disabled = state.guestState === "needs review" || state.presetApplied;
+      }
+
+      function render() {
+        renderPreviewModes();
+        renderSpeakerCards();
+        renderStage();
+        renderSummary();
+        renderIssues();
+        renderStatus();
+      }
+
+      autoMatchButton.addEventListener("click", () => setGuestAdjustment("brightness", "matched"));
+      applyToPresetButton.addEventListener("click", () => {
+        if (state.guestState !== "needs review") {
+          state.presetApplied = true;
+          render();
+        }
+      });
+      resetSampleButton.addEventListener("click", () => {
+        state = freshState();
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
