@@ -131,8 +131,8 @@ assert.equal(embeddedHome.target, "_top", "embedded episode flow home targets th
 const embeddedPrevious = linkWithText(embeddedFirstNav, "Previous: Speaker roles");
 assert.equal(
   embeddedPrevious.href,
-  "../preview/app.html#speaker-role-mapping",
-  "embedded episode flow nav routes previous steps through the preview app hash",
+  "../preview/app.html#speaker-role-mapping?path=episode",
+  "embedded episode flow nav routes previous steps through the preview app hash with episode context",
 );
 assert.equal(embeddedPrevious.target, "_top", "embedded previous link targets the parent app");
 

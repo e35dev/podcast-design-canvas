@@ -54,7 +54,12 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function routeSearchFromFile(file) {
+  const query = (file || "").split("?")[1] || "";
+  return query.split("&").includes("path=episode") ? "?path=episode" : "";
 }
 
 function setTopTargetWhenEmbedded(link) {

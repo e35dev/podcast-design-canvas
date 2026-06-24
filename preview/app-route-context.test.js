@@ -136,6 +136,81 @@ assert.equal(
   "non-visuals screens discard contextual visuals route context",
 );
 
+const episodeRoles = runApp("#speaker-role-mapping?path=episode");
+assert.equal(
+  episodeRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode",
+  "episode path context loads role mapping with its route context",
+);
+assert.equal(
+  episodeRoles.nodes.prevStep.href,
+  "#episode-readiness?path=episode",
+  "episode path context steps back to episode readiness",
+);
+assert.equal(
+  episodeRoles.nodes.nextStep.href,
+  "#source-media-health?path=episode",
+  "episode path context steps forward to source media health",
+);
+
+episodeRoles.reroute("#source-media-health?path=episode");
+assert.equal(
+  episodeRoles.nodes.frame.src,
+  "../prototype/source-media-health.html?path=episode",
+  "source media health can carry episode path context in the preview app",
+);
+assert.equal(
+  episodeRoles.nodes.prevStep.href,
+  "#speaker-role-mapping?path=episode",
+  "episode path source media step returns to role mapping",
+);
+assert.equal(
+  episodeRoles.nodes.nextStep.href,
+  "#speaker-sync-repair",
+  "episode path source media step continues to speaker sync",
+);
+
+const ingestRoles = runApp("#speaker-role-mapping?path=ingest");
+assert.equal(
+  ingestRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=ingest",
+  "ingest path context loads role mapping with its route context",
+);
+assert.equal(
+  ingestRoles.nodes.prevStep.href,
+  "#episode-readiness?path=ingest",
+  "ingest path context steps back to episode readiness",
+);
+assert.equal(
+  ingestRoles.nodes.nextStep.href,
+  "#social-context-intake?path=ingest",
+  "ingest path context steps forward to social context",
+);
+
+ingestRoles.reroute("#social-context-intake?path=ingest");
+assert.equal(
+  ingestRoles.nodes.frame.src,
+  "../prototype/social-context-intake.html?path=ingest",
+  "ingest path context loads social context with its route context",
+);
+assert.equal(
+  ingestRoles.nodes.prevStep.href,
+  "#speaker-role-mapping?path=ingest",
+  "ingest social context step returns to role mapping",
+);
+assert.equal(
+  ingestRoles.nodes.nextStep.href,
+  "#source-media-health?path=episode",
+  "ingest social context step hands into the episode source-media path",
+);
+
+ingestRoles.reroute("#speaker-visual-match?path=episode");
+assert.equal(
+  ingestRoles.nodes.frame.src,
+  "../prototype/speaker-visual-match.html",
+  "non-ingest screens discard ingest route context",
+);
+
 styleEntry.reroute("#missing-screen?from=style");
 assert.equal(
   styleEntry.nodes.frame.src,
@@ -143,4 +218,4 @@ assert.equal(
   "unknown route hashes fall back to the first known screen without route context",
 );
 
-console.log("preview app route context: contextual visuals entry context is preserved safely");
+console.log("preview app route context: contextual visuals and ingest path context are preserved safely");

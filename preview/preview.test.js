@@ -182,8 +182,8 @@ assert.equal(embeddedHome.target, "_top", "embedded episode nav home opens the p
 const embeddedPrevious = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
 assert.equal(
   embeddedPrevious.href,
-  "../preview/app.html#speaker-role-mapping",
-  "embedded first flow screen routes previous through the preview app hash",
+  "../preview/app.html#speaker-role-mapping?path=episode",
+  "embedded first flow screen routes previous through the preview app hash with episode context",
 );
 assert.equal(embeddedPrevious.target, "_top", "embedded previous link targets the parent app");
 const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Speaker sync repair");

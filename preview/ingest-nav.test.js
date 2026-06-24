@@ -198,21 +198,21 @@ assert.equal(embeddedNext.target, "_top", "embedded ingest next link targets the
 const embeddedMiddleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest", true);
 assert.equal(
   linkWithText(embeddedMiddleNav.nodes, "Previous: Episode readiness").href,
-  "../preview/app.html#episode-readiness",
-  "embedded ingest nav routes previous setup steps through the preview app hash",
+  "../preview/app.html#episode-readiness?path=ingest",
+  "embedded ingest nav routes previous setup steps through the preview app hash with ingest context",
 );
 assert.equal(
   linkWithText(embeddedMiddleNav.nodes, "Next: Social links").href,
-  "../preview/app.html#social-context-intake",
-  "embedded ingest nav routes middle next steps through the preview app hash",
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded ingest nav routes middle next steps through the preview app hash with ingest context",
 );
 
 const embeddedLastNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Source media health");
 assert.equal(
   embeddedHandoff.href,
-  "../preview/app.html#source-media-health",
-  "embedded ingest nav routes the source media health handoff through the preview app hash",
+  "../preview/app.html#source-media-health?path=episode",
+  "embedded ingest nav routes the source media health handoff through the preview app hash with episode context",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded ingest handoff targets the parent app");
 

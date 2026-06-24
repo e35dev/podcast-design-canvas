@@ -35,7 +35,18 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function routeSearchFromFile(file) {
+  const query = (file || "").split("?")[1] || "";
+  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  return path === "episode" || path === "ingest" ? `?path=${path}` : "";
+}
+
+function pathFromQuery(query) {
+  const part = (query || "").split("&").find((item) => item.startsWith("path="));
+  return part ? part.split("=")[1] : "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -55,13 +66,14 @@ function setIngestScreenLink(link, file) {
 }
 
 function setIngestHandoffLink(link) {
+  const file = shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html";
   if (isEmbeddedInPreviewApp()) {
-    link.href = previewAppHref("source-media-health.html");
+    link.href = previewAppHref(file);
     link.target = "_top";
     return;
   }
 
-  link.href = shouldHandoffToEpisodePath() ? "source-media-health.html?path=episode" : "source-media-health.html";
+  link.href = file;
 }
 
 function pathQuerySuffix() {

@@ -149,8 +149,8 @@ assert.equal(embeddedGuided.target, "_top", "embedded guided-flow link targets t
 const embeddedRolesBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
 assert.equal(
   embeddedRolesBack.href,
-  "../preview/app.html#speaker-role-mapping",
-  "embedded speaker setup nav routes the roles back-link through the preview app hash",
+  "../preview/app.html#speaker-role-mapping?path=episode",
+  "embedded speaker setup nav routes the roles back-link through the preview app hash with episode context",
 );
 assert.equal(embeddedRolesBack.target, "_top", "embedded roles back-link targets the parent app");
 const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Guest profile reuse");
