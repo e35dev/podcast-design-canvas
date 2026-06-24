@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Render Failure Recovery Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        max-width: 780px;
+        color: var(--muted);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel h2 {
+        font-size: 17px;
+        margin-bottom: 14px;
+      }
+
+      .panel h3 {
+        font-size: 14px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 10px;
+      }
+
+      .episode-context {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 20px;
+      }
+
+      .episode-context .ep-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-ink));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .episode-context .ep-detail {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .episode-context .ep-title {
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 15px;
+      }
+
+      .failure-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      .failure-card[data-severity="error"] {
+        border-left: 3px solid var(--block);
+      }
+
+      .failure-card[data-severity="warning"] {
+        border-left: 3px solid var(--warn);
+      }
+
+      .failure-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .failure-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .failure-icon.error {
+        background: #fde8e8;
+        color: var(--block);
+      }
+
+      .failure-icon.warn {
+        background: #fef3e2;
+        color: var(--warn);
+      }
+
+      .failure-icon.ok {
+        background: #e6f5f0;
+        color: var(--accent);
+      }
+
+      .failure-icon.retrying {
+        background: #eef0f8;
+        color: #4a5fa8;
+      }
+
+      .failure-message {
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .failure-detail {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .failure-status {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-top: 8px;
+      }
+
+      .failure-status.failed { background: #fde8e8; color: var(--block); }
+      .failure-status.retrying { background: #eef0f8; color: #4a5fa8; }
+      .failure-status.needs-input { background: #fef3e2; color: var(--warn); }
+      .failure-status.recovered { background: #e6f5f0; color: var(--accent); }
+      .failure-status.exported-around { background: #e6f5f0; color: var(--accent); }
+      .failure-status.set-aside { background: #f3f4f6; color: var(--muted); }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        transition: background 0.15s;
+      }
+
+      .btn:hover { background: var(--panel); }
+      .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .btn.primary:hover { background: var(--accent-ink); }
+
+      .sidebar-section {
+        margin-bottom: 20px;
+      }
+
+      .sidebar-section:last-child { margin-bottom: 0; }
+
+      .preserved-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .preserved-list li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 0;
+        font-size: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .preserved-list li:last-child { border-bottom: none; }
+
+      .check-icon {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .last-export {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .last-export .export-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+
+      .last-export .export-title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .last-export .export-meta {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      .summary-bar {
+        display: flex;
+        gap: 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 16px;
+        font-size: 14px;
+        flex-wrap: wrap;
+      }
+
+      .summary-stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .summary-stat .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .dot.red { background: var(--block); }
+      .dot.amber { background: var(--warn); }
+      .dot.green { background: var(--accent); }
+      .dot.grey { background: var(--muted); }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .spinning {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="render-failure-recovery">
+    <main>
+      <h1>Render Failure Recovery</h1>
+      <p class="lede">
+        Two issues came up during export. Your edits and decisions are safe &mdash;
+        choose how to move forward for each issue.
+      </p>
+
+      <div class="workspace">
+        <div class="main-col">
+          <div class="episode-context">
+            <div class="ep-icon" aria-hidden="true">OS</div>
+            <div>
+              <div class="ep-title">The Future of Open Source</div>
+              <div class="ep-detail">Dana Brooks &middot; Marcus Chen &middot; 47 min</div>
+            </div>
+          </div>
+
+          <div id="summary-bar" class="summary-bar" aria-live="polite"></div>
+          <div id="failures" aria-live="polite"></div>
+        </div>
+
+        <div class="sidebar">
+          <div class="panel sidebar-section">
+            <h2>Preserved</h2>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+              Everything you have done on this episode is safe.
+            </p>
+            <ul class="preserved-list" aria-label="Preserved items">
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Canvas edits (12 changes)</li>
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Caption corrections (8 edits)</li>
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Approved b-roll (3 clips)</li>
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Episode metadata</li>
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Comments (5 threads)</li>
+              <li><span class="check-icon" aria-hidden="true">&#10003;</span> Template changes</li>
+            </ul>
+          </div>
+
+          <div class="panel sidebar-section">
+            <h3>Last successful export</h3>
+            <div class="last-export">
+              <div class="export-label">Exported</div>
+              <div class="export-title">The Future of Open Source &mdash; draft 3</div>
+              <div class="export-meta">June 22, 2026 at 3:14 PM &middot; 1080p &middot; 47:12</div>
+              <button class="btn" style="margin-top:10px;" aria-label="Download last successful export">
+                Download previous export
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      var state = {
+        failures: [
+          {
+            id: "broll-missing",
+            severity: "error",
+            message: "B-roll asset missing",
+            detail: "The clip \"server-room-pan.mp4\" used at 14:22 could not be found. It may have been moved or deleted.",
+            status: "needs-input",
+            actions: [
+              { id: "replace-asset", label: "Replace asset in source media health", primary: true, href: "source-media-health.html" },
+              { id: "skip-visual", label: "Skip this visual", handler: "skipVisual" },
+              { id: "return-moment", label: "Return to 14:22 in contextual visuals", href: "contextual-broll-moments.html" }
+            ]
+          },
+          {
+            id: "thumbnail-failed",
+            severity: "error",
+            message: "Thumbnail export failed",
+            detail: "The episode thumbnail could not be rendered. The source frame at 02:18 produced an empty image.",
+            status: "failed",
+            actions: [
+              { id: "retry-thumb", label: "Fix source frame in thumbnail editor", primary: true, href: "thumbnail-cover-frame.html" },
+              { id: "review-copy", label: "Prepare review copy instead", href: "client-review-copy-flow.html" },
+              { id: "export-without", label: "Export without thumbnail", handler: "exportWithoutThumbnail" }
+            ]
+          }
+        ]
+      };
+
+      var handlers = {
+        skipVisual: function(failure) {
+          failure.status = "exported-around";
+          failure.detail = "This visual will be skipped. The speaker camera will fill the frame at 14:22 instead.";
+          failure.actions = [];
+          render();
+        },
+        exportWithoutThumbnail: function(failure) {
+          failure.status = "exported-around";
+          failure.detail = "The episode will export without a thumbnail. A default placeholder will be used.";
+          failure.actions = [];
+          render();
+        }
+      };
+
+      function statusLabel(s) {
+        var labels = {
+          "failed": "Failed",
+          "retrying": "Retrying\u2026",
+          "needs-input": "Needs your input",
+          "recovered": "Recovered",
+          "exported-around": "Exported around issue",
+          "set-aside": "Set aside"
+        };
+        return labels[s] || s;
+      }
+
+      function iconForStatus(s) {
+        if (s === "recovered" || s === "exported-around") return "ok";
+        if (s === "retrying") return "retrying";
+        if (s === "needs-input") return "warn";
+        return "error";
+      }
+
+      function iconChar(s) {
+        if (s === "recovered" || s === "exported-around") return "\u2713";
+        if (s === "retrying") return "\u21BB";
+        if (s === "needs-input") return "!";
+        return "\u2717";
+      }
+
+      function render() {
+        var container = document.getElementById("failures");
+        var html = "";
+
+        state.failures.forEach(function(f) {
+          var ic = iconForStatus(f.status);
+          var spinning = f.status === "retrying" ? " spinning" : "";
+          html += '<div class="failure-card" id="moment-focus-' + f.id + '" tabindex="-1" data-severity="' +
+            (f.status === "recovered" || f.status === "exported-around" ? "ok" : f.severity) + '">';
+          html += '<div class="failure-header">';
+          html += '<div class="failure-icon ' + ic + '" aria-hidden="true"><span class="' + spinning + '">' + iconChar(f.status) + '</span></div>';
+          html += '<div>';
+          html += '<div class="failure-message">' + f.message + '</div>';
+          html += '<div class="failure-detail">' + f.detail + '</div>';
+          html += '<div class="failure-status ' + f.status + '">' + statusLabel(f.status) + '</div>';
+          html += '</div></div>';
+
+          if (f.actions.length > 0) {
+            html += '<div class="actions" role="group" aria-label="Recovery actions for ' + f.message + '">';
+            f.actions.forEach(function(a) {
+              var cls = a.primary ? "btn primary" : "btn";
+              if (a.href) {
+                html += '<a class="' + cls + '" href="' + a.href + '">' + a.label + '</a>';
+              } else {
+                html += '<button class="' + cls + '" data-failure="' + f.id + '" data-handler="' + a.handler + '">';
+                html += a.label + '</button>';
+              }
+            });
+            html += '</div>';
+          }
+
+          html += '</div>';
+        });
+
+        container.innerHTML = html;
+
+        container.querySelectorAll("button[data-handler]").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            var fid = btn.getAttribute("data-failure");
+            var hname = btn.getAttribute("data-handler");
+            var failure = state.failures.find(function(f) { return f.id === fid; });
+            if (failure && handlers[hname]) {
+              handlers[hname](failure);
+            }
+          });
+        });
+
+        renderSummary();
+      }
+
+      function renderSummary() {
+        var bar = document.getElementById("summary-bar");
+        var counts = { failed: 0, retrying: 0, "needs-input": 0, resolved: 0 };
+        state.failures.forEach(function(f) {
+          if (f.status === "recovered" || f.status === "exported-around") {
+            counts.resolved++;
+          } else if (f.status === "set-aside") {
+            counts["needs-input"]++;
+          } else if (f.status === "retrying") {
+            counts.retrying++;
+          } else if (f.status === "needs-input") {
+            counts["needs-input"]++;
+          } else {
+            counts.failed++;
+          }
+        });
+
+        var parts = [];
+        if (counts.failed > 0) parts.push('<span class="summary-stat"><span class="dot red" aria-hidden="true"></span>' + counts.failed + ' failed</span>');
+        if (counts.retrying > 0) parts.push('<span class="summary-stat"><span class="dot amber" aria-hidden="true"></span>' + counts.retrying + ' retrying</span>');
+        if (counts["needs-input"] > 0) parts.push('<span class="summary-stat"><span class="dot amber" aria-hidden="true"></span>' + counts["needs-input"] + ' needs input</span>');
+        if (counts.resolved > 0) parts.push('<span class="summary-stat"><span class="dot green" aria-hidden="true"></span>' + counts.resolved + ' resolved</span>');
+
+        var allResolved = counts.resolved === state.failures.length;
+        if (allResolved) {
+          parts.push('<a class="btn primary" href="export-package-handoff.html" style="margin-left:auto;text-decoration:none;">Continue to export handoff</a>');
+        }
+
+        bar.innerHTML = parts.join("");
+      }
+
+      render();
+    </script>
+  </body>
+</html>

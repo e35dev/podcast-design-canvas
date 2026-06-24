@@ -26,6 +26,7 @@ const publishScreens = [
   "show-notes-assembly.html",
   "episode-metadata-publishing.html",
   "export-package-handoff.html",
+  "render-failure-recovery.html",
   "client-review-copy-flow.html",
   "publish-checklist.html",
 ];
@@ -169,7 +170,7 @@ assert.ok(
   "first publish screen renders the next publish step",
 );
 const firstStep = firstNav.find(
-  (node) => node.textContent === "Publish step 1 of 9 · Watch-through preview",
+  (node) => node.textContent === "Publish step 1 of 10 · Watch-through preview",
 );
 assert.ok(firstStep, "first publish screen renders its visible step label");
 assert.equal(firstStep.attributes["aria-current"], "step", "current publish step exposes aria-current");
