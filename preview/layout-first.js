@@ -591,6 +591,15 @@
       const target = firstOpenVisibleSlot();
       if (target) {
         placeVideoFiles(target, fileList);
+        return;
+      }
+      // Every visible slot is already filled or flagged, so a canvas-wide drop has nowhere
+      // to land. Tell the creator how to make room instead of silently ignoring the drop,
+      // matching the multi-file overflow guidance — but only when a real video was dropped,
+      // so a stray non-video stays quiet.
+      const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
+      if (files.some(isVideoFile)) {
+        setError("There's no open slot left. Remove a video to make room for another.");
       }
     }
 

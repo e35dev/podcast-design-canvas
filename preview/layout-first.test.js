@@ -798,6 +798,22 @@ controller.placeDroppedFiles([{ name: "guest.mp4", type: "video/mp4", size: 8, l
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "drop-anywhere targets the next empty slot when the first is taken");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "host.mp4", "drop-anywhere leaves an already-filled slot untouched");
 
+// A canvas-wide drop when every visible slot is already filled should report there's no
+// room instead of silently swallowing the file (#1026).
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "h.mp4", type: "video/mp4", size: 11, lastModified: 11 });
+controller.placeVideoFile(controller.zonesBySlot.guest, { name: "g.mp4", type: "video/mp4", size: 12, lastModified: 12 });
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "b.mp4", type: "video/mp4", size: 13, lastModified: 13 });
+controller.placeDroppedFiles([{ name: "extra.mp4", type: "video/mp4", size: 14, lastModified: 14 }]);
+assert.match(
+  elementsById["layout-error"].textContent,
+  /no open slot left/i,
+  "dropping on a full layout reports there's no room instead of silently ignoring the drop",
+);
+assert.equal(elementsById["layout-error-card"].hidden, false, "the no-room message is shown to the creator");
+assert.equal(controller.zonesBySlot.host.dataset.fileName, "h.mp4", "a full-layout drop leaves existing placements untouched");
+
 // Drag-over highlight stays steady while the cursor crosses the slot's contents. dragenter and
 // dragleave fire for each child (label, badge, input), so the highlight is tracked by enter/
 // leave depth rather than toggled on every crossing — which would flicker — and a drop clears it.
