@@ -395,6 +395,27 @@
         // Record progress through the product and reflect it in the rail.
         markVisited(screen);
         renderProgress();
+        rememberLast(screen);
+      }
+
+      // Remember the last screen viewed so a return visit resumes where the creator
+      // left off, rather than always restarting at the first screen.
+      const LAST_KEY = "pdc-preview-last";
+
+      function rememberLast(screen) {
+        try {
+          sessionStorage.setItem(LAST_KEY, screen);
+        } catch (error) {
+          // Session storage may be unavailable; resume just won't persist.
+        }
+      }
+
+      function lastScreen() {
+        try {
+          return sessionStorage.getItem(LAST_KEY);
+        } catch (error) {
+          return null;
+        }
       }
 
       function setStep(button, target) {
@@ -410,6 +431,15 @@
       }
 
       window.addEventListener("hashchange", route);
+
+      // On a fresh open with no screen in the URL, resume the last screen the creator
+      // viewed in this session (if any) instead of restarting at the beginning.
+      if (!window.location.hash) {
+        const resume = lastScreen();
+        if (resume && KNOWN.has(resume)) {
+          window.location.hash = resume;
+        }
+      }
       route();
     </script>
   </body>

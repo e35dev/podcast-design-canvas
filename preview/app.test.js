@@ -54,6 +54,12 @@ assert.ok(app.includes("of ${ORDER.length} viewed"), "app shows how many screens
 assert.ok(app.includes('classList.toggle("seen"'), "the rail marks viewed screens");
 assert.ok(/try\s*\{[\s\S]*sessionStorage/.test(app), "session storage access is guarded");
 
+// The app resumes the last viewed screen on a fresh open (continuous product, not a restart).
+assert.ok(app.includes('"pdc-preview-last"'), "app remembers the last viewed screen");
+assert.ok(app.includes("function rememberLast"), "app saves the last viewed screen");
+assert.ok(app.includes("if (!window.location.hash)"), "app only resumes when no screen is in the URL");
+assert.ok(app.includes("KNOWN.has(resume)"), "app only resumes to a known screen");
+
 // The shell links to the app so it's discoverable.
 const shell = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 assert.ok(shell.includes("app.html"), "the preview shell links to the unified app");
