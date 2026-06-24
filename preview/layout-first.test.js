@@ -44,9 +44,15 @@ class Element {
     this.listeners = {};
     this.files = null;
     this.value = "";
+    this.href = options.href || "";
   }
 
   setAttribute(name, value) { this.attributes[name] = value; }
+  getAttribute(name) { return this.attributes[name]; }
+  removeAttribute(name) {
+    delete this.attributes[name];
+    if (name === "href") this.href = "";
+  }
   addEventListener(type, handler) { this.listeners[type] = handler; }
   appendChild(child) {
     this.children.push(child);
@@ -158,6 +164,7 @@ function video(name) {
 }
 
 const controller = createLayoutFirstController(documentStub, { URL: urlApi });
+elementsById["layout-continue"].dataset.readyHref = "./app.html#speaker-role-mapping?path=episode";
 
 assert.match(html, /Start with a podcast layout/, "layout-first landing opens with layout selection");
 assert.match(html, /data-layout="interview"/, "layout-first offers an interview layout");
@@ -165,6 +172,8 @@ assert.match(html, /data-layout="solo"/, "layout-first offers a solo layout");
 assert.match(html, /data-layout="panel"/, "layout-first offers a panel layout");
 assert.match(html, /data-slot="broll" data-optional="true"/, "layout-first marks b-roll as optional");
 assert.match(html, /Continue to production workspace/, "layout-first has a production workspace handoff");
+assert.match(html, /data-ready-href=".\/app.html#speaker-role-mapping\?path=episode"/, "layout-first stores the ready handoff target separately");
+assert.doesNotMatch(html, /id="layout-continue"[^>]* href=/, "disabled Continue has no initial href");
 assert.match(html, /type="file" accept="video\/\*"/, "layout-first supports choosing video files");
 assert.match(html, /script src=".\/layout-first.js"/, "layout-first uses source-backed behavior");
 assert.ok(app.includes("layout-first.html"), "preview app links back to the layout-first start");
@@ -173,6 +182,14 @@ assert.equal(isVideoFile(video("host.mp4")), true, "video files are accepted");
 assert.equal(isVideoFile({ name: "notes.txt", type: "text/plain" }), false, "non-video files are rejected");
 
 assert.equal(controller.requiredSlots().length, 2, "interview requires host and guest only");
+assert.equal(elementsById["layout-continue"].href, "", "disabled Continue starts without a navigation target");
+let preventedDisabledContinue = false;
+elementsById["layout-continue"].listeners.click({
+  preventDefault() {
+    preventedDisabledContinue = true;
+  },
+});
+assert.equal(preventedDisabledContinue, true, "disabled Continue prevents activation");
 controller.placeVideoFile(controller.zonesBySlot.host, video("host.mp4"));
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
@@ -184,6 +201,11 @@ assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
   "false",
   "interview continues after host and guest without b-roll",
+);
+assert.equal(
+  elementsById["layout-continue"].href,
+  "./app.html#speaker-role-mapping?path=episode",
+  "enabled Continue restores the production workspace target",
 );
 assert.match(
   elementsById["layout-slot-status"].textContent,

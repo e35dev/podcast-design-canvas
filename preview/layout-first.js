@@ -90,6 +90,11 @@
       const ready = required.length > 0 && required.every((zone) => zone.classList.contains("filled"));
       continueLink.classList.toggle("is-disabled", !ready);
       continueLink.setAttribute("aria-disabled", ready ? "false" : "true");
+      if (ready && continueLink.dataset.readyHref) {
+        continueLink.href = continueLink.dataset.readyHref;
+      } else {
+        continueLink.removeAttribute("href");
+      }
     }
 
     function updateSlotStatus(message) {
@@ -230,6 +235,14 @@
         clearAllZones();
         setError("");
         updateSlotStatus();
+      });
+    }
+
+    if (continueLink) {
+      continueLink.addEventListener("click", (event) => {
+        if (continueLink.getAttribute("aria-disabled") === "true") {
+          event.preventDefault();
+        }
       });
     }
 
