@@ -116,6 +116,11 @@ function renderEpisodeFlowNav() {
     nextLink.href = next.file;
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
+  } else {
+    const finish = document.createElement("a");
+    finish.href = "episode-watch-through-preview.html";
+    finish.textContent = "Continue: Episode watch-through";
+    wrap.appendChild(finish);
   }
 
   const stepLabel = document.createElement("span");

@@ -142,7 +142,11 @@ assert.ok(
   "last flow screen renders previous link",
 );
 assert.ok(
-  !lastNav.nodes.some((node) => node.textContent.startsWith("Next:")),
+  lastNav.nodes.some((node) => node.textContent === "Continue: Episode watch-through"),
+  "last flow screen hands off to publish prep",
+);
+assert.ok(
+  !lastNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Next:")),
   "last flow screen does not render a next link",
 );
 
