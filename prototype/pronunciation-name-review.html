@@ -235,7 +235,7 @@
   <body>
     <main>
       <h1>Pronunciation and name review</h1>
-      <p class="lede">Confirm how names and terms are spoken before publish — in context, with plain-language notes. Implements the flow in <code>docs/pronunciation-name-review.md</code>. This pass never rewrites what a speaker actually said.</p>
+      <p class="lede">Get spoken names and terms right before publish &mdash; hear each one in context with a plain-language note like &ldquo;sounds like EYE-rin.&rdquo; We never rewrite what a speaker actually said; this is a calm readiness check, not a blocker.</p>
 
       <section class="workspace" aria-label="Pronunciation review workspace">
         <div class="panel">
@@ -248,9 +248,9 @@
 
         <aside class="panel" aria-live="polite">
           <h2>Spoken accuracy</h2>
-          <div id="status" class="status review">Names need review</div>
+          <div id="status" class="status review">Names need a look</div>
           <div class="issues" id="issues"></div>
-          <p class="note">Pronunciation review is a calm readiness signal — it does not block export on its own.</p>
+          <p class="note">Saving to a guest profile also updates how we read their name in future episodes.</p>
         </aside>
       </section>
     </main>
@@ -360,6 +360,14 @@
         return "suggested";
       }
 
+      function badgeLabel(state) {
+        if (state === "confirmed") return "confirmed";
+        if (state === "guest preferred") return "saved for guest";
+        if (state === "not spoken in episode") return "text only";
+        if (state === "needs review") return "check note";
+        return "needs confirmation";
+      }
+
       function pendingCount(results) {
         return results.filter((result) =>
           result.spoken && !["confirmed", "guest preferred"].includes(result.state),
@@ -395,7 +403,7 @@
         title.textContent = term.name;
         const badge = document.createElement("span");
         badge.className = `badge ${badgeClass(result.state)}`;
-        badge.textContent = result.state;
+        badge.textContent = badgeLabel(result.state);
         head.append(title, badge);
 
         const source = document.createElement("div");
@@ -434,19 +442,19 @@
             const item = terms.find((entry) => entry.id === term.id);
             item.resolution = "confirmed";
             item.saveToProfile = false;
-            item.outcomeNote = "Trusted for this episode's captions, intros, outros, and review handoff.";
+            item.outcomeNote = "Trusted for this episode only — intros, outros, and captions will follow this note.";
             render();
           });
 
           const guestButton = document.createElement("button");
           guestButton.type = "button";
           guestButton.className = "secondary";
-          guestButton.textContent = "Save guest preference";
+          guestButton.textContent = "Save to guest profile";
           guestButton.addEventListener("click", () => {
             const item = terms.find((entry) => entry.id === term.id);
             item.resolution = "guest preferred";
             item.saveToProfile = true;
-            item.outcomeNote = "Saved to guest profile — will apply to intros, outros, and future episodes with this guest.";
+            item.outcomeNote = `Saved to ${item.name}'s guest profile — future episodes will reuse this pronunciation in intros and outros.`;
             render();
           });
 
@@ -471,7 +479,7 @@
         const badge = document.querySelector(`.term[data-id="${id}"] .badge`);
         if (badge) {
           badge.className = `badge ${badgeClass(result.state)}`;
-          badge.textContent = result.state;
+          badge.textContent = badgeLabel(result.state);
         }
         const outcome = document.querySelector(`.term[data-id="${id}"] .outcome`);
         if (outcome) outcome.remove();
@@ -507,7 +515,7 @@
         const pending = pendingCount(results);
 
         statusElement.className = `status ${pending ? "review" : ""}`;
-        statusElement.textContent = pending ? "Names need review" : "Pronunciations confirmed";
+        statusElement.textContent = pending ? "Names need a look" : "Names sound right";
 
         issuesElement.replaceChildren(...results.filter((result) => result.spoken || result.state === "not spoken in episode").map(renderIssue));
       }
