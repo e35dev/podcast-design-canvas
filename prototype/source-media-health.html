@@ -290,6 +290,17 @@
         color: var(--muted);
       }
 
+      .issue a.routed-link {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .issue a.routed-link:hover,
+      .issue a.routed-link:focus-visible {
+        text-decoration: underline;
+        outline: none;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -528,6 +539,7 @@
           natural: "review suggested",
           title: (name) => `${name}'s camera is too dark to see clearly`,
           action: "Open visual match to lift the lighting, replace the file, or continue with a warning.",
+          fixSurface: "speaker-visual-match",
           steps: ["keep", "warn", "audio-only", "replace"],
         },
         blurry: {
@@ -546,6 +558,7 @@
           natural: "review suggested",
           title: (name) => `${name} is hard to hear`,
           action: "Balance this speaker's volume in audio cleanup, or continue with a warning.",
+          fixSurface: "audio-cleanup-controls",
           steps: ["keep", "warn", "replace"],
         },
         "no-audio": {
@@ -591,6 +604,7 @@
           natural: "review suggested",
           title: (name) => `Captions may be inaccurate for ${name}`,
           action: "Improve this speaker's audio for cleaner captions, or continue and review their captions by hand.",
+          fixSurface: "audio-cleanup-controls",
           steps: ["keep", "warn", "replace"],
         },
       };
@@ -713,7 +727,7 @@
             };
           } else {
             state = "review suggested";
-            issue = { title: condition.title(speaker.name), action: condition.action, tone: "review" };
+            issue = { title: condition.title(speaker.name), action: condition.action, tone: "review", fixSurface: condition.fixSurface || null };
           }
 
           return {
@@ -965,9 +979,20 @@
         // them with textContent rather than innerHTML.
         const strong = document.createElement("strong");
         strong.textContent = issue.title;
-        const span = document.createElement("span");
-        span.textContent = issue.action;
-        article.append(strong, span);
+        // When the issue hands off to a fix screen, the next step is a real link
+        // the creator can open — not just a status note — so "Open visual match"
+        // or "...in audio cleanup" actually navigates to that screen.
+        let action;
+        if (issue.fixSurface) {
+          action = document.createElement("a");
+          action.className = "routed-link";
+          action.href = `${issue.fixSurface}.html`;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
+        article.append(strong, action);
         return article;
       }
 
