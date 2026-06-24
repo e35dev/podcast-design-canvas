@@ -91,4 +91,20 @@ assert.strictEqual(M.evaluate(after).results[p5].state, "cleaned", "shortened de
 const deadAirGuidance = M.momentGuidanceCopy(M.kinds["dead-air"]);
 assert.ok(deadAirGuidance?.title && deadAirGuidance?.suggest, "dead-air kind includes card guidance copy");
 
-console.log("pause-crosstalk-cleanup (Apply to similar): all assertions passed");
+// Caption-risk cross-talk is fixed where captions are reviewed, so an unresolved
+// cross-talk moment routes to the caption review screen (connected hand-off).
+const crosstalkResult = M.evaluate([{ id: "x", kind: "crosstalk", at: "00:10", choice: "review" }]).results[0];
+assert.strictEqual(crosstalkResult.state, "caption", "unresolved cross-talk is a caption-risk item");
+assert.strictEqual(
+  crosstalkResult.issue.fixScreen,
+  "audio-caption-quality-review.html",
+  "caption-risk issue routes to the caption review screen",
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, "audio-caption-quality-review.html")),
+  "the caption review hand-off target exists",
+);
+const crosstalkHtml = fs.readFileSync(path.join(__dirname, "pause-crosstalk-cleanup.html"), "utf8");
+assert.ok(crosstalkHtml.includes("openLink.href = issue.fixScreen"), "renderIssue opens the owning fix screen");
+
+console.log("pause-crosstalk-cleanup (Apply to similar; caption-risk hand-off): all assertions passed");

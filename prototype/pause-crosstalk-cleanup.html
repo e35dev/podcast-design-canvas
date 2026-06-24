@@ -248,6 +248,25 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent, #136f63);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover {
+        text-decoration: underline;
+      }
+
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent, #136f63);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -582,6 +601,10 @@
               title: `${kind.title} (${moment.at})`,
               action: kind.suggest,
               tone: "blocker",
+              // Caption-risk cross-talk is fixed where captions are reviewed, so open
+              // the owning screen — the same connected hand-off used across the product.
+              fixScreen: "audio-caption-quality-review.html",
+              fixLabel: "caption quality review",
             };
           } else {
             state = "review";
@@ -1008,6 +1031,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
