@@ -27,6 +27,10 @@ function currentSetupIndex() {
 }
 
 function renderSpeakerSetupNav() {
+  if (document.querySelector(".speaker-setup-nav")) {
+    return;
+  }
+
   const index = currentSetupIndex();
   if (index < 0) {
     return;
