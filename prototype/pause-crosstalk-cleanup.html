@@ -248,6 +248,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -582,6 +598,8 @@
               title: `${kind.title} (${moment.at})`,
               action: kind.suggest,
               tone: "blocker",
+              fixScreen: "audio-caption-quality-review.html",
+              fixLabel: "caption quality review",
             };
           } else {
             state = "review";
@@ -589,6 +607,8 @@
               title: `${kind.title} (${moment.at})`,
               action: kind.suggest,
               tone: "review",
+              fixScreen: "transcript-search-navigation.html",
+              fixLabel: "transcript search",
             };
           }
 
@@ -1008,6 +1028,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
