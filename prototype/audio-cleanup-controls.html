@@ -153,6 +153,24 @@
         background: #fff1d6;
       }
 
+      .rollup-choice-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-choice-tags .rollup-choice-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #075246;
+        background: #dff5ef;
+      }
+
       .speaker.filtered-out {
         display: none;
       }
@@ -542,6 +560,21 @@
         return wrap;
       }
 
+      function renderRollupChoiceTags() {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-choice-tags";
+        wrap.setAttribute("aria-label", "Active cleanup choices in this review");
+
+        for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
+          const tag = document.createElement("span");
+          tag.className = "rollup-choice-tag";
+          tag.textContent = choice.label;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(reviewCount) {
         const rollup = buildRollup();
         rollupElement.className = `cleanup-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -560,6 +593,10 @@
 
         if (rollup.needsWork.length) {
           rollupElement.appendChild(renderRollupSpeakerTags(rollup.needsWork));
+          const choiceTags = renderRollupChoiceTags();
+          if (choiceTags.childElementCount) {
+            rollupElement.appendChild(choiceTags);
+          }
         }
 
         if (reviewCount > 0) {
