@@ -373,6 +373,29 @@
         font-size: 14px;
       }
 
+      .batch-condition-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .batch-condition-tags .batch-condition-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .batch-condition-tags .batch-condition-tag.action {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
       .batch-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -457,6 +480,7 @@
               <span id="batchStatus" class="batch-status all-clear">All clear</span>
               <p id="batchDetail" class="batch-detail"></p>
             </div>
+            <div class="batch-condition-tags" id="batchConditionTags" hidden></div>
             <div class="batch-toolbar" id="batchToolbar"></div>
             <div class="batch-links" id="batchLinks"></div>
           </div>
@@ -589,6 +613,7 @@
       const batchDetailElement = document.querySelector("#batchDetail");
       const batchToolbarElement = document.querySelector("#batchToolbar");
       const batchLinksElement = document.querySelector("#batchLinks");
+      const batchConditionTagsElement = document.querySelector("#batchConditionTags");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -682,7 +707,15 @@
             issue = { title: condition.title(speaker.name), action: condition.action, tone: "review" };
           }
 
-          return { id: speaker.id, name: speaker.name, role: speaker.role, state, issue };
+          return {
+            id: speaker.id,
+            name: speaker.name,
+            role: speaker.role,
+            state,
+            issue,
+            conditionKey: speaker.condition,
+            chip: condition.chip || null,
+          };
         });
 
         const hasBlock = results.some((result) => result.state === "unavailable" || result.state === "needs replacement");
@@ -690,6 +723,33 @@
         const overall = hasBlock ? "blocked" : hasReview ? "review" : "ready";
 
         return { overall, results };
+      }
+
+      function bucketLabel(name) {
+        return name.split(" — ")[0];
+      }
+
+      function renderBatchConditionTags(flagged) {
+        batchConditionTagsElement.replaceChildren();
+        batchConditionTagsElement.hidden = true;
+
+        for (const result of flagged) {
+          if (!result.chip) continue;
+          const tag = document.createElement("span");
+          tag.className = `batch-condition-tag ${batchCategory(result.state) === "action" ? "action" : ""}`;
+          tag.textContent = `${bucketLabel(result.name)} — ${result.chip}`;
+          batchConditionTagsElement.appendChild(tag);
+        }
+
+        if (batchConditionTagsElement.childElementCount) {
+          batchConditionTagsElement.hidden = false;
+          batchConditionTagsElement.setAttribute(
+            "aria-label",
+            "Detected source conditions for tracks needing work",
+          );
+        } else {
+          batchConditionTagsElement.removeAttribute("aria-label");
+        }
       }
 
       function renderBatchSummary(batch, results) {
@@ -727,6 +787,7 @@
         }
 
         const flagged = results.filter((result) => batchCategory(result.state) !== "clear");
+        renderBatchConditionTags(flagged);
         batchLinksElement.replaceChildren(
           ...(flagged.length
             ? flagged.map((result) => {
