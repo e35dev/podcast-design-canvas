@@ -18,6 +18,7 @@ const navGuards = [
   { file: "visuals-nav.js", className: "visuals-nav" },
   { file: "reuse-nav.js", className: "reuse-nav" },
   { file: "cleanup-nav.js", className: "cleanup-nav" },
+  { file: "music-nav.js", className: "music-nav" },
   { file: "speaker-setup-nav.js", className: "speaker-setup-nav" },
   { file: "tools-nav.js", className: "tools-nav" },
 ];

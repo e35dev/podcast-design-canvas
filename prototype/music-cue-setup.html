@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Music Cue Setup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #7a4400;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      h2 { font-size: 18px; margin-bottom: 10px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel + .panel { margin-top: 18px; }
+      .placements { display: grid; gap: 14px; }
+
+      .placement {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .placement-title { font-weight: 800; font-size: 16px; }
+      .placement-meta,
+      .placement-context,
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .placement-meta { margin-top: 4px; }
+      .placement-context { margin-top: 6px; font-style: italic; }
+
+      .placement-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.ready { color: #075246; background: #dff5ef; }
+      .badge.missing-approval { color: var(--warn); background: #fff1d6; }
+      .badge.not-placed { color: var(--muted); background: #eeeeee; }
+      .badge.overlap-speech { color: var(--block); background: #fde8e8; }
+      .badge.template-review { color: #2a4c8a; background: #e2ebfb; }
+      .badge.unavailable { color: var(--block); background: #fde8e8; }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 6px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:focus-visible,
+      .routed-link:focus-visible,
+      .issue .fix-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .routed-link,
+      .issue .fix-link {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .routed-link:hover,
+      .issue .fix-link:hover { text-decoration: underline; }
+
+      .summary-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .summary-count { font-size: 14px; font-weight: 800; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: var(--warn); background: #fff1d6; }
+      .status.blocked { color: var(--block); background: #fde8e8; }
+
+      .issues { display: grid; gap: 10px; margin-top: 12px; }
+
+      .issue {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+      .issue .fix-link { display: inline-block; margin-top: 8px; }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+        .placement { grid-template-columns: 1fr; }
+        .placement-actions { align-items: flex-start; }
+      }
+    </style>
+    <script src="../preview/music-nav.js" defer></script>
+  </head>
+  <body data-music-step="music-cue-setup">
+    <main>
+      <h1>Music cue setup</h1>
+      <p class="lede">Add approved music to structural podcast moments and preview each cue against the current episode. Placement stays in plain language — no mixer lanes or waveform handles.</p>
+
+      <section class="workspace" aria-label="Music cue setup workspace">
+        <div class="panel">
+          <div class="summary-row" id="summary"></div>
+          <div class="placements" id="placements"></div>
+          <div class="toolbar">
+            <button type="button" id="approve-ready">Approve ready cues</button>
+            <button type="button" class="secondary" id="reset">Reset sample episode</button>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2>Readiness</h2>
+            <div id="readiness"></div>
+          </div>
+          <div class="panel">
+            <h2>Owning screens</h2>
+            <p class="summary-note">Speech overlap after placement routes to <a class="routed-link" href="music-ducking-under-speech.html">music ducking under speech</a>. Intro and outro structure stays in <a class="routed-link" href="intro-outro-builder.html">intro &amp; outro builder</a>. Sponsor beds follow <a class="routed-link" href="show-notes-assembly.html">show notes assembly</a> for read context.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var PURPOSES = {
+        intro: "Intro",
+        outro: "Outro",
+        "segment-transition": "Segment transition",
+        "sponsor-bed": "Sponsor bed",
+        "title-moment": "Title moment accent",
+        "chapter-bumper": "Chapter bumper",
+      };
+
+      var SAMPLE_PLACEMENTS = [
+        {
+          id: "intro-cue",
+          purpose: "intro",
+          cueName: "Warm opener — show template",
+          source: "saved show template cue",
+          approval: "approved",
+          state: "ready",
+          context: "Music ends before Maya's first line at 00:08.",
+        },
+        {
+          id: "segment-transition",
+          purpose: "segment-transition",
+          cueName: "Soft bridge — preset style",
+          source: "starter cue from a preset style",
+          approval: "approved",
+          state: "overlap-speech",
+          context: "Transition still audible when Priya starts the platform segment at 12:41.",
+        },
+        {
+          id: "sponsor-bed",
+          purpose: "sponsor-bed",
+          cueName: "Sponsor bed — partner track",
+          source: "sponsor-provided track",
+          approval: "missing",
+          state: "missing-approval",
+          context: "Bed is attached to the mid-roll read with captions visible.",
+        },
+        {
+          id: "outro-cue",
+          purpose: "outro",
+          cueName: "Closing theme — uploaded file",
+          source: "uploaded music file",
+          approval: "approved",
+          state: "ready",
+          context: "Outro starts after the final sign-off near 58:12.",
+        },
+        {
+          id: "chapter-bumper",
+          purpose: "chapter-bumper",
+          cueName: "Chapter sting — reused asset",
+          source: "previously used show asset",
+          approval: "approved",
+          state: "template-review",
+          context: "Bumper separates 'Platform shift' and 'Audience Q&amp;A' chapters.",
+        },
+        {
+          id: "title-accent",
+          purpose: "title-moment",
+          cueName: "",
+          source: "",
+          approval: "none",
+          state: "not-placed",
+          context: "No accent is placed on the highlighted quote at 24:05 yet.",
+        },
+      ];
+
+      var placements = SAMPLE_PLACEMENTS.map(function (item) {
+        return Object.assign({}, item);
+      });
+
+      function stateLabel(state) {
+        var labels = {
+          ready: "Ready",
+          "missing-approval": "Missing usage approval",
+          "not-placed": "Cue not placed",
+          "overlap-speech": "Overlaps important speech",
+          "template-review": "Template cue needs review",
+          unavailable: "Unavailable file",
+        };
+        return labels[state] || state;
+      }
+
+      function stateClass(state) {
+        if (state === "missing-approval") return "missing-approval";
+        if (state === "not-placed") return "not-placed";
+        if (state === "overlap-speech") return "overlap-speech";
+        if (state === "template-review") return "template-review";
+        if (state === "unavailable") return "unavailable";
+        return "ready";
+      }
+
+      function evaluate(list) {
+        var blocked = list.some(function (item) {
+          return item.state === "unavailable" || item.state === "missing-approval";
+        });
+        var review = list.some(function (item) {
+          return item.state === "overlap-speech" || item.state === "template-review" || item.state === "not-placed";
+        });
+        var overall = blocked ? "blocked" : review ? "review" : "ready";
+        return { overall: overall, blocked: blocked, review: review };
+      }
+
+      function issuesFor(result, list) {
+        var issues = [];
+        list.forEach(function (item) {
+          if (item.state === "overlap-speech") {
+            issues.push({
+              tone: "warn",
+              title: PURPOSES[item.purpose] + " overlaps important speech",
+              detail: item.context,
+              fixScreen: "music-ducking-under-speech.html",
+              fixLabel: "music ducking under speech",
+            });
+          } else if (item.state === "missing-approval") {
+            issues.push({
+              tone: "block",
+              title: PURPOSES[item.purpose] + " is missing usage approval",
+              detail: "Confirm this cue is allowed in the finished episode before export.",
+            });
+          } else if (item.state === "template-review") {
+            issues.push({
+              tone: "info",
+              title: PURPOSES[item.purpose] + " template balance needs a listen",
+              detail: item.context,
+            });
+          } else if (item.state === "not-placed") {
+            issues.push({
+              tone: "info",
+              title: PURPOSES[item.purpose] + " is not placed yet",
+              detail: item.context,
+            });
+          } else if (item.state === "unavailable") {
+            issues.push({
+              tone: "block",
+              title: PURPOSES[item.purpose] + " file is unavailable",
+              detail: "Relink the missing file or replace the cue in this spot.",
+            });
+          }
+        });
+        if (!issues.length && result.overall === "ready") {
+          issues.push({
+            tone: "info",
+            title: "Placed cues are ready for ducking review",
+            detail: "Move to music ducking under speech to confirm speech stays clear where cues overlap lines.",
+            fixScreen: "music-ducking-under-speech.html",
+            fixLabel: "music ducking under speech",
+          });
+        }
+        return issues;
+      }
+
+      function placementSummary(list) {
+        return list.reduce(function (summary, item) {
+          summary.total += 1;
+          if (item.state === "ready") summary.ready += 1;
+          if (item.state === "overlap-speech") summary.overlap += 1;
+          if (item.state === "missing-approval" || item.state === "unavailable") summary.blocked += 1;
+          return summary;
+        }, { total: 0, ready: 0, overlap: 0, blocked: 0 });
+      }
+
+      function updatePlacementState(list, id, state) {
+        return list.map(function (item) {
+          if (item.id !== id) return item;
+          return Object.assign({}, item, { state: state });
+        });
+      }
+
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      var placementsEl = document.getElementById("placements");
+      var summaryEl = document.getElementById("summary");
+      var readinessEl = document.getElementById("readiness");
+
+      function renderPlacement(item) {
+        var card = el("article", "placement");
+        var info = el("div");
+        info.append(
+          el("div", "placement-title", PURPOSES[item.purpose] + (item.cueName ? ": " + item.cueName : "")),
+          el("div", "placement-meta", "Source: " + (item.source || "not chosen")),
+          el("div", "placement-context", item.context)
+        );
+
+        var actions = el("div", "placement-actions");
+        actions.append(el("span", "badge " + stateClass(item.state), stateLabel(item.state)));
+
+        if (item.state === "missing-approval") {
+          var approve = el("button", "", "Confirm usage approval");
+          approve.addEventListener("click", function () {
+            placements = updatePlacementState(placements, item.id, "ready");
+            placements = placements.map(function (row) {
+              if (row.id !== item.id) return row;
+              return Object.assign({}, row, { approval: "approved", state: "ready" });
+            });
+            render();
+          });
+          actions.append(approve);
+        }
+
+        if (item.state === "overlap-speech") {
+          var duck = el("button", "secondary", "Review ducking");
+          duck.addEventListener("click", function () {
+            window.location.href = "music-ducking-under-speech.html";
+          });
+          actions.append(duck);
+        }
+
+        if (item.state === "not-placed") {
+          var place = el("button", "", "Choose cue");
+          place.addEventListener("click", function () {
+            placements = placements.map(function (row) {
+              if (row.id !== item.id) return row;
+              return Object.assign({}, row, {
+                cueName: "Short accent — preset style",
+                source: "starter cue from a preset style",
+                approval: "approved",
+                state: "ready",
+              });
+            });
+            render();
+          });
+          actions.append(place);
+        }
+
+        card.append(info, actions);
+        return card;
+      }
+
+      function renderIssue(issue) {
+        var article = el("article", "issue " + (issue.tone || "").trim());
+        article.append(el("strong", "", issue.title), el("span", "", issue.detail));
+        if (issue.fixScreen && issue.fixLabel) {
+          var link = el("a", "fix-link", "Open " + issue.fixLabel + " →");
+          link.href = issue.fixScreen;
+          article.append(link);
+        }
+        return article;
+      }
+
+      function render() {
+        var result = evaluate(placements);
+        var summary = placementSummary(placements);
+
+        summaryEl.replaceChildren(
+          el("span", "summary-count", summary.ready + " of " + summary.total + " placements ready"),
+          el("span", "status " + result.overall, result.overall === "ready" ? "Ready for ducking review" : result.overall === "blocked" ? "Blocked by approval or file issues" : "Needs review before export")
+        );
+
+        placementsEl.replaceChildren(...placements.map(renderPlacement));
+
+        readinessEl.replaceChildren();
+        var status = el("p", "summary-note", "");
+        if (result.overall === "ready") {
+          status.textContent = "Every placed cue has usage approval. Continue to ducking review so speech stays clear under intro, transition, sponsor, and chapter music.";
+        } else if (result.blocked) {
+          status.textContent = "Resolve missing approval or unavailable files before export. Unused library music should not block readiness.";
+        } else {
+          status.textContent = "Finish placement and overlap review on real episode moments before moving to publish readiness.";
+        }
+        readinessEl.replaceChildren(status);
+        var issuesWrap = el("div", "issues");
+        issuesWrap.replaceChildren(...issuesFor(result, placements).map(renderIssue));
+        readinessEl.append(issuesWrap);
+      }
+
+      document.getElementById("approve-ready").addEventListener("click", function () {
+        placements = placements.map(function (item) {
+          if (item.state === "ready" || item.state === "template-review") {
+            return Object.assign({}, item, { state: "ready" });
+          }
+          return item;
+        });
+        render();
+      });
+
+      document.getElementById("reset").addEventListener("click", function () {
+        placements = SAMPLE_PLACEMENTS.map(function (item) {
+          return Object.assign({}, item);
+        });
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          SAMPLE_PLACEMENTS: SAMPLE_PLACEMENTS,
+          PURPOSES: PURPOSES,
+          evaluate: evaluate,
+          issuesFor: issuesFor,
+          placementSummary: placementSummary,
+        };
+      }
+    </script>
+  </body>
+</html>

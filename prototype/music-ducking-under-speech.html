@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Music Ducking Under Speech Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #7a4400;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      h2 { font-size: 18px; margin-bottom: 10px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel + .panel { margin-top: 18px; }
+      .moments { display: grid; gap: 14px; }
+
+      .moment {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .moment-title { font-weight: 800; font-size: 16px; }
+      .moment-meta,
+      .moment-context,
+      .summary-note,
+      .preview-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .moment-meta { margin-top: 4px; }
+      .moment-context { margin-top: 6px; font-style: italic; }
+      .preview-note {
+        margin-top: 8px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        background: #f0f4f2;
+      }
+
+      .moment-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.clear { color: #075246; background: #dff5ef; }
+      .badge.review-overlap { color: var(--warn); background: #fff1d6; }
+      .badge.speech-hard { color: var(--block); background: #fde8e8; }
+      .badge.featured { color: #2a4c8a; background: #e2ebfb; }
+      .badge.template-balance { color: #2a4c8a; background: #e2ebfb; }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 6px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:focus-visible,
+      .routed-link:focus-visible,
+      .issue .fix-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .routed-link,
+      .issue .fix-link {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .routed-link:hover,
+      .issue .fix-link:hover { text-decoration: underline; }
+
+      .summary-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .summary-count { font-size: 14px; font-weight: 800; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .status.clear { color: #075246; background: #dff5ef; }
+      .status.review { color: var(--warn); background: #fff1d6; }
+      .status.blocked { color: var(--block); background: #fde8e8; }
+
+      .issues { display: grid; gap: 10px; margin-top: 12px; }
+
+      .issue {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+      .issue .fix-link { display: inline-block; margin-top: 8px; }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+        .moment { grid-template-columns: 1fr; }
+        .moment-actions { align-items: flex-start; }
+      }
+    </style>
+    <script src="../preview/music-nav.js" defer></script>
+  </head>
+  <body data-music-step="music-ducking-under-speech">
+    <main>
+      <h1>Music ducking under speech</h1>
+      <p class="lede">Keep intro, outro, transition, sponsor, and chapter music present without burying hosts or guests. Review each overlap on the real spoken line — not as detached volume sliders.</p>
+
+      <section class="workspace" aria-label="Music ducking under speech workspace">
+        <div class="panel">
+          <div class="summary-row" id="summary"></div>
+          <div class="moments" id="moments"></div>
+          <div class="toolbar">
+            <button type="button" id="lower-all">Lower music on flagged moments</button>
+            <button type="button" class="secondary" id="reset">Reset sample episode</button>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2>Readiness</h2>
+            <div id="readiness"></div>
+          </div>
+          <div class="panel">
+            <h2>Owning screens</h2>
+            <p class="summary-note">Placed cues come from <a class="routed-link" href="music-cue-setup.html">music cue setup</a>. Publish warnings surface in <a class="routed-link" href="export-readiness-review.html">export readiness review</a> when speech or captions become less trustworthy.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var MOMENT_TYPES = {
+        intro: "Intro overlap",
+        outro: "Outro overlap",
+        transition: "Segment transition",
+        sponsor: "Sponsor read",
+        title: "Title moment accent",
+        chapter: "Chapter bumper",
+      };
+
+      var SAMPLE_MOMENTS = [
+        {
+          id: "intro-first-line",
+          type: "intro",
+          cueName: "Warm opener",
+          state: "clear",
+          spokenLine: "Welcome back to The Long Build — I'm Maya.",
+          context: "Intro music fades before the first spoken line at 00:08.",
+          preview: "Speech stays easy to follow with the current fade.",
+        },
+        {
+          id: "transition-platform",
+          type: "transition",
+          cueName: "Soft bridge",
+          state: "review-overlap",
+          spokenLine: "Let's dig into the platform shift Priya mentioned.",
+          context: "Transition music still audible when Priya starts at 12:41.",
+          preview: "Compare featured music versus lowered music on the same line.",
+        },
+        {
+          id: "sponsor-read",
+          type: "sponsor",
+          cueName: "Sponsor bed",
+          state: "speech-hard",
+          spokenLine: "This episode is supported by Northline — link in the show notes.",
+          context: "Bed competes with the read while captions and lower-thirds are visible.",
+          preview: "Guest answer would be hard to trust if the bed stays this loud.",
+        },
+        {
+          id: "chapter-bumper",
+          type: "chapter",
+          cueName: "Chapter sting",
+          state: "review-overlap",
+          spokenLine: "Before we take questions, here's what changed for listeners.",
+          context: "Bumper runs under the guest answer that opens Audience Q&amp;A.",
+          preview: "Keep captions visible while comparing fade-out sooner versus lower music.",
+        },
+        {
+          id: "outro-signoff",
+          type: "outro",
+          cueName: "Closing theme",
+          state: "featured",
+          spokenLine: "Thanks for building with us — we'll see you next week.",
+          context: "Creator chose to keep the closing theme featured over the sign-off.",
+          preview: "Short intentional overlap — speech remains clear.",
+        },
+        {
+          id: "title-accent",
+          type: "title",
+          cueName: "Quote accent",
+          state: "template-balance",
+          spokenLine: "Shipping is a product decision, not a deadline trick.",
+          context: "Template balance from a previous episode feels loud on this guest.",
+          preview: "Save a quieter balance to the show template after previewing here.",
+        },
+      ];
+
+      var moments = SAMPLE_MOMENTS.map(function (item) {
+        return Object.assign({}, item);
+      });
+
+      function stateLabel(state) {
+        var labels = {
+          clear: "Clear",
+          "review-overlap": "Review overlap",
+          "speech-hard": "Speech hard to hear",
+          featured: "Music intentionally featured",
+          "template-balance": "Template balance needs review",
+        };
+        return labels[state] || state;
+      }
+
+      function stateClass(state) {
+        if (state === "review-overlap") return "review-overlap";
+        if (state === "speech-hard") return "speech-hard";
+        if (state === "featured") return "featured";
+        if (state === "template-balance") return "template-balance";
+        return "clear";
+      }
+
+      function evaluate(list) {
+        var blocked = list.some(function (item) {
+          return item.state === "speech-hard";
+        });
+        var review = list.some(function (item) {
+          return item.state === "review-overlap" || item.state === "template-balance";
+        });
+        var overall = blocked ? "blocked" : review ? "review" : "clear";
+        return { overall: overall, blocked: blocked, review: review };
+      }
+
+      function issuesFor(result, list) {
+        var issues = [];
+        list.forEach(function (item) {
+          if (item.state === "speech-hard") {
+            issues.push({
+              tone: "block",
+              title: MOMENT_TYPES[item.type] + " makes speech hard to hear",
+              detail: item.context,
+              fixScreen: "music-cue-setup.html",
+              fixLabel: "music cue setup",
+            });
+          } else if (item.state === "review-overlap") {
+            issues.push({
+              tone: "warn",
+              title: MOMENT_TYPES[item.type] + " still needs a ducking decision",
+              detail: item.context,
+            });
+          } else if (item.state === "template-balance") {
+            issues.push({
+              tone: "info",
+              title: "Template balance needs review on " + item.cueName,
+              detail: item.preview,
+            });
+          }
+        });
+        if (!issues.length && result.overall === "clear") {
+          issues.push({
+            tone: "info",
+            title: "Speech stays clear under placed music",
+            detail: "Ducking choices are ready for export readiness unless new cues are added.",
+          });
+        }
+        return issues;
+      }
+
+      function momentSummary(list) {
+        return list.reduce(function (summary, item) {
+          summary.total += 1;
+          if (item.state === "clear" || item.state === "featured") summary.clear += 1;
+          if (item.state === "review-overlap" || item.state === "template-balance") summary.review += 1;
+          if (item.state === "speech-hard") summary.blocked += 1;
+          return summary;
+        }, { total: 0, clear: 0, review: 0, blocked: 0 });
+      }
+
+      function updateMomentState(list, id, state) {
+        return list.map(function (item) {
+          if (item.id !== id) return item;
+          return Object.assign({}, item, { state: state });
+        });
+      }
+
+      function applyDuckingAction(list, id, action) {
+        return list.map(function (item) {
+          if (item.id !== id) return item;
+          if (action === "lower") {
+            return Object.assign({}, item, { state: "clear", preview: "Music lowers during speech on this moment." });
+          }
+          if (action === "fade") {
+            return Object.assign({}, item, { state: "clear", preview: "Cue fades out sooner before the spoken line." });
+          }
+          if (action === "featured") {
+            return Object.assign({}, item, { state: "featured", preview: "Creator keeps music featured — speech remains clear." });
+          }
+          if (action === "after-line") {
+            return Object.assign({}, item, { state: "clear", preview: "Music starts after this spoken line." });
+          }
+          if (action === "template") {
+            return Object.assign({}, item, { state: "clear", preview: "Quieter balance saved to the show template." });
+          }
+          return item;
+        });
+      }
+
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      var momentsEl = document.getElementById("moments");
+      var summaryEl = document.getElementById("summary");
+      var readinessEl = document.getElementById("readiness");
+
+      function renderMoment(item) {
+        var card = el("article", "moment");
+        var info = el("div");
+        info.append(
+          el("div", "moment-title", MOMENT_TYPES[item.type] + ": " + item.cueName),
+          el("div", "moment-meta", "Spoken line: \"" + item.spokenLine + "\""),
+          el("div", "moment-context", item.context),
+          el("div", "preview-note", item.preview)
+        );
+
+        var actions = el("div", "moment-actions");
+        actions.append(el("span", "badge " + stateClass(item.state), stateLabel(item.state)));
+
+        if (item.state === "review-overlap" || item.state === "template-balance") {
+          var lower = el("button", "", "Lower music during speech");
+          lower.addEventListener("click", function () {
+            moments = applyDuckingAction(moments, item.id, "lower");
+            render();
+          });
+          var fade = el("button", "secondary", "Fade out sooner");
+          fade.addEventListener("click", function () {
+            moments = applyDuckingAction(moments, item.id, "fade");
+            render();
+          });
+          actions.append(lower, fade);
+        }
+
+        if (item.state === "speech-hard") {
+          var fixCue = el("button", "", "Adjust cue placement");
+          fixCue.addEventListener("click", function () {
+            window.location.href = "music-cue-setup.html";
+          });
+          var lowerHard = el("button", "secondary", "Lower music during speech");
+          lowerHard.addEventListener("click", function () {
+            moments = applyDuckingAction(moments, item.id, "lower");
+            render();
+          });
+          actions.append(fixCue, lowerHard);
+        }
+
+        if (item.state === "featured") {
+          var keep = el("button", "secondary", "Keep music featured");
+          keep.disabled = true;
+          actions.append(keep);
+        }
+
+        card.append(info, actions);
+        return card;
+      }
+
+      function renderIssue(issue) {
+        var article = el("article", "issue " + (issue.tone || "").trim());
+        article.append(el("strong", "", issue.title), el("span", "", issue.detail));
+        if (issue.fixScreen && issue.fixLabel) {
+          var link = el("a", "fix-link", "Open " + issue.fixLabel + " →");
+          link.href = issue.fixScreen;
+          article.append(link);
+        }
+        return article;
+      }
+
+      function render() {
+        var result = evaluate(moments);
+        var summary = momentSummary(moments);
+
+        summaryEl.replaceChildren(
+          el("span", "summary-count", summary.clear + " of " + summary.total + " moments clear"),
+          el("span", "status " + result.overall, result.overall === "clear" ? "Speech stays clear" : result.overall === "blocked" ? "Speech clarity blocked" : "Overlap decisions still open")
+        );
+
+        momentsEl.replaceChildren(...moments.map(renderMoment));
+
+        readinessEl.replaceChildren();
+        var status = el("p", "summary-note", "");
+        if (result.overall === "clear") {
+          status.textContent = "Placed music no longer competes with necessary spoken moments. Export readiness can treat remaining featured overlaps as intentional.";
+        } else if (result.blocked) {
+          status.textContent = "Fix moments where speech is hard to hear before publish. Adjust the cue in setup or lower music on the flagged line.";
+        } else {
+          status.textContent = "Finish ducking decisions on episode moments where overlap is still open.";
+        }
+        readinessEl.replaceChildren(status);
+        var issuesWrap = el("div", "issues");
+        issuesWrap.replaceChildren(...issuesFor(result, moments).map(renderIssue));
+        readinessEl.append(issuesWrap);
+      }
+
+      document.getElementById("lower-all").addEventListener("click", function () {
+        moments = moments.map(function (item) {
+          if (item.state === "review-overlap" || item.state === "speech-hard" || item.state === "template-balance") {
+            return applyDuckingAction([item], item.id, "lower")[0];
+          }
+          return item;
+        });
+        render();
+      });
+
+      document.getElementById("reset").addEventListener("click", function () {
+        moments = SAMPLE_MOMENTS.map(function (item) {
+          return Object.assign({}, item);
+        });
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          SAMPLE_MOMENTS: SAMPLE_MOMENTS,
+          MOMENT_TYPES: MOMENT_TYPES,
+          evaluate: evaluate,
+          issuesFor: issuesFor,
+          momentSummary: momentSummary,
+          applyDuckingAction: applyDuckingAction,
+        };
+      }
+    </script>
+  </body>
+</html>

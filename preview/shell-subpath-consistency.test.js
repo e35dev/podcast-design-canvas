@@ -15,6 +15,7 @@ const subpaths = [
   { section: "Speaker setup", script: "speaker-setup-nav.js", flowName: "SPEAKER_SETUP_FLOW" },
   { section: "Choose a visual direction", script: "style-nav.js", flowName: "STYLE_FLOW" },
   { section: "Publish prep after export", script: "publish-nav.js", flowName: "PUBLISH_FLOW" },
+  { section: "Place music cues", script: "music-nav.js", flowName: "MUSIC_FLOW" },
   { section: "Clean up audio &amp; captions", script: "cleanup-nav.js", flowName: "CLEANUP_FLOW" },
   { section: "Add contextual visuals", script: "visuals-nav.js", flowName: "VISUALS_FLOW" },
   { section: "Make it reusable", script: "reuse-nav.js", flowName: "REUSE_FLOW" },
