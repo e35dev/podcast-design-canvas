@@ -55,4 +55,13 @@ assert.ok(
   "portrait routed copy names the speaker framing safety screen",
 );
 
+assert.ok(
+  source.includes('action: "Open visual match to compare a sharper recording'),
+  "soft video routes to and names the visual match screen",
+);
+assert.ok(
+  source.includes('action: "Open visual match to compare a sharper take'),
+  "out-of-focus video routes to and names the visual match screen",
+);
+
 console.log("source media health: routed issues link to their fix screens");

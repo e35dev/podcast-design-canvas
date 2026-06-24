@@ -533,7 +533,8 @@
           chip: "Soft video",
           natural: "review suggested",
           title: (name) => `${name}'s video will look soft at full size`,
-          action: "Swap in a sharper recording, or continue — it still reads fine across a full episode.",
+          action: "Open visual match to compare a sharper recording, or continue — it still reads fine across a full episode.",
+          fixSurface: "speaker-visual-match",
           steps: ["keep", "warn", "audio-only", "replace"],
         },
         dark: {
@@ -552,7 +553,8 @@
           chip: "Out of focus",
           natural: "review suggested",
           title: (name) => `${name}'s camera is out of focus`,
-          action: "Replace the recording, show this speaker audio-only, or continue with a warning.",
+          action: "Open visual match to compare a sharper take, show this speaker audio-only, or continue with a warning.",
+          fixSurface: "speaker-visual-match",
           steps: ["keep", "warn", "audio-only", "replace"],
         },
         quiet: {
