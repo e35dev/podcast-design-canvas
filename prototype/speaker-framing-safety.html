@@ -460,6 +460,9 @@
           fixes: ["review", "recrop", "switch", "accept"],
           title: (name) => `${name} is cropped too tight for the destination`,
           suggest: "Loosen the crop, switch the layout, or accept the close framing.",
+          // The destination crop is what actually frames the speaker, so the crop
+          // preview screen owns fixing a too-tight crop.
+          owner: { fixScreen: "destination-crop-preview.html", fixLabel: "destination crop preview" },
         },
         panel: {
           label: "Too small in the panel",
@@ -474,6 +477,8 @@
           fixes: ["review", "recrop", "switch", "accept"],
           title: (name) => `${name} is cut off in the mobile crop`,
           suggest: "Re-center the mobile crop, switch to a stacked layout, or accept it.",
+          // Mobile crop is the same destination crop, owned by the crop preview screen.
+          owner: { fixScreen: "destination-crop-preview.html", fixLabel: "destination crop preview" },
         },
       };
 
