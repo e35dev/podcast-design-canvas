@@ -161,6 +161,9 @@
       // another slot must not keep its outline once the error names a different slot.
       zones.forEach((candidate) => {
         if (candidate !== zone && candidate.classList) {
+          if (candidate.classList.contains("is-invalid")) {
+            delete invalidAside[candidate.dataset.slot];
+          }
           candidate.classList.remove("is-invalid");
           candidate.dataset.invalidMessage = "";
         }
@@ -174,6 +177,21 @@
       return zones.find((zone) => {
         return zone.classList.contains("is-invalid") && !zone.classList.contains("is-hidden");
       });
+    }
+
+    function promoteInvalidAside() {
+      if (firstInvalidZone()) return;
+      const zone = zones.find((candidate) => {
+        const slot = candidate.dataset.slot;
+        return !candidate.classList.contains("is-hidden")
+          && !candidate.classList.contains("filled")
+          && invalidAside[slot];
+      });
+      if (!zone) return;
+      const slot = zone.dataset.slot;
+      zone.classList.add("is-invalid");
+      zone.dataset.invalidMessage = invalidAside[slot];
+      delete invalidAside[slot];
     }
 
     function syncInvalidError() {
@@ -256,7 +274,9 @@
 
     function firstMissingRequiredZone() {
       return requiredSlots().find((zone) => {
-        return !zone.classList.contains("filled") && !zone.classList.contains("is-hidden");
+        return !zone.classList.contains("filled")
+          && !zone.classList.contains("is-invalid")
+          && !zone.classList.contains("is-hidden");
       }) || null;
     }
 
@@ -476,6 +496,9 @@
       zone.insertBefore(wrap, zone.firstChild);
       updateSlotStatus();
       syncInvalidError();
+      promoteInvalidAside();
+      syncInvalidError();
+      updateSlotStatus();
     }
 
     // Clear a single placed video without disturbing the other slots, so a creator who
@@ -548,6 +571,10 @@
         if (!visible.has(slot) || zone.classList.contains("filled")) return;
         const message = invalidAside[slot];
         if (!message) return;
+        if (firstInvalidZone()) {
+          invalidAside[slot] = message;
+          return;
+        }
         zone.classList.add("is-invalid");
         zone.dataset.invalidMessage = message;
         delete invalidAside[slot];
@@ -562,14 +589,21 @@
       });
 
       syncInvalidError();
+      promoteInvalidAside();
+      syncInvalidError();
       updateSlotStatus();
       const newlyVisibleRequired = requiredSlots().find((zone) => {
         return !previousVisible.has(zone.dataset.slot)
           && !zone.classList.contains("filled")
+          && !zone.classList.contains("is-invalid")
           && !zone.classList.contains("is-hidden");
       });
-      if (newlyVisibleRequired) {
-        focusSlotInput(newlyVisibleRequired);
+      const blocking = firstBlockingZone();
+      const focusTarget = (blocking && blocking.classList.contains("is-invalid"))
+        ? blocking
+        : newlyVisibleRequired;
+      if (focusTarget) {
+        focusSlotInput(focusTarget);
       }
     }
 

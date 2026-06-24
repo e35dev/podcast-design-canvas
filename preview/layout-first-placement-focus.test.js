@@ -158,4 +158,14 @@ assert.strictEqual(
   "switching to panel focuses the newly revealed required guest slot",
 );
 
+const { controller: invalidFocus } = buildController();
+invalidFocus.placeVideoFile(invalidFocus.zonesBySlot.host, { name: "bad.png", type: "image/png", size: 100 });
+lastFocused = null;
+invalidFocus.applyLayout("panel");
+assert.strictEqual(
+  lastFocused,
+  invalidFocus.zonesBySlot.host.querySelector("[data-file-input]"),
+  "layout switch keeps focus on a visible invalid slot instead of a newly revealed one",
+);
+
 console.log("layout-first placement-focus: reset and layout switch focus the next placement target");
