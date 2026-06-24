@@ -223,6 +223,11 @@
         color: var(--accent);
       }
 
+      button.suggested-moment {
+        border-style: dashed;
+        border-color: var(--accent);
+      }
+
       button.primary {
         border-color: #0f5d53;
         background: var(--accent);
@@ -275,19 +280,23 @@
           <h2>Cleanup summary</h2>
           <div id="status" class="status">Sounds ready</div>
           <p class="note" id="summary"></p>
-          <button type="button" class="primary" id="apply" style="margin-top: 14px;">Apply to episode</button>
+          <label class="apply-scope" for="apply-scope" style="display: grid; gap: 6px; margin-top: 14px; color: var(--muted); font-size: 13px;">
+            Apply cleanup to
+            <select id="apply-scope"></select>
+          </label>
+          <button type="button" class="primary" id="apply" style="margin-top: 14px;">Apply cleanup</button>
         </aside>
       </section>
     </main>
 
     <script>
       const choices = [
-        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices", effect: "Room hum softens; voices stay present" },
-        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level", effect: "Host and guest levels move closer together" },
-        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise", effect: "Soft guest lines rise without lifting the room floor" },
-        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural", effect: "Hollow tail softens while speech stays natural" },
-        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis", effect: "Sudden laughs stay energetic but less harsh" },
-        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy", effect: "Speech edges sharpen for clearer captions" },
+        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices", effect: "Room hum softens; voices stay present", bestMoment: "noisy-room" },
+        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level", effect: "Host and guest levels move closer together", bestMoment: "exchange" },
+        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise", effect: "Soft guest lines rise without lifting the room floor", bestMoment: "quiet-guest" },
+        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural", effect: "Hollow tail softens while speech stays natural", bestMoment: "noisy-room" },
+        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis", effect: "Sudden laughs stay energetic but less harsh", bestMoment: "peak" },
+        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy", effect: "Speech edges sharpen for clearer captions", bestMoment: "caption-line" },
       ];
 
       const previewMoments = [
@@ -307,12 +316,14 @@
       };
 
       const sampleSpeakers = [
-        { name: "Host — Dana Brooks", state: "not needed" },
-        { name: "Guest 1 — Marcus Lee", state: "suggested" },
+        { id: "host", name: "Host — Dana Brooks", state: "not needed" },
+        { id: "guest-1", name: "Guest 1 — Marcus Lee", state: "suggested" },
+        { id: "guest-2", name: "Guest 2 — Priya Shah", state: "not needed" },
       ];
 
       let enabled = new Set(["balance", "quiet"]);
       let preview = "quiet-guest";
+      let applyScope = "episode";
       let speakers = structuredClone(sampleSpeakers);
       let applied = false;
 
@@ -322,29 +333,69 @@
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
+      const applyScopeElement = document.querySelector("#apply-scope");
+
+      applyScopeElement.addEventListener("change", () => {
+        applyScope = applyScopeElement.value;
+        applied = false;
+        render();
+      });
 
       document.querySelector("#apply").addEventListener("click", () => {
         applied = true;
-        speakers = speakers.map((speaker) => ({
-          ...speaker,
-          state: speaker.state === "suggested" ? "applied" : speaker.state,
-        }));
+        speakers = speakers.map((speaker) => {
+          if (speaker.state !== "suggested") {
+            return speaker;
+          }
+
+          if (applyScope === "episode" || speaker.id === applyScope) {
+            return { ...speaker, state: "applied" };
+          }
+
+          return speaker;
+        });
         render();
       });
 
       function render() {
         controlsElement.replaceChildren(...choices.map(renderChoice));
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
+        renderApplyScope();
         renderCompare();
         speakersElement.replaceChildren(...speakers.map(renderSpeaker));
 
         const hasSuggested = speakers.some((speaker) => speaker.state === "suggested");
+        const scopeLabel = applyScope === "episode"
+          ? "the whole episode"
+          : speakers.find((speaker) => speaker.id === applyScope)?.name.toLowerCase() ?? "the selected speaker bucket";
         statusElement.textContent = applied || !hasSuggested ? "Sounds ready" : "Cleanup suggested";
         summaryElement.textContent = applied
-          ? `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} after previewing "${previewMoments.find((moment) => moment.id === preview).label.toLowerCase()}".`
+          ? `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} to ${scopeLabel} after previewing "${previewMoments.find((moment) => moment.id === preview).label.toLowerCase()}".`
           : hasSuggested
-            ? "Compare original and cleaned audio on a real moment, then apply cleanup across the episode."
+            ? "Compare original and cleaned audio on a real moment, then apply cleanup to the whole episode or one speaker bucket."
             : "Tracks are already clean enough for the final episode.";
+      }
+
+      function suggestedMoments() {
+        return new Set(choices.filter((choice) => enabled.has(choice.id)).map((choice) => choice.bestMoment));
+      }
+
+      function renderApplyScope() {
+        applyScopeElement.replaceChildren();
+
+        const episodeOption = document.createElement("option");
+        episodeOption.value = "episode";
+        episodeOption.textContent = "Whole episode";
+        episodeOption.selected = applyScope === "episode";
+        applyScopeElement.appendChild(episodeOption);
+
+        for (const speaker of speakers) {
+          const option = document.createElement("option");
+          option.value = speaker.id;
+          option.textContent = speaker.name;
+          option.selected = applyScope === speaker.id;
+          applyScopeElement.appendChild(option);
+        }
       }
 
       function applyChoice(bars, choiceId, momentId) {
@@ -463,8 +514,12 @@
         input.type = "checkbox";
         input.checked = enabled.has(choice.id);
         input.addEventListener("change", () => {
-          if (input.checked) enabled.add(choice.id);
-          else enabled.delete(choice.id);
+          if (input.checked) {
+            enabled.add(choice.id);
+            preview = choice.bestMoment;
+          } else {
+            enabled.delete(choice.id);
+          }
           applied = false;
           render();
         });
@@ -478,6 +533,13 @@
         button.type = "button";
         button.textContent = moment.label;
         button.setAttribute("aria-pressed", moment.id === preview ? "true" : "false");
+        if (suggestedMoments().has(moment.id)) {
+          button.classList.add("suggested-moment");
+          button.setAttribute(
+            "aria-label",
+            `${moment.label}. Suggested preview for an enabled cleanup choice.`,
+          );
+        }
         button.addEventListener("click", () => {
           preview = moment.id;
           render();
