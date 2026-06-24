@@ -23,5 +23,9 @@ for (const file of fixScreens) {
 }
 
 assert.ok(fixScreens.includes("thumbnail-cover-frame.html"), "thumbnail checklist item routes to cover frame");
+assert.ok(
+  fixScreens.includes("client-review-copy-flow.html"),
+  "review watermark checklist item routes to the review copy flow that owns the watermark",
+);
 
 console.log(`publish checklist: ${fixScreens.length} checklist items open their owning fix screen`);
