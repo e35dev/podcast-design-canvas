@@ -31,6 +31,22 @@
     },
   };
 
+  // Creator-facing names for each speaker slot, used when telling the creator which
+  // required videos are still missing before they can continue.
+  const SLOT_LABELS = {
+    host: "Host",
+    guest: "Guest",
+    "guest-b": "Guest 2",
+    broll: "B-roll",
+  };
+
+  function formatList(items) {
+    if (items.length === 0) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} and ${items[1]}`;
+    return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+  }
+
   function toArray(list) {
     return Array.prototype.slice.call(list || []);
   }
@@ -41,6 +57,8 @@
 
   function createLayoutFirstController(doc, options = {}) {
     const urlApi = options.URL || global.URL || {};
+    const storage = options.storage || global.sessionStorage;
+    const handoff = options.handoff || global.PodcastLayoutHandoff;
     const layoutButtons = toArray(doc.querySelectorAll("[data-layout]"));
     const zones = toArray(doc.querySelectorAll(".drop-zone[data-slot]"));
     const zonesBySlot = {};
@@ -91,7 +109,13 @@
       continueLink.classList.toggle("is-disabled", !ready);
       continueLink.setAttribute("aria-disabled", ready ? "false" : "true");
       if (ready && continueLink.dataset.readyHref) {
-        continueLink.href = continueLink.dataset.readyHref;
+        const state = handoff && handoff.stateFromZones(currentLayout, zones);
+        if (handoff && state) {
+          handoff.save(storage, state);
+          continueLink.href = handoff.hrefWithState(continueLink.dataset.readyHref, state);
+        } else {
+          continueLink.href = continueLink.dataset.readyHref;
+        }
       } else {
         continueLink.removeAttribute("href");
       }
@@ -110,7 +134,12 @@
       if (filled === total) {
         slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
       } else {
-        slotStatus.textContent = `${filled} of ${total} required speaker videos ready. Optional b-roll can be added later.`;
+        const missingNames = requiredSlots()
+          .filter((zone) => !zone.classList.contains("filled"))
+          .map((zone) => SLOT_LABELS[zone.dataset.slot] || zone.dataset.slot);
+        const noun = missingNames.length > 1 ? "videos" : "video";
+        slotStatus.textContent =
+          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. Optional b-roll can be added later.`;
       }
       updateContinueState();
     }
@@ -131,6 +160,7 @@
       if (placed) placed.remove();
       const input = zone.querySelector("[data-file-input]");
       if (input) input.value = "";
+      zone.dataset.fileName = "";
     }
 
     function clearAllZones() {
@@ -151,6 +181,7 @@
       setError("");
       clearZone(zone);
       zone.classList.add("filled");
+      zone.dataset.fileName = file.name || "";
 
       const wrap = doc.createElement("div");
       wrap.className = "placed-video";
@@ -167,9 +198,34 @@
 
       const label = doc.createElement("span");
       label.textContent = file.name || "Video ready";
+
+      const remove = doc.createElement("button");
+      remove.type = "button";
+      remove.className = "placed-remove";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", "Remove the " + (zone.dataset.slot || "video") + " video");
+      remove.addEventListener("click", (event) => {
+        if (event && typeof event.stopPropagation === "function") {
+          event.stopPropagation();
+        }
+        removeVideo(zone);
+      });
+
       wrap.appendChild(video);
       wrap.appendChild(label);
+      wrap.appendChild(remove);
       zone.insertBefore(wrap, zone.firstChild);
+      updateSlotStatus();
+    }
+
+    // Clear a single placed video without disturbing the other slots, so a creator who
+    // picks the wrong file can fix just that slot instead of resetting the whole layout.
+    function removeVideo(zone) {
+      if (!zone || !zone.classList.contains("filled")) {
+        return;
+      }
+      clearZone(zone);
+      setError("");
       updateSlotStatus();
     }
 
@@ -184,10 +240,15 @@
         speakerRow.className = "speaker-row" + (layout.rowClass ? " " + layout.rowClass : "");
       }
 
+      // Keep videos already placed in slots that stay visible, so switching layout to add
+      // or drop a speaker doesn't discard the work a creator has already done. Only slots
+      // that leave the new layout are cleared.
       zones.forEach((zone) => {
         const isVisible = visible.has(zone.dataset.slot);
         zone.classList.toggle("is-hidden", !isVisible);
-        clearZone(zone);
+        if (!isVisible) {
+          clearZone(zone);
+        }
       });
 
       layoutButtons.forEach((button) => {
@@ -251,6 +312,7 @@
     return {
       applyLayout,
       placeVideoFile,
+      removeVideo,
       resetVideos: clearAllZones,
       requiredSlots,
       visibleSlots,

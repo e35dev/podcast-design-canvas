@@ -8,6 +8,7 @@ const path = require("path");
 const assert = require("assert");
 
 const { createLayoutFirstController, isVideoFile } = require("./layout-first.js");
+const layoutHandoff = require("./layout-handoff.js");
 
 const html = fs.readFileSync(path.join(__dirname, "layout-first.html"), "utf8");
 const app = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
@@ -158,12 +159,21 @@ const urlApi = {
     revokedUrls.push(url);
   },
 };
+const stored = {};
+const storage = {
+  setItem(key, value) {
+    stored[key] = value;
+  },
+  getItem(key) {
+    return stored[key] || null;
+  },
+};
 
 function video(name) {
   return { name, type: "video/mp4" };
 }
 
-const controller = createLayoutFirstController(documentStub, { URL: urlApi });
+const controller = createLayoutFirstController(documentStub, { URL: urlApi, handoff: layoutHandoff, storage });
 elementsById["layout-continue"].dataset.readyHref = "./app.html#speaker-role-mapping?path=episode";
 
 assert.match(html, /Start with a podcast layout/, "layout-first landing opens with layout selection");
@@ -175,6 +185,7 @@ assert.match(html, /Continue to production workspace/, "layout-first has a produ
 assert.match(html, /data-ready-href=".\/app.html#speaker-role-mapping\?path=episode"/, "layout-first stores the ready handoff target separately");
 assert.doesNotMatch(html, /id="layout-continue"[^>]* href=/, "disabled Continue has no initial href");
 assert.match(html, /type="file" accept="video\/\*"/, "layout-first supports choosing video files");
+assert.match(html, /script src=".\/layout-handoff.js"/, "layout-first loads shared handoff state");
 assert.match(html, /script src=".\/layout-first.js"/, "layout-first uses source-backed behavior");
 assert.ok(app.includes("layout-first.html"), "preview app links back to the layout-first start");
 assert.ok(root.includes("preview/layout-first.html"), "root catalog leads with the layout-first landing");
@@ -182,6 +193,11 @@ assert.equal(isVideoFile(video("host.mp4")), true, "video files are accepted");
 assert.equal(isVideoFile({ name: "notes.txt", type: "text/plain" }), false, "non-video files are rejected");
 
 assert.equal(controller.requiredSlots().length, 2, "interview requires host and guest only");
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Still need the Host and Guest videos/,
+  "readiness copy names every missing required speaker video before any placement",
+);
 assert.equal(elementsById["layout-continue"].href, "", "disabled Continue starts without a navigation target");
 let preventedDisabledContinue = false;
 elementsById["layout-continue"].listeners.click({
@@ -196,6 +212,11 @@ assert.equal(
   "true",
   "interview does not continue after host alone",
 );
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Still need the Guest video\./,
+  "readiness copy names the one remaining required speaker video",
+);
 controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
@@ -204,8 +225,13 @@ assert.equal(
 );
 assert.equal(
   elementsById["layout-continue"].href,
-  "./app.html#speaker-role-mapping?path=episode",
-  "enabled Continue restores the production workspace target",
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
+  "enabled Continue carries the selected layout and placed slots into the workspace target",
+);
+assert.equal(
+  JSON.parse(stored[layoutHandoff.STORAGE_KEY]).layout,
+  "interview",
+  "enabled Continue stores the layout handoff for the role-mapping workspace",
 );
 assert.match(
   elementsById["layout-slot-status"].textContent,
@@ -214,13 +240,79 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), false, "b-roll remains empty and optional");
 
-controller.applyLayout("solo");
-assert.equal(controller.requiredSlots().length, 1, "solo requires only the host video");
-controller.placeVideoFile(controller.zonesBySlot.host, video("solo.mp4"));
+controller.applyLayout("panel");
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "switching layouts keeps the host video when that slot still exists",
+);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  true,
+  "switching layouts keeps the guest video when that slot still exists",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "switching to panel re-gates continue until the new required guest slot is filled",
+);
+controller.placeVideoFile(controller.zonesBySlot["guest-b"], video("panel-guest-b.mp4"));
 assert.equal(
   elementsById["layout-continue"].attributes["aria-disabled"],
   "false",
-  "solo continues after the host slot is filled",
+  "panel continues once the newly required guest slot is filled",
+);
+controller.applyLayout("solo");
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "switching to solo keeps the host video in the shared slot",
+);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  false,
+  "switching to solo clears the guest video because that slot is no longer visible",
+);
+assert.ok(
+  revokedUrls.includes("blob:guest.mp4"),
+  "switching away from a hidden slot revokes that slot's object URL",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "solo stays ready when its single required host slot was already placed",
+);
+
+// Per-slot remove: a creator can clear one wrong video without resetting the layout.
+const jsSource = fs.readFileSync(path.join(__dirname, "layout-first.js"), "utf8");
+assert.match(jsSource, /placed-remove/, "placed videos expose a per-slot remove control");
+assert.match(jsSource, /aria-label", "Remove the/, "the remove control is labelled per slot");
+
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
+controller.removeVideo(controller.zonesBySlot.guest);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  false,
+  "removing a slot clears just that video",
+);
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "removing one slot leaves the other placed videos intact",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "Continue re-gates after a required video is removed",
+);
+assert.ok(revokedUrls.includes("blob:guest.mp4"), "removing a slot revokes its object URL");
+// Re-filling the cleared slot restores readiness.
+controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "re-filling the removed slot restores the continue handoff",
 );
 
 controller.applyLayout("panel");
@@ -246,4 +338,48 @@ elementsById["layout-reset"].listeners.click();
 assert.equal(controller.filledRequiredSlots().length, 0, "reset clears filled required slots");
 assert.ok(revokedUrls.length > 0 && createdUrls.length > 0, "reset revokes created object URLs");
 
-console.log("layout-first landing: required speaker readiness, optional b-roll, and handoff behavior verified");
+// Switching layout preserves videos placed in slots that stay visible (#1026), and only
+// clears slots that leave the new layout. Uses a fresh controller to isolate state.
+const preserveZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const preserveButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const preserveById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const preserveDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return preserveById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return preserveButtons;
+    if (selector === ".drop-zone[data-slot]") return preserveZones;
+    return [];
+  },
+};
+const preserve = createLayoutFirstController(preserveDoc, { URL: urlApi });
+preserve.placeVideoFile(preserve.zonesBySlot.host, video("p-host.mp4"));
+preserve.placeVideoFile(preserve.zonesBySlot.guest, video("p-guest.mp4"));
+preserve.applyLayout("panel");
+assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "switching interview->panel keeps the placed host video");
+assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), true, "switching interview->panel keeps the placed guest video");
+assert.equal(preserve.zonesBySlot["guest-b"].classList.contains("filled"), false, "the newly revealed panel slot starts empty");
+preserve.applyLayout("solo");
+assert.equal(preserve.zonesBySlot.host.classList.contains("filled"), true, "switching to solo keeps the still-visible host video");
+assert.equal(preserve.zonesBySlot.guest.classList.contains("filled"), false, "a slot that leaves the layout is cleared");
+assert.ok(revokedUrls.includes("blob:p-guest.mp4"), "leaving a slot revokes its object URL");
+
+console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");

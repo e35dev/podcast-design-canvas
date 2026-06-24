@@ -11,6 +11,7 @@ const vm = require("vm");
 const appHtml = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
 const appScript = appHtml.match(/<script>([\s\S]*?)<\/script>/)[1];
 const routeContextScript = fs.readFileSync(path.join(__dirname, "app-route-context.js"), "utf8");
+const layoutHandoffScript = fs.readFileSync(path.join(__dirname, "layout-handoff.js"), "utf8");
 
 function createElement(tagName) {
   return {
@@ -82,7 +83,7 @@ function makeDocument(hash) {
 
 function runApp(hash) {
   const page = makeDocument(hash);
-  vm.runInNewContext(`${routeContextScript}\n${appScript}`, {
+  vm.runInNewContext(`${layoutHandoffScript}\n${routeContextScript}\n${appScript}`, {
     document: page.document,
     window: page.window,
     sessionStorage: {
@@ -95,6 +96,20 @@ function runApp(hash) {
   });
   return page;
 }
+
+assert.ok(
+  appHtml.indexOf("./layout-handoff.js") < appHtml.indexOf("./app-route-context.js"),
+  "preview app loads layout handoff before route context",
+);
+assert.ok(
+  routeContextScript.includes("globalThis.PodcastLayoutHandoff")
+    && routeContextScript.includes("window.PodcastLayoutHandoff"),
+  "route context uses the shared layout handoff helper explicitly",
+);
+assert.ok(
+  !routeContextScript.includes('interview: ["host", "guest"]'),
+  "route context does not duplicate layout slot definitions",
+);
 
 const styleEntry = runApp("#contextual-broll-moments?from=style");
 assert.equal(
@@ -164,6 +179,25 @@ assert.equal(
   episodeRoles.nodes.nextStep.href,
   "#source-media-health?path=episode",
   "episode path context steps forward to source media health",
+);
+
+const layoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest,guest-b");
+assert.equal(
+  layoutStartRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff keeps the selected layout and required placed slots on role mapping",
+);
+assert.equal(
+  layoutStartRoles.nodes.nextStep.href,
+  "#source-media-health?path=episode",
+  "layout-first handoff does not leak layout params into later episode screens",
+);
+
+const invalidLayoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest");
+assert.equal(
+  invalidLayoutStartRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode",
+  "invalid layout-first slot handoff is stripped by the preview app",
 );
 
 episodeRoles.reroute("#source-media-health?path=episode");

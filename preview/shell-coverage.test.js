@@ -51,6 +51,7 @@ assert.match(shell, /canvas-slot-status/, "shell shows slot fill status on the e
 assert.match(shell, /data-slot="broll"/, "shell labels the b-roll slot for drag-in placement");
 assert.match(shell, /id="canvas-continue"/, "shell exposes a continue handoff from the example canvas");
 assert.match(shell, /speaker-role-mapping\?path=episode/, "shell continues from the example canvas into speaker roles");
+assert.match(shell, /Optional b-roll can be added later/, "shell treats b-roll as optional in the example canvas");
 assert.ok(
   shell.indexOf("Example podcast layout canvas") < shell.indexOf("Episode path"),
   "the example canvas leads the shell before the workflow lists",

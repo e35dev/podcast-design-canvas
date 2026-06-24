@@ -90,12 +90,24 @@ function createPreviewAppRouting(order) {
     "client-review-copy-flow",
     "publish-checklist",
   ]);
+  const layoutHandoff = typeof globalThis !== "undefined" && globalThis.PodcastLayoutHandoff
+    ? globalThis.PodcastLayoutHandoff
+    : typeof window !== "undefined" ? window.PodcastLayoutHandoff : null;
+
+  function normalizedLayoutSlots(layout, value) {
+    if (!layoutHandoff || typeof layoutHandoff.completeSlotQueryForLayout !== "function") {
+      return "";
+    }
+    return layoutHandoff.completeSlotQueryForLayout(layout, value);
+  }
 
   function routeSearchFor(screen, rawSearch) {
     const params = new URLSearchParams(rawSearch || "");
     const out = new URLSearchParams();
     const from = params.get("from");
     const path = params.get("path");
+    const layout = params.get("layout");
+    const layoutSlots = normalizedLayoutSlots(layout, params.get("slots"));
     if (fromContextScreens.has(screen) && visualsEntryContexts.has(from)) {
       out.set("from", from);
     }
@@ -118,6 +130,10 @@ function createPreviewAppRouting(order) {
     }
     if (path === "publish" && pathedPublishScreens.has(screen)) {
       out.set("path", "publish");
+    }
+    if (screen === "speaker-role-mapping" && path === "episode" && layoutSlots) {
+      out.set("layout", layout);
+      out.set("slots", layoutSlots);
     }
     const search = out.toString();
     return search ? `?${search}` : "";
