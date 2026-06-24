@@ -32,6 +32,12 @@ Current targets:
 
 PRs should clearly advance one of these targets or fix a blocker in the current preview/product path. Standalone prototype files, scattered micro-features, or useful-but-unconnected additions are closed by default until the preview shell and core episode flow are real.
 
+Every accepted product PR should either improve the runnable preview or preserve it with tests. The current preview contract is:
+- run `npm run preview`
+- open `/preview/`
+- keep `npm test` passing
+- keep the connected flow at `/preview/episode-flow.html` usable
+
 ## Pull Request Standard
 
 Submit one focused product improvement at a time. The maintainers prefer small, complete, verifiable changes over broad speculative rewrites.
@@ -93,7 +99,8 @@ Docs-only, spec-only, planning-only, README/CONTRIBUTING/VISION-only, Markdown-o
 Target `main` unless the maintainers explicitly publish another branch policy for this repo.
 
 ## Checks
+- Keep `npm test` passing.
 - Keep `typecheck` passing or explain why it does not apply.
 - Keep `lint` passing or explain why it does not apply.
-- Keep `test` passing or explain why it does not apply.
 - Keep `preview-build` passing or explain why it does not apply.
+- Include preview notes or screenshots when the PR changes the browser experience.

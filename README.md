@@ -63,20 +63,25 @@ A creator can go from raw synced podcast tracks and a few social links to a fini
 | `off-vision` | 0 | Technically plausible work that does not help Podcast Design Canvas converge on the captured vision. |
 
 ## Verification
-- Run or preserve `typecheck` before submitting product work.
-- Run or preserve `lint` before submitting product work.
-- Run or preserve `test` before submitting product work.
-- Run or preserve `preview-build` before submitting product work.
+- Run `npm test` before submitting product work.
+- Run or preserve `typecheck` when the change introduces typed source files.
+- Run or preserve `lint` when the change introduces linted source files.
+- Run or preserve `preview-build` when a bundler or hosted preview build exists.
+- Do not merge PRs that break the browser preview shell or connected episode flow.
 
 ## Local preview
 From the repo root:
 
 ```bash
-python3 -m http.server 8080
+npm run preview
 ```
 
 Open [http://localhost:8080/preview/](http://localhost:8080/preview/) to walk the core episode flow. Verify the shell with:
 
 ```bash
-node preview/preview.test.js
+npm test
 ```
+
+The preview entrypoints are:
+- [Preview shell](http://localhost:8080/preview/)
+- [Connected episode flow](http://localhost:8080/preview/episode-flow.html)
