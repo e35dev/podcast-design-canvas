@@ -188,9 +188,25 @@ assert.equal(
   "layout-first handoff keeps the selected layout and required placed slots on role mapping",
 );
 assert.equal(
+  layoutStartRoles.nodes.prevStep.href,
+  "#episode-readiness?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff survives stepping back to episode readiness",
+);
+assert.equal(
   layoutStartRoles.nodes.nextStep.href,
   "#source-media-health?path=episode",
   "layout-first handoff does not leak layout params into later episode screens",
+);
+layoutStartRoles.reroute("#episode-readiness?path=episode&layout=panel&slots=host,guest,guest-b");
+assert.equal(
+  layoutStartRoles.nodes.frame.src,
+  "../prototype/episode-readiness.html?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "episode readiness keeps the layout-first handoff while the creator checks the previous step",
+);
+assert.equal(
+  layoutStartRoles.nodes.nextStep.href,
+  "#speaker-role-mapping?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "returning from episode readiness restores the layout-first role mapping handoff",
 );
 
 const layoutStartRolesWithBroll = runApp("#speaker-role-mapping?path=episode&layout=interview&slots=host,guest&broll=placed");
@@ -198,6 +214,11 @@ assert.equal(
   layoutStartRolesWithBroll.nodes.frame.src,
   "../prototype/speaker-role-mapping.html?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
   "layout-first handoff carries the optional b-roll flag through to role mapping",
+);
+assert.equal(
+  layoutStartRolesWithBroll.nodes.prevStep.href,
+  "#episode-readiness?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
+  "optional b-roll handoff also survives the role-mapping back step",
 );
 
 const invalidLayoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest");

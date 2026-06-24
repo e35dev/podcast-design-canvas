@@ -90,6 +90,10 @@ function createPreviewAppRouting(order) {
     "client-review-copy-flow",
     "publish-checklist",
   ]);
+  const layoutHandoffScreens = new Set([
+    "episode-readiness",
+    "speaker-role-mapping",
+  ]);
   const layoutHandoff = typeof globalThis !== "undefined" && globalThis.PodcastLayoutHandoff
     ? globalThis.PodcastLayoutHandoff
     : typeof window !== "undefined" ? window.PodcastLayoutHandoff : null;
@@ -101,13 +105,30 @@ function createPreviewAppRouting(order) {
     return layoutHandoff.completeSlotQueryForLayout(layout, value);
   }
 
+  function layoutHandoffEntries(screen, params) {
+    if (!layoutHandoffScreens.has(screen) || params.get("path") !== "episode") {
+      return [];
+    }
+    const layout = params.get("layout");
+    const slots = normalizedLayoutSlots(layout, params.get("slots"));
+    if (!layout || !slots) {
+      return [];
+    }
+    const entries = [
+      ["layout", layout],
+      ["slots", slots],
+    ];
+    if (params.get("broll") === "placed") {
+      entries.push(["broll", "placed"]);
+    }
+    return entries;
+  }
+
   function routeSearchFor(screen, rawSearch) {
     const params = new URLSearchParams(rawSearch || "");
     const out = new URLSearchParams();
     const from = params.get("from");
     const path = params.get("path");
-    const layout = params.get("layout");
-    const layoutSlots = normalizedLayoutSlots(layout, params.get("slots"));
     if (fromContextScreens.has(screen) && visualsEntryContexts.has(from)) {
       out.set("from", from);
     }
@@ -131,15 +152,11 @@ function createPreviewAppRouting(order) {
     if (path === "publish" && pathedPublishScreens.has(screen)) {
       out.set("path", "publish");
     }
-    if (screen === "speaker-role-mapping" && path === "episode" && layoutSlots) {
-      out.set("layout", layout);
-      out.set("slots", layoutSlots);
-      // The layout-first handoff also flags whether optional b-roll was placed. Carry it through
-      // the shell so role mapping's load() can match the stored placement; dropping it makes the
-      // match fail and silently falls back to generic names without the carried recordings.
-      if (params.get("broll") === "placed") {
-        out.set("broll", "placed");
-      }
+    // The layout-first handoff also flags placed slots and optional b-roll. Carry it only across
+    // the role-mapping <-> episode-readiness round trip; dropping it makes role mapping fall back
+    // to generic names, while carrying it later would leak placement-only params into other steps.
+    for (const [key, value] of layoutHandoffEntries(screen, params)) {
+      out.set(key, value);
     }
     const search = out.toString();
     return search ? `?${search}` : "";
