@@ -51,6 +51,9 @@ function createElement(tagName) {
       this.attributes[name] = value;
       if (name === "id") this.id = value;
     },
+    getAttribute(name) {
+      return this.attributes[name] || "";
+    },
     appendChild(child) {
       this.children.push(child);
       return child;
@@ -67,6 +70,15 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
+function appendStaticLink(body, href, text = href) {
+  const link = createElement("a");
+  link.href = href;
+  link.textContent = text;
+  link.attributes.href = href;
+  body.appendChild(link);
+  return link;
+}
+
 function makeWindow(fileName, embedded = false, search = "") {
   const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
@@ -74,10 +86,11 @@ function makeWindow(fileName, embedded = false, search = "") {
   return window;
 }
 
-function renderNavFor(fileName, embedded = false, search = "") {
+function renderNavFor(fileName, embedded = false, search = "", staticHrefs = []) {
   const head = createElement("head");
   const body = createElement("body");
   body.dataset = {};
+  staticHrefs.forEach((href) => appendStaticLink(body, href));
   const document = {
     readyState: "complete",
     head,
@@ -90,6 +103,10 @@ function renderNavFor(fileName, embedded = false, search = "") {
       if (!selector.startsWith(".")) return null;
       const className = selector.slice(1);
       return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
+    },
+    querySelectorAll(selector) {
+      if (selector !== "a[href]") return [];
+      return flatten(body).filter((node) => node.tagName === "a" && node.getAttribute("href"));
     },
   };
 
@@ -229,6 +246,37 @@ assert.equal(
   "episode-metadata-publishing.html?path=publish",
   "standalone publish nav keeps publish path context between publish prep screens",
 );
+const standaloneMetadataLinks = renderNavFor(
+  "episode-metadata-publishing.html",
+  false,
+  "?path=publish",
+  ["publish-checklist.html", "show-notes-assembly.html", "#readiness", "https://example.com/publish", "//cdn.example.com/publish-checklist.html"],
+);
+assert.equal(
+  linkWithText(standaloneMetadataLinks, "publish-checklist.html").href,
+  "publish-checklist.html?path=publish",
+  "standalone publish nav keeps publish context on in-page publish links",
+);
+assert.equal(
+  linkWithText(standaloneMetadataLinks, "show-notes-assembly.html").href,
+  "show-notes-assembly.html?path=publish",
+  "standalone publish nav keeps publish context on in-page backward publish links",
+);
+assert.equal(
+  linkWithText(standaloneMetadataLinks, "#readiness").href,
+  "#readiness",
+  "publish nav leaves same-page anchors alone",
+);
+assert.equal(
+  linkWithText(standaloneMetadataLinks, "https://example.com/publish").href,
+  "https://example.com/publish",
+  "publish nav leaves external links alone",
+);
+assert.equal(
+  linkWithText(standaloneMetadataLinks, "//cdn.example.com/publish-checklist.html").href,
+  "//cdn.example.com/publish-checklist.html",
+  "publish nav leaves protocol-relative external links alone",
+);
 
 const publishApi = publishNavApi("show-notes-assembly.html", "?path=publish");
 assert.equal(
@@ -261,6 +309,24 @@ assert.equal(
   linkWithText(embeddedExplicitPublishPath, "Next: Destination crop preview").href,
   "../preview/app.html#destination-crop-preview?path=publish",
   "embedded publish nav reads publish context with URLSearchParams instead of positional parsing",
+);
+const embeddedMetadataLinks = renderNavFor(
+  "episode-metadata-publishing.html",
+  true,
+  "?path=publish",
+  ["publish-checklist.html", "show-notes-assembly.html"],
+);
+const embeddedChecklistLink = linkWithText(embeddedMetadataLinks, "publish-checklist.html");
+assert.equal(
+  embeddedChecklistLink.href,
+  "../preview/app.html#publish-checklist?path=publish",
+  "embedded publish nav routes in-page publish links through the preview app with publish context",
+);
+assert.equal(embeddedChecklistLink.target, "_top", "embedded in-page publish links target the parent app");
+assert.equal(
+  linkWithText(embeddedMetadataLinks, "show-notes-assembly.html").href,
+  "../preview/app.html#show-notes-assembly?path=publish",
+  "embedded publish nav routes in-page backward publish links through the preview app with publish context",
 );
 
 // Rendering twice must still leave a single nav (matches the script's guard).

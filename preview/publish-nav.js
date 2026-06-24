@@ -144,6 +144,27 @@ function setPublishScreenLink(link, file) {
   link.href = hrefWithPath(file);
 }
 
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizePublishHref(href) {
+  return isLocalScreenHref(href) && isPreviewAppPublishTarget(href);
+}
+
+function normalizePublishScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    if (shouldNormalizePublishHref(href)) {
+      setPublishScreenLink(link, href);
+    }
+  });
+}
+
 function renderPublishNav() {
   if (document.querySelector(".publish-nav")) {
     return;
@@ -266,6 +287,7 @@ function renderPublishNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizePublishScreenLinks(document);
 }
 
 if (document.readyState === "loading") {
