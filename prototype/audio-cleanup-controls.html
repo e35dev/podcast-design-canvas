@@ -639,6 +639,7 @@
         wrap.setAttribute("aria-label", "Active cleanup choices in this review");
 
         for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
+          if (typeof choice.label !== "string" || !choice.label.length) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-choice-tag";
           tag.textContent = choice.label;
