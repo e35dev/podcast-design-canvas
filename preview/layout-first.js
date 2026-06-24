@@ -167,9 +167,34 @@
 
       const label = doc.createElement("span");
       label.textContent = file.name || "Video ready";
+
+      const remove = doc.createElement("button");
+      remove.type = "button";
+      remove.className = "placed-remove";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", "Remove the " + (zone.dataset.slot || "video") + " video");
+      remove.addEventListener("click", (event) => {
+        if (event && typeof event.stopPropagation === "function") {
+          event.stopPropagation();
+        }
+        removeVideo(zone);
+      });
+
       wrap.appendChild(video);
       wrap.appendChild(label);
+      wrap.appendChild(remove);
       zone.insertBefore(wrap, zone.firstChild);
+      updateSlotStatus();
+    }
+
+    // Clear a single placed video without disturbing the other slots, so a creator who
+    // picks the wrong file can fix just that slot instead of resetting the whole layout.
+    function removeVideo(zone) {
+      if (!zone || !zone.classList.contains("filled")) {
+        return;
+      }
+      clearZone(zone);
+      setError("");
       updateSlotStatus();
     }
 
@@ -251,6 +276,7 @@
     return {
       applyLayout,
       placeVideoFile,
+      removeVideo,
       resetVideos: clearAllZones,
       requiredSlots,
       visibleSlots,

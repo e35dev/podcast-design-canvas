@@ -70,6 +70,7 @@
 
       .layout-choice:focus-visible,
       .slot-file:focus-visible,
+      .placed-remove:focus-visible,
       .reset-btn:focus-visible,
       .continue-btn:focus-visible {
         outline: 2px solid var(--accent);
@@ -179,6 +180,24 @@
         display: grid;
         gap: 6px;
         margin-bottom: 8px;
+      }
+
+      .placed-remove {
+        justify-self: start;
+        min-height: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.72);
+        color: #ffffff;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      .placed-remove:hover {
+        background: rgba(16, 24, 22, 0.9);
       }
 
       .placed-video video {

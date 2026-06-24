@@ -214,6 +214,36 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), false, "b-roll remains empty and optional");
 
+// Per-slot remove: a creator can clear one wrong video without resetting the layout.
+const jsSource = fs.readFileSync(path.join(__dirname, "layout-first.js"), "utf8");
+assert.match(jsSource, /placed-remove/, "placed videos expose a per-slot remove control");
+assert.match(jsSource, /aria-label", "Remove the/, "the remove control is labelled per slot");
+
+controller.removeVideo(controller.zonesBySlot.guest);
+assert.equal(
+  controller.zonesBySlot.guest.classList.contains("filled"),
+  false,
+  "removing a slot clears just that video",
+);
+assert.equal(
+  controller.zonesBySlot.host.classList.contains("filled"),
+  true,
+  "removing one slot leaves the other placed videos intact",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "true",
+  "Continue re-gates after a required video is removed",
+);
+assert.ok(revokedUrls.includes("blob:guest.mp4"), "removing a slot revokes its object URL");
+// Re-filling the cleared slot restores readiness.
+controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "re-filling the removed slot restores the continue handoff",
+);
+
 controller.applyLayout("solo");
 assert.equal(controller.requiredSlots().length, 1, "solo requires only the host video");
 controller.placeVideoFile(controller.zonesBySlot.host, video("solo.mp4"));
