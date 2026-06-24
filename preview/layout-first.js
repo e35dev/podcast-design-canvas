@@ -816,22 +816,28 @@
       const extras = rest.filter(isPlaceableVideo);
       const skippedNonVideo = rest.filter((file) => !isVideoFile(file)).length;
       const skippedEmpty = rest.filter((file) => isVideoFile(file) && isEmptyExport(file)).length;
-      if (extras.length === 0 && skippedNonVideo === 0 && skippedEmpty === 0 && skippedDuplicate === 0) {
-        return;
-      }
       const openSlots = visibleSlots().filter((candidate) => {
         return candidate !== zone
           && !candidate.classList.contains("filled")
           && !candidate.classList.contains("is-invalid");
       });
       let overflow = 0;
+      let placedExtras = 0;
       extras.forEach((file, index) => {
         if (openSlots[index]) {
           placeVideoFile(openSlots[index], file);
+          placedExtras += 1;
         } else {
           overflow += 1;
         }
       });
+      // Confirm the placement to screen readers the way remove/move/swap/clear already do. Placing
+      // a recording into a slot is the core canvas action, yet on its own it only updated the
+      // readiness summary and never named the slot the creator just filled.
+      const placedCount = 1 + placedExtras;
+      announceAction(placedCount === 1
+        ? "Placed the " + slotName(zone) + " video."
+        : "Placed " + placedCount + " videos.");
       // Tell the creator about anything from the drop that didn't land, rather than silently
       // discarding it. Overflow (more videos than open slots) takes priority; otherwise report the
       // empty exports, then the non-video files, that were skipped.
