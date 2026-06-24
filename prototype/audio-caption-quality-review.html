@@ -225,6 +225,21 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent, #136f63);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: none;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -294,12 +309,15 @@
       // What the system flagged about a caption line. "weak" means it can't be confirmed
       // as-is without a creator check; "layout" means the words are right but the caption
       // collides with something on screen.
+      // fixScreen names the screen that owns the underlying fix, so a flagged line can
+      // open it directly — the same connected hand-off used by speaker attribution,
+      // transcript search, and watch-through review.
       const flags = {
         clear: { label: "Reads clearly", weak: false },
-        "low-confidence": { label: "Uncertain name or term", weak: true, title: "We're not sure this name is spelled right" },
-        crosstalk: { label: "Word lost to cross-talk", weak: true, title: "A word was hard to hear over cross-talk" },
-        collision: { label: "Collides with a lower-third", weak: false, layout: true, title: "This caption overlaps the lower-third" },
-        "long-line": { label: "Line is too long to read", weak: false, layout: true, title: "This line is too long to read in time" },
+        "low-confidence": { label: "Uncertain name or term", weak: true, title: "We're not sure this name is spelled right", fixScreen: "transcript-glossary.html", fixLabel: "transcript glossary" },
+        crosstalk: { label: "Word lost to cross-talk", weak: true, title: "A word was hard to hear over cross-talk", fixScreen: "pause-crosstalk-cleanup.html", fixLabel: "pause & cross-talk cleanup" },
+        collision: { label: "Collides with a lower-third", weak: false, layout: true, title: "This caption overlaps the lower-third", fixScreen: "layout-safe-areas.html", fixLabel: "layout safe areas" },
+        "long-line": { label: "Line is too long to read", weak: false, layout: true, title: "This line is too long to read in time", fixScreen: "layout-safe-areas.html", fixLabel: "layout safe areas" },
       };
 
       // The creator's decision for a line. These record what the creator did — "edit" is
@@ -365,6 +383,11 @@
           } else if (action === "review") {
             state = "review";
             issue = { title: flag.title, action: "Confirm the wording, fix it, or resolve the overlap.", tone: "review" };
+            // Offer a direct route to the screen that owns this fix.
+            if (flag.fixScreen) {
+              issue.fixScreen = flag.fixScreen;
+              issue.fixLabel = flag.fixLabel;
+            }
           } else if (action === "confirm") {
             state = "confirmed";
           } else {
@@ -525,6 +548,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
