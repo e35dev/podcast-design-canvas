@@ -129,6 +129,16 @@
         gap: 8px;
       }
 
+      .rollup-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .speaker.filtered-out {
+        display: none;
+      }
+
       .speaker.jump-highlight {
         box-shadow: 0 0 0 2px #136f63;
       }
@@ -398,6 +408,7 @@
       let preview = "quiet-guest";
       let speakers = structuredClone(sampleSpeakers);
       let applied = false;
+      let showReviewOnly = false;
 
       const controlsElement = document.querySelector("#controls");
       const momentsElement = document.querySelector("#moments");
@@ -417,12 +428,27 @@
         render();
       });
 
+      function needsReviewState(state) {
+        return state === "suggested";
+      }
+
       function render() {
+        const reviewCount = speakers.filter((speaker) => needsReviewState(speaker.state)).length;
+
+        if (showReviewOnly && reviewCount === 0) {
+          showReviewOnly = false;
+        }
+
         controlsElement.replaceChildren(...choices.map(renderChoice));
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
         renderCompare();
-        speakersElement.replaceChildren(...speakers.map((speaker, index) => renderSpeaker(speaker, index)));
-        renderRollup();
+        speakersElement.replaceChildren(
+          ...speakers.map((speaker, index) => {
+            const filteredOut = showReviewOnly && !needsReviewState(speaker.state);
+            return renderSpeaker(speaker, index, filteredOut);
+          }),
+        );
+        renderRollup(reviewCount);
         renderMomentHint();
 
         statusElement.textContent = speakers.some((speaker) => speaker.state === "suggested")
@@ -483,7 +509,7 @@
         };
       }
 
-      function renderRollup() {
+      function renderRollup(reviewCount) {
         const rollup = buildRollup();
         rollupElement.className = `cleanup-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
         rollupElement.replaceChildren();
@@ -498,6 +524,23 @@
         detail.textContent = rollup.detail;
         head.append(status, detail);
         rollupElement.appendChild(head);
+
+        if (reviewCount > 0) {
+          const toolbar = document.createElement("div");
+          toolbar.className = "rollup-toolbar";
+          const filterButton = document.createElement("button");
+          filterButton.type = "button";
+          filterButton.className = "secondary";
+          filterButton.textContent = showReviewOnly
+            ? `Show all ${speakers.length} speakers`
+            : `Show speakers that need review (${reviewCount})`;
+          filterButton.addEventListener("click", () => {
+            showReviewOnly = !showReviewOnly;
+            render();
+          });
+          toolbar.appendChild(filterButton);
+          rollupElement.appendChild(toolbar);
+        }
 
         if (rollup.needsWork.length) {
           const links = document.createElement("div");
@@ -515,6 +558,8 @@
       }
 
       function focusSpeaker(speakerId) {
+        showReviewOnly = false;
+        render();
         const target = document.querySelector(`#speaker-${speakerId}`);
         if (!target) return;
         target.classList.add("jump-highlight");
@@ -693,9 +738,9 @@
         return button;
       }
 
-      function renderSpeaker(speaker, index) {
+      function renderSpeaker(speaker, index, filteredOut = false) {
         const article = document.createElement("article");
-        article.className = "speaker";
+        article.className = filteredOut ? "speaker filtered-out" : "speaker";
         article.id = `speaker-${speaker.id}`;
         const head = document.createElement("div");
         head.style.display = "flex";
