@@ -38,8 +38,16 @@ for (const proto of all) {
   assert.ok(screens.includes(proto), `every prototype is reachable from the app: ${proto}`);
 }
 
+// The app steps through the product in workflow order (one guided product, prev/next).
+assert.ok(app.includes("const ORDER = []"), "app builds a workflow order for stepping");
+assert.ok(app.includes("ORDER.indexOf(screen)"), "app locates the current screen in the workflow order");
+assert.ok(app.includes("Screen ${index + 1} of ${ORDER.length}"), "app shows progress through the workflow");
+assert.match(app, /id="prev-step"/, "app has a previous-screen control");
+assert.match(app, /id="next-step"/, "app has a next-screen control");
+assert.ok(app.includes('setAttribute("aria-disabled", "true")'), "first/last steps disable the missing direction");
+
 // The shell links to the app so it's discoverable.
 const shell = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 assert.ok(shell.includes("app.html"), "the preview shell links to the unified app");
 
-console.log(`preview app: ${screens.length} screens routed through one shell URL`);
+console.log(`preview app: ${screens.length} screens routed and stepped through one shell URL`);

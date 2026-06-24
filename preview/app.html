@@ -135,6 +135,43 @@
         color: var(--ink);
       }
 
+      .crumb .step-count {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .crumb .stepper {
+        display: inline-flex;
+        gap: 6px;
+        margin-left: 6px;
+      }
+
+      .crumb .step-btn {
+        color: var(--accent-ink);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 4px 9px;
+      }
+
+      .crumb .step-btn[aria-disabled="true"] {
+        color: #9aa7a2;
+        border-color: #eef2f0;
+        pointer-events: none;
+      }
+
+      .crumb .step-btn:hover {
+        background: #eef4f2;
+      }
+
+      .crumb .step-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .crumb a.open {
         margin-left: auto;
         color: var(--accent-ink);
@@ -179,6 +216,11 @@
         <div class="crumb">
           <span>Now viewing:</span>
           <strong id="crumb-label">—</strong>
+          <span class="step-count" id="step-count"></span>
+          <span class="stepper">
+            <a class="step-btn" id="prev-step" href="#" rel="prev">← Previous</a>
+            <a class="step-btn" id="next-step" href="#" rel="next">Next →</a>
+          </span>
           <a class="open" id="open-direct" href="#" target="_blank" rel="noopener">Open full screen ↗</a>
         </div>
         <iframe id="screen" title="Selected episode screen" src="about:blank"></iframe>
@@ -215,17 +257,21 @@
         ]],
         ["Review & publish", [
           "export-readiness-review", "episode-watch-through-preview", "export-package-handoff",
-          "publish-checklist", "destination-crop-preview", "thumbnail-cover-frame",
-          "show-notes-assembly",
+          "publish-checklist", "client-review-copy-flow", "destination-crop-preview",
+          "thumbnail-cover-frame", "show-notes-assembly",
         ]],
       ];
 
       // Flat set of known screens — the iframe only ever loads a screen from this set, so a
       // hash can never point the frame at an arbitrary URL.
       const KNOWN = new Set();
+      // The whole product in workflow order, so the shell can step through it like one
+      // guided product (Previous / Next) — not just a directory of links.
+      const ORDER = [];
       for (const [, screens] of STAGES) {
         for (const screen of screens) {
           KNOWN.add(screen);
+          ORDER.push(screen);
         }
       }
 
@@ -233,6 +279,9 @@
       const frame = document.querySelector("#screen");
       const crumbLabel = document.querySelector("#crumb-label");
       const openDirect = document.querySelector("#open-direct");
+      const stepCount = document.querySelector("#step-count");
+      const prevStep = document.querySelector("#prev-step");
+      const nextStep = document.querySelector("#next-step");
 
       function titleCase(slug) {
         return slug
@@ -276,6 +325,24 @@
           } else {
             link.removeAttribute("aria-current");
           }
+        }
+
+        // Step through the product in workflow order.
+        const index = ORDER.indexOf(screen);
+        stepCount.textContent = `Screen ${index + 1} of ${ORDER.length}`;
+        setStep(prevStep, ORDER[index - 1]);
+        setStep(nextStep, ORDER[index + 1]);
+      }
+
+      function setStep(button, target) {
+        if (target) {
+          button.href = `#${target}`;
+          button.removeAttribute("aria-disabled");
+          button.title = titleCase(target);
+        } else {
+          button.removeAttribute("href");
+          button.setAttribute("aria-disabled", "true");
+          button.removeAttribute("title");
         }
       }
 
