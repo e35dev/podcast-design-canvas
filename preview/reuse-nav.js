@@ -116,6 +116,11 @@ function renderReuseNav() {
     prevLink.href = previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
+  } else {
+    const review = document.createElement("a");
+    review.href = "sensitive-moment-review.html";
+    review.textContent = "Previous: Sensitive moment review";
+    wrap.appendChild(review);
   }
 
   if (next) {
