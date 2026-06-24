@@ -488,24 +488,35 @@
         return article;
       }
 
-      function evaluateChecklist() {
-        const states = itemStates();
-        const relevantItems = items.filter((item) => item.requiredFor.includes(selectedDestination));
+      // Ignored items stay visible as warnings but never block readiness: an
+      // explicitly ignored item records its consequence (docs/publish-checklist.md)
+      // instead of leaving the checklist stuck in "needs review".
+      function summarizeWarnings(relevantItems, states) {
         const warnings = relevantItems
           .map((item) => ({ item, state: states[item.id] }))
           .filter(({ state }) => state !== "ready" && state !== "not-needed");
-
-        const status = warnings.some(({ state }) => state === "blocked")
+        const unresolvedWarnings = warnings.filter(({ state }) => state === "review" || state === "blocked");
+        const ignoredCount = warnings.length - unresolvedWarnings.length;
+        const status = unresolvedWarnings.some(({ state }) => state === "blocked")
           ? "blocked"
-          : warnings.length
+          : unresolvedWarnings.length
             ? "review"
             : "ready";
+        return { warnings, ignoredCount, status };
+      }
+
+      function evaluateChecklist() {
+        const states = itemStates();
+        const relevantItems = items.filter((item) => item.requiredFor.includes(selectedDestination));
+        const { warnings, ignoredCount, status } = summarizeWarnings(relevantItems, states);
 
         return {
           status,
           warnings,
           nextAction: status === "ready"
-            ? `Export ${destinations[selectedDestination]}.`
+            ? ignoredCount
+              ? `Export ${destinations[selectedDestination]} (${ignoredCount} ignored warning${ignoredCount === 1 ? "" : "s"} recorded).`
+              : `Export ${destinations[selectedDestination]}.`
             : status === "blocked"
               ? "Fix blocked checklist items before export."
               : "Review or ignore warnings before final export.",
@@ -531,6 +542,10 @@
       }
 
       render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { items, destinations, summarizeWarnings };
+      }
     </script>
   </body>
 </html>
