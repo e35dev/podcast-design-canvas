@@ -12,6 +12,7 @@ const root = path.join(__dirname, "..");
 
 const pathNavs = [
   { script: "ingest-nav.js", attr: "data-ingest-step", flowName: "INGEST_FLOW" },
+  { script: "speaker-setup-nav.js", attr: "data-setup-step", flowName: "SPEAKER_SETUP_FLOW" },
   { script: "publish-nav.js", attr: "data-publish-step", flowName: "PUBLISH_FLOW" },
   { script: "style-nav.js", attr: "data-style-step", flowName: "STYLE_FLOW" },
   { script: "visuals-nav.js", attr: "data-visuals-step", flowName: "VISUALS_FLOW" },

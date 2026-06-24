@@ -10,6 +10,9 @@ const assert = require("assert");
 const previewDir = __dirname;
 
 const navGuards = [
+  { file: "episode-flow-nav.js", className: "episode-flow-nav" },
+  { file: "ingest-nav.js", className: "ingest-nav" },
+  { file: "speaker-setup-nav.js", className: "speaker-setup-nav" },
   { file: "publish-nav.js", className: "publish-nav" },
   { file: "style-nav.js", className: "style-nav" },
   { file: "visuals-nav.js", className: "visuals-nav" },
