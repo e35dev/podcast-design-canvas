@@ -453,6 +453,94 @@ assert.equal(
 );
 assert.equal(dynamicCrossStageFix.target, "_top", "dynamic embedded cross-stage fix hand-offs target the parent app");
 
+// Long-form navigation moment cards hand off to cross-stage fix owners (#1003).
+const longFormMomentFixes = [
+  "episode-chapter-markers.html",
+  "speaker-attribution-review.html",
+  "audio-caption-quality-review.html",
+  "contextual-broll-moments.html",
+  "audio-cleanup-controls.html",
+  "contextual-title-cards.html",
+];
+const longFormHtml = fs.readFileSync(path.join(root, "prototype", "long-form-navigation.html"), "utf8");
+for (const screen of longFormMomentFixes) {
+  assert.ok(longFormHtml.includes(`screen: "${screen}"`), `long-form navigation moment links to ${screen}`);
+}
+
+const standaloneLongFormLinks = renderNavFor(
+  "long-form-navigation.html",
+  false,
+  "?path=publish",
+  longFormMomentFixes,
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "episode-chapter-markers.html").href,
+  "episode-chapter-markers.html?path=publish",
+  "long-form chapter fix carries publish context",
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "speaker-attribution-review.html").href,
+  "speaker-attribution-review.html?path=publish",
+  "long-form speaker-attribution fix carries publish context",
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "audio-caption-quality-review.html").href,
+  "audio-caption-quality-review.html?path=publish",
+  "long-form caption-quality fix carries publish context",
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "contextual-broll-moments.html").href,
+  "contextual-broll-moments.html?from=cleanup&path=publish",
+  "long-form b-roll fix carries cleanup entry and publish context",
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "audio-cleanup-controls.html").href,
+  "audio-cleanup-controls.html?path=publish",
+  "long-form audio cleanup fix carries publish context",
+);
+assert.equal(
+  linkWithText(standaloneLongFormLinks, "contextual-title-cards.html").href,
+  "contextual-title-cards.html?from=cleanup&path=publish",
+  "long-form title-card fix carries cleanup entry and publish context",
+);
+
+const embeddedLongFormLinks = renderNavFor(
+  "long-form-navigation.html",
+  true,
+  "?path=publish",
+  longFormMomentFixes,
+);
+assert.equal(
+  linkWithText(embeddedLongFormLinks, "contextual-broll-moments.html").href,
+  "../preview/app.html#contextual-broll-moments?from=cleanup&path=publish",
+  "embedded long-form nav routes b-roll fix hand-offs through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedLongFormLinks, "contextual-title-cards.html").href,
+  "../preview/app.html#contextual-title-cards?from=cleanup&path=publish",
+  "embedded long-form nav routes title-card fix hand-offs through the preview app",
+);
+assert.equal(
+  linkWithText(embeddedLongFormLinks, "audio-cleanup-controls.html").href,
+  "../preview/app.html#audio-cleanup-controls?path=publish",
+  "embedded long-form nav routes audio cleanup fix hand-offs through the preview app",
+);
+
+const dynamicLongFormBroll = normalizePublishClickFor("contextual-broll-moments.html", "?path=publish", true);
+assert.equal(
+  dynamicLongFormBroll.href,
+  "../preview/app.html#contextual-broll-moments?from=cleanup&path=publish",
+  "embedded long-form nav normalizes dynamic b-roll fix hand-offs before navigation",
+);
+assert.equal(dynamicLongFormBroll.target, "_top", "dynamic long-form b-roll fix hand-offs target the parent app");
+
+const dynamicLongFormChapter = normalizePublishClickFor("episode-chapter-markers.html", "?path=publish", false);
+assert.equal(
+  dynamicLongFormChapter.href,
+  "episode-chapter-markers.html?path=publish",
+  "long-form nav normalizes dynamic chapter fix hand-offs before navigation",
+);
+
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
 const body = createElement("body");

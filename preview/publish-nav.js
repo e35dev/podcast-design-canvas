@@ -42,10 +42,12 @@ const PUBLISH_FIX_PATHS = {
   "speaker-attribution-review.html": { path: "publish" },
   "speaker-framing-safety.html": { path: "publish" },
   "layout-safe-areas.html": { path: "publish" },
-  // Episode metadata publishing -> guest links owner. The publish-checklist
-  // caption/chapter/source-media fixes are owned by PUBLISH_CHECKLIST_FIX_PATHS
-  // (setPublishChecklistFixLink), so they are not duplicated here.
+  // Episode metadata publishing -> guest links owner.
   "social-context-intake.html": { path: "publish" },
+  // Long-form navigation moment cards -> cross-stage owners.
+  "audio-cleanup-controls.html": { path: "publish" },
+  "contextual-broll-moments.html": { from: "cleanup", path: "publish" },
+  "contextual-title-cards.html": { from: "cleanup", path: "publish" },
 };
 
 const PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS = new Set(
@@ -212,6 +214,11 @@ function shouldNormalizePublishHref(href) {
 
 function normalizePublishScreenLink(link) {
   const href = link.getAttribute("href") || "";
+  const checklistBase = checklistFixBase(href);
+  if (Object.prototype.hasOwnProperty.call(PUBLISH_CHECKLIST_FIX_PATHS, checklistBase)) {
+    setPublishChecklistFixLink(link);
+    return;
+  }
   if (shouldNormalizePublishHref(href)) {
     setPublishScreenLink(link, href);
   }
