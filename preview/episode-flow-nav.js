@@ -15,10 +15,53 @@ const EPISODE_FLOW = [
 const EPISODE_SHELL_PREFIX = 2;
 const EPISODE_PREAMBLE = { file: "speaker-role-mapping.html", label: "Speaker roles" };
 const EPISODE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Watch-through preview" };
+const PREVIEW_APP_EPISODE_TARGETS = new Set([
+  screenIdFromFile(EPISODE_PREAMBLE.file),
+  ...EPISODE_FLOW.map((step) => screenIdFromFile(step.file)),
+  screenIdFromFile(EPISODE_HANDOFF.file),
+]);
 
 function currentStepIndex() {
   const name = window.location.pathname.split("/").pop() || "";
   return EPISODE_FLOW.findIndex((step) => step.file === name);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppEpisodeTarget(file) {
+  return PREVIEW_APP_EPISODE_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setEpisodeScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppEpisodeTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = file;
 }
 
 function renderEpisodeFlowNav() {
@@ -100,10 +143,12 @@ function renderEpisodeFlowNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/index.html";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "Episode flow home";
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
 
   wrap.appendChild(home);
@@ -111,19 +156,19 @@ function renderEpisodeFlowNav() {
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = index === 0 ? `${EPISODE_PREAMBLE.file}?path=episode` : previous.file;
+    setEpisodeScreenLink(prevLink, index === 0 ? `${EPISODE_PREAMBLE.file}?path=episode` : previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   }
 
   if (next) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
+    setEpisodeScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const handoff = document.createElement("a");
-    handoff.href = EPISODE_HANDOFF.file;
+    setEpisodeScreenLink(handoff, EPISODE_HANDOFF.file);
     handoff.textContent = `Continue: ${EPISODE_HANDOFF.label}`;
     wrap.appendChild(handoff);
   }

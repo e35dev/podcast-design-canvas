@@ -49,6 +49,7 @@ function createElement(tagName) {
     className: "",
     href: "",
     id: "",
+    target: "",
     textContent: "",
     setAttribute(name, value) {
       this.attributes[name] = value;
@@ -74,7 +75,14 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName) {
+function makeWindow(fileName, embedded = false) {
+  const window = { location: { pathname: `/prototype/${fileName}` } };
+  window.self = window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  return window;
+}
+
+function renderNavFor(fileName, embedded = false) {
   const head = createElement("head");
   const body = createElement("body");
   const document = {
@@ -98,10 +106,14 @@ function renderNavFor(fileName) {
 
   vm.runInNewContext(navSource, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}` } },
+    window: makeWindow(fileName, embedded),
   });
 
   return { head, body, nodes: [...flatten(head), ...flatten(body)] };
+}
+
+function linkWithText(nodes, text) {
+  return nodes.find((node) => node.tagName === "a" && node.textContent === text);
 }
 
 const firstNav = renderNavFor("source-media-health.html");
@@ -162,6 +174,33 @@ assert.ok(
   fs.existsSync(path.join(root, "prototype", publishHandoff.href)),
   "publish prep handoff target exists",
 );
+
+const embeddedFirstNav = renderNavFor("source-media-health.html", true);
+const embeddedHome = linkWithText(embeddedFirstNav.nodes, "Episode flow home");
+assert.equal(embeddedHome.target, "_top", "embedded episode nav home opens the preview shell at top level");
+const embeddedPrevious = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker roles");
+assert.equal(
+  embeddedPrevious.href,
+  "../preview/app.html#speaker-role-mapping",
+  "embedded first flow screen routes previous through the preview app hash",
+);
+assert.equal(embeddedPrevious.target, "_top", "embedded previous link targets the parent app");
+const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Speaker sync repair");
+assert.equal(
+  embeddedNext.href,
+  "../preview/app.html#speaker-sync-repair",
+  "embedded first flow screen routes next through the preview app hash",
+);
+assert.equal(embeddedNext.target, "_top", "embedded next link targets the parent app");
+
+const embeddedLastNav = renderNavFor("export-readiness-review.html", true);
+const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Watch-through preview");
+assert.equal(
+  embeddedHandoff.href,
+  "../preview/app.html#episode-watch-through-preview",
+  "embedded last flow screen routes publish prep handoff through the preview app hash",
+);
+assert.equal(embeddedHandoff.target, "_top", "embedded publish prep handoff targets the parent app");
 
 const duplicateNav = renderNavFor("speaker-sync-repair.html");
 vm.runInNewContext(navSource, {
