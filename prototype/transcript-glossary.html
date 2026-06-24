@@ -268,6 +268,23 @@
         color: var(--accent);
       }
 
+      .entry-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .entry-actions button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .badge.applied {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
       .summary-note {
         color: var(--muted);
         font-size: 13px;
@@ -312,7 +329,7 @@
           <h2>Glossary summary</h2>
           <div id="status" class="status ready">Glossary ready</div>
           <div id="issues" class="issues"></div>
-          <p class="summary-note">Approved spellings apply across repeated mentions. Declined suggestions stay out of the way and won't be offered again.</p>
+          <p class="summary-note">Approved spellings spread only after you choose to update repeated mentions. Undo a spread before it becomes reusable show-wide.</p>
         </aside>
       </section>
     </main>
@@ -345,10 +362,10 @@
       };
 
       const sampleEntries = [
-        { id: "e1", term: "Anika", spelling: "Aanika", scope: "everywhere", source: "social", decision: "approved" },
-        { id: "e2", term: "Riverside", spelling: "Riverside.fm", scope: "descriptions", source: "sponsor-kit", decision: "suggested" },
-        { id: "e3", term: "kubernetes", spelling: "Kubernetes", scope: "captions", source: "repeated", decision: "suggested" },
-        { id: "e4", term: "Anika", spelling: "Annika", scope: "captions", source: "heard", decision: "suggested" },
+        { id: "e1", term: "Anika", spelling: "Aanika", scope: "everywhere", source: "social", decision: "approved", mentions: 12, applied: false },
+        { id: "e2", term: "Riverside", spelling: "Riverside.fm", scope: "descriptions", source: "sponsor-kit", decision: "suggested", mentions: 3, applied: false },
+        { id: "e3", term: "kubernetes", spelling: "Kubernetes", scope: "captions", source: "repeated", decision: "suggested", mentions: 9, applied: false },
+        { id: "e4", term: "Anika", spelling: "Annika", scope: "captions", source: "heard", decision: "suggested", mentions: 12, applied: false },
       ];
 
       let entries = structuredClone(sampleEntries);
@@ -359,7 +376,7 @@
 
       document.querySelector("#addEntry").addEventListener("click", () => {
         const next = entries.length + 1;
-        entries.push({ id: `e${next}-${entries.length}`, term: "", spelling: "", scope: "everywhere", source: "manual", decision: "suggested" });
+        entries.push({ id: `e${next}-${entries.length}`, term: "", spelling: "", scope: "everywhere", source: "manual", decision: "suggested", mentions: 1, applied: false });
         render();
       });
 
@@ -416,7 +433,21 @@
               tone: "review",
             };
           } else if (entry.decision === "approved") {
-            state = "approved";
+            if (entry.applied) {
+              state = "applied across episode";
+              issue = {
+                title: `"${entry.spelling}" now appears ${entry.mentions} times in this episode`,
+                action: "Captions and linked text use the approved spelling. Undo spread if you want to try a different spelling first.",
+                tone: "info",
+              };
+            } else {
+              state = "approved";
+              issue = {
+                title: `"${entry.spelling}" approved for "${entry.term}"`,
+                action: `Ready to update ${entry.mentions} repeated mentions in this episode.`,
+                tone: "info",
+              };
+            }
           } else if (source.weak) {
             state = "review";
             issue = {
@@ -437,9 +468,12 @@
         });
 
         const hasConflict = results.some((result) => result.conflict);
-        const hasReview = results.some((result) => result.state === "review" || result.state === "suggested");
-        const overall = hasConflict ? "blocked" : hasReview ? "review" : "ready";
-        return { overall, results };
+        const hasReview = results.some((result) =>
+          result.state === "review" || result.state === "suggested" || (result.state === "approved"),
+        );
+        const pendingSpread = results.filter((result) => result.state === "approved").length;
+        const overall = hasConflict ? "blocked" : hasReview || pendingSpread ? "review" : "ready";
+        return { overall, results, pendingSpread };
       }
 
       function render() {
@@ -453,7 +487,9 @@
           ? "Glossary ready"
           : evaluation.overall === "blocked"
             ? "Resolve spelling conflicts"
-            : "Review suggested spellings";
+            : evaluation.pendingSpread
+              ? `${evaluation.pendingSpread} approved ${evaluation.pendingSpread === 1 ? "spelling still to spread" : "spellings still to spread"}`
+              : "Review suggested spellings";
 
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
@@ -464,6 +500,9 @@
       }
 
       function badgeClass(state) {
+        if (state === "applied across episode") {
+          return "applied";
+        }
         if (state === "approved") {
           return "approved";
         }
@@ -529,6 +568,33 @@
         article.querySelector('[data-field="spelling"]').value = entry.spelling;
         article.querySelector("[data-preview]").textContent = entry.spelling.trim() || "Aa";
 
+        const fields = article.querySelector(".fields");
+        if (entry.decision === "approved" && result.state !== "review") {
+          const actions = document.createElement("div");
+          actions.className = "entry-actions";
+          if (!entry.applied) {
+            const spread = document.createElement("button");
+            spread.type = "button";
+            spread.textContent = `Update ${entry.mentions} mentions in this episode`;
+            spread.addEventListener("click", () => {
+              entries[index].applied = true;
+              render();
+            });
+            actions.append(spread);
+          } else {
+            const undo = document.createElement("button");
+            undo.type = "button";
+            undo.className = "secondary";
+            undo.textContent = "Undo spread for this episode";
+            undo.addEventListener("click", () => {
+              entries[index].applied = false;
+              render();
+            });
+            actions.append(undo);
+          }
+          fields.append(actions);
+        }
+
         article.addEventListener("input", (event) => updateEntry(event, index));
         article.addEventListener("change", (event) => updateEntry(event, index));
         return article;
@@ -547,6 +613,10 @@
         // already declined the entry, which stays declined).
         if ((field === "term" || field === "spelling") && entry.decision === "approved") {
           entry.decision = "suggested";
+          entry.applied = false;
+        }
+        if (field === "decision" && event.target.value !== "approved") {
+          entry.applied = false;
         }
         render();
       }
