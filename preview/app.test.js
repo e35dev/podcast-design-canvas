@@ -46,8 +46,16 @@ assert.match(app, /id="prev-step"/, "app has a previous-screen control");
 assert.match(app, /id="next-step"/, "app has a next-screen control");
 assert.ok(app.includes('setAttribute("aria-disabled", "true")'), "first/last steps disable the missing direction");
 
+// Shared session state: the app records which screens have been viewed and shows
+// progress through the product in the rail.
+assert.ok(app.includes('"pdc-preview-visited"'), "app persists viewed screens in session storage");
+assert.ok(app.includes("function markVisited"), "app records a viewed screen");
+assert.ok(app.includes("of ${ORDER.length} viewed"), "app shows how many screens have been viewed");
+assert.ok(app.includes('classList.toggle("seen"'), "the rail marks viewed screens");
+assert.ok(/try\s*\{[\s\S]*sessionStorage/.test(app), "session storage access is guarded");
+
 // The shell links to the app so it's discoverable.
 const shell = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 assert.ok(shell.includes("app.html"), "the preview shell links to the unified app");
 
-console.log(`preview app: ${screens.length} screens routed and stepped through one shell URL`);
+console.log(`preview app: ${screens.length} screens routed, stepped, and progress-tracked through one shell URL`);

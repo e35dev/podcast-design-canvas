@@ -49,6 +49,12 @@
         font-size: 13px;
       }
 
+      header.bar .progress {
+        color: #cfe9e2;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
       header.bar a.catalog {
         margin-left: auto;
         color: #ffffff;
@@ -113,6 +119,16 @@
       nav.rail a[aria-current="page"] {
         background: #136f63;
         color: #ffffff;
+      }
+
+      nav.rail a.seen::after {
+        content: " ✓";
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      nav.rail a.seen[aria-current="page"]::after {
+        color: #d7ece7;
       }
 
       .stage-frame {
@@ -207,6 +223,7 @@
     <header class="bar">
       <h1>Podcast Design Canvas</h1>
       <span class="sub">One preview — every screen loads here, in order.</span>
+      <span class="progress" id="progress"></span>
       <a class="catalog" href="./index.html">Shell home</a>
     </header>
 
@@ -282,6 +299,48 @@
       const stepCount = document.querySelector("#step-count");
       const prevStep = document.querySelector("#prev-step");
       const nextStep = document.querySelector("#next-step");
+      const progressEl = document.querySelector("#progress");
+
+      // Shared session state: which screens the creator has already opened in this shell,
+      // so the rail shows progress through the product (✓) across navigations.
+      const STORAGE_KEY = "pdc-preview-visited";
+
+      function loadVisited() {
+        try {
+          return new Set(JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "[]"));
+        } catch (error) {
+          return new Set();
+        }
+      }
+
+      const visited = loadVisited();
+
+      function markVisited(screen) {
+        if (visited.has(screen)) {
+          return;
+        }
+        visited.add(screen);
+        try {
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
+        } catch (error) {
+          // Session storage may be unavailable; progress just won't persist.
+        }
+      }
+
+      function renderProgress() {
+        let seen = 0;
+        for (const screen of ORDER) {
+          const link = linkFor[screen];
+          const isSeen = visited.has(screen);
+          if (link) {
+            link.classList.toggle("seen", isSeen);
+          }
+          if (isSeen) {
+            seen += 1;
+          }
+        }
+        progressEl.textContent = `${seen} of ${ORDER.length} viewed`;
+      }
 
       function titleCase(slug) {
         return slug
@@ -332,6 +391,10 @@
         stepCount.textContent = `Screen ${index + 1} of ${ORDER.length}`;
         setStep(prevStep, ORDER[index - 1]);
         setStep(nextStep, ORDER[index + 1]);
+
+        // Record progress through the product and reflect it in the rail.
+        markVisited(screen);
+        renderProgress();
       }
 
       function setStep(button, target) {
