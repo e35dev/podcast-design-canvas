@@ -743,4 +743,23 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), true, "the drop still fills every available slot before overflowing");
 
+// Non-video files in a multi-file drop are placed-around, not silently dropped: the videos land
+// and the creator is told the non-video was skipped (drag-and-drop bypasses the input's accept
+// filter, so a stray file can ride along).
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFiles(controller.zonesBySlot.host, [
+  { name: "host.mp4", type: "video/mp4", size: 1, lastModified: 1 },
+  { name: "notes.txt", type: "text/plain", size: 2, lastModified: 2 },
+  { name: "guest.mp4", type: "video/mp4", size: 3, lastModified: 3 },
+]);
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "the first video fills the target slot");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "the other video still spills past the skipped non-video");
+assert.equal(elementsById["layout-error-card"].hidden, false, "a skipped non-video in the drop surfaces a message");
+assert.match(
+  elementsById["layout-error"].textContent,
+  /1 file in that drop wasn't a video, so it was skipped/,
+  "the message names how many non-video files were skipped",
+);
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

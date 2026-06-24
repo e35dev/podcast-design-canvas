@@ -530,8 +530,12 @@
       }
       // Only spill the extra files that are actually videos, so a stray non-video in the
       // batch never flags a slot the creator didn't aim at.
+      // Spill only the extras that are actually videos; count any non-video so it can be
+      // reported instead of silently vanishing. (The first file already went through
+      // placeVideoFile above, which flags it if it isn't a video.)
       const extras = files.slice(1).filter(isVideoFile);
-      if (extras.length === 0) {
+      const skippedNonVideo = files.slice(1).length - extras.length;
+      if (extras.length === 0 && skippedNonVideo === 0) {
         return;
       }
       const openSlots = visibleSlots().filter((candidate) => {
@@ -547,12 +551,17 @@
           overflow += 1;
         }
       });
-      // More videos than open slots: the surplus has nowhere to land. Say so instead of
-      // silently dropping the extra files, and tell the creator how to make room.
+      // Tell the creator about anything from the drop that didn't land, rather than silently
+      // discarding it. Overflow (more videos than open slots) takes priority; otherwise report
+      // non-video files that were skipped.
       if (overflow > 0) {
         const noun = overflow === 1 ? "video" : "videos";
         const verb = overflow === 1 ? "wasn't" : "weren't";
         setError(`There's no open slot left, so ${overflow} extra ${noun} ${verb} placed. Remove a video to make room for another.`);
+      } else if (skippedNonVideo > 0) {
+        const noun = skippedNonVideo === 1 ? "file" : "files";
+        const wasWere = skippedNonVideo === 1 ? "wasn't a video, so it was" : "weren't videos, so they were";
+        setError(`${skippedNonVideo} ${noun} in that drop ${wasWere} skipped. Only video files can fill a slot.`);
       }
     }
 
