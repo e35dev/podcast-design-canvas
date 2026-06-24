@@ -18,6 +18,12 @@ const REUSE_ENTRY = { file: "sensitive-moment-review.html", label: "Sensitive mo
 const REUSE_HANDOFF = { file: "episode-watch-through-preview.html", label: "Episode watch-through" };
 const REUSE_HANDOFF_PATH = "publish";
 
+// Starting a new episode from a previous one reuses the show's layout, so it is the natural
+// point to jump to the layout-first start and place this episode's speaker videos — the same
+// placement already offered from the ingest, style, and speaker-setup steps.
+const LAYOUT_FIRST_PLACEMENT_STEP = "start-from-previous-episode";
+const LAYOUT_FIRST_PLACEMENT_FILE = "layout-first.html";
+
 // Reuse screens hand off to these owning screens when a review item needs a fix.
 const REUSE_FIX_PATHS = {
   "music-cue-setup.html": "episode",
@@ -139,6 +145,30 @@ function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
   }
+}
+
+function layoutFirstPlacementSearch() {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  const params = new URLSearchParams();
+  if (shellPath === "episode" || shellPath === "publish" || shellPath === "reuse") {
+    params.set("path", shellPath);
+  }
+  params.set("from", "reuse");
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
+function layoutFirstPlacementHref() {
+  return `../preview/${LAYOUT_FIRST_PLACEMENT_FILE}${layoutFirstPlacementSearch()}`;
+}
+
+function shouldOfferLayoutPlacement(step) {
+  return step && step.id === LAYOUT_FIRST_PLACEMENT_STEP;
+}
+
+function setLayoutPlacementLink(link) {
+  link.href = layoutFirstPlacementHref();
+  setTopTargetWhenEmbedded(link);
 }
 
 // Keep the episode workflow path (?path=...) on reuse links so a creator who entered
@@ -329,6 +359,13 @@ function renderReuseNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (shouldOfferLayoutPlacement(step)) {
+    const placement = document.createElement("a");
+    setLayoutPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");
