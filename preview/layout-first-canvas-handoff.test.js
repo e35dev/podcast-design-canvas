@@ -21,6 +21,7 @@ class Element {
     this.dataset = {};
     this.textContent = "";
     this.href = "";
+    this.focused = false;
   }
 
   setAttribute(name, value) {
@@ -67,6 +68,10 @@ class Element {
   }
 
   querySelector(selector) {
+    const chipMatch = selector.match(/^\.drag-chip\[data-track="([^"]+)"\]$/);
+    if (chipMatch) {
+      return chips.find((chip) => chip.dataset.track === chipMatch[1]) || null;
+    }
     if (selector === ".placed-track") {
       return this.children.find((child) => child.className === "placed-track") || null;
     }
@@ -84,6 +89,13 @@ class Element {
     if (this.listeners.click) {
       this.listeners.click({ target: this });
     }
+  }
+
+  focus() {
+    chips.forEach((chip) => {
+      chip.focused = false;
+    });
+    this.focused = true;
   }
 
   get classList() {
@@ -134,6 +146,10 @@ continueNote.textContent = "Place the host and guest into the layout before cont
 
 const document = {
   querySelector(selector) {
+    const chipMatch = selector.match(/^\.drag-chip\[data-track="([^"]+)"\]$/);
+    if (chipMatch) {
+      return chips.find((chip) => chip.dataset.track === chipMatch[1]) || null;
+    }
     const slotMatch = selector.match(/^\.drop-zone\[data-slot="([^"]+)"\]$/);
     if (slotMatch) {
       return zones.find((zone) => zone.dataset.slot === slotMatch[1]) || null;
@@ -253,6 +269,7 @@ assert.strictEqual(hostZone.classList.contains("filled"), false, "removing a tra
 assert.strictEqual(hostZone.querySelector(".placed-track"), null, "the placed track and its remove control are gone");
 assert.strictEqual(guestZone.classList.contains("filled"), true, "removing one track leaves the others placed");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "Continue re-gates after a required track is removed");
+assert.strictEqual(chips[0].focused, true, "removing a track returns focus to its matching palette chip");
 // Re-placing the cleared slot restores readiness.
 keydown(chips[0], "Enter");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false", "re-placing the removed track restores Continue");
