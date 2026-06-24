@@ -310,6 +310,98 @@
         line-height: 1.45;
       }
 
+      .track-tray {
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .track-tray h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+
+      .track-tray p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .track-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .track-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #bfd0ca;
+        border-radius: 10px;
+        background: #f7faf8;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        text-align: left;
+        padding: 10px 12px;
+        cursor: grab;
+      }
+
+      .track-chip small {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .track-chip.is-selected,
+      .track-chip:hover,
+      .track-chip:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        background: #eef8f4;
+      }
+
+      .drop-zone.is-target {
+        border-color: #ffffff;
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+      }
+
+      .drop-zone.is-filled {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .drop-assignment {
+        position: relative;
+        z-index: 2;
+        margin-top: 10px;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .canvas-status {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .canvas-reset {
+        margin-top: 12px;
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+      }
+
       .canvas-links {
         display: flex;
         flex-wrap: wrap;
@@ -384,13 +476,15 @@
               <span class="canvas-chip scene">Interview scene · intro beat</span>
               <span class="canvas-chip runtime">Host + guest · 58 min cut</span>
               <div class="speaker-row">
-                <div class="drop-zone host">
+                <div class="drop-zone host" data-slot="host">
                   <span class="slot-label">Host video slot</span>
                   <span class="slot-note">Drop the host Riverside track here. Keep room for captions and chapter callouts.</span>
+                  <span class="drop-assignment" data-assignment="host">Waiting for host track</span>
                 </div>
-                <div class="drop-zone guest">
+                <div class="drop-zone guest" data-slot="guest">
                   <span class="slot-label">Guest video slot</span>
                   <span class="slot-note">Drop the guest track here, matched to framing and safe-area rules.</span>
+                  <span class="drop-assignment" data-assignment="guest">Waiting for guest track</span>
                 </div>
               </div>
               <div class="canvas-footer">
@@ -398,12 +492,33 @@
                   <span class="slot-label">Caption area</span>
                   <div class="slot-note">Reserved for readable long-form captions and lower-thirds that never cover a speaker.</div>
                 </div>
-                <div class="title-slot drop-zone broll">
+                <div class="title-slot drop-zone broll" data-slot="broll">
                   <span class="slot-label">B-roll drop zone</span>
                   <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
+                  <span class="drop-assignment" data-assignment="broll">Waiting for b-roll clip</span>
                 </div>
               </div>
             </div>
+            <section class="track-tray" aria-labelledby="track-tray-title">
+              <h3 id="track-tray-title">Track tray</h3>
+              <p>Drag a prepared host track, guest track, or b-roll clip into the canvas slots to preview how the episode composition comes together.</p>
+              <div class="track-list" id="track-tray">
+                <button type="button" class="track-chip" draggable="true" data-track-id="host" data-slot="host" data-label="Host track · Dana Brooks">
+                  <span>Host track · Dana Brooks</span>
+                  <small>Drag to host video slot</small>
+                </button>
+                <button type="button" class="track-chip" draggable="true" data-track-id="guest" data-slot="guest" data-label="Guest track · Marcus Lee">
+                  <span>Guest track · Marcus Lee</span>
+                  <small>Drag to guest video slot</small>
+                </button>
+                <button type="button" class="track-chip" draggable="true" data-track-id="broll" data-slot="broll" data-label="B-roll clip · Product demo cutaway">
+                  <span>B-roll clip · Product demo cutaway</span>
+                  <small>Drag to contextual visuals slot</small>
+                </button>
+              </div>
+              <div class="canvas-status" id="canvas-status">No tracks placed yet. Start by dropping the host track into the main layout.</div>
+              <button type="button" class="canvas-reset" id="canvas-reset">Reset example canvas</button>
+            </section>
             <div class="canvas-links" aria-label="Example canvas actions">
               <a class="primary" href="./app.html#canvas-layer-controls?path=episode">Open canvas layer controls →</a>
               <a class="secondary" href="./app.html#layout-safe-areas?path=episode">Review layout safe areas →</a>
@@ -842,5 +957,145 @@
 
       <p class="note">Start a local server from the repo root, then open <code>/preview/</code>. Example: <code>python3 -m http.server 8080</code></p>
     </main>
+    <script>
+      const DEFAULT_CANVAS_ASSIGNMENTS = {
+        host: "Waiting for host track",
+        guest: "Waiting for guest track",
+        broll: "Waiting for b-roll clip",
+      };
+
+      function applyCanvasTrack(assignments, track) {
+        if (!track || !track.slot || !track.label) {
+          return assignments;
+        }
+        return { ...assignments, [track.slot]: track.label };
+      }
+
+      function canvasSummary(assignments) {
+        const placed = Object.values(assignments).filter((value) => !/^Waiting for /.test(value)).length;
+        if (placed === 0) {
+          return "No tracks placed yet. Start by dropping the host track into the main layout.";
+        }
+        if (placed < 3) {
+          return `${placed} of 3 layout slots filled. Keep placing speaker tracks before styling the episode.`;
+        }
+        return "All three layout slots are filled. Review safe areas and canvas layers before moving deeper into the episode flow.";
+      }
+
+      function renderCanvasAssignments(root, assignments, selectedTrackId) {
+        root.querySelectorAll("[data-assignment]").forEach((node) => {
+          const slot = node.getAttribute("data-assignment");
+          const value = assignments[slot];
+          node.textContent = value;
+          const zone = node.closest("[data-slot]");
+          if (zone) {
+            zone.classList.toggle("is-filled", !/^Waiting for /.test(value));
+          }
+        });
+
+        const status = root.querySelector("#canvas-status");
+        if (status) {
+          status.textContent = canvasSummary(assignments);
+        }
+
+        root.querySelectorAll(".track-chip").forEach((node) => {
+          node.classList.toggle("is-selected", node.getAttribute("data-track-id") === selectedTrackId);
+        });
+      }
+
+      function initExampleCanvas(root = document) {
+        const tray = root.querySelector("#track-tray");
+        const reset = root.querySelector("#canvas-reset");
+        if (!tray || !reset) {
+          return;
+        }
+
+        let assignments = { ...DEFAULT_CANVAS_ASSIGNMENTS };
+        let draggedTrackId = "";
+        let selectedTrackId = "";
+
+        function trackFromNode(node) {
+          if (!node) return null;
+          return {
+            id: node.getAttribute("data-track-id"),
+            slot: node.getAttribute("data-slot"),
+            label: node.getAttribute("data-label"),
+          };
+        }
+
+        function placeTrack(track) {
+          assignments = applyCanvasTrack(assignments, track);
+          renderCanvasAssignments(root, assignments, selectedTrackId);
+        }
+
+        tray.querySelectorAll(".track-chip").forEach((node) => {
+          node.addEventListener("dragstart", (event) => {
+            draggedTrackId = node.getAttribute("data-track-id") || "";
+            selectedTrackId = draggedTrackId;
+            renderCanvasAssignments(root, assignments, selectedTrackId);
+            if (event.dataTransfer) {
+              event.dataTransfer.setData("text/plain", draggedTrackId);
+            }
+          });
+          node.addEventListener("click", () => {
+            selectedTrackId = node.getAttribute("data-track-id") || "";
+            renderCanvasAssignments(root, assignments, selectedTrackId);
+          });
+        });
+
+        root.querySelectorAll("[data-slot].drop-zone").forEach((zone) => {
+          zone.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            zone.classList.add("is-target");
+          });
+          zone.addEventListener("dragleave", () => {
+            zone.classList.remove("is-target");
+          });
+          zone.addEventListener("drop", (event) => {
+            event.preventDefault();
+            zone.classList.remove("is-target");
+            const slot = zone.getAttribute("data-slot");
+            const requestedId = draggedTrackId || (event.dataTransfer ? event.dataTransfer.getData("text/plain") : "");
+            const trackNode = tray.querySelector(`.track-chip[data-track-id="${requestedId}"]`);
+            const track = trackFromNode(trackNode);
+            if (track && track.slot === slot) {
+              selectedTrackId = track.id;
+              placeTrack(track);
+            }
+          });
+          zone.addEventListener("click", () => {
+            if (!selectedTrackId) return;
+            const trackNode = tray.querySelector(`.track-chip[data-track-id="${selectedTrackId}"]`);
+            const track = trackFromNode(trackNode);
+            if (track && track.slot === zone.getAttribute("data-slot")) {
+              placeTrack(track);
+            }
+          });
+        });
+
+        reset.addEventListener("click", () => {
+          assignments = { ...DEFAULT_CANVAS_ASSIGNMENTS };
+          selectedTrackId = "";
+          draggedTrackId = "";
+          renderCanvasAssignments(root, assignments, selectedTrackId);
+        });
+
+        renderCanvasAssignments(root, assignments, selectedTrackId);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => initExampleCanvas(document));
+      } else {
+        initExampleCanvas(document);
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          DEFAULT_CANVAS_ASSIGNMENTS,
+          applyCanvasTrack,
+          canvasSummary,
+        };
+      }
+    </script>
   </body>
 </html>
