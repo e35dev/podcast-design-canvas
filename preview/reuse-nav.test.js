@@ -231,4 +231,11 @@ assert.ok(
   "reuse nav adds no path suffix when there is no path context",
 );
 
+const conflictingPathNav = renderNavWithSearch("show-segment-system.html", "show-segment-system", "?path=episode");
+assert.equal(
+  linkWithText(conflictingPathNav, "Previous: Sensitive moment review").href,
+  "sensitive-moment-review.html?path=episode",
+  "reuse nav replaces conflicting path values when linking back to sensitive moment review",
+);
+
 console.log("reuse nav: make-it-reusable screens connected into one path");

@@ -60,6 +60,13 @@ assertCanonicalPathMerge(
   "speaker-role-mapping.html?path=episode&draft=roles",
 );
 
+assertCanonicalPathMerge(
+  "reuse-nav.js",
+  "?path=reuse",
+  "show-segment-system.html?path=episode&draft=segments",
+  "show-segment-system.html?path=reuse&draft=segments",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -107,4 +114,29 @@ assert.equal(
   "speaker setup nav preserves unrelated flags and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest, publish, and speaker setup path merges are canonical and non-ambiguous");
+const reuseSource = fs.readFileSync(path.join(previewDir, "reuse-nav.js"), "utf8");
+function reuseHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/show-template-adaptation.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${reuseSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const reuseWithHash = reuseHrefWithPathFor(
+  "intro-outro-builder.html?draft=intro#review",
+  "?path=episode",
+);
+assert.equal(
+  reuseWithHash,
+  "intro-outro-builder.html?draft=intro&path=episode#review",
+  "reuse nav preserves unrelated flags and hash segments when merging path context",
+);
+
+console.log("nav query merge: ingest, publish, speaker setup, and reuse path merges are canonical and non-ambiguous");

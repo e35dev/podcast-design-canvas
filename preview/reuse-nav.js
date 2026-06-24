@@ -55,7 +55,43 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+}
+
+function pathFromQuery(query) {
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
+}
+
+function routeSearchFromFile(file) {
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  const path = filePath || shellPath;
+  return path === "episode" || path === "reuse" ? `?path=${path}` : "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -79,8 +115,14 @@ function pathQuerySuffix() {
 }
 
 function hrefWithPath(file) {
-  const suffix = pathQuerySuffix();
-  return suffix ? `${file}${suffix}` : file;
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== "episode" && shellPath !== "reuse") {
+    return file;
+  }
+  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: shellPath });
 }
 
 function setReuseScreenLink(link, file) {
