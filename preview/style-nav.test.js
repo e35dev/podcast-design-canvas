@@ -26,6 +26,7 @@ const styleScreens = [
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
+  "preset-pacing-controls.html",
 ];
 
 for (const file of styleScreens) {
@@ -114,7 +115,7 @@ function linkWithText(nodes, text) {
   return link;
 }
 
-const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+const lastNav = renderNavFor("preset-pacing-controls.html", "preset-pacing-controls");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Contextual b-roll moments"),
   "last visual direction screen hands off to the contextual visuals path",
@@ -155,7 +156,7 @@ assert.equal(
   "embedded style nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
+const embeddedLastNav = renderNavFor("preset-pacing-controls.html", "preset-pacing-controls", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,

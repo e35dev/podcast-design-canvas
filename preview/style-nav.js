@@ -11,6 +11,7 @@ const STYLE_FLOW = [
   { id: "layout-safe-areas", file: "layout-safe-areas.html", label: "Layout safe areas" },
   { id: "speaker-framing-safety", file: "speaker-framing-safety.html", label: "Speaker framing safety" },
   { id: "canvas-layer-controls", file: "canvas-layer-controls.html", label: "Canvas layer controls" },
+  { id: "preset-pacing-controls", file: "preset-pacing-controls.html", label: "Preset pacing controls" },
 ];
 
 const STYLE_ENTRY = { file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" };
