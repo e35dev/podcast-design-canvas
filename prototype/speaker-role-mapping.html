@@ -591,7 +591,17 @@
         tracksElement.replaceChildren(
           ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
         );
+        applySummary(evaluation);
+      }
 
+      // Refresh the status pill, issue list, and layout summary from a fresh evaluation WITHOUT
+      // rebuilding the editable track rows. Used for live text edits so the field being typed in
+      // is never destroyed mid-edit.
+      function refreshSummary() {
+        applySummary(evaluate(tracks));
+      }
+
+      function applySummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready"
           ? "Roles confirmed"
@@ -708,7 +718,16 @@
           track.signal = "manual";
           track.decision = "suggested";
         }
-        render();
+        // Typing a speaker name updates live. Rebuilding the rows here would destroy the <input>
+        // being typed in and drop focus after one character — so a name change only refreshes the
+        // summary copy (which is all a name affects; badges and the gate depend on role/sig/
+        // decision, not the name). Role/signal/decision change a <select> (and reset state above),
+        // where a full rebuild is correct.
+        if (field === "name") {
+          refreshSummary();
+        } else {
+          render();
+        }
       }
 
       function renderIssue(issue) {

@@ -178,7 +178,59 @@ assert.strictEqual(
   "independent per-track problems are still listed individually",
 );
 
-console.log("speaker role mapping: layout-first handoff hook + same-recording gate + conflict aggregation verified");
+// Editing the speaker name must update live without rebuilding the track rows — otherwise the
+// <input> being typed in is destroyed and focus/caret is lost after one character. A role change
+// (a <select>) still does a full rebuild.
+const page = loadPage();
+const rebuildsBefore = page.trackRebuilds();
+page.sandbox.updateTrack({ target: { dataset: { field: "name" }, value: "Dana Brooks" } }, 0);
+assert.strictEqual(
+  page.trackRebuilds(),
+  rebuildsBefore,
+  "editing a speaker name does not rebuild the track rows (keeps the input focused)",
+);
+page.sandbox.updateTrack({ target: { dataset: { field: "role" }, value: "guest" } }, 0);
+assert.ok(
+  page.trackRebuilds() > rebuildsBefore,
+  "changing a role rebuilds the track rows",
+);
+
+console.log("speaker role mapping: layout-first handoff hook + same-recording gate + conflict aggregation + live name edit verified");
+
+// Loads the inline page script in a vm with a DOM stub, exposing its top-level functions and a
+// counter of how many times the #tracks container was rebuilt (replaceChildren calls).
+function loadPage() {
+  const vm = require("vm");
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  let trackRebuilds = 0;
+  function makeNode() {
+    return {
+      _children: [], style: {}, dataset: {}, textContent: "", value: "", checked: false, disabled: false, hidden: false,
+      set className(v) { this._cls = v; }, get className() { return this._cls; },
+      setAttribute() {}, getAttribute() { return null; }, removeAttribute() {},
+      addEventListener() {}, append(...c) { this._children.push(...c); },
+      appendChild(c) { this._children.push(c); return c; },
+      replaceChildren(...c) { this._children = c; },
+      insertBefore(c) { this._children.unshift(c); return c; },
+      remove() {}, querySelector() { return makeNode(); }, querySelectorAll() { return []; },
+    };
+  }
+  const roots = {};
+  ["#tracks", "#status", "#issues", "#layout-handoff", "#addTrack", "#reset"].forEach((sel) => { roots[sel] = makeNode(); });
+  const tracksRoot = roots["#tracks"];
+  tracksRoot.replaceChildren = function (...c) { trackRebuilds += 1; this._children = c; };
+  const documentStub = {
+    createElement: () => makeNode(),
+    createTextNode: (text) => ({ textContent: text }),
+    querySelector: (sel) => roots[sel] || makeNode(),
+  };
+  const windowStub = { PodcastLayoutHandoff: handoff, location: { search: "" }, sessionStorage: undefined };
+  const sandbox = { document: documentStub, window: windowStub, structuredClone: globalThis.structuredClone, console };
+  vm.createContext(sandbox);
+  vm.runInContext(script, sandbox);
+  assert.strictEqual(typeof sandbox.updateTrack, "function", "extracted updateTrack() from speaker-role-mapping.html");
+  return { sandbox, trackRebuilds: () => trackRebuilds };
+}
 
 // Extract the page's evaluate() by running its inline script against a tiny DOM/window stub,
 // the same dependency-free approach used by the other prototype behavior tests.
