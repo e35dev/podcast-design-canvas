@@ -27,10 +27,22 @@ const PREVIEW_APP_PUBLISH_TARGETS = new Set([
   ...PUBLISH_FLOW.map((step) => step.id),
 ]);
 
-// Cleanup screens that publish prep prototypes hand off to when clip review needs
-// the full transcript search path.
+// Cross-stage fix screens that publish-prep prototypes hand off to. These screens are
+// owned by other stages, so when opened from the assembled preview app they route
+// through it carrying the publish path context (matching the clip-review transcript
+// hand-off), instead of loading nested inside the iframe.
 const PUBLISH_FIX_PATHS = {
   "transcript-search-navigation.html": { path: "publish", from: "cleanup" },
+  // Publish checklist -> the screens that own each unresolved readiness fix.
+  "audio-caption-quality-review.html": { path: "publish" },
+  "source-media-health.html": { path: "publish" },
+  "episode-chapter-markers.html": { path: "publish" },
+  // Export package handoff / destination crop -> framing & layout owners.
+  "speaker-attribution-review.html": { path: "publish" },
+  "speaker-framing-safety.html": { path: "publish" },
+  "layout-safe-areas.html": { path: "publish" },
+  // Episode metadata publishing -> guest links owner.
+  "social-context-intake.html": { path: "publish" },
 };
 
 const PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS = new Set(
