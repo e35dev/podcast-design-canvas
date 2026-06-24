@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Line Pickup Insert Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .moments { display: grid; gap: 14px; }
+      .moment {
+        display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 14px;
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
+      }
+      .preview {
+        position: relative; width: 132px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+        background: linear-gradient(160deg, #567a72, #213734);
+      }
+      .speaker {
+        position: absolute; top: 18%; left: 50%; width: 30%; aspect-ratio: 1; transform: translateX(-50%);
+        border-radius: 50%; background: #e8f4f1;
+      }
+      .caption {
+        position: absolute; left: 16%; right: 16%; bottom: 10%; height: 18%; border-radius: 5px;
+        background: rgba(255,255,255,0.9);
+      }
+      .seam {
+        position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; transform: translateX(-50%);
+        background: rgba(255, 241, 215, 0.95);
+      }
+      .tag {
+        position: absolute; top: 6px; left: 6px; border-radius: 4px; background: rgba(16,24,22,0.78);
+        color: #fff; font-size: 11px; font-weight: 700; padding: 3px 6px;
+      }
+      .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+      .head strong { display: block; margin-bottom: 4px; font-size: 15px; }
+      .head span, .fix span, .warning span, .summary li { color: var(--muted); }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+      .controls { display: grid; gap: 10px; margin-top: 12px; }
+      .fix {
+        display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 12px; align-items: center;
+        border: 1px solid var(--line); border-radius: 7px; background: #fcfdfd; padding: 12px;
+      }
+      .fix strong { display: block; margin-bottom: 4px; }
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .warning.blocked { border-left-color: var(--blocked); }
+      .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .moment, .fix { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Line Pickup Insert Prototype</h1>
+      <p class="lede">
+        Mark a short flubbed line, attach a replacement take for the same speaker, and confirm the seam in context without opening a raw timeline.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Pickup Moments</h2>
+          <div class="moments">
+            <article class="moment">
+              <div class="preview">
+                <span class="tag">marked</span>
+                <div class="speaker"></div>
+                <div class="caption"></div>
+              </div>
+              <div>
+                <div class="head">
+                  <div>
+                    <strong>00:42 · host redoes company name</strong>
+                    <span>The host said the guest company name incorrectly and wants a short pickup instead of trimming the full sentence.</span>
+                  </div>
+                  <span class="badge review">marked</span>
+                </div>
+                <div class="controls">
+                  <div class="fix">
+                    <div>
+                      <strong>Record or upload replacement take</strong>
+                      <span>Attach a short redo from the same speaker bucket without leaving the episode review flow.</span>
+                    </div>
+                    <span class="badge review">take needed</span>
+                  </div>
+                  <div class="fix">
+                    <div>
+                      <strong>Preview surrounding context</strong>
+                      <span>Play the lead-in and line after the patch so the creator hears whether the transition still feels natural.</span>
+                    </div>
+                    <span class="badge review">compare seam</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="moment">
+              <div class="preview">
+                <span class="tag">take ready</span>
+                <div class="speaker"></div>
+                <div class="caption"></div>
+                <div class="seam"></div>
+              </div>
+              <div>
+                <div class="head">
+                  <div>
+                    <strong>18:15 · guest corrects launch date</strong>
+                    <span>The replacement take is attached and the seam preview shows the pickup landing inside the same layout and speaker treatment.</span>
+                  </div>
+                  <span class="badge ready">take ready</span>
+                </div>
+                <div class="controls">
+                  <div class="fix">
+                    <div>
+                      <strong>Nudge pickup boundaries</strong>
+                      <span>Adjust where the replacement starts and ends without exposing waveform splicing or multi-track edits.</span>
+                    </div>
+                    <span class="badge review">fine tune</span>
+                  </div>
+                  <div class="fix">
+                    <div>
+                      <strong>Refresh captions for replaced span</strong>
+                      <span>Update only the new words so the corrected date appears without rewriting the surrounding paragraph.</span>
+                    </div>
+                    <span class="badge review">caption pass</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="moment">
+              <div class="preview">
+                <span class="tag">inserted</span>
+                <div class="speaker"></div>
+                <div class="caption"></div>
+                <div class="seam"></div>
+              </div>
+              <div>
+                <div class="head">
+                  <div>
+                    <strong>31:08 · guest title corrected</strong>
+                    <span>The pickup is kept, captions follow the new wording, and the seam stays visually consistent with the current framing.</span>
+                  </div>
+                  <span class="badge ready">inserted</span>
+                </div>
+                <div class="controls">
+                  <div class="fix">
+                    <div>
+                      <strong>Compare before and after</strong>
+                      <span>Show the original line and the inserted version so the creator can confirm the patch beats the untouched take.</span>
+                    </div>
+                    <span class="badge ready">history checkpoint</span>
+                  </div>
+                  <div class="fix">
+                    <div>
+                      <strong>Revert to original take</strong>
+                      <span>Restore the original moment if the replacement feels more distracting than the original stumble.</span>
+                    </div>
+                    <span class="badge review">revert safe</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="actions">
+            <button type="button">Mark moment for pickup</button>
+            <button type="button">Attach replacement take</button>
+            <button type="button">Open caption review for span</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Playback Consequences</h2>
+          <div class="warning">
+            <strong>Quiet reminder, not an export block</strong>
+            <span>A marked pickup with no take stays visible as a reminder, but it does not become a generic blocked-export state.</span>
+          </div>
+          <div class="warning">
+            <strong>Caption handoff stays scoped</strong>
+            <span>Only the replaced span reopens caption review when the new words need confirmation.</span>
+          </div>
+          <div class="warning blocked">
+            <strong>Never swap silently</strong>
+            <span>The creator always confirms the seam before the original line is replaced in the finished episode.</span>
+          </div>
+
+          <h3 style="margin-top:20px;">Connected workflow</h3>
+          <ul class="summary">
+            <li>speaker bucket stays tied to ingest and role mapping</li>
+            <li>look and framing stay governed by matching and framing specs</li>
+            <li>caption refresh stays limited to the replaced words</li>
+            <li>accepted pickups show up as meaningful version-history checkpoints</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>
