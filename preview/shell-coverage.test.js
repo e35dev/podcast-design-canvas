@@ -62,7 +62,7 @@ assert.ok(shell.includes("show-notes-assembly.html"), "shell links to show notes
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
 assert.match(shell, /Clean up audio &amp; captions/, "shell documents the cleanup helper path");
 assert.ok(
-  shell.indexOf("Clean up audio") < shell.indexOf("Add contextual visuals"),
+  shell.indexOf("Clean up audio &amp; captions") < shell.indexOf("Add contextual visuals"),
   "cleanup helper section precedes contextual visuals in shell workflow order",
 );
 assert.ok(shell.includes("pause-crosstalk-cleanup.html"), "shell links to pause cleanup in helper path");

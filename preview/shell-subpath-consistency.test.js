@@ -14,6 +14,7 @@ const subpaths = [
   { section: "Episode ingest setup", script: "ingest-nav.js", flowName: "INGEST_FLOW" },
   { section: "Speaker setup", script: "speaker-setup-nav.js", flowName: "SPEAKER_SETUP_FLOW" },
   { section: "Choose a visual direction", script: "style-nav.js", flowName: "STYLE_FLOW" },
+  { section: "Publish prep after export", script: "publish-nav.js", flowName: "PUBLISH_FLOW" },
   { section: "Clean up audio &amp; captions", script: "cleanup-nav.js", flowName: "CLEANUP_FLOW" },
   { section: "Add contextual visuals", script: "visuals-nav.js", flowName: "VISUALS_FLOW" },
   { section: "Make it reusable", script: "reuse-nav.js", flowName: "REUSE_FLOW" },
@@ -23,9 +24,9 @@ function parseFlowFiles(source, flowName) {
   const match = source.match(new RegExp(`const ${flowName} = \\[([\\s\\S]*?)\\];`));
   assert.ok(match, `${flowName} must be declared`);
   const files = [];
-  const filePattern = /file:\s*"([^"]+)"/g;
+  const entryPattern = /\{\s*id:\s*"[^"]+"[\s\S]*?file:\s*"([^"]+)"/g;
   let entry;
-  while ((entry = filePattern.exec(match[1])) !== null) {
+  while ((entry = entryPattern.exec(match[1])) !== null) {
     files.push(entry[1]);
   }
   assert.ok(files.length > 0, `${flowName} must declare connected steps`);
