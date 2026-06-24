@@ -43,10 +43,12 @@ const EPISODE_FLOW_IN_PAGE_TARGETS = new Set([
   ...EPISODE_FLOW.map((step) => screenIdFromFile(step.file)),
 ]);
 
-// Speaker setup screens that episode flow prototypes hand off to when sync work
-// needs attribution review.
+// Speaker setup and visual-direction screens that episode flow prototypes hand
+// off to when source review flags visual or framing problems.
 const PREVIEW_APP_EPISODE_HANDOFFS = new Map([
   ["speaker-attribution-review", "?path=episode"],
+  ["speaker-visual-match", "?path=episode"],
+  ["speaker-framing-safety", "?path=episode"],
 ]);
 
 function currentStepIndex() {

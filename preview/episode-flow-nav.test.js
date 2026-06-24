@@ -323,4 +323,41 @@ assert.equal(
   "embedded episode flow nav normalizes dynamic attribution handoffs before navigation",
 );
 
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-visual-match.html", "source-media-health.html", "?path=episode").href,
+  "speaker-visual-match.html?path=episode",
+  "episode flow nav keeps episode path context on source-to-visual-match handoffs",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-visual-match.html", "source-media-health.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-visual-match?path=episode",
+  "embedded episode flow nav routes source-to-visual-match handoffs through the preview app",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-visual-match.html", "source-media-health.html", "?path=episode", true).target,
+  "_top",
+  "embedded source-to-visual-match handoffs target the parent app",
+);
+
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-framing-safety.html", "source-media-health.html", "?path=episode").href,
+  "speaker-framing-safety.html?path=episode",
+  "episode flow nav keeps episode path context on source-to-framing handoffs",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-framing-safety.html", "source-media-health.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-framing-safety?path=episode",
+  "embedded episode flow nav routes source-to-framing handoffs through the preview app",
+);
+assert.equal(
+  normalizeEpisodeClickFor("speaker-framing-safety.html", "source-media-health.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-framing-safety?path=episode",
+  "embedded episode flow nav normalizes dynamic framing handoffs before navigation",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("audio-cleanup-controls.html", "source-media-health.html", "?path=episode", true).href,
+  "../preview/app.html#audio-cleanup-controls?path=episode",
+  "embedded episode flow nav routes source-to-audio-cleanup handoffs through the preview app",
+);
+
 console.log("episode flow nav: core episode screens connected to the preview shell and app");
