@@ -74,6 +74,15 @@ const speakerSetupFlow = new Set([
   "speaker-eye-line-coherence.html",
 ]);
 
+const cleanupFlow = new Set([
+  "pause-crosstalk-cleanup.html",
+  "transcript-glossary.html",
+  "transcript-search-navigation.html",
+  "accessibility-readability-checks.html",
+  "line-pickup-insert.html",
+  "on-screen-correction-note.html",
+]);
+
 const prototypes = fs
   .readdirSync(path.join(root, "prototype"))
   .filter((name) => name.endsWith(".html"));
@@ -144,6 +153,15 @@ for (const file of prototypes) {
       !html.includes("../preview/tools-nav.js"),
       `speaker setup screen does not double up with tools nav: ${file}`,
     );
+  } else if (cleanupFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/cleanup-nav.js"),
+      `cleanup screen uses cleanup navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `cleanup screen does not double up with tools nav: ${file}`,
+    );
   } else {
     // Every secondary screen links back to the shell.
     assert.ok(
@@ -159,7 +177,14 @@ for (const file of prototypes) {
   }
 }
 
-assert.ok(secondaryCount > 0, "found secondary screens to check");
+// With the cleanup stage connected, every prototype now belongs to a dedicated stage
+// nav, so the generic tools-nav fallback has no remaining screens. Confirm that end
+// state rather than requiring leftover generic screens.
+assert.strictEqual(
+  secondaryCount,
+  0,
+  "every prototype is connected to a dedicated stage nav (none left on the generic fallback)",
+);
 
 // No stale stage entries pointing at files that no longer exist.
 const existing = new Set(prototypes);

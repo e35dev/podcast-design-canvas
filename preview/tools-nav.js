@@ -10,12 +10,6 @@
 const TOOL_STAGE = {
   "episode-readiness.html": "Bring in the recording",
   "speaker-role-mapping.html": "Bring in the recording",
-  "pause-crosstalk-cleanup.html": "Clean up audio & captions",
-  "transcript-glossary.html": "Clean up audio & captions",
-  "transcript-search-navigation.html": "Clean up audio & captions",
-  "accessibility-readability-checks.html": "Clean up audio & captions",
-  "line-pickup-insert.html": "Clean up audio & captions",
-  "on-screen-correction-note.html": "Clean up audio & captions",
 };
 
 function currentToolStage() {
