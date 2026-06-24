@@ -503,4 +503,52 @@ assert.strictEqual(
   "the removed video (with its focused Remove button) is gone from the slot",
 );
 
+// A rejected drop is announced to assistive tech: the error card becomes an assertive
+// live region (role="alert") while shown, and stops announcing once cleared. Fresh controller.
+const announceZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const announceButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const announceById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const announceDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return announceById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return announceButtons;
+    if (selector === ".drop-zone[data-slot]") return announceZones;
+    return [];
+  },
+};
+const announceCtl = createLayoutFirstController(announceDoc, { URL: urlApi });
+announceCtl.placeVideoFile(announceCtl.zonesBySlot.host, { name: "notes.txt", type: "text/plain" });
+assert.strictEqual(announceById["layout-error-card"].hidden, false, "a rejected drop shows the error card");
+assert.strictEqual(
+  announceById["layout-error-card"].attributes.role,
+  "alert",
+  "a shown drop error is an assertive live region so screen readers announce it",
+);
+announceCtl.placeVideoFile(announceCtl.zonesBySlot.host, video("host.mp4"));
+assert.strictEqual(announceById["layout-error-card"].hidden, true, "placing a valid video clears the error");
+assert.strictEqual(
+  announceById["layout-error-card"].attributes.role,
+  undefined,
+  "a cleared error stops announcing",
+);
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");

@@ -115,6 +115,14 @@
       if (!errorCard || !errorText) return;
       errorText.textContent = message;
       errorCard.hidden = !message;
+      // Expose the error as an assertive live region only while it is shown, so a screen
+      // reader announces a rejected drop instead of it appearing silently. The slot-status
+      // region is polite; a blocking error should interrupt.
+      if (message) {
+        errorCard.setAttribute("role", "alert");
+      } else {
+        errorCard.removeAttribute("role");
+      }
     }
 
     // The same recording placed in two visible speaker slots would put one person in two
