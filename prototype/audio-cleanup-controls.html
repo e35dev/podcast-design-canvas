@@ -684,7 +684,8 @@
 
         const effects = choices
           .filter((entry) => enabled.has(entry.id))
-          .map((entry) => entry.effect);
+          .map((entry) => entry.effect)
+          .filter((effect) => typeof effect === "string" && effect.length);
         if (!effects.length) return wrap;
 
         for (const speaker of needsWork) {
