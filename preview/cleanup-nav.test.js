@@ -239,8 +239,15 @@ assert.equal(embeddedHandoff.target, "_top", "embedded cleanup handoff targets t
 const cleanupContextNav = renderNavFor("transcript-glossary.html", "transcript-glossary", true, "?from=cleanup");
 assert.equal(
   linkWithText(cleanupContextNav, "Preview app").href,
-  "../preview/app.html#transcript-glossary",
-  "embedded cleanup nav keeps the current preview app link on a supported shell route",
+  "../preview/app.html#transcript-glossary?from=cleanup",
+  "embedded cleanup nav preserves cleanup entry context on the current preview app link",
+);
+
+const styleContextNav = renderNavFor("transcript-glossary.html", "transcript-glossary", true, "?from=style");
+assert.equal(
+  linkWithText(styleContextNav, "Preview app").href,
+  "../preview/app.html#transcript-glossary?from=style",
+  "embedded cleanup nav preserves style entry context on the current preview app link",
 );
 assert.equal(
   linkWithText(cleanupContextNav, "Previous: Pause & cross-talk cleanup").href,

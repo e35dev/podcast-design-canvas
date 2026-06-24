@@ -61,7 +61,7 @@ function previewAppHref(file) {
 }
 
 function currentPreviewAppHref(step) {
-  return `../preview/app.html#${step.id}`;
+  return previewAppHref(hrefWithCleanupContext(step.file));
 }
 
 function supportedRouteSearch(params) {
