@@ -792,12 +792,15 @@
           return;
         }
 
-        const labels = active.map((choice) => {
+        const labels = active.flatMap((choice) => {
           const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
-          return `${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`;
+          if (!moment?.label) return [];
+          return [`${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`];
         });
 
-        momentHintElement.textContent = `Suggested previews highlighted for ${labels.join("; ")}.`;
+        momentHintElement.textContent = labels.length
+          ? `Suggested previews highlighted for ${labels.join("; ")}.`
+          : "";
       }
 
       function applyChoice(bars, choiceId, momentId) {
@@ -984,6 +987,22 @@
         if (speaker.state === "suggested" || speaker.state === "applied") {
           const actions = document.createElement("div");
           actions.className = "speaker-actions";
+
+          if (speaker.state === "suggested") {
+            const moment = rollupPreviewMomentForSpeaker(speaker);
+            if (moment?.id && moment?.label) {
+              const previewButton = document.createElement("button");
+              previewButton.type = "button";
+              previewButton.className = "secondary suggested-moment";
+              previewButton.textContent = `Preview on ${moment.label.toLowerCase()}`;
+              previewButton.addEventListener("click", () => {
+                preview = moment.id;
+                focusSpeaker(speaker.id);
+              });
+              actions.appendChild(previewButton);
+            }
+          }
+
           const revertButton = document.createElement("button");
           revertButton.type = "button";
           revertButton.className = "secondary";

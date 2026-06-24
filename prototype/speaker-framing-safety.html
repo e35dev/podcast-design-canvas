@@ -79,6 +79,24 @@
         background: #ffffff;
       }
 
+      .frame-row.filtered-out {
+        display: none;
+      }
+
+      .review-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 12px 0;
+      }
+
+      .review-rollup {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .fields {
         display: grid;
         gap: 10px;
@@ -348,6 +366,7 @@
         <aside class="panel" aria-live="polite" aria-label="Framing summary">
           <h2>Framing summary</h2>
           <div id="status" class="status ready">Framing looks good</div>
+          <div id="reviewFilter" class="review-filter"></div>
           <div id="issues" class="issues"></div>
           <p class="summary-note">A framing choice you make on purpose &mdash; like keeping a tight crop &mdash; won't block your export once you accept it.</p>
         </aside>
@@ -423,8 +442,14 @@
 
       let frames = structuredClone(sampleFrames);
 
+      // Review-only focus: hide speaker frames the creator has already cleared,
+      // fixed, or accepted so only the ones still flagged for review stay visible
+      // before export.
+      let showReviewOnly = false;
+
       const framesElement = document.querySelector("#frames");
       const statusElement = document.querySelector("#status");
+      const reviewFilterElement = document.querySelector("#reviewFilter");
       const issuesElement = document.querySelector("#issues");
 
       document.querySelector("#addFrame").addEventListener("click", () => {
@@ -488,8 +513,20 @@
       // a caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(frames);
+        // Drop the focus filter before building rows when nothing is flagged any more
+        // (e.g. the creator just resolved the last one) — otherwise every row would
+        // render filtered-out and leave the list blank with no show-all control.
+        if (showReviewOnly && !evaluation.results.some((result) => result.state === "review")) {
+          showReviewOnly = false;
+        }
         framesElement.replaceChildren(
-          ...frames.map((frame, index) => renderFrame(frame, index, evaluation.results[index])),
+          ...frames.map((frame, index) => {
+            const result = evaluation.results[index];
+            // Hide rather than drop, so card positions still line up with frames[] for
+            // in-place name edits in refreshStates().
+            const filteredOut = showReviewOnly && result.state !== "review";
+            return renderFrame(frame, index, result, filteredOut);
+          }),
         );
         updateSummary(evaluation);
       }
@@ -498,12 +535,44 @@
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready" ? "Framing looks good" : "Frames to review";
 
+        renderReviewFilter(evaluation);
+
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every speaker is well framed and ready for export." })]),
         );
+      }
+
+      // Honest review rollup: count only frames still flagged for review — never the
+      // ones already cleared, fixed, or accepted — and offer a focus filter while any
+      // remain. The toggle only hides resolved frames; it never relabels a flagged one.
+      function renderReviewFilter(evaluation) {
+        const total = evaluation.results.length;
+        const reviewCount = evaluation.results.filter((result) => result.state === "review").length;
+
+        reviewFilterElement.replaceChildren();
+        const rollup = document.createElement("p");
+        rollup.className = "review-rollup";
+        rollup.textContent = reviewCount === 0
+          ? "No speaker frames need review."
+          : `${reviewCount} of ${total} speaker ${total === 1 ? "frame" : "frames"} still ${reviewCount === 1 ? "needs" : "need"} review.`;
+        reviewFilterElement.append(rollup);
+
+        if (reviewCount > 0) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "secondary";
+          button.textContent = showReviewOnly
+            ? `Show all ${total} speaker frames`
+            : `Show only the ${reviewCount} that need review`;
+          button.addEventListener("click", () => {
+            showReviewOnly = !showReviewOnly;
+            render();
+          });
+          reviewFilterElement.append(button);
+        }
       }
 
       // Light update: used while typing a name. Refreshes each card's badge and the
@@ -537,10 +606,10 @@
         return state === "review" ? "needs review" : state;
       }
 
-      function renderFrame(frame, index, result) {
+      function renderFrame(frame, index, result, filteredOut = false) {
         const check = checks[frame.check];
         const article = document.createElement("article");
-        article.className = "frame-row";
+        article.className = filteredOut ? "frame-row filtered-out" : "frame-row";
 
         const checkOptions = Object.entries(checks)
           .map(([value, item]) => `<option value="${value}" ${value === frame.check ? "selected" : ""}>${item.label}</option>`)

@@ -381,7 +381,8 @@
         font-weight: 700;
       }
 
-      .compare-repair-note {
+
+      .compare-repair-note, .compare-issue-note {
         margin: 0;
         color: var(--muted);
         font-size: 13px;
@@ -902,7 +903,7 @@
 
         for (const result of needsWork) {
           const effect = repairEffects[result.proposedRepair];
-          if (!effect) continue;
+          if (typeof effect !== "string" || !effect.length) continue;
           const tag = document.createElement("span");
           tag.className = "rollup-effect-tag";
           tag.textContent = `${trackBucketLabel(result.name)} — ${effect}`;
@@ -1197,6 +1198,7 @@
           track.proposedRepair,
         );
         const effect = repairEffects[track.proposedRepair];
+        const effectCopy = typeof effect === "string" && effect.length ? effect : null;
         const issue = issues[track.issue];
         const selectedMoment = previewMoments.find((entry) => entry.id === track.previewMoment);
         const momentLabel = selectedMoment?.label;
@@ -1210,7 +1212,7 @@
             track.proposedRepair
               ? `Preview after ${repairDisplayLabel(track.proposedRepair)?.toLowerCase() ?? "repair"} at ${momentLabel?.toLowerCase() ?? "this moment"}.`
               : "Choose a repair to preview the difference.",
-            effect ? [effect] : [],
+            effectCopy ? [effectCopy] : [],
             track,
           ),
         );
@@ -1228,6 +1230,12 @@
           repairNote.className = "compare-repair-note";
           repairNote.textContent = `Proposed repair: ${repairLabel}`;
           wrap.appendChild(repairNote);
+        const focusNote = issues[track.issue]?.moment;
+        if (focusNote) {
+          const issueNote = document.createElement("p");
+          issueNote.className = "compare-issue-note";
+          issueNote.textContent = `Focus on: ${focusNote}`;
+          wrap.appendChild(issueNote);
         }
         wrap.appendChild(compare);
         return wrap;

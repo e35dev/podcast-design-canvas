@@ -68,10 +68,17 @@
       .warning.blocked { border-left-color: var(--blocked); }
       .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
       .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      .action-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        color: var(--muted); padding: 11px 12px;
+      }
+      .action-note strong { display: block; color: var(--ink); margin-bottom: 4px; }
+      .moment.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15, 106, 87, 0.12); }
       button {
         min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
         color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
       }
+      button:disabled { opacity: 0.52; cursor: not-allowed; }
       @media (max-width: 920px) {
         .workspace { grid-template-columns: 1fr; }
         .moment, .fix { grid-template-columns: 1fr; }
@@ -88,10 +95,10 @@
       <section class="workspace">
         <div class="panel">
           <h2>Pickup Moments</h2>
-          <div class="moments">
-            <article class="moment">
-              <div class="preview">
-                <span class="tag">marked</span>
+          <div class="moments" id="moments">
+            <article class="moment active" data-moment="marked">
+              <div class="preview" data-preview="marked">
+                <span class="tag" data-tag="marked">marked</span>
                 <div class="speaker"></div>
                 <div class="caption"></div>
               </div>
@@ -101,7 +108,7 @@
                     <strong>00:42 · host redoes company name</strong>
                     <span>The host said the guest company name incorrectly and wants a short pickup instead of trimming the full sentence.</span>
                   </div>
-                  <span class="badge review">marked</span>
+                  <span class="badge review" data-status="marked">marked</span>
                 </div>
                 <div class="controls">
                   <div class="fix">
@@ -122,7 +129,7 @@
               </div>
             </article>
 
-            <article class="moment">
+            <article class="moment" data-moment="take-ready">
               <div class="preview">
                 <span class="tag">take ready</span>
                 <div class="speaker"></div>
@@ -141,7 +148,7 @@
                   <div class="fix">
                     <div>
                       <strong>Nudge pickup boundaries</strong>
-                      <span>Adjust where the replacement starts and ends without exposing waveform splicing or multi-track edits.</span>
+                      <span>Adjust where the replacement starts and ends without opening detailed splice controls.</span>
                     </div>
                     <span class="badge review">fine tune</span>
                   </div>
@@ -156,7 +163,7 @@
               </div>
             </article>
 
-            <article class="moment">
+            <article class="moment" data-moment="inserted">
               <div class="preview">
                 <span class="tag">inserted</span>
                 <div class="speaker"></div>
@@ -192,10 +199,11 @@
           </div>
 
           <div class="actions">
-            <button type="button">Mark moment for pickup</button>
-            <button type="button">Attach replacement take</button>
-            <button type="button">Open caption review for span</button>
+            <button type="button" id="markPickup">Mark moment for pickup</button>
+            <button type="button" id="attachTake">Attach replacement take</button>
+            <button type="button" id="captionReview">Open caption review for span</button>
           </div>
+          <div class="action-note" id="actionNote" aria-live="polite"></div>
         </div>
 
         <aside class="panel">
@@ -223,5 +231,107 @@
         </aside>
       </section>
     </main>
+    <script>
+      const actionCopy = {
+        mark: {
+          title: "Pickup reminder selected",
+          detail: "The host company-name correction stays marked as a quiet reminder until a same-speaker replacement take is attached.",
+        },
+        attach: {
+          title: "Replacement take attached",
+          detail: "The marked host pickup now has a seam preview and can hand only the replaced words to caption review.",
+        },
+        caption: {
+          title: "Caption review opened for replaced span",
+          detail: "Only the pickup words reopen for caption review; the surrounding paragraph and other episode captions stay untouched.",
+        },
+      };
+
+      let selectedMoment = "marked";
+      let replacementAttached = false;
+      let captionReviewOpen = false;
+
+      const momentsElement = document.querySelector("#moments");
+      const markedPreviewElement = document.querySelector('[data-preview="marked"]');
+      const markedTagElement = document.querySelector('[data-tag="marked"]');
+      const markedStatusElement = document.querySelector('[data-status="marked"]');
+      const actionNoteElement = document.querySelector("#actionNote");
+      const markPickupButton = document.querySelector("#markPickup");
+      const attachTakeButton = document.querySelector("#attachTake");
+      const captionReviewButton = document.querySelector("#captionReview");
+
+      function renderActionNote(action) {
+        const copy = actionCopy[action];
+        actionNoteElement.replaceChildren();
+        const title = document.createElement("strong");
+        title.textContent = copy.title;
+        const detail = document.createElement("span");
+        detail.textContent = copy.detail;
+        actionNoteElement.append(title, detail);
+      }
+
+      function ensureSeamPreview() {
+        if (markedPreviewElement.querySelector(".seam")) return;
+        const seam = document.createElement("div");
+        seam.className = "seam";
+        markedPreviewElement.appendChild(seam);
+      }
+
+      function removeSeamPreview() {
+        const seam = markedPreviewElement.querySelector(".seam");
+        if (seam) seam.remove();
+      }
+
+      function render() {
+        momentsElement.querySelectorAll("[data-moment]").forEach((moment) => {
+          moment.classList.toggle("active", moment.dataset.moment === selectedMoment);
+        });
+
+        if (replacementAttached) {
+          ensureSeamPreview();
+          markedTagElement.textContent = "take ready";
+          markedStatusElement.className = "badge review";
+          markedStatusElement.textContent = captionReviewOpen ? "caption review open" : "take ready";
+        } else {
+          removeSeamPreview();
+          markedTagElement.textContent = "marked";
+          markedStatusElement.className = "badge review";
+          markedStatusElement.textContent = "marked";
+        }
+
+        captionReviewButton.disabled = !replacementAttached;
+      }
+
+      markPickupButton.addEventListener("click", () => {
+        selectedMoment = "marked";
+        replacementAttached = false;
+        captionReviewOpen = false;
+        renderActionNote("mark");
+        render();
+      });
+
+      attachTakeButton.addEventListener("click", () => {
+        selectedMoment = "marked";
+        replacementAttached = true;
+        captionReviewOpen = false;
+        renderActionNote("attach");
+        render();
+      });
+
+      captionReviewButton.addEventListener("click", () => {
+        if (!replacementAttached) return;
+        selectedMoment = "marked";
+        captionReviewOpen = true;
+        renderActionNote("caption");
+        render();
+      });
+
+      renderActionNote("mark");
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { actionCopy };
+      }
+    </script>
   </body>
 </html>
