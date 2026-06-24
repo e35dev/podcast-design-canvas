@@ -181,6 +181,38 @@ function setCleanupScreenLink(link, file) {
   link.href = resolved;
 }
 
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeCleanupHref(href) {
+  return isLocalScreenHref(href) && isPreviewAppCleanupTarget(href);
+}
+
+function normalizeCleanupScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeCleanupHref(href)) {
+    setCleanupScreenLink(link, href);
+  }
+}
+
+function normalizeCleanupScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeCleanupScreenLink);
+}
+
+function normalizeCleanupLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeCleanupScreenLink(link);
+  }
+}
+
 function renderCleanupNav() {
   if (document.querySelector(".cleanup-nav")) {
     return;
@@ -310,6 +342,8 @@ function renderCleanupNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeCleanupScreenLinks(document);
+  document.addEventListener("click", normalizeCleanupLinkClick);
 }
 
 if (document.readyState === "loading") {

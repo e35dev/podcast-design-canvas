@@ -54,6 +54,12 @@ function createElement(tagName) {
       if (name === "id") this.id = value;
       if (name === "class") this.className = value;
     },
+    getAttribute(name) {
+      return this.attributes[name] || "";
+    },
+    closest(selector) {
+      return selector === "a[href]" && this.tagName === "a" && this.getAttribute("href") ? this : null;
+    },
     appendChild(child) {
       this.children.push(child);
       return child;
@@ -70,6 +76,15 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
+function appendStaticLink(body, href, text = href) {
+  const link = createElement("a");
+  link.href = href;
+  link.textContent = text;
+  link.attributes.href = href;
+  body.appendChild(link);
+  return link;
+}
+
 function makeWindow(fileName, embedded = false, search = "") {
   const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
@@ -77,12 +92,14 @@ function makeWindow(fileName, embedded = false, search = "") {
   return window;
 }
 
-function renderNavFor(fileName, cleanupStep, embedded = false, search = "") {
+function renderNavFor(fileName, cleanupStep, embedded = false, search = "", staticHrefs = []) {
   const head = createElement("head");
   const body = createElement("body");
+  const listeners = {};
   if (cleanupStep) {
     body.dataset = { cleanupStep };
   }
+  staticHrefs.forEach((href) => appendStaticLink(body, href));
   const document = {
     readyState: "complete",
     head,
@@ -96,6 +113,13 @@ function renderNavFor(fileName, cleanupStep, embedded = false, search = "") {
       const className = selector.slice(1);
       return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
     },
+    querySelectorAll(selector) {
+      if (selector !== "a[href]") return [];
+      return flatten(body).filter((node) => node.tagName === "a" && node.getAttribute("href"));
+    },
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    },
   };
 
   vm.runInNewContext(navScript, {
@@ -104,7 +128,9 @@ function renderNavFor(fileName, cleanupStep, embedded = false, search = "") {
     URLSearchParams,
   });
 
-  return flatten(body);
+  const nodes = flatten(body);
+  nodes.listeners = listeners;
+  return nodes;
 }
 
 function linkWithText(nodes, text) {
@@ -305,5 +331,78 @@ assert.equal(
   "transcript-glossary.html?draft=terms&from=cleanup&path=publish#review",
   "cleanup nav merges cleanup flow context without dropping existing query flags or hash",
 );
+
+const standalonePronunciationLinks = renderNavFor(
+  "pronunciation-name-review.html",
+  "pronunciation-name-review",
+  false,
+  "?from=cleanup",
+  [
+    "transcript-glossary.html",
+    "guest-profile-reuse.html",
+    "#readiness",
+    "https://example.com/transcript-glossary.html",
+    "//cdn.example.com/transcript-glossary.html",
+  ],
+);
+assert.equal(
+  linkWithText(standalonePronunciationLinks, "transcript-glossary.html").href,
+  "transcript-glossary.html?from=cleanup",
+  "standalone cleanup nav keeps cleanup context on in-page cleanup links",
+);
+assert.equal(
+  linkWithText(standalonePronunciationLinks, "guest-profile-reuse.html").href,
+  "guest-profile-reuse.html",
+  "cleanup nav leaves non-cleanup in-page links alone",
+);
+assert.equal(
+  linkWithText(standalonePronunciationLinks, "#readiness").href,
+  "#readiness",
+  "cleanup nav leaves same-page anchors alone",
+);
+assert.equal(
+  linkWithText(standalonePronunciationLinks, "https://example.com/transcript-glossary.html").href,
+  "https://example.com/transcript-glossary.html",
+  "cleanup nav leaves external links alone",
+);
+assert.equal(
+  linkWithText(standalonePronunciationLinks, "//cdn.example.com/transcript-glossary.html").href,
+  "//cdn.example.com/transcript-glossary.html",
+  "cleanup nav leaves protocol-relative external links alone",
+);
+
+const embeddedPronunciationLinks = renderNavFor(
+  "pronunciation-name-review.html",
+  "pronunciation-name-review",
+  true,
+  "?from=cleanup",
+  ["transcript-glossary.html"],
+);
+const embeddedGlossaryLink = linkWithText(embeddedPronunciationLinks, "transcript-glossary.html");
+assert.equal(
+  embeddedGlossaryLink.href,
+  "../preview/app.html#transcript-glossary?from=cleanup",
+  "embedded cleanup nav routes in-page cleanup links through the preview app",
+);
+assert.equal(embeddedGlossaryLink.target, "_top", "embedded in-page cleanup links target the parent app");
+
+const dynamicPronunciationLinks = renderNavFor(
+  "pronunciation-name-review.html",
+  "pronunciation-name-review",
+  true,
+  "?path=publish&from=cleanup",
+);
+const dynamicGlossaryLink = appendStaticLink(
+  dynamicPronunciationLinks[0],
+  "transcript-glossary.html",
+  "Apply in transcript glossary",
+);
+dynamicPronunciationLinks.listeners.click({ target: dynamicGlossaryLink });
+assert.equal(
+  dynamicGlossaryLink.href,
+  "../preview/app.html#transcript-glossary?from=cleanup&path=publish",
+  "embedded cleanup nav normalizes dynamically rendered cleanup links before navigation",
+);
+assert.equal(dynamicGlossaryLink.target, "_top", "dynamic embedded cleanup links target the parent app");
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");
