@@ -122,4 +122,31 @@ if (typeof M.layoutSignature === "function") {
   );
 }
 
-console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker) verified");
+// Locking a layer must actually prevent reordering (#1248): the lock's stated purpose is that a
+// layer "cannot move by accident". reorderLayers returns the SAME list (a no-op) when a move is
+// blocked, and a new list when it is allowed.
+assert.ok(typeof M.reorderLayers === "function", "prototype exports reorderLayers()");
+
+const lockedStack = [
+  { id: "u", type: "brand", visible: true, locked: false },       // 0 unlocked
+  { id: "k", type: "background", visible: true, locked: true },    // 1 locked
+  { id: "u2", type: "captions", visible: true, locked: false },    // 2 unlocked
+];
+assert.strictEqual(M.reorderLayers(lockedStack, 1, -1), lockedStack, "a locked layer cannot be moved up");
+assert.strictEqual(M.reorderLayers(lockedStack, 1, 1), lockedStack, "a locked layer cannot be moved down");
+assert.strictEqual(M.reorderLayers(lockedStack, 0, 1), lockedStack, "an unlocked layer cannot displace a locked layer below it");
+assert.strictEqual(M.reorderLayers(lockedStack, 2, -1), lockedStack, "an unlocked layer cannot displace a locked layer above it");
+assert.strictEqual(M.reorderLayers(lockedStack, 0, -1), lockedStack, "moving the top layer up is a no-op");
+assert.strictEqual(M.reorderLayers(lockedStack, 2, 1), lockedStack, "moving the bottom layer down is a no-op");
+
+const freeStack = [
+  { id: "a", type: "captions", visible: true, locked: false },
+  { id: "b", type: "speaker", visible: true, locked: false },
+  { id: "c", type: "lower-thirds", visible: true, locked: false },
+];
+const reordered = M.reorderLayers(freeStack, 0, 1);
+assert.notStrictEqual(reordered, freeStack, "an allowed reorder returns a new list");
+assert.deepStrictEqual(reordered.map((l) => l.id), ["b", "a", "c"], "an unlocked reorder swaps the two layers");
+assert.deepStrictEqual(freeStack.map((l) => l.id), ["a", "b", "c"], "reorderLayers does not mutate its input");
+
+console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker, lock-blocks-reorder) verified");
