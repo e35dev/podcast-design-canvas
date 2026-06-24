@@ -25,11 +25,17 @@ const flowBlock = shell.match(/<ol class="flow">([\s\S]*?)<\/ol>/);
 assert.ok(flowBlock, "shell has a core flow list");
 const shellFlow = [...flowBlock[1].matchAll(/\.\.\/prototype\/([a-z0-9-]+\.html)/g)].map((m) => m[1]);
 
-// 3) The shell flow and the nav flow must match exactly, in order.
+// 3) The shell lists the full guided path; its core tail matches the nav script.
+const expectedShellFlow = ["episode-readiness.html", "speaker-role-mapping.html", ...navFlow];
 assert.deepStrictEqual(
   shellFlow,
+  expectedShellFlow,
+  "shell episode path matches ingest setup plus the shared nav order",
+);
+assert.deepStrictEqual(
+  shellFlow.slice(-navFlow.length),
   navFlow,
-  "shell core-flow order matches the shared nav script order",
+  "shell core-flow tail matches the shared nav script order",
 );
 
 // 4) Every core-flow prototype exists and wires in the shared nav.

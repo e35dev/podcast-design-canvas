@@ -38,7 +38,7 @@ for (const file of linked) {
 assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
-assert.match(shell, /Setup before the core path/, "shell documents the ingest setup path");
+assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
 assert.match(shell, /Publish prep after export/, "shell documents the publish prep path");
 assert.ok(shell.includes("episode-readiness.html"), "shell links to episode readiness in setup path");
 assert.ok(shell.includes("export-package-handoff.html"), "shell links to export package handoff in publish path");
