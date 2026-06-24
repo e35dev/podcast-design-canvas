@@ -450,10 +450,30 @@
         font-size: 13px;
       }
 
-      .batch-link button {
+      .batch-link button,
+      .batch-link a.batch-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-height: 34px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--accent);
+        font: inherit;
         padding: 6px 10px;
+        font-weight: 700;
         font-size: 13px;
+        text-decoration: none;
+      }
+
+      .batch-link a.batch-action:hover {
+        text-decoration: underline;
+      }
+
+      .batch-link a.batch-action:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .speaker.filtered-out {
@@ -622,6 +642,12 @@
         replace: "Replace with a clean file",
       };
 
+      const fixSurfaceLabels = {
+        "speaker-visual-match": "visual match",
+        "audio-cleanup-controls": "audio cleanup",
+        "speaker-framing-safety": "speaker framing safety",
+      };
+
       const sampleSpeakers = [
         { id: "host", role: "Host", name: "Host — Dana Brooks", condition: "good", disposition: "keep" },
         { id: "guest-1", role: "Guest 1", name: "Guest 1 — Marcus Lee", condition: "dark", disposition: "keep" },
@@ -772,6 +798,36 @@
         return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
       }
 
+      function batchActionTarget(result) {
+        const fixSurface = result.issue && result.issue.fixSurface;
+        return fixSurface ? `${fixSurface}.html` : null;
+      }
+
+      function batchActionLabel(result) {
+        const bucket = bucketLabel(result.name);
+        const fixSurface = result.issue && result.issue.fixSurface;
+        const label = fixSurfaceLabels[fixSurface];
+        return label ? `Open ${label} for ${bucket}` : batchOpenLinkLabel(result);
+      }
+
+      function renderBatchAction(result) {
+        const target = batchActionTarget(result);
+        if (target) {
+          const link = document.createElement("a");
+          link.className = "batch-action";
+          link.href = target;
+          link.textContent = batchActionLabel(result);
+          return link;
+        }
+
+        const jump = document.createElement("button");
+        jump.type = "button";
+        jump.className = "secondary";
+        jump.textContent = batchActionLabel(result);
+        jump.addEventListener("click", () => jumpToSpeaker(result.id));
+        return jump;
+      }
+
       function renderBatchConditionTags(flagged) {
         batchConditionTagsElement.replaceChildren();
         batchConditionTagsElement.hidden = true;
@@ -843,12 +899,7 @@
                 const span = document.createElement("span");
                 span.textContent = result.issue ? result.issue.action : result.state;
                 copy.append(strong, span);
-                const jump = document.createElement("button");
-                jump.type = "button";
-                jump.className = "secondary";
-                jump.textContent = batchOpenLinkLabel(result);
-                jump.addEventListener("click", () => jumpToSpeaker(result.id));
-                row.append(copy, jump);
+                row.append(copy, renderBatchAction(result));
                 return row;
               })
             : []),

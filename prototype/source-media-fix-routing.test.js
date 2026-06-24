@@ -9,6 +9,7 @@
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
+const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "prototype", "source-media-health.html"), "utf8");
@@ -55,4 +56,124 @@ assert.ok(
   "portrait routed copy names the speaker framing safety screen",
 );
 
-console.log("source media health: routed issues link to their fix screens");
+const script = source.match(/<script>([\s\S]*?)<\/script>/)[1];
+const harnessScript = script.replace(
+  /\n\s*render\(\);\s*$/,
+  `
+      module.exports = {
+        sampleSpeakers,
+        evaluate,
+        summarizeBatch,
+        renderBatchSummary,
+      };
+`,
+);
+
+function createElement(tagName) {
+  return {
+    tagName,
+    attributes: {},
+    children: [],
+    className: "",
+    dataset: {},
+    disabled: false,
+    hidden: false,
+    href: "",
+    style: {},
+    textContent: "",
+    type: "",
+    value: "",
+    append(...children) {
+      this.children.push(...children);
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    replaceChildren(...children) {
+      this.children = children;
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    },
+    removeAttribute(name) {
+      delete this.attributes[name];
+    },
+    addEventListener(event, handler) {
+      this[`on${event}`] = handler;
+    },
+  };
+}
+
+function flatten(node) {
+  return [node, ...node.children.flatMap(flatten)];
+}
+
+const roots = {
+  "#speakers": createElement("section"),
+  "#status": createElement("span"),
+  "#issues": createElement("div"),
+  "#batchImport": createElement("div"),
+  "#batchStatus": createElement("span"),
+  "#batchDetail": createElement("p"),
+  "#batchToolbar": createElement("div"),
+  "#batchLinks": createElement("div"),
+  "#batchConditionTags": createElement("div"),
+  "#batchFilterNote": createElement("p"),
+  "#addSpeaker": createElement("button"),
+  "#reset": createElement("button"),
+};
+
+const context = {
+  document: {
+    createElement,
+    querySelector(selector) {
+      return roots[selector] || createElement("div");
+    },
+  },
+  module: { exports: {} },
+  structuredClone,
+  window: { setTimeout() {} },
+};
+
+vm.runInNewContext(harnessScript, context);
+const api = context.module.exports;
+
+function renderBatchFor(list) {
+  const evaluation = api.evaluate(list);
+  api.renderBatchSummary(api.summarizeBatch(evaluation.results), evaluation.results);
+}
+
+function actionFor(speakerName) {
+  const row = roots["#batchLinks"].children.find((item) =>
+    flatten(item).some((node) => node.textContent === speakerName)
+  );
+  assert.ok(row, `rendered batch row for ${speakerName}`);
+  return row.children[1];
+}
+
+renderBatchFor(api.sampleSpeakers);
+
+let action = actionFor("Guest 1 — Marcus Lee");
+assert.equal(action.tagName, "a", "dark video batch row opens the owning screen directly");
+assert.equal(action.href, "speaker-visual-match.html", "dark video batch row opens visual match");
+assert.equal(action.textContent, "Open visual match for Guest 1", "dark video batch action names the fix screen");
+
+action = actionFor("Guest 3 — Alex Kim");
+assert.equal(action.tagName, "a", "quiet audio batch row opens the owning screen directly");
+assert.equal(action.href, "audio-cleanup-controls.html", "quiet audio batch row opens audio cleanup");
+assert.equal(action.textContent, "Open audio cleanup for Guest 3", "quiet audio batch action names the fix screen");
+
+action = actionFor("Guest 2 — Priya Shah");
+assert.equal(action.tagName, "button", "replacement-only batch row stays a local jump");
+assert.equal(action.textContent, "Open Guest 2 · No file", "replacement-only batch row keeps the local speaker action");
+
+renderBatchFor([
+  { id: "portrait", role: "Guest 4", name: "Guest 4 — Jules", condition: "portrait", disposition: "keep" },
+]);
+action = actionFor("Guest 4 — Jules");
+assert.equal(action.tagName, "a", "portrait batch row opens the owning screen directly");
+assert.equal(action.href, "speaker-framing-safety.html", "portrait batch row opens speaker framing safety");
+assert.equal(action.textContent, "Open speaker framing safety for Guest 4", "portrait batch action names the fix screen");
+
+console.log("source media health: routed issues and batch actions link to their fix screens");
