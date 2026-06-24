@@ -274,6 +274,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -424,6 +440,8 @@
               title: `Check "${card.text}" before it shows`,
               action: "This came from low-confidence context. Confirm the wording fits, edit it, or reject it.",
               tone: "review",
+              fixScreen: "social-context-intake.html",
+              fixLabel: "social context intake",
             };
           } else if (card.decision === "approved") {
             state = "approved";
@@ -583,6 +601,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
