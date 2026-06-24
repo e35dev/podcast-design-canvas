@@ -103,4 +103,23 @@ const clean = M.evaluate([
 ]);
 assert.strictEqual(clean.overall, "ready", "a clean, locked-brand layout is ready to save");
 
+// The saved-layout signature must change when EITHER the layers or the "adapts when
+// reused" choices change, so saving then toggling a reuse option marks it unsaved.
+if (typeof M.layoutSignature === "function") {
+  const layersA = [{ id: "a", type: "speaker", visible: true, locked: false }];
+  const reuseA = [{ id: "roles", label: "Speaker count and roles", on: true }];
+  const reuseB = [{ id: "roles", label: "Speaker count and roles", on: false }];
+  assert.notStrictEqual(
+    M.layoutSignature(layersA, reuseA),
+    M.layoutSignature(layersA, reuseB),
+    "changing a reuse option changes the saved-layout signature",
+  );
+  const layersB = [{ id: "a", type: "speaker", visible: false, locked: false }];
+  assert.notStrictEqual(
+    M.layoutSignature(layersA, reuseA),
+    M.layoutSignature(layersB, reuseA),
+    "changing a layer changes the saved-layout signature",
+  );
+}
+
 console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker) verified");

@@ -196,7 +196,8 @@
       let reuse = REUSE_KEYS.map(function (k) { return { id: k.id, label: k.label, on: k.on }; });
       let counter = 6;
       let savedSignature = null;
-      function signature() { return JSON.stringify({ layers: layers, reuse: reuse }); }
+      function layoutSignature(layerList, reuseList) { return JSON.stringify({ layers: layerList, reuse: reuseList }); }
+      function signature() { return layoutSignature(layers, reuse); }
 
       const layersEl = document.querySelector("#layers");
       const stageEl = document.querySelector("#stage");
@@ -299,7 +300,7 @@
 
         reuseEl.replaceChildren.apply(reuseEl, reuse.map(function (item, index) {
           const box = el("input", { type: "checkbox", "aria-label": item.label, checked: item.on }, []);
-          box.addEventListener("change", function () { reuse[index].on = box.checked; });
+          box.addEventListener("change", function () { reuse[index].on = box.checked; render(); });
           const label = el("label", {}, [box]);
           label.appendChild(document.createTextNode(item.label));
           return label;
@@ -387,7 +388,7 @@
       }
 
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES };
+        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature };
       }
 
       render();
