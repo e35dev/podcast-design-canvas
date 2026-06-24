@@ -16,7 +16,7 @@ assert.ok(navScript.includes('home.href = "../preview/"'), "visuals nav links ba
 assert.ok(navScript.includes("episode-flow.html"), "visuals nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "visuals nav links to the preview app");
 assert.ok(navScript.includes("show-segment-system.html"), "visuals nav hands off to the reuse path");
-assert.ok(navScript.includes("speaker-framing-safety.html"), "visuals nav links back to the style path");
+assert.ok(navScript.includes("on-screen-correction-note.html"), "visuals nav links back to the cleanup path");
 assert.ok(navScript.includes('document.querySelector(".visuals-nav")'), "visuals nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "visuals nav builds the DOM without innerHTML");
 

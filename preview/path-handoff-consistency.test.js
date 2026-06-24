@@ -75,6 +75,12 @@ const expectedEntryBacklinks = [
     text: "Previous: Sensitive moment review",
     note: "reuse path links back to contextual visuals",
   },
+  {
+    script: "visuals-nav.js",
+    href: 'cleanup.href = "on-screen-correction-note.html"',
+    text: "Previous: On-screen correction note",
+    note: "contextual visuals link back to cleanup helpers",
+  },
 ];
 
 for (const { script, href, text, note } of expectedEntryBacklinks) {
