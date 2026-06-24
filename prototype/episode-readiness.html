@@ -183,10 +183,14 @@
         font-weight: 700;
       }
 
-      .issue a.routed-link:hover,
+      .issue a.routed-link:hover {
+        text-decoration: underline;
+      }
+
       .issue a.routed-link:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .issue-actions {

@@ -234,10 +234,14 @@
         text-decoration: none;
       }
 
-      .issue .fix-link:hover,
+      .issue .fix-link:hover {
+        text-decoration: underline;
+      }
+
       .issue .fix-link:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid var(--accent, #136f63);
+        outline-offset: 2px;
       }
 
       .actions {
