@@ -130,8 +130,8 @@ function renderStyleNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "contextual-broll-moments.html";
-    start.textContent = "Continue: Contextual b-roll moments";
+    start.href = "episode-watch-through-preview.html";
+    start.textContent = "Continue: Watch the finished episode";
     wrap.appendChild(start);
   }
 
