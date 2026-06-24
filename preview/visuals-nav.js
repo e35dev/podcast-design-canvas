@@ -62,10 +62,11 @@ function previewAppHref(file) {
 
 function routeSearchFromFile(file) {
   const query = ((file || "").split("#")[0].split("?")[1] || "");
-  if (query === "from=style") {
+  const from = new URLSearchParams(query).get("from");
+  if (from === "style") {
     return "?from=style";
   }
-  if (query === "from=cleanup") {
+  if (from === "cleanup") {
     return "?from=cleanup";
   }
   return "";
@@ -88,11 +89,11 @@ function setVisualsScreenLink(link, file) {
 }
 
 function visualsEntryContext() {
-  const queryParts = (window.location.search || "").replace(/^\?/, "").split("&");
-  if (queryParts.includes("from=style")) {
+  const from = new URLSearchParams((window.location.search || "").replace(/^\?/, "")).get("from");
+  if (from === "style") {
     return "style";
   }
-  if (queryParts.includes("from=cleanup")) {
+  if (from === "cleanup") {
     return "cleanup";
   }
   return "cleanup";

@@ -59,10 +59,11 @@ function previewAppHref(file) {
 
 function routeSearchFromFile(file) {
   const query = ((file || "").split("#")[0].split("?")[1] || "");
-  if (query === "from=style") {
+  const from = new URLSearchParams(query).get("from");
+  if (from === "style") {
     return "?from=style";
   }
-  if (query === "from=cleanup") {
+  if (from === "cleanup") {
     return "?from=cleanup";
   }
   return "";

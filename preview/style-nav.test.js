@@ -105,6 +105,7 @@ function renderNavFor(fileName, styleStep, embedded = false) {
   vm.runInNewContext(navScript, {
     document,
     window: makeWindow(fileName, embedded),
+    URLSearchParams,
   });
   return { nodes: [...flatten(head), ...flatten(body)] };
 }
@@ -114,6 +115,38 @@ function linkWithText(nodes, text) {
   assert.ok(link, `Missing link: ${text}`);
   return link;
 }
+
+function routeSearchFor(file) {
+  const window = makeWindow("canvas-layer-controls.html");
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  window.self = window;
+  window.top = window;
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = routeSearchFromFile(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?moment=42&from=style"),
+  "?from=style",
+  "style nav preserves style context when extra query params are present",
+);
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?from=cleanup&moment=42"),
+  "?from=cleanup",
+  "style nav preserves cleanup context when it is not the only query param",
+);
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?moment=42&from=unknown"),
+  "",
+  "style nav strips unsupported handoff context from preview app hashes",
+);
 
 const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
 assert.ok(

@@ -101,6 +101,7 @@ function renderNavFor(fileName, visualsStep, embedded = false, search = "") {
   vm.runInNewContext(navScript, {
     document,
     window: makeWindow(fileName, embedded, search),
+    URLSearchParams,
   });
 
   return flatten(body);
@@ -111,6 +112,38 @@ function linkWithText(nodes, text) {
   assert.ok(link, `Missing link: ${text}`);
   return link;
 }
+
+function routeSearchFor(file) {
+  const window = makeWindow("contextual-broll-moments.html");
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  window.self = window;
+  window.top = window;
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = routeSearchFromFile(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  routeSearchFor("contextual-title-cards.html?moment=42&from=style"),
+  "?from=style",
+  "visuals nav preserves style context when extra query params are present",
+);
+assert.equal(
+  routeSearchFor("contextual-title-cards.html?from=cleanup&moment=42"),
+  "?from=cleanup",
+  "visuals nav preserves cleanup context when it is not the only query param",
+);
+assert.equal(
+  routeSearchFor("contextual-title-cards.html?moment=42&from=unknown"),
+  "",
+  "visuals nav strips unsupported handoff context from preview app hashes",
+);
 
 const firstNav = renderNavFor("contextual-broll-moments.html", "contextual-broll-moments");
 const cleanupBackLink = linkWithText(firstNav, "Previous: On-screen correction note");
@@ -137,6 +170,23 @@ assert.equal(
   linkWithText(styleEntryNav, "Next: Contextual title cards").href,
   "contextual-title-cards.html?from=style",
   "style-entered visuals carry style context forward",
+);
+
+const styleEntryWithExtraNav = renderNavFor(
+  "contextual-broll-moments.html",
+  "contextual-broll-moments",
+  false,
+  "?moment=42&from=style",
+);
+assert.equal(
+  linkWithText(styleEntryWithExtraNav, "Previous: Canvas layer controls").href,
+  "canvas-layer-controls.html",
+  "style-entered visuals still link back to visual direction when extra params are present",
+);
+assert.equal(
+  linkWithText(styleEntryWithExtraNav, "Next: Contextual title cards").href,
+  "contextual-title-cards.html?from=style",
+  "style-entered visuals strip extra params but keep style context",
 );
 
 const cleanupMiddleNav = renderNavFor("contextual-title-cards.html", "contextual-title-cards", false, "?from=cleanup");

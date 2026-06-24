@@ -101,6 +101,7 @@ function renderNavFor(fileName, cleanupStep, embedded = false) {
   vm.runInNewContext(navScript, {
     document,
     window: makeWindow(fileName, embedded),
+    URLSearchParams,
   });
 
   return flatten(body);
@@ -111,6 +112,38 @@ function linkWithText(nodes, text) {
   assert.ok(link, `Missing link: ${text}`);
   return link;
 }
+
+function routeSearchFor(file) {
+  const window = makeWindow("on-screen-correction-note.html");
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  window.self = window;
+  window.top = window;
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = routeSearchFromFile(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?moment=42&from=cleanup"),
+  "?from=cleanup",
+  "cleanup nav preserves cleanup context when extra query params are present",
+);
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?from=style&moment=42"),
+  "?from=style",
+  "cleanup nav preserves style context when it is not the only query param",
+);
+assert.equal(
+  routeSearchFor("contextual-broll-moments.html?moment=42&from=unknown"),
+  "",
+  "cleanup nav strips unsupported handoff context from preview app hashes",
+);
 
 const firstNav = renderNavFor("pause-crosstalk-cleanup.html", "pause-crosstalk-cleanup");
 const publishBackLink = linkWithText(firstNav, "Previous: Publish checklist");

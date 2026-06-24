@@ -112,6 +112,18 @@ assert.equal(
   "style entry context is preserved when stepping deeper into visuals",
 );
 
+const styleEntryWithExtraParams = runApp("#contextual-broll-moments?moment=42&from=style");
+assert.equal(
+  styleEntryWithExtraParams.nodes.frame.src,
+  "../prototype/contextual-broll-moments.html?from=style",
+  "style entry context survives extra query params in the preview app route",
+);
+assert.equal(
+  styleEntryWithExtraParams.nodes.nextStep.href,
+  "#contextual-title-cards?from=style",
+  "preview app strips extra query params while preserving the visuals entry context",
+);
+
 styleEntry.reroute("#contextual-title-cards?from=cleanup");
 assert.equal(
   styleEntry.nodes.frame.src,
