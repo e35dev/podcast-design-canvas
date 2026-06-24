@@ -229,6 +229,16 @@ assert.equal(
   "episode-metadata-publishing.html?draft=notes&path=publish#details",
   "standalone publish nav preserves hash fragments while appending publish context",
 );
+assert.equal(
+  publishApi.hrefWithPath("episode-metadata-publishing.html?path=episode&draft=notes"),
+  "episode-metadata-publishing.html?path=publish&draft=notes",
+  "publish nav replaces conflicting path values with the shell publish context",
+);
+assert.equal(
+  (publishApi.hrefWithPath("show-notes-assembly.html?path=episode").match(/path=/g) || []).length,
+  1,
+  "publish nav emits one canonical path query param after merge",
+);
 
 const embeddedExplicitPublishPath = renderNavFor(
   "episode-watch-through-preview.html",

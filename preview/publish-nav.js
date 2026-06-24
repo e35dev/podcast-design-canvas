@@ -88,10 +88,25 @@ function hrefHasPublishPath(file) {
   return pathFromQuery(queryWithoutHash(file)) === "publish";
 }
 
-function appendPublishPath(file) {
-  const [base, hash = ""] = (file || "").split("#");
-  const separator = base.includes("?") ? "&" : "?";
-  return `${base}${separator}path=publish${hash ? `#${hash}` : ""}`;
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
 function previewAppHref(file) {
@@ -99,10 +114,14 @@ function previewAppHref(file) {
 }
 
 function hrefWithPath(file) {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== "publish") {
+    return file;
+  }
   if (hrefHasPublishPath(file)) {
     return file;
   }
-  return pathQuerySuffix() ? appendPublishPath(file) : file;
+  return mergeRouteSearch(file, { path: "publish" });
 }
 
 function setTopTargetWhenEmbedded(link) {

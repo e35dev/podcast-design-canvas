@@ -11,15 +11,50 @@ const assert = require("assert");
 const vm = require("vm");
 
 const previewDir = __dirname;
-const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 
-assert.match(
-  ingestSource,
-  /mergeRouteSearch\s*\(|URLSearchParams[\s\S]{0,200}\.set\(\s*["']path["']/,
-  "ingest nav merges path context with URLSearchParams.set",
+function assertCanonicalPathMerge(navFile, shellPath, conflictingFile, expected) {
+  const source = fs.readFileSync(path.join(previewDir, navFile), "utf8");
+  assert.match(
+    source,
+    /mergeRouteSearch\s*\(|URLSearchParams[\s\S]{0,200}\.set\(\s*["']path["']/,
+    `${navFile} merges path context with URLSearchParams.set`,
+  );
+
+  function hrefWithPathFor(file, search) {
+    const window = { location: { pathname: "/prototype/screen.html", search } };
+    const sandbox = {
+      document: { readyState: "loading", addEventListener() {} },
+      window,
+      URLSearchParams,
+    };
+    vm.runInNewContext(
+      `${source}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+      sandbox,
+    );
+    return sandbox.result;
+  }
+
+  const merged = hrefWithPathFor(conflictingFile, shellPath);
+  assert.equal(merged, expected, `${navFile} replaces conflicting path values canonically`);
+  assert.equal((merged.match(/path=/g) || []).length, 1, `${navFile} emits one path query param`);
+}
+
+assertCanonicalPathMerge(
+  "ingest-nav.js",
+  "?path=ingest",
+  "speaker-role-mapping.html?path=episode&draft=roles",
+  "speaker-role-mapping.html?path=ingest&draft=roles",
 );
 
-function hrefWithPathFor(file, search) {
+assertCanonicalPathMerge(
+  "publish-nav.js",
+  "?path=publish",
+  "episode-metadata-publishing.html?path=episode&draft=notes",
+  "episode-metadata-publishing.html?path=publish&draft=notes",
+);
+
+const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
+function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
   const sandbox = {
     document: { readyState: "loading", addEventListener() {} },
@@ -33,26 +68,11 @@ function hrefWithPathFor(file, search) {
   return sandbox.result;
 }
 
-const conflicting = hrefWithPathFor(
-  "speaker-role-mapping.html?path=episode&draft=roles",
-  "?path=ingest",
-);
-assert.equal(
-  conflicting,
-  "speaker-role-mapping.html?path=ingest&draft=roles",
-  "ingest nav replaces conflicting path values with the shell ingest context",
-);
-assert.equal(
-  (conflicting.match(/path=/g) || []).length,
-  1,
-  "ingest nav emits one canonical path query param after merge",
-);
-
-const withHash = hrefWithPathFor("social-context-intake.html?draft=links#review", "?path=ingest");
+const withHash = ingestHrefWithPathFor("social-context-intake.html?draft=links#review", "?path=ingest");
 assert.equal(
   withHash,
   "social-context-intake.html?draft=links&path=ingest#review",
   "ingest nav preserves unrelated flags and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest path merge is canonical and non-ambiguous");
+console.log("nav query merge: ingest and publish path merges are canonical and non-ambiguous");
