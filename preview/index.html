@@ -440,6 +440,39 @@
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
+
+      .layout-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .layout-option {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+      }
+
+      .layout-option[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #f1f9f6;
+        color: var(--accent);
+      }
+
+      .layout-option:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
     
       .tools-title { margin: 34px 0 4px; font-size: 22px; }
       .tools-lede { margin: 0 0 18px; color: var(--muted); max-width: 640px; }
@@ -476,8 +509,13 @@
         <div class="canvas-grid">
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
-            <p class="canvas-lede">Start with a concrete long-form episode composition: drag the host and guest into their video slots, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
-            <div class="track-palette" aria-label="Drag speaker tracks onto the layout">
+            <p class="canvas-lede">Pick a layout for the episode, then drag speakers into the right slots.</p>
+            <div class="layout-picker" id="layout-picker" aria-label="Choose a podcast layout">
+              <button type="button" class="layout-option" aria-pressed="true" data-layout="interview">Interview · host + guest</button>
+              <button type="button" class="layout-option" aria-pressed="false" data-layout="solo">Solo · full-frame host</button>
+              <button type="button" class="layout-option" aria-pressed="false" data-layout="panel">Panel · host + 2 guests</button>
+            </div>
+            <div class="track-palette" id="track-palette" aria-label="Drag speaker tracks onto the layout">
               <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
               <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
               <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
@@ -952,6 +990,52 @@
     </main>
     <script>
       (function () {
+        var LAYOUTS = {
+          interview: {
+            label: "Interview scene · intro beat",
+            runtime: "Host + guest · 58 min cut",
+            tracks: [
+              { id: "host", label: "Host track · Dana Brooks" },
+              { id: "guest", label: "Guest track · Marcus Lee" },
+              { id: "broll", label: "B-roll clip · intro beat" },
+            ],
+            slots: [
+              { id: "host", label: "Host video slot", note: "Drop the host Riverside track here. Keep room for captions and chapter callouts.", zone: "speaker" },
+              { id: "guest", label: "Guest video slot", note: "Drop the guest track here, matched to framing and safe-area rules.", zone: "speaker" },
+              { id: "broll", label: "B-roll drop zone", note: "Place contextual visuals, title cards, or screen shares without hiding the conversation.", zone: "footer" },
+            ],
+          },
+          solo: {
+            label: "Solo commentary · full frame",
+            runtime: "Host only · 42 min cut",
+            tracks: [
+              { id: "host", label: "Host track · Dana Brooks" },
+              { id: "broll", label: "B-roll clip · intro beat" },
+            ],
+            slots: [
+              { id: "host", label: "Host video slot", note: "Full-frame host fills the stage. Keep room for captions.", zone: "speaker-full" },
+              { id: "broll", label: "B-roll drop zone", note: "Place contextual visuals without hiding the solo frame.", zone: "footer" },
+            ],
+          },
+          panel: {
+            label: "Panel discussion · three speakers",
+            runtime: "Host + 2 guests · 72 min cut",
+            tracks: [
+              { id: "host", label: "Host track · Dana Brooks" },
+              { id: "guest", label: "Guest 1 track · Marcus Lee" },
+              { id: "guest2", label: "Guest 2 track · Priya Anand" },
+              { id: "broll", label: "B-roll clip · intro beat" },
+            ],
+            slots: [
+              { id: "host", label: "Host video slot", note: "Host takes the primary position.", zone: "speaker" },
+              { id: "guest", label: "Guest 1 video slot", note: "First guest shares the frame.", zone: "speaker" },
+              { id: "guest2", label: "Guest 2 video slot", note: "Second guest in a smaller inset.", zone: "footer" },
+              { id: "broll", label: "B-roll drop zone", note: "Contextual visuals for the panel.", zone: "footer" },
+            ],
+          },
+        };
+        var currentLayout = "interview";
+
         var trackLabels = {
           host: "Host track · Dana Brooks",
           guest: "Guest track · Marcus Lee",
@@ -975,12 +1059,13 @@
 
         function updateContinueLink(filled) {
           if (!continueLink) return;
-          if (filled === 3) {
+          var total = expectedSlotCount();
+          if (filled === total) {
             continueLink.href = "./app.html#speaker-role-mapping?path=episode";
             continueLink.setAttribute("aria-disabled", "false");
             continueLink.textContent = "Continue to speaker roles →";
             if (continueNote) {
-              continueNote.textContent = "Layout slots are filled. Continue into speaker roles with the placed host, guest, and b-roll context.";
+              continueNote.textContent = "Layout slots are filled. Continue into speaker roles with the placed context.";
             }
             return;
           }
@@ -989,7 +1074,7 @@
           continueLink.setAttribute("aria-disabled", "true");
           continueLink.textContent = "Fill all layout slots to continue";
           if (continueNote) {
-            continueNote.textContent = "Place the host, guest, and b-roll into the layout before continuing into speaker roles.";
+            continueNote.textContent = "Place tracks into the layout before continuing into speaker roles.";
           }
         }
 
@@ -1005,11 +1090,12 @@
             return;
           }
           var filled = filledSlotCount();
-          if (filled === 3) {
+          var total = expectedSlotCount();
+          if (filled === total) {
             slotStatus.textContent = "All layout slots filled — continue to speaker roles or open canvas layer controls to stack layers.";
             return;
           }
-          slotStatus.textContent = filled + " of 3 layout slots filled";
+          slotStatus.textContent = filled + " of " + total + " layout slots filled";
         }
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
@@ -1047,11 +1133,151 @@
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
             });
-            updateSlotStatus("0 of 3 layout slots filled");
+            updateSlotStatus("0 of " + expectedSlotCount() + " layout slots filled");
           });
         }
 
         updateContinueLink(filledSlotCount());
+
+        // Layout picker: switch between interview, solo, and panel layouts.
+        var pickerButtons = document.querySelectorAll(".layout-option[data-layout]");
+        var speakerRow = typeof document.querySelector === "function" ? document.querySelector(".speaker-row") : null;
+        var canvasFooter = typeof document.querySelector === "function" ? document.querySelector(".canvas-footer") : null;
+        var sceneChip = typeof document.querySelector === "function" ? document.querySelector(".canvas-chip.scene") : null;
+        var runtimeChip = typeof document.querySelector === "function" ? document.querySelector(".canvas-chip.runtime") : null;
+        var trackPalette = document.getElementById("track-palette");
+
+        function applyLayout(layoutKey) {
+          var layout = LAYOUTS[layoutKey];
+          if (!layout) return;
+          currentLayout = layoutKey;
+
+          pickerButtons.forEach(function (btn) {
+            btn.setAttribute("aria-pressed", btn.dataset.layout === layoutKey ? "true" : "false");
+          });
+
+          if (sceneChip) sceneChip.textContent = layout.label;
+          if (runtimeChip) runtimeChip.textContent = layout.runtime;
+
+          // Rebuild drop zones.
+          var speakerSlots = layout.slots.filter(function (s) { return s.zone === "speaker" || s.zone === "speaker-full"; });
+          var footerSlots = layout.slots.filter(function (s) { return s.zone === "footer"; });
+
+          if (speakerRow) {
+            speakerRow.style.gridTemplateColumns = speakerSlots.length === 1 ? "1fr" : speakerSlots.map(function () { return "1fr"; }).join(" ");
+            speakerRow.innerHTML = "";
+            speakerSlots.forEach(function (slot) {
+              var zone = document.createElement("div");
+              zone.className = "drop-zone " + slot.id;
+              zone.setAttribute("data-slot", slot.id);
+              var label = document.createElement("span");
+              label.className = "slot-label";
+              label.textContent = slot.label;
+              var note = document.createElement("span");
+              note.className = "slot-note";
+              note.textContent = slot.note;
+              zone.append(label, note);
+              speakerRow.appendChild(zone);
+            });
+          }
+
+          if (canvasFooter) {
+            canvasFooter.innerHTML = "";
+            // Always keep caption area.
+            var captionSlot = document.createElement("div");
+            captionSlot.className = "caption-slot";
+            var captionLabel = document.createElement("span");
+            captionLabel.className = "slot-label";
+            captionLabel.textContent = "Caption area";
+            var captionNote = document.createElement("div");
+            captionNote.className = "slot-note";
+            captionNote.textContent = "Reserved for readable long-form captions and lower-thirds that never cover a speaker.";
+            captionSlot.append(captionLabel, captionNote);
+            canvasFooter.appendChild(captionSlot);
+
+            footerSlots.forEach(function (slot) {
+              var zone = document.createElement("div");
+              zone.className = "title-slot drop-zone " + slot.id;
+              zone.setAttribute("data-slot", slot.id);
+              var label = document.createElement("span");
+              label.className = "slot-label";
+              label.textContent = slot.label;
+              var note = document.createElement("div");
+              note.className = "slot-note";
+              note.textContent = slot.note;
+              zone.append(label, note);
+              canvasFooter.appendChild(zone);
+            });
+
+            canvasFooter.style.gridTemplateColumns = (footerSlots.length + 1) <= 2
+              ? "1.1fr 0.9fr"
+              : "repeat(" + (footerSlots.length + 1) + ", 1fr)";
+          }
+
+          // Rebuild track palette.
+          if (trackPalette) {
+            trackPalette.innerHTML = "";
+            layout.tracks.forEach(function (track) {
+              var chip = document.createElement("span");
+              chip.className = "drag-chip";
+              chip.draggable = true;
+              chip.setAttribute("data-track", track.id);
+              chip.tabIndex = 0;
+              chip.textContent = track.label;
+              chip.addEventListener("dragstart", function (event) {
+                event.dataTransfer.setData("text/plain", track.id);
+                chip.classList.add("dragging");
+              });
+              chip.addEventListener("dragend", function () {
+                chip.classList.remove("dragging");
+              });
+              trackPalette.appendChild(chip);
+            });
+          }
+
+          // Rebind drop zones.
+          document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+            zone.addEventListener("dragover", function (event) {
+              event.preventDefault();
+              zone.classList.add("drag-over");
+            });
+            zone.addEventListener("dragleave", function () {
+              zone.classList.remove("drag-over");
+            });
+            zone.addEventListener("drop", function (event) {
+              event.preventDefault();
+              zone.classList.remove("drag-over");
+              var track = event.dataTransfer.getData("text/plain");
+              if (track !== zone.dataset.slot) {
+                updateSlotStatus("That track belongs in a different slot.");
+                return;
+              }
+              zone.classList.add("filled");
+              var placed = zone.querySelector(".placed-track");
+              if (!placed) {
+                placed = document.createElement("span");
+                placed.className = "placed-track";
+                zone.insertBefore(placed, zone.firstChild);
+              }
+              var trackDef = layout.tracks.find(function (t) { return t.id === track; });
+              placed.textContent = trackDef ? trackDef.label : track;
+              updateSlotStatus();
+            });
+          });
+
+          updateSlotStatus("0 of " + layout.slots.length + " layout slots filled");
+        }
+
+        pickerButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            applyLayout(btn.dataset.layout);
+          });
+        });
+
+        function expectedSlotCount() {
+          var layout = LAYOUTS[currentLayout];
+          return layout ? layout.slots.length : 3;
+        }
       }());
     </script>
   </body>

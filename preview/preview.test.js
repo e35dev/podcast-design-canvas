@@ -51,6 +51,11 @@ assert.ok(
   html.includes("Fill all layout slots to continue"),
   "preview shell keeps the continue handoff gated until layout slots are placed",
 );
+assert.match(html, /layout-picker/, "preview shell exposes a layout picker for the example canvas");
+assert.match(html, /data-layout="interview"/, "preview shell offers an interview layout option");
+assert.match(html, /data-layout="solo"/, "preview shell offers a solo layout option");
+assert.match(html, /data-layout="panel"/, "preview shell offers a panel layout option");
+assert.match(html, /Choose a podcast layout/, "preview shell labels the layout picker for accessibility");
 
 for (const step of flowSteps) {
   assert.ok(html.includes(step), `preview shell links to ${step}`);
