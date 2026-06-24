@@ -1,6 +1,6 @@
 "use strict";
 
-// Connects the two ingest prototype screens into a short setup path (#582 / #583).
+// Connects ingest prototype screens into a short setup path (#582 / #583).
 // Include from ingest prototypes with:
 //   <body data-ingest-step="episode-readiness">
 //   <script src="../preview/ingest-nav.js" defer></script>
@@ -8,6 +8,7 @@
 const INGEST_FLOW = [
   { id: "episode-readiness", file: "episode-readiness.html", label: "Episode readiness" },
   { id: "speaker-role-mapping", file: "speaker-role-mapping.html", label: "Speaker roles" },
+  { id: "social-context-intake", file: "social-context-intake.html", label: "Social links" },
 ];
 
 function currentIngestIndex() {
@@ -113,6 +114,11 @@ function renderIngestNav() {
     nextLink.href = next.file;
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
+  } else {
+    const start = document.createElement("a");
+    start.href = "source-media-health.html";
+    start.textContent = "Continue: Source media health";
+    wrap.appendChild(start);
   }
 
   const stepLabel = document.createElement("span");

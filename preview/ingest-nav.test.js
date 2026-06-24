@@ -14,11 +14,13 @@ const navScript = fs.readFileSync(path.join(__dirname, "ingest-nav.js"), "utf8")
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "ingest nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "ingest nav links to the guided episode flow");
+assert.ok(navScript.includes("source-media-health.html"), "ingest nav hands off to source media health");
 assert.ok(!/innerHTML/.test(navScript), "ingest nav builds the DOM without innerHTML");
 
 const ingestScreens = [
   "episode-readiness.html",
   "speaker-role-mapping.html",
+  "social-context-intake.html",
 ];
 
 const forbidden = [

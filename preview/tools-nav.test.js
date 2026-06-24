@@ -35,6 +35,7 @@ const coreFlow = new Set([
 const ingestFlow = new Set([
   "episode-readiness.html",
   "speaker-role-mapping.html",
+  "social-context-intake.html",
 ]);
 
 const prototypes = fs
