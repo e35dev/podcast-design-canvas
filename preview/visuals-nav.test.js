@@ -26,11 +26,12 @@ const visualsScreens = [
   "contextual-title-cards.html",
   "screen-share-moment-review.html",
   "sensitive-moment-review.html",
+  "episode-asset-library.html",
 ];
 
 // The nav declares its path in order, and every screen in it exists.
 const flowFiles = [...navScript.matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-assert.deepStrictEqual(flowFiles, visualsScreens, "visuals nav path is the four contextual-visuals screens, in order");
+assert.deepStrictEqual(flowFiles, visualsScreens, "visuals nav path is the five contextual-visuals screens, in order");
 
 for (const file of visualsScreens) {
   const html = fs.readFileSync(path.join(root, "prototype", file), "utf8");
@@ -201,7 +202,7 @@ assert.equal(
   "cleanup-entered visuals carry cleanup context forward inside the visuals path",
 );
 
-const lastNav = renderNavFor("sensitive-moment-review.html", "sensitive-moment-review");
+const lastNav = renderNavFor("episode-asset-library.html", "episode-asset-library");
 const reuseHandoff = linkWithText(lastNav, "Continue: Show segment system");
 assert.equal(
   reuseHandoff.href,
@@ -257,7 +258,7 @@ assert.equal(
   "embedded visuals nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("sensitive-moment-review.html", "sensitive-moment-review", true);
+const embeddedLastNav = renderNavFor("episode-asset-library.html", "episode-asset-library", true);
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Show segment system");
 assert.equal(
   embeddedHandoff.href,

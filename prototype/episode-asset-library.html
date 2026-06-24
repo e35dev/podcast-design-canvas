@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Asset Library Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .filter-btn {
+        min-height: 32px;
+        padding: 4px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .filter-btn.active {
+        border-color: var(--accent);
+        background: #dff5ef;
+        color: #075246;
+      }
+
+      .filter-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .asset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+      }
+
+      .asset-card {
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color 0.15s ease;
+      }
+
+      .asset-card:hover {
+        border-color: #a3c4be;
+      }
+
+      .asset-card.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+
+      .asset-card:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .asset-thumb {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+      }
+
+      .asset-thumb.logo { background: linear-gradient(145deg, #dff5ef, #e8f0ee); }
+      .asset-thumb.headshot { background: linear-gradient(145deg, #e0e8f7, #c9d4f0); }
+      .asset-thumb.sponsor { background: linear-gradient(145deg, #fde8e8, #f5d0d0); }
+      .asset-thumb.broll { background: linear-gradient(145deg, #e8f0ee, #d9e0dd); }
+      .asset-thumb.title-bg { background: linear-gradient(145deg, #f3e8fd, #e5d5f7); }
+      .asset-thumb.intro-outro { background: linear-gradient(145deg, #e2ebfb, #c4d5f0); }
+      .asset-thumb.thumbnail { background: linear-gradient(145deg, #dff5ef, #b3e0d4); }
+
+      .asset-meta {
+        padding: 8px 10px;
+      }
+
+      .asset-meta strong {
+        display: block;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .asset-meta .scope {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .detail-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .detail-header .detail-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+
+      .detail-header strong {
+        font-size: 15px;
+      }
+
+      .detail-header .detail-type {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .used-in {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+        margin-top: 12px;
+      }
+
+      .used-in strong {
+        font-size: 13px;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .used-in ul {
+        margin: 0;
+        padding: 0 0 0 18px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .used-in li {
+        margin-bottom: 4px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .badge.ready { color: #075246; background: #dff5ef; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.missing { color: #a52828; background: #fde8e8; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info { border-left-color: var(--accent); }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span { color: var(--muted); }
+
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .asset-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      }
+    </style>
+    <script src="../preview/visuals-nav.js" defer></script>
+  </head>
+  <body data-visuals-step="episode-asset-library">
+    <main>
+      <h1>Episode asset library</h1>
+      <p class="lede">Browse logos, guest photos, b-roll clips, and show graphics already placed by the preset. See where each asset appears in the current episode and swap or replace anything that does not fit.</p>
+
+      <section class="workspace" aria-label="Episode asset library workspace">
+        <div class="panel">
+          <h2>Assets</h2>
+          <div class="filter-bar" id="filters" role="toolbar" aria-label="Filter assets"></div>
+          <div class="asset-grid" id="assetGrid"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Asset detail">
+          <div id="detail"></div>
+
+          <h2 style="margin-top: 18px;">Library summary</h2>
+          <div id="statusBadge" class="status ready">All placed assets look good</div>
+          <div class="issues" id="issues"></div>
+          <p class="summary-note">The preset placed these assets automatically. Review only the ones flagged for attention; everything else is ready for export.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var ASSET_TYPES = {
+        logo: { label: "Show logo", icon: "\u2B50", thumbClass: "logo" },
+        headshot: { label: "Guest headshot", icon: "\uD83D\uDC64", thumbClass: "headshot" },
+        sponsor: { label: "Sponsor logo", icon: "\u2606", thumbClass: "sponsor" },
+        broll: { label: "B-roll clip", icon: "\uD83C\uDFAC", thumbClass: "broll" },
+        "title-bg": { label: "Title card background", icon: "\uD83D\uDDBC", thumbClass: "title-bg" },
+        "intro-outro": { label: "Intro or outro element", icon: "\u25B6", thumbClass: "intro-outro" },
+        thumbnail: { label: "Thumbnail image", icon: "\uD83D\uDCCE", thumbClass: "thumbnail" },
+      };
+
+      var SAMPLE_ASSETS = [
+        { id: "a1", name: "The Weekly Deep Dive logo", type: "logo", scope: "show template", speaker: null, placed: true, flag: null, usedIn: ["Title card at 0:00", "Thumbnail", "Lower-third intro"] },
+        { id: "a2", name: "Dana Brooks headshot", type: "headshot", scope: "speaker profile", speaker: "Dana Brooks", placed: true, flag: null, usedIn: ["Lower-third at 2:15", "Thumbnail"] },
+        { id: "a3", name: "Marcus Lee headshot", type: "headshot", scope: "speaker profile", speaker: "Marcus Lee", placed: true, flag: null, usedIn: ["Lower-third at 3:40"] },
+        { id: "a4", name: "Priya Anand headshot", type: "headshot", scope: "current episode", speaker: "Priya Anand", placed: false, flag: "no placement yet", usedIn: [] },
+        { id: "a5", name: "TechCorp sponsor mark", type: "sponsor", scope: "sponsor kit", speaker: null, placed: true, flag: "unreadable at small sizes", usedIn: ["Sponsor card at 12:30"] },
+        { id: "a6", name: "City skyline b-roll", type: "broll", scope: "current episode", speaker: null, placed: true, flag: null, usedIn: ["B-roll at 5:20"] },
+        { id: "a7", name: "Gradient title background", type: "title-bg", scope: "show template", speaker: null, placed: true, flag: null, usedIn: ["Title card at 0:00", "Chapter title at 15:00"] },
+        { id: "a8", name: "Intro animation", type: "intro-outro", scope: "show template", speaker: null, placed: true, flag: null, usedIn: ["Intro at 0:00"] },
+        { id: "a9", name: "Episode thumbnail", type: "thumbnail", scope: "current episode", speaker: null, placed: true, flag: null, usedIn: ["Thumbnail"] },
+        { id: "a10", name: "Product demo screenshot", type: "broll", scope: "current episode", speaker: null, placed: true, flag: "wrong speaker association", usedIn: ["B-roll at 18:45"] },
+      ];
+
+      var assets = JSON.parse(JSON.stringify(SAMPLE_ASSETS));
+      var selectedAssetId = "a1";
+      var activeFilter = "all";
+
+      var FILTERS = ["all", "speaker", "show", "sponsor", "flagged"];
+
+      function matchesFilter(asset) {
+        if (activeFilter === "all") return true;
+        if (activeFilter === "speaker") return asset.speaker !== null;
+        if (activeFilter === "show") return asset.scope === "show template";
+        if (activeFilter === "sponsor") return asset.type === "sponsor";
+        if (activeFilter === "flagged") return asset.flag !== null;
+        return true;
+      }
+
+      function renderFilters() {
+        var container = document.getElementById("filters");
+        container.innerHTML = "";
+        for (var i = 0; i < FILTERS.length; i++) {
+          (function (f) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "filter-btn" + (activeFilter === f ? " active" : "");
+            btn.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+            btn.addEventListener("click", function () {
+              activeFilter = f;
+              render();
+            });
+            container.appendChild(btn);
+          })(FILTERS[i]);
+        }
+      }
+
+      function renderGrid() {
+        var container = document.getElementById("assetGrid");
+        container.innerHTML = "";
+        var visible = assets.filter(matchesFilter);
+        for (var i = 0; i < visible.length; i++) {
+          (function (asset) {
+            var type = ASSET_TYPES[asset.type] || ASSET_TYPES.broll;
+            var card = document.createElement("div");
+            card.className = "asset-card" + (asset.id === selectedAssetId ? " selected" : "");
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", asset.name);
+
+            var thumb = document.createElement("div");
+            thumb.className = "asset-thumb " + type.thumbClass;
+            thumb.textContent = type.icon;
+            thumb.setAttribute("aria-hidden", "true");
+
+            var meta = document.createElement("div");
+            meta.className = "asset-meta";
+            var strong = document.createElement("strong");
+            strong.textContent = asset.name;
+            var scope = document.createElement("div");
+            scope.className = "scope";
+            scope.textContent = asset.scope;
+            meta.appendChild(strong);
+            meta.appendChild(scope);
+
+            card.appendChild(thumb);
+            card.appendChild(meta);
+
+            card.addEventListener("click", function () {
+              selectedAssetId = asset.id;
+              render();
+            });
+
+            container.appendChild(card);
+          })(visible[i]);
+        }
+      }
+
+      function renderDetail() {
+        var container = document.getElementById("detail");
+        container.innerHTML = "";
+
+        var asset = null;
+        for (var i = 0; i < assets.length; i++) {
+          if (assets[i].id === selectedAssetId) { asset = assets[i]; break; }
+        }
+        if (!asset) return;
+
+        var type = ASSET_TYPES[asset.type] || ASSET_TYPES.broll;
+
+        var header = document.createElement("div");
+        header.className = "detail-header";
+        var icon = document.createElement("div");
+        icon.className = "detail-icon";
+        icon.textContent = type.icon;
+        var headerInfo = document.createElement("div");
+        var headerStrong = document.createElement("strong");
+        headerStrong.textContent = asset.name;
+        var headerType = document.createElement("div");
+        headerType.className = "detail-type";
+        headerType.textContent = type.label + " \u00B7 " + asset.scope;
+        headerInfo.appendChild(headerStrong);
+        headerInfo.appendChild(headerType);
+        header.appendChild(icon);
+        header.appendChild(headerInfo);
+        container.appendChild(header);
+
+        if (asset.flag) {
+          var flagBadge = document.createElement("span");
+          flagBadge.className = "badge review";
+          flagBadge.textContent = asset.flag;
+          container.appendChild(flagBadge);
+        } else if (asset.placed) {
+          var okBadge = document.createElement("span");
+          okBadge.className = "badge ready";
+          okBadge.textContent = "placed by preset";
+        } else {
+          var okBadge = document.createElement("span");
+          okBadge.className = "badge ready";
+          okBadge.textContent = "available";
+        }
+
+        if (asset.usedIn.length > 0) {
+          var usedIn = document.createElement("div");
+          usedIn.className = "used-in";
+          var usedStrong = document.createElement("strong");
+          usedStrong.textContent = "Appears in this episode";
+          usedIn.appendChild(usedStrong);
+          var ul = document.createElement("ul");
+          for (var u = 0; u < asset.usedIn.length; u++) {
+            var li = document.createElement("li");
+            li.textContent = asset.usedIn[u];
+            ul.appendChild(li);
+          }
+          usedIn.appendChild(ul);
+          container.appendChild(usedIn);
+        }
+
+        var actions = document.createElement("div");
+        actions.className = "actions";
+
+        if (asset.placed) {
+          var replaceBtn = document.createElement("button");
+          replaceBtn.type = "button";
+          replaceBtn.textContent = asset.flag ? "Replace with a different asset" : "Replace for this episode";
+          replaceBtn.addEventListener("click", function () {
+            asset.name = "Replaced " + type.label.toLowerCase();
+            asset.flag = null;
+            render();
+          });
+          actions.appendChild(replaceBtn);
+        }
+
+        if (asset.type === "sponsor") {
+          var sponsorLink = document.createElement("a");
+          sponsorLink.className = "fix-link";
+          sponsorLink.href = "sponsor-placement-review.html";
+          sponsorLink.textContent = "Open sponsor placement review \u2192";
+          actions.appendChild(sponsorLink);
+        }
+
+        if (asset.type === "headshot" && asset.speaker) {
+          var guestLink = document.createElement("a");
+          guestLink.className = "fix-link";
+          guestLink.href = "guest-profile-reuse.html";
+          guestLink.textContent = "Open guest profile reuse \u2192";
+          actions.appendChild(guestLink);
+        }
+
+        if (asset.type === "thumbnail") {
+          var thumbLink = document.createElement("a");
+          thumbLink.className = "fix-link";
+          thumbLink.href = "thumbnail-cover-frame.html";
+          thumbLink.textContent = "Open thumbnail & cover frame \u2192";
+          actions.appendChild(thumbLink);
+        }
+
+        container.appendChild(actions);
+      }
+
+      function renderSummary() {
+        var statusBadge = document.getElementById("statusBadge");
+        var issuesContainer = document.getElementById("issues");
+
+        var flagged = [];
+        for (var i = 0; i < assets.length; i++) {
+          if (assets[i].flag && assets[i].placed) flagged.push(assets[i]);
+        }
+
+        if (flagged.length > 0) {
+          statusBadge.className = "status review";
+          statusBadge.textContent = flagged.length + " placed asset" + (flagged.length === 1 ? "" : "s") + " flagged";
+        } else {
+          statusBadge.className = "status ready";
+          statusBadge.textContent = "All placed assets look good";
+        }
+
+        issuesContainer.innerHTML = "";
+
+        for (var i = 0; i < flagged.length; i++) {
+          var asset = flagged[i];
+          var type = ASSET_TYPES[asset.type] || ASSET_TYPES.broll;
+          var issue = document.createElement("article");
+          issue.className = "issue";
+          var s = document.createElement("strong");
+          s.textContent = asset.name;
+          var sp = document.createElement("span");
+          sp.textContent = type.label + ": " + asset.flag + ". Replace the asset or clear the flag if the placement is acceptable.";
+          issue.appendChild(s);
+          issue.appendChild(sp);
+
+          if (asset.type === "sponsor") {
+            var link = document.createElement("a");
+            link.className = "fix-link";
+            link.href = "sponsor-placement-review.html";
+            link.textContent = "Open sponsor placement review \u2192";
+            issue.appendChild(link);
+          }
+
+          issuesContainer.appendChild(issue);
+        }
+
+        if (flagged.length === 0) {
+          var placedCount = 0;
+          for (var i = 0; i < assets.length; i++) {
+            if (assets[i].placed) placedCount++;
+          }
+          var note = document.createElement("article");
+          note.className = "issue info";
+          var s = document.createElement("strong");
+          s.textContent = placedCount + " asset" + (placedCount === 1 ? "" : "s") + " placed by preset";
+          var sp = document.createElement("span");
+          sp.textContent = "The preset placed these assets into the episode. Everything looks good for export.";
+          note.appendChild(s);
+          note.appendChild(sp);
+          issuesContainer.appendChild(note);
+        }
+      }
+
+      function render() {
+        renderFilters();
+        renderGrid();
+        renderDetail();
+        renderSummary();
+      }
+
+      render();
+    </script>
+  </body>
+</html>

@@ -64,6 +64,7 @@ const visualsFlow = new Set([
   "contextual-title-cards.html",
   "screen-share-moment-review.html",
   "sensitive-moment-review.html",
+  "episode-asset-library.html",
 ]);
 
 const reuseFlow = new Set([
