@@ -64,6 +64,12 @@ for (const { script, href, text, note } of expectedHandoffs) {
 
 const expectedEntryBacklinks = [
   {
+    script: "speaker-setup-nav.js",
+    href: 'roles.href = "speaker-role-mapping.html?path=episode"',
+    text: "Previous: Speaker roles",
+    note: "speaker setup links back to ingest speaker roles",
+  },
+  {
     script: "cleanup-nav.js",
     href: 'prep.href = "publish-checklist.html"',
     text: "Previous: Publish checklist",
