@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Notes Assembly Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 24px 0 12px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c6c2;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 11px;
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #dcf2ee;
+        color: var(--accent);
+      }
+
+      button.primary {
+        border-color: #0f5d53;
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .sections {
+        display: grid;
+        gap: 14px;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .desc {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input[type="checkbox"] {
+        width: auto;
+        min-height: auto;
+      }
+
+      .include-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 88px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 10px;
+        resize: vertical;
+      }
+
+      textarea:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .preview-block {
+        border-radius: 6px;
+        background: #f3f7f5;
+        padding: 10px 12px;
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+
+      .section-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .section-actions button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.omitted {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .notes-preview {
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--ink);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Show notes assembly</h1>
+      <p class="lede">Turn confirmed chapters, guests, and sponsor details into destination-ready show notes. This extends metadata you already approved &mdash; it is not a separate publishing editor.</p>
+
+      <div class="toolbar" id="destinations"></div>
+
+      <section class="workspace" aria-label="Show notes assembly workspace">
+        <div class="panel">
+          <h2>Note sections</h2>
+          <div class="sections" id="sections"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Show notes summary">
+          <h2>Assembly summary</h2>
+          <div id="status" class="status ready">Show notes ready</div>
+          <div id="issues" class="issues"></div>
+          <h2>Combined preview</h2>
+          <div id="combinedPreview" class="notes-preview"></div>
+          <button type="button" class="primary" id="copyNotes" disabled>Copy notes to export package</button>
+          <p class="summary-note" id="summaryNote"></p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const destinations = {
+        youtube: {
+          label: "YouTube full episode",
+          wantsShowNotes: true,
+          wantsChapters: true,
+          wantsSponsor: true,
+        },
+        review: {
+          label: "Client review copy",
+          wantsShowNotes: false,
+          wantsChapters: false,
+          wantsSponsor: false,
+        },
+        archive: {
+          label: "Archive master",
+          wantsShowNotes: false,
+          wantsChapters: true,
+          wantsSponsor: false,
+        },
+      };
+
+      const confirmedChapters = [
+        "0:00 Cold open and welcome",
+        "10:00 How the guest got started",
+        "25:00 Finding the first customers",
+        "40:00 Lightning round and goodbyes",
+      ];
+
+      const confirmedGuests = "Marcus Lee — marcuslee.com\nDana Brooks — host show links";
+
+      const confirmedSponsor = "This episode is supported by Riverside.fm. Try separate tracks at riverside.fm/podcast.";
+
+      let selectedDestination = "youtube";
+      let sections = [
+        {
+          id: "summary",
+          label: "Episode summary",
+          detail: "A short plain-language description for the publish page.",
+          included: true,
+          editable: true,
+          content: "",
+          sourceReady: true,
+          destinationKey: null,
+        },
+        {
+          id: "chapters",
+          label: "Chapter list",
+          detail: "Confirmed chapter titles in playback order.",
+          included: true,
+          editable: false,
+          content: "",
+          sourceReady: false,
+          destinationKey: "wantsChapters",
+        },
+        {
+          id: "guests",
+          label: "Guest links",
+          detail: "Names and links pulled from confirmed guest profiles.",
+          included: true,
+          editable: false,
+          content: confirmedGuests,
+          sourceReady: true,
+          destinationKey: null,
+        },
+        {
+          id: "sponsor",
+          label: "Sponsor disclosure",
+          detail: "Required disclosure text from sponsor placement review.",
+          included: true,
+          editable: false,
+          content: confirmedSponsor,
+          sourceReady: true,
+          destinationKey: "wantsSponsor",
+        },
+      ];
+
+      const destinationsElement = document.querySelector("#destinations");
+      const sectionsElement = document.querySelector("#sections");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const combinedPreviewElement = document.querySelector("#combinedPreview");
+      const copyNotesButton = document.querySelector("#copyNotes");
+      const summaryNoteElement = document.querySelector("#summaryNote");
+
+      function destinationRules() {
+        return destinations[selectedDestination];
+      }
+
+      function sectionContent(section) {
+        if (section.id === "chapters" && section.sourceReady) {
+          return confirmedChapters.join("\n");
+        }
+        return section.content;
+      }
+
+      function evaluateSection(section) {
+        const rules = destinationRules();
+        if (!section.included) {
+          return { state: "omitted", issue: null };
+        }
+
+        if (section.destinationKey && !rules[section.destinationKey]) {
+          return {
+            state: "destination mismatch",
+            issue: {
+              title: `${section.label} is not used for ${rules.label}`,
+              action: "Hide this section for this destination or choose a destination that needs it.",
+              tone: "review",
+            },
+          };
+        }
+
+        if (!section.sourceReady) {
+          return {
+            state: "needs source",
+            issue: {
+              title: `${section.label} is waiting on confirmed chapters`,
+              action: "Pull the latest confirmed chapter titles before including them in show notes.",
+              tone: "review",
+            },
+          };
+        }
+
+        if (section.editable && !(section.content || "").trim()) {
+          return {
+            state: "needs edit",
+            issue: {
+              title: "Episode summary is empty",
+              action: "Write a short summary or hide this section for this destination.",
+              tone: "review",
+            },
+          };
+        }
+
+        return {
+          state: "ready",
+          issue: {
+            title: `${section.label} is ready`,
+            action: section.editable ? "Summary will ship with the export package." : "Pulled from confirmed episode metadata.",
+            tone: "info",
+          },
+        };
+      }
+
+      function evaluateAll() {
+        const rules = destinationRules();
+        const results = sections.map((section) => ({
+          section,
+          ...evaluateSection(section),
+        }));
+
+        const open = results.filter(({ state }) => state === "needs source" || state === "needs edit" || state === "destination mismatch");
+        const overall = !rules.wantsShowNotes
+          ? "ready"
+          : open.length
+            ? "review"
+            : "ready";
+
+        return { results, open, overall, rules };
+      }
+
+      function buildCombinedPreview(results) {
+        const blocks = results
+          .filter(({ section, state }) => section.included && state !== "destination mismatch" && state !== "needs source")
+          .map(({ section }) => {
+            const body = sectionContent(section).trim();
+            if (!body && section.editable) {
+              return null;
+            }
+            return `${section.label}\n${body || "—"}`;
+          })
+          .filter(Boolean);
+
+        return blocks.length ? blocks.join("\n\n") : "No sections included yet.";
+      }
+
+      function renderDestinations() {
+        destinationsElement.replaceChildren(
+          ...Object.entries(destinations).map(([id, dest]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = dest.label;
+            button.setAttribute("aria-pressed", String(id === selectedDestination));
+            button.addEventListener("click", () => {
+              selectedDestination = id;
+              render();
+            });
+            return button;
+          }),
+        );
+      }
+
+      function renderSection(result, index) {
+        const { section, state } = result;
+        const article = document.createElement("article");
+        article.className = "section";
+
+        const head = document.createElement("div");
+        head.className = "head";
+        const strong = document.createElement("strong");
+        strong.textContent = section.label;
+        const badge = document.createElement("span");
+        badge.className = `badge ${state === "ready" ? "ready" : state === "omitted" ? "omitted" : "review"}`;
+        badge.textContent = state;
+        head.append(strong, badge);
+
+        const desc = document.createElement("p");
+        desc.className = "desc";
+        desc.textContent = section.detail;
+
+        const includeRow = document.createElement("label");
+        includeRow.className = "include-row";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = section.included;
+        checkbox.addEventListener("change", () => {
+          sections[index].included = checkbox.checked;
+          render();
+        });
+        includeRow.append(checkbox, document.createTextNode(" Include in show notes"));
+
+        article.append(head, desc, includeRow);
+
+        if (section.included) {
+          if (section.editable) {
+            const summaryLabel = document.createElement("label");
+            summaryLabel.textContent = "Summary text";
+            const textarea = document.createElement("textarea");
+            textarea.value = section.content;
+            textarea.placeholder = "What is this episode about?";
+            textarea.addEventListener("input", () => {
+              sections[index].content = textarea.value;
+              render();
+            });
+            summaryLabel.append(textarea);
+            article.append(summaryLabel);
+          } else {
+            const preview = document.createElement("div");
+            preview.className = "preview-block";
+            preview.textContent = section.sourceReady ? sectionContent(section) : "Waiting on confirmed source data.";
+            article.append(preview);
+
+            if (section.id === "chapters" && !section.sourceReady) {
+              const actions = document.createElement("div");
+              actions.className = "section-actions";
+              const button = document.createElement("button");
+              button.type = "button";
+              button.textContent = "Pull confirmed chapters";
+              button.addEventListener("click", () => {
+                sections[index].sourceReady = true;
+                render();
+              });
+              actions.append(button);
+              article.append(actions);
+            }
+          }
+        }
+
+        return article;
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone === "info" ? "info" : ""}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      function render() {
+        renderDestinations();
+        const evaluation = evaluateAll();
+        sectionsElement.replaceChildren(
+          ...evaluation.results.map((result, index) => renderSection(result, index)),
+        );
+
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready"
+          ? evaluation.rules.wantsShowNotes
+            ? "Show notes ready"
+            : "Show notes optional for this destination"
+          : `${evaluation.open.length} ${evaluation.open.length === 1 ? "section still open" : "sections still open"}`;
+
+        const issues = evaluation.results.map((result) => result.issue).filter((issue) => issue && issue.tone !== "info");
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), {
+                textContent: evaluation.rules.wantsShowNotes
+                  ? "Every included section is ready to copy into the export package."
+                  : "This destination does not require show notes.",
+              })]),
+        );
+
+        combinedPreviewElement.textContent = buildCombinedPreview(evaluation.results);
+        copyNotesButton.disabled = evaluation.overall !== "ready" || !evaluation.rules.wantsShowNotes;
+
+        summaryNoteElement.textContent = evaluation.rules.wantsShowNotes
+          ? "Show notes appear on the publish checklist only when this destination uses them."
+          : "Solo-host archive or review deliveries can skip show notes without blocking export.";
+      }
+
+      render();
+    </script>
+  </body>
+</html>
