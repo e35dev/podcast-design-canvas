@@ -386,6 +386,90 @@ assert.equal(
 );
 assert.equal(embeddedGlossaryLink.target, "_top", "embedded in-page cleanup links target the parent app");
 
+const standaloneCleanupFixLinks = renderNavFor(
+  "accessibility-readability-checks.html",
+  "accessibility-readability-checks",
+  false,
+  "?from=cleanup",
+  [
+    "audio-caption-quality-review.html",
+    "layout-safe-areas.html",
+    "contextual-title-cards.html",
+    "social-context-intake.html",
+    "guest-profile-reuse.html",
+  ],
+);
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "audio-caption-quality-review.html").href,
+  "audio-caption-quality-review.html",
+  "standalone cleanup nav leaves caption quality fix links direct",
+);
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "layout-safe-areas.html").href,
+  "layout-safe-areas.html",
+  "standalone cleanup nav leaves layout fix links direct",
+);
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "contextual-title-cards.html").href,
+  "contextual-title-cards.html",
+  "standalone cleanup nav leaves contextual title fix links direct",
+);
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "social-context-intake.html").href,
+  "social-context-intake.html",
+  "standalone cleanup nav leaves social context fix links direct",
+);
+assert.equal(
+  linkWithText(standaloneCleanupFixLinks, "guest-profile-reuse.html").href,
+  "guest-profile-reuse.html",
+  "standalone cleanup nav leaves guest profile links direct",
+);
+
+const embeddedCleanupFixLinks = renderNavFor(
+  "accessibility-readability-checks.html",
+  "accessibility-readability-checks",
+  true,
+  "?from=cleanup",
+  [
+    "audio-caption-quality-review.html",
+    "layout-safe-areas.html",
+    "contextual-title-cards.html",
+    "social-context-intake.html",
+    "guest-profile-reuse.html",
+  ],
+);
+const embeddedCaptionFix = linkWithText(embeddedCleanupFixLinks, "audio-caption-quality-review.html");
+assert.equal(
+  embeddedCaptionFix.href,
+  "../preview/app.html#audio-caption-quality-review",
+  "embedded cleanup nav routes caption quality fix links through the preview app",
+);
+assert.equal(embeddedCaptionFix.target, "_top", "embedded caption quality links target the parent app");
+const embeddedLayoutFix = linkWithText(embeddedCleanupFixLinks, "layout-safe-areas.html");
+assert.equal(
+  embeddedLayoutFix.href,
+  "../preview/app.html#layout-safe-areas",
+  "embedded cleanup nav routes layout fix links through the preview app",
+);
+assert.equal(embeddedLayoutFix.target, "_top", "embedded layout fix links target the parent app");
+const embeddedTitleFix = linkWithText(embeddedCleanupFixLinks, "contextual-title-cards.html");
+assert.equal(
+  embeddedTitleFix.href,
+  "../preview/app.html#contextual-title-cards?from=cleanup",
+  "embedded cleanup nav routes contextual title fixes through the cleanup visuals path",
+);
+assert.equal(embeddedTitleFix.target, "_top", "embedded contextual title links target the parent app");
+assert.equal(
+  linkWithText(embeddedCleanupFixLinks, "social-context-intake.html").href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded cleanup nav routes social context links through the ingest preview app path",
+);
+assert.equal(
+  linkWithText(embeddedCleanupFixLinks, "guest-profile-reuse.html").href,
+  "../preview/app.html#guest-profile-reuse",
+  "embedded cleanup nav routes guest profile links through the preview app",
+);
+
 const dynamicPronunciationLinks = renderNavFor(
   "pronunciation-name-review.html",
   "pronunciation-name-review",
@@ -404,5 +488,18 @@ assert.equal(
   "embedded cleanup nav normalizes dynamically rendered cleanup links before navigation",
 );
 assert.equal(dynamicGlossaryLink.target, "_top", "dynamic embedded cleanup links target the parent app");
+
+const dynamicSocialLink = appendStaticLink(
+  dynamicPronunciationLinks[0],
+  "social-context-intake.html",
+  "Open social context",
+);
+dynamicPronunciationLinks.listeners.click({ target: dynamicSocialLink });
+assert.equal(
+  dynamicSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded cleanup nav normalizes dynamic social context links before navigation",
+);
+assert.equal(dynamicSocialLink.target, "_top", "dynamic social context links target the parent app");
 
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");

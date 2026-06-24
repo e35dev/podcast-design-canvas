@@ -21,6 +21,13 @@ const PREVIEW_APP_CLEANUP_TARGETS = new Set([
   ...CLEANUP_FLOW.map((step) => step.id),
   "contextual-broll-moments",
 ]);
+const PREVIEW_APP_CLEANUP_HANDOFFS = new Map([
+  ["audio-caption-quality-review", ""],
+  ["layout-safe-areas", ""],
+  ["contextual-title-cards", "?from=cleanup"],
+  ["social-context-intake", "?path=ingest"],
+  ["guest-profile-reuse", ""],
+]);
 const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
 const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
 const CLEANUP_RETURN_PATHS = new Set(["publish"]);
@@ -48,6 +55,19 @@ function isPreviewAppCleanupTarget(file) {
   return PREVIEW_APP_CLEANUP_TARGETS.has(screenIdFromFile(file));
 }
 
+function cleanupHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_CLEANUP_HANDOFFS.has(screen) ? PREVIEW_APP_CLEANUP_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppCleanupHandoff(file) {
+  return cleanupHandoffSearch(file) !== null;
+}
+
+function isPreviewAppCleanupRoute(file) {
+  return isPreviewAppCleanupTarget(file) || isPreviewAppCleanupHandoff(file);
+}
+
 function isEmbeddedInPreviewApp() {
   try {
     return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
@@ -57,7 +77,12 @@ function isEmbeddedInPreviewApp() {
 }
 
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = cleanupHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function pathFromQuery(query) {
@@ -172,7 +197,7 @@ function setTopTargetWhenEmbedded(link) {
 
 function setCleanupScreenLink(link, file) {
   const resolved = hrefWithCleanupContext(file);
-  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupTarget(resolved)) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppCleanupRoute(resolved)) {
     link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
@@ -186,7 +211,13 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeCleanupHref(href) {
-  return isLocalScreenHref(href) && isPreviewAppCleanupTarget(href);
+  if (!isLocalScreenHref(href)) {
+    return false;
+  }
+  if (isPreviewAppCleanupTarget(href)) {
+    return true;
+  }
+  return isEmbeddedInPreviewApp() && isPreviewAppCleanupHandoff(href);
 }
 
 function normalizeCleanupScreenLink(link) {
