@@ -209,9 +209,22 @@ dropFile("guest", sharedTake);
 assert.equal(continueLink.attributes["aria-disabled"], "true", "the same recording in both speaker slots blocks Continue");
 assert.match(slotStatus.textContent, /same video is in more than one speaker slot/i, "duplicate guidance is creator-facing");
 
+// The side panel names the problem, but a creator scanning the canvas needs to see WHICH two
+// slots are in conflict — both previously read the identical "Ready" badge with no way to tell
+// them apart (#1131: clearly indicate duplicate slot assignments, not just describe them).
+const hostIndicator = zoneFor("host").querySelector(".slot-state");
+const guestIndicator = zoneFor("guest").querySelector(".slot-state");
+assert.equal(hostIndicator.textContent, "Duplicate video", "the host slot badge names the duplicate, not a misleading Ready");
+assert.ok(hostIndicator.classList.contains("is-duplicate"), "the host slot badge carries the duplicate state class");
+assert.equal(guestIndicator.textContent, "Duplicate video", "the guest slot badge also names the duplicate");
+assert.ok(guestIndicator.classList.contains("is-duplicate"), "the guest slot badge also carries the duplicate state class");
+
 // Two separate recordings that merely share a filename are allowed.
 dropFile("guest", video("riverside.mp4", 8000, 88));
 assert.equal(continueLink.attributes["aria-disabled"], "false", "distinct recordings that share a name are not duplicates");
+assert.equal(hostIndicator.textContent, "Ready", "resolving the conflict restores the host slot's Ready badge");
+assert.ok(hostIndicator.classList.contains("is-ready"), "the host slot returns to the ready state class");
+assert.equal(guestIndicator.textContent, "Ready", "the guest slot also returns to Ready once its recording is distinct");
 
 // A non-video file is rejected with a creator-facing hint and does not fill the slot.
 const beforeFill = zoneFor("host").classList.contains("filled");

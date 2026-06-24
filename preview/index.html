@@ -300,6 +300,7 @@
       .slot-state.is-missing { background: #fbe4d2; color: #9a4b12; }
       .slot-state.is-ready { background: #d6f3ea; color: #075246; }
       .slot-state.is-optional { background: rgba(246, 251, 249, 0.92); color: #5e6b67; }
+      .slot-state.is-duplicate { background: #fbe0df; color: #9a2b1d; }
 
       .track-palette {
         display: flex;
@@ -1313,6 +1314,11 @@
 
         function updateSlotIndicators() {
           var visible = new Set(currentDefinition().visibleSlots);
+          // Computed once per pass: the side panel already names this problem in prose, but a
+          // creator scanning the canvas sees two slots that both look "Ready" with no way to
+          // tell which two are actually in conflict (#1131 calls for duplicate assignments to be
+          // clearly indicated, not just described off to the side).
+          var duplicates = duplicateSpeakerSlots();
           document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
             var indicator = zone.querySelector(".slot-state");
             if (!indicator) {
@@ -1320,14 +1326,17 @@
               indicator.className = "slot-state";
               zone.appendChild(indicator);
             }
-            indicator.classList.remove("is-ready", "is-missing", "is-optional");
+            indicator.classList.remove("is-ready", "is-missing", "is-optional", "is-duplicate");
             var slot = zone.dataset.slot;
             var required = requiredSlots().indexOf(slot) !== -1;
             indicator.hidden = !visible.has(slot);
             if (indicator.hidden) {
               return;
             }
-            if (zone.classList.contains("filled")) {
+            if (zone.classList.contains("filled") && duplicates.indexOf(slot) !== -1) {
+              indicator.textContent = "Duplicate video";
+              indicator.classList.add("is-duplicate");
+            } else if (zone.classList.contains("filled")) {
               indicator.textContent = "Ready";
               indicator.classList.add("is-ready");
             } else if (required) {
@@ -1340,18 +1349,24 @@
           });
         }
 
+        // Every visible speaker slot that shares a recording identity with another speaker slot,
+        // in layout order. Group by signature first, not "seen vs. not seen": an each-after-the-
+        // first approach would name only the slot that arrived second, leaving the first slot in
+        // the pair to read as plain "Ready" even though it is just as much part of the conflict.
         function duplicateSpeakerSlots() {
-          var seen = {};
-          var duplicates = [];
+          var sigToSlots = {};
           visibleSpeakerSlots().forEach(function (slot) {
             var zone = document.querySelector(slotSelector(slot));
             if (!zone || !zone.classList.contains("filled")) return;
             var sig = (zone.dataset.fileSig || "").trim();
             if (!sig) return;
-            if (seen[sig]) {
-              if (duplicates.indexOf(slot) === -1) duplicates.push(slot);
-            } else {
-              seen[sig] = true;
+            if (!sigToSlots[sig]) sigToSlots[sig] = [];
+            sigToSlots[sig].push(slot);
+          });
+          var duplicates = [];
+          Object.keys(sigToSlots).forEach(function (sig) {
+            if (sigToSlots[sig].length > 1) {
+              duplicates = duplicates.concat(sigToSlots[sig]);
             }
           });
           return duplicates;
