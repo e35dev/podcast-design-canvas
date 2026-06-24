@@ -27,6 +27,7 @@ const styleScreens = [
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
+  "speaker-switch-framing.html",
 ];
 
 for (const file of styleScreens) {
@@ -148,7 +149,7 @@ assert.equal(
   "style nav strips unsupported handoff context from preview app hashes",
 );
 
-const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+const lastNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Contextual b-roll moments"),
   "last visual direction screen hands off to the contextual visuals path",
@@ -201,7 +202,7 @@ assert.equal(
   "embedded style nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
+const embeddedLastNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
@@ -226,7 +227,7 @@ assert.ok(
   "style nav adds no path suffix when there is no path context",
 );
 
-const handoffPathNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
+const handoffPathNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing", false, "?path=episode");
 assert.equal(
   linkWithText(handoffPathNav.nodes, "Continue: Contextual b-roll moments").href,
   "contextual-broll-moments.html?from=style&path=episode",

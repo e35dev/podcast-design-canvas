@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel h2 { font-size: 18px; margin-bottom: 12px; }
+      .panel h3 { font-size: 15px; margin-bottom: 8px; }
+
+      /* Preview area */
+      .preview-frame {
+        aspect-ratio: 16 / 9;
+        background: linear-gradient(160deg, #3a5a54, #1a2e2b);
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+
+      .speaker-box {
+        position: absolute;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+        transition: all 0.3s ease;
+      }
+
+      .speaker-box.dana { background: rgba(19, 111, 99, 0.7); border: 2px solid rgba(19, 111, 99, 0.9); }
+      .speaker-box.marcus { background: rgba(161, 92, 0, 0.7); border: 2px solid rgba(161, 92, 0, 0.9); }
+      .speaker-box .label { text-align: center; font-size: 13px; line-height: 1.3; }
+      .speaker-box .label span { display: block; font-weight: 400; font-size: 11px; opacity: 0.8; }
+
+      /* Controls */
+      .control-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .control-row label {
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 90px;
+        color: var(--muted);
+      }
+
+      select, button {
+        font: inherit;
+        font-size: 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+
+      select { flex: 1; }
+
+      .btn-accent {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        font-weight: 600;
+        padding: 6px 14px;
+      }
+
+      .btn-accent:hover { background: var(--accent-ink); }
+
+      .btn-small {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+
+      .btn-warn {
+        color: var(--warn);
+        border-color: var(--warn);
+        background: #fff8ec;
+      }
+
+      /* Moments list */
+      .moments-list {
+        display: grid;
+        gap: 10px;
+        max-height: 520px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .moment-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 12px;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+
+      .moment-card:hover { border-color: var(--accent); }
+      .moment-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(19,111,99,0.12); }
+
+      .moment-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .moment-time { font-weight: 700; font-size: 14px; }
+      .moment-speaker { font-size: 13px; color: var(--muted); }
+      .moment-style { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      .badge.ready { background: #e8f4f1; color: var(--accent); }
+      .badge.needs-review { background: #fff8ec; color: var(--warn); }
+      .badge.conflict { background: #fdeaea; color: var(--block); }
+      .badge.overridden { background: #ece8f4; color: #5b3fa0; }
+      .badge.accepted { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+
+      .moment-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      .note-bar {
+        margin-top: 14px;
+        padding: 10px 12px;
+        background: #fff8ec;
+        border: 1px solid #e8d2a0;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--warn);
+      }
+
+      .nav-links {
+        margin-top: 20px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1px;
+      }
+
+      .nav-links a:hover { border-color: var(--accent); }
+
+      @media (max-width: 800px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body data-style-step="speaker-switch-framing">
+    <main>
+      <h1>Speaker Switch Framing</h1>
+      <p class="lede">When the active speaker changes, the layout reframes naturally. Choose a default style or override individual moments.</p>
+
+      <div class="workspace">
+        <div class="left-col">
+          <div class="panel" id="preview-panel">
+            <h2>Preview</h2>
+            <div class="preview-frame" id="preview-frame" role="img" aria-label="Speaker framing preview showing current layout style"></div>
+            <div id="style-note" class="note-bar" style="display:none"></div>
+
+            <div class="control-row">
+              <label for="default-style">Default style</label>
+              <select id="default-style" aria-label="Default switch style">
+                <option value="featured">Featured speaker</option>
+                <option value="equal">Equal presence</option>
+                <option value="side-by-side">Side-by-side</option>
+                <option value="pip">Picture-in-picture</option>
+                <option value="reaction">Reaction aware</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <label for="reframe-speed">Reframe speed</label>
+              <select id="reframe-speed" aria-label="Reframe transition speed">
+                <option value="instant">Instant</option>
+                <option value="smooth">Smooth</option>
+                <option value="slow">Slow</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <label for="pin-speaker">Pin speaker</label>
+              <select id="pin-speaker" aria-label="Pin a speaker as featured">
+                <option value="">None</option>
+                <option value="dana">Dana Brooks</option>
+                <option value="marcus">Marcus Chen</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="nav-links">
+            <a href="preset-style-picker.html">Preset style picker</a>
+            <a href="preset-comparison-preview.html">Comparison preview</a>
+            <a href="speaker-framing-safety.html">Framing safety</a>
+            <a href="off-camera-speaker-presence.html">Off-camera presence</a>
+            <a href="layout-safe-areas.html">Safe areas</a>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="panel">
+            <h2>Episode Moments</h2>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">The Future of Open Source &mdash; 1h 12m &middot; Dana Brooks &amp; Marcus Chen</p>
+            <div class="moments-list" id="moments-list" role="list" aria-label="Speaker switch moments"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="../preview/style-nav.js" defer></script>
+    <script>
+      const STYLES = {
+        featured:    { label: "Featured speaker",    desc: "Active speaker large, other small" },
+        equal:       { label: "Equal presence",      desc: "Both speakers at similar size" },
+        "side-by-side": { label: "Side-by-side",     desc: "Speakers placed next to each other" },
+        pip:         { label: "Picture-in-picture",  desc: "Small overlay for non-speaker" },
+        reaction:    { label: "Reaction aware",      desc: "Show listener reaction alongside speaker" }
+      };
+
+      const SPEEDS = { instant: "0s", smooth: "0.4s", slow: "1.2s" };
+
+      const REVIEW_STATES = ["ready", "needs-review", "conflict", "overridden", "accepted"];
+      const REVIEW_LABELS = {
+        ready: "Ready",
+        "needs-review": "Needs review",
+        conflict: "Conflict",
+        overridden: "Overridden",
+        accepted: "Accepted original"
+      };
+
+      const initialMoments = [
+        { id: 1, time: "0:00",  speaker: "Dana Brooks",  from: "solo",   note: "Solo intro before guest arrives", style: null, review: "ready",        pinned: null, speakerCount: 1 },
+        { id: 2, time: "2:14",  speaker: "Marcus Chen",  from: "Dana",   note: "Guest introduction",              style: null, review: "ready",        pinned: null, speakerCount: 2 },
+        { id: 3, time: "8:42",  speaker: "Dana Brooks",  from: "Marcus", note: "Follow-up question on licensing", style: null, review: "needs-review", pinned: null, speakerCount: 2 },
+        { id: 4, time: "18:05", speaker: "Marcus Chen",  from: "Dana",   note: "Deep dive into contributor models", style: null, review: "ready",        pinned: null, speakerCount: 2 },
+        { id: 5, time: "31:20", speaker: "Dana Brooks",  from: "Marcus", note: "Challenge on sustainability",     style: null, review: "conflict",     pinned: null, speakerCount: 2 },
+        { id: 6, time: "42:58", speaker: "Marcus Chen",  from: "Dana",   note: "Community response story",        style: null, review: "needs-review", pinned: null, speakerCount: 2 },
+        { id: 7, time: "55:11", speaker: "Dana Brooks",  from: "Marcus", note: "Wrap-up question",                style: null, review: "ready",        pinned: null, speakerCount: 2 },
+        { id: 8, time: "1:08:30", speaker: "Dana Brooks", from: "Marcus", note: "Solo outro after guest leaves",  style: null, review: "accepted",     pinned: null, speakerCount: 1 }
+      ];
+
+      let moments = JSON.parse(JSON.stringify(initialMoments));
+      let selectedId = 1;
+      let defaultStyle = "featured";
+      let reframeSpeed = "smooth";
+      let globalPin = "";
+
+      const defaultStyleEl = document.getElementById("default-style");
+      const reframeSpeedEl = document.getElementById("reframe-speed");
+      const pinSpeakerEl = document.getElementById("pin-speaker");
+      const previewFrame = document.getElementById("preview-frame");
+      const styleNote = document.getElementById("style-note");
+      const momentsList = document.getElementById("moments-list");
+
+      function effectiveStyle(m) {
+        return m.style || defaultStyle;
+      }
+
+      function effectivePinned(m) {
+        return m.pinned || globalPin;
+      }
+
+      function speakerKey(name) {
+        return name.toLowerCase().split(" ")[0];
+      }
+
+      function renderPreview() {
+        const m = moments.find(x => x.id === selectedId);
+        const style = effectiveStyle(m);
+        const speed = SPEEDS[reframeSpeed];
+        const pinned = effectivePinned(m);
+        const isSolo = m.speakerCount === 1;
+
+        previewFrame.innerHTML = "";
+
+        const danaBox = document.createElement("div");
+        danaBox.className = "speaker-box dana";
+        danaBox.innerHTML = '<div class="label">Dana Brooks<span>Host</span></div>';
+
+        const marcusBox = document.createElement("div");
+        marcusBox.className = "speaker-box marcus";
+        marcusBox.innerHTML = '<div class="label">Marcus Chen<span>Guest</span></div>';
+
+        [danaBox, marcusBox].forEach(b => { b.style.transition = `all ${speed} ease`; });
+
+        const activeSpeaker = speakerKey(m.speaker);
+
+        if (isSolo) {
+          // Solo: one full-frame speaker
+          const soloBox = activeSpeaker === "dana" ? danaBox : marcusBox;
+          Object.assign(soloBox.style, { top: "4%", left: "4%", width: "92%", height: "92%" });
+          previewFrame.appendChild(soloBox);
+          styleNote.style.display = "block";
+          styleNote.textContent = m.speakerCount === 1 && m.from === "solo"
+            ? "Solo segment: only one speaker on screen. Layout adapts automatically."
+            : "Solo outro: guest has left. Layout returns to single speaker.";
+          return;
+        }
+
+        styleNote.style.display = "none";
+
+        // Determine primary/secondary based on pin or active speaker
+        let primary = activeSpeaker;
+        if (pinned) primary = pinned;
+        const isPrimaryDana = primary === "dana";
+        const primaryBox = isPrimaryDana ? danaBox : marcusBox;
+        const secondaryBox = isPrimaryDana ? marcusBox : danaBox;
+
+        if (style === "featured") {
+          Object.assign(primaryBox.style,   { top: "4%", left: "4%", width: "62%", height: "92%" });
+          Object.assign(secondaryBox.style, { top: "30%", left: "70%", width: "26%", height: "40%" });
+        } else if (style === "equal") {
+          Object.assign(primaryBox.style,   { top: "4%", left: "4%", width: "45%", height: "92%" });
+          Object.assign(secondaryBox.style, { top: "4%", left: "52%", width: "45%", height: "92%" });
+        } else if (style === "side-by-side") {
+          Object.assign(primaryBox.style,   { top: "10%", left: "3%", width: "46%", height: "80%" });
+          Object.assign(secondaryBox.style, { top: "10%", left: "51%", width: "46%", height: "80%" });
+        } else if (style === "pip") {
+          Object.assign(primaryBox.style,   { top: "4%", left: "4%", width: "92%", height: "92%" });
+          Object.assign(secondaryBox.style, { top: "62%", left: "72%", width: "24%", height: "32%", borderRadius: "8px" });
+        } else if (style === "reaction") {
+          Object.assign(primaryBox.style,   { top: "4%", left: "4%", width: "56%", height: "92%" });
+          Object.assign(secondaryBox.style, { top: "20%", left: "64%", width: "32%", height: "60%" });
+        }
+
+        previewFrame.appendChild(primaryBox);
+        previewFrame.appendChild(secondaryBox);
+      }
+
+      function renderMoments() {
+        momentsList.innerHTML = "";
+        moments.forEach(m => {
+          const card = document.createElement("div");
+          card.className = "moment-card" + (m.id === selectedId ? " selected" : "");
+          card.setAttribute("role", "listitem");
+          card.setAttribute("tabindex", "0");
+          card.setAttribute("aria-label", `${m.time} - ${m.speaker} - ${m.note}`);
+
+          const style = effectiveStyle(m);
+          const isOverridden = m.style !== null;
+          const pinned = effectivePinned(m);
+
+          card.innerHTML = `
+            <div class="moment-head">
+              <span class="moment-time">${m.time}</span>
+              <span class="badge ${m.review}">${REVIEW_LABELS[m.review]}</span>
+            </div>
+            <div class="moment-speaker">${m.speaker}${m.from !== "solo" ? ` (from ${m.from})` : " (solo)"}</div>
+            <div class="moment-style">${STYLES[style].label}${isOverridden ? " (override)" : ""}${pinned ? ` · pinned: ${pinned === "dana" ? "Dana" : "Marcus"}` : ""}</div>
+            ${m.speakerCount === 1 ? '<div class="note-bar" style="margin-top:6px;padding:6px 8px;font-size:12px;">Single speaker — layout auto-adapts</div>' : ""}
+            <div class="moment-actions" data-moment="${m.id}">
+              ${m.speakerCount > 1 ? `
+                <select class="btn-small" aria-label="Override style for moment at ${m.time}" data-action="override-style">
+                  ${Object.entries(STYLES).map(([k, v]) => `<option value="${k}"${k === style ? " selected" : ""}>${v.label}</option>`).join("")}
+                </select>
+                <select class="btn-small" aria-label="Pin speaker for moment at ${m.time}" data-action="pin-moment">
+                  <option value=""${!m.pinned ? " selected" : ""}>No pin</option>
+                  <option value="dana"${m.pinned === "dana" ? " selected" : ""}>Pin Dana</option>
+                  <option value="marcus"${m.pinned === "marcus" ? " selected" : ""}>Pin Marcus</option>
+                </select>
+              ` : ""}
+              ${isOverridden ? `<button class="btn-small btn-warn" data-action="reset">Reset to default</button>` : ""}
+              <select class="btn-small" aria-label="Review state for moment at ${m.time}" data-action="review-state">
+                ${REVIEW_STATES.map(s => `<option value="${s}"${s === m.review ? " selected" : ""}>${REVIEW_LABELS[s]}</option>`).join("")}
+              </select>
+            </div>
+          `;
+
+          card.addEventListener("click", e => {
+            if (e.target.closest("select") || e.target.closest("button")) return;
+            selectedId = m.id;
+            renderMoments();
+            renderPreview();
+          });
+
+          card.addEventListener("keydown", e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectedId = m.id;
+              renderMoments();
+              renderPreview();
+            }
+          });
+
+          momentsList.appendChild(card);
+        });
+
+        // Wire actions via event delegation
+        momentsList.querySelectorAll("[data-action]").forEach(el => {
+          const momentId = parseInt(el.closest("[data-moment]").dataset.moment, 10);
+          const m = moments.find(x => x.id === momentId);
+
+          if (el.dataset.action === "override-style") {
+            el.addEventListener("change", () => {
+              m.style = el.value === defaultStyle ? null : el.value;
+              if (m.style) m.review = "overridden";
+              renderMoments();
+              if (momentId === selectedId) renderPreview();
+            });
+          } else if (el.dataset.action === "pin-moment") {
+            el.addEventListener("change", () => {
+              m.pinned = el.value || null;
+              renderMoments();
+              if (momentId === selectedId) renderPreview();
+            });
+          } else if (el.dataset.action === "reset") {
+            el.addEventListener("click", () => {
+              m.style = null;
+              m.pinned = null;
+              const orig = initialMoments.find(x => x.id === momentId);
+              if (orig) m.review = orig.review;
+              renderMoments();
+              if (momentId === selectedId) renderPreview();
+            });
+          } else if (el.dataset.action === "review-state") {
+            el.addEventListener("change", () => {
+              m.review = el.value;
+              renderMoments();
+            });
+          }
+        });
+      }
+
+      defaultStyleEl.addEventListener("change", () => {
+        defaultStyle = defaultStyleEl.value;
+        renderMoments();
+        renderPreview();
+      });
+
+      reframeSpeedEl.addEventListener("change", () => {
+        reframeSpeed = reframeSpeedEl.value;
+        renderPreview();
+      });
+
+      pinSpeakerEl.addEventListener("change", () => {
+        globalPin = pinSpeakerEl.value;
+        renderMoments();
+        renderPreview();
+      });
+
+      // Initialize
+      defaultStyleEl.value = defaultStyle;
+      reframeSpeedEl.value = reframeSpeed;
+      renderMoments();
+      renderPreview();
+    </script>
+  </body>
+</html>
