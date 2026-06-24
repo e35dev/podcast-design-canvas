@@ -118,6 +118,12 @@ function createPreviewAppRouting(order) {
       ["layout", layout],
       ["slots", slots],
     ];
+    if (
+      typeof layoutHandoff.placementEntriesFromQuery === "function"
+      && layoutHandoff.placementEntriesFromQuery(params).length > 0
+    ) {
+      entries.push(["placements", params.get("placements")]);
+    }
     if (params.get("broll") === "placed") {
       entries.push(["broll", "placed"]);
     }

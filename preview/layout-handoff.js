@@ -33,6 +33,7 @@
   };
 
   const STORAGE_KEY = "pdc-layout-first-handoff";
+  const PLACEMENTS_QUERY_KEY = "placements";
   const validSlots = new Set(Object.keys(slotLabels));
 
   function clone(value) {
@@ -129,6 +130,51 @@
     return stateFromSlots(layout, entries);
   }
 
+  function placementQueryPayload(state) {
+    if (!state) {
+      return [];
+    }
+    const entries = (state.slots || []).concat(state.optionalBroll ? [state.optionalBroll] : []);
+    return entries
+      .filter((entry) => entry && validSlots.has(entry.slot) && (entry.name || entry.sig))
+      .map((entry) => ({
+        slot: entry.slot,
+        name: entry.name || "",
+        sig: entry.sig || "",
+      }));
+  }
+
+  function placementEntriesFromQuery(params) {
+    const value = params.get(PLACEMENTS_QUERY_KEY);
+    if (!value) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(value);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed
+        .filter((entry) => entry && validSlots.has(entry.slot))
+        .map((entry) => ({
+          slot: entry.slot,
+          name: typeof entry.name === "string" ? entry.name : "",
+          sig: typeof entry.sig === "string" ? entry.sig : "",
+        }))
+        .filter((entry) => entry.name || entry.sig);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function slotEntriesFromQuery(params) {
+    const carried = placementEntriesFromQuery(params);
+    return slotsFromQuery(params.get("slots")).map((slot) => {
+      const entry = carried.find((candidate) => candidate.slot === slot);
+      return entry || { slot };
+    });
+  }
+
   function queryForState(state) {
     if (!state || !normalizeLayout(state.layout)) {
       return "";
@@ -140,6 +186,10 @@
     const params = new URLSearchParams();
     params.set("layout", state.layout);
     params.set("slots", slots.join(","));
+    const placements = placementQueryPayload(state);
+    if (placements.length) {
+      params.set(PLACEMENTS_QUERY_KEY, JSON.stringify(placements));
+    }
     if (state.optionalBroll) {
       params.set("broll", "placed");
     }
@@ -212,7 +262,7 @@
 
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
-    const queryState = stateFromSlots(params.get("layout"), slotsFromQuery(params.get("slots")).map((slot) => ({ slot })));
+    const queryState = stateFromSlots(params.get("layout"), slotEntriesFromQuery(params));
     if (!queryState) {
       return null;
     }
@@ -323,6 +373,7 @@
     load,
     normalizeLayout,
     optionalBrollFromEntries,
+    placementEntriesFromQuery,
     placementList,
     queryForState,
     requiredSlotsFor,

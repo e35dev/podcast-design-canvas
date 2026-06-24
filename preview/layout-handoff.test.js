@@ -33,11 +33,13 @@ assert.deepEqual(
   "interview handoff keeps required speaker slots separate from optional b-roll",
 );
 assert.equal(interview.optionalBroll.name, "intro-card.mp4", "optional b-roll is carried beside required slots");
-assert.equal(
-  handoff.hrefWithState("./app.html#speaker-role-mapping?path=episode", interview),
-  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest&broll=placed",
-  "handoff href flags optional b-roll without adding it to required slots",
-);
+const interviewHref = handoff.hrefWithState("./app.html#speaker-role-mapping?path=episode", interview);
+const interviewParams = new URLSearchParams(interviewHref.split("?")[1]);
+assert.equal(interviewHref.split("?")[0], "./app.html#speaker-role-mapping", "handoff keeps the role-mapping target");
+assert.equal(interviewParams.get("path"), "episode", "handoff keeps the episode path");
+assert.equal(interviewParams.get("layout"), "interview", "handoff keeps the selected layout");
+assert.equal(interviewParams.get("slots"), "host,guest", "handoff keeps required slots separate from optional b-roll");
+assert.equal(interviewParams.get("broll"), "placed", "handoff href flags optional b-roll without adding it to required slots");
 assert.equal(
   handoff.completeSlotQueryForLayout("interview", "host,guest,broll"),
   "host,guest",
@@ -84,8 +86,8 @@ assert.equal(
   "query-only layout handoff still tells role mapping that optional b-roll was placed",
 );
 assert.equal(
-  handoff.queryForState(queryOnlyBroll),
-  "layout=interview&slots=host%2Cguest&broll=placed",
+  new URLSearchParams(handoff.queryForState(queryOnlyBroll)).get("broll"),
+  "placed",
   "query-only optional b-roll state can round-trip through handoff URLs",
 );
 handoff.clear(storage);
@@ -128,6 +130,34 @@ assert.equal(
   "stored placement is restored even when the URL lists the same slots in a different order",
 );
 handoff.clear(storage);
+
+const punctuationSig = "name:100% final, guest:cut.mp4|size:10|mtime:5";
+const punctuationState = handoff.stateFromSlots("interview", [
+  { slot: "host", name: "100% final, host:cut.mp4", sig: "name:100% final, host:cut.mp4|size:9|mtime:4" },
+  { slot: "guest", name: "100% final, guest:cut.mp4", sig: punctuationSig },
+]);
+const punctuationQuery = handoff.queryForState(punctuationState);
+const punctuationParams = new URLSearchParams(punctuationQuery);
+assert.ok(
+  punctuationParams.get("placements").includes("100% final, guest:cut.mp4"),
+  "placement identities are stored as decoded JSON, not delimiter-split fields",
+);
+const punctuationRoundTrip = handoff.load(null, `?path=episode&${punctuationQuery}`);
+assert.equal(
+  punctuationRoundTrip.slots.find((slot) => slot.slot === "guest").sig,
+  punctuationSig,
+  "query-only handoff preserves recording identity with percent, comma, and colon characters",
+);
+assert.equal(
+  punctuationRoundTrip.slots.find((slot) => slot.slot === "host").name,
+  "100% final, host:cut.mp4",
+  "query-only handoff preserves carried file names without session storage",
+);
+assert.equal(
+  handoff.load(null, "?path=episode&layout=interview&slots=host,guest&placements=%E0%A4%A").slots[0].sig,
+  "",
+  "malformed placement JSON falls back to slot-only handoff instead of throwing",
+);
 
 const panelTracks = handoff.tracksFromState(
   handoff.stateFromSlots("panel", [{ slot: "host" }, { slot: "guest" }, { slot: "guest-b" }]),

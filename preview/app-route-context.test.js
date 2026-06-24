@@ -221,6 +221,28 @@ assert.equal(
   "optional b-roll handoff also survives the role-mapping back step",
 );
 
+const placementJson = JSON.stringify([
+  { slot: "host", name: "100% final, host:cut.mp4", sig: "name:100% final, host:cut.mp4|size:9|mtime:4" },
+  { slot: "guest", name: "100% final, guest:cut.mp4", sig: "name:100% final, guest:cut.mp4|size:10|mtime:5" },
+]);
+const placementSearch = new URLSearchParams({
+  path: "episode",
+  layout: "interview",
+  slots: "host,guest",
+  placements: placementJson,
+}).toString();
+const layoutStartRolesWithPlacements = runApp(`#speaker-role-mapping?${placementSearch}`);
+assert.equal(
+  new URLSearchParams(layoutStartRolesWithPlacements.nodes.frame.src.split("?")[1]).get("placements"),
+  placementJson,
+  "layout-first query handoff carries arbitrary recording identities through to role mapping",
+);
+assert.equal(
+  new URLSearchParams(layoutStartRolesWithPlacements.nodes.prevStep.href.split("?")[1]).get("placements"),
+  placementJson,
+  "layout-first query handoff identities survive stepping back to episode readiness",
+);
+
 const invalidLayoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest");
 assert.equal(
   invalidLayoutStartRoles.nodes.frame.src,

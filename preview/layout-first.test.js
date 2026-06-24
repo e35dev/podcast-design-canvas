@@ -259,10 +259,16 @@ assert.equal(
   "false",
   "interview continues after host and guest without b-roll",
 );
-assert.equal(
-  elementsById["layout-continue"].href,
-  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
-  "enabled Continue carries the selected layout and placed slots into the workspace target",
+const readyHref = elementsById["layout-continue"].href;
+const readyParams = new URLSearchParams(readyHref.split("?")[1]);
+assert.equal(readyHref.split("?")[0], "./app.html#speaker-role-mapping", "enabled Continue targets role mapping");
+assert.equal(readyParams.get("path"), "episode", "enabled Continue keeps the episode path");
+assert.equal(readyParams.get("layout"), "interview", "enabled Continue carries the selected layout");
+assert.equal(readyParams.get("slots"), "host,guest", "enabled Continue carries the placed required slots");
+assert.deepEqual(
+  JSON.parse(readyParams.get("placements")).map((entry) => [entry.slot, entry.name]),
+  [["host", "host.mp4"], ["guest", "guest.mp4"]],
+  "enabled Continue carries placed file names for query-only role mapping fallback",
 );
 assert.equal(
   JSON.parse(stored[layoutHandoff.STORAGE_KEY]).layout,
