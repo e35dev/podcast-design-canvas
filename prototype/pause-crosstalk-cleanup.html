@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pause &amp; Cross-Talk Cleanup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.kept {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.cleaned {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.caption {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .wave {
+        position: relative;
+        width: 116px;
+        height: 64px;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #10201d;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 8px;
+      }
+
+      .wave i {
+        display: block;
+        flex: 1;
+        border-radius: 1px;
+        background: #4fb3a1;
+      }
+
+      .wave.gap i.low {
+        background: #2a463f;
+      }
+
+      .wave.overlap i.alt {
+        background: #d6a14e;
+      }
+
+      .tag {
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.45);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 6px;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker {
+        border-left-color: var(--block);
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .moment {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .wave {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pause &amp; cross-talk cleanup</h1>
+      <p class="lede">Smooth out awkward pauses, false starts, and heavy cross-talk so a long episode is easier to watch &mdash; while keeping the natural rhythm of the conversation. We only suggest cleanups; you decide what to soften and what to keep.</p>
+
+      <section class="workspace" aria-label="Pause and cross-talk cleanup workspace">
+        <div class="panel">
+          <h2>Detected moments</h2>
+          <div class="moments" id="moments"></div>
+          <div class="actions">
+            <button type="button" id="addMoment">Add a moment</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Cleanup summary">
+          <h2>Cleanup summary</h2>
+          <div id="status" class="status ready">Conversation ready</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Thoughtful silences and natural back-and-forth are kept unless you choose to change them. We never auto-clean the whole episode for you.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // The kinds of moment we detect. "captionRisk" marks cross-talk that can make
+      // captions unreliable, so it stays a review item until the creator handles it.
+      // "preview" picks which waveform treatment to draw (gap vs overlap).
+      const kinds = {
+        "dead-air": {
+          label: "Long dead air",
+          preview: "gap",
+          steps: ["review", "shorten", "keep"],
+          title: "A long silence interrupts the flow here",
+          suggest: "Shorten the pause, or keep it if the silence is doing real work.",
+        },
+        "false-start": {
+          label: "Repeated false start",
+          preview: "gap",
+          steps: ["review", "shorten", "keep"],
+          title: "A false start repeats the same opening",
+          suggest: "Tighten the false start, or keep it if it sounds natural.",
+        },
+        crosstalk: {
+          label: "Heavy cross-talk",
+          preview: "overlap",
+          captionRisk: true,
+          steps: ["review", "reduce", "keep"],
+          title: "Cross-talk makes this answer hard to caption",
+          suggest: "Lower the background speaker so the captions stay reliable, or keep the overlap.",
+        },
+        interruption: {
+          label: "Interruption over an answer",
+          preview: "overlap",
+          steps: ["review", "reduce", "keep"],
+          title: "An interruption talks over the guest's answer",
+          suggest: "Lower the interrupting speaker, or keep it if the back-and-forth matters.",
+        },
+        cough: {
+          label: "Cough or bump",
+          preview: "overlap",
+          steps: ["review", "soften", "keep"],
+          title: "A cough lands during another speaker's point",
+          suggest: "Soften the noise, or keep it if it isn't distracting.",
+        },
+        "trailing-silence": {
+          label: "Silence after a speaker leaves",
+          preview: "gap",
+          steps: ["review", "shorten", "keep"],
+          title: "Extended silence after a speaker drops off",
+          suggest: "Trim the trailing silence, or keep it as a natural beat.",
+        },
+      };
+
+      // The creator's cleanup choice. Soften/shorten/reduce are "cleaned"; keep is "kept".
+      const choices = {
+        review: "Decide later",
+        shorten: "Shorten the pause",
+        soften: "Soften the noise",
+        reduce: "Lower the other speaker",
+        keep: "Keep it natural",
+      };
+
+      const sampleMoments = [
+        { id: "p1", at: "00:04:12", kind: "dead-air", choice: "shorten" },
+        { id: "p2", at: "00:18:39", kind: "crosstalk", choice: "review" },
+        { id: "p3", at: "00:26:05", kind: "false-start", choice: "keep" },
+        { id: "p4", at: "00:41:50", kind: "trailing-silence", choice: "review" },
+      ];
+
+      let moments = structuredClone(sampleMoments);
+
+      const momentsElement = document.querySelector("#moments");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addMoment").addEventListener("click", () => {
+        const next = moments.length + 1;
+        moments.push({ id: `p${next}-${moments.length}`, at: "00:00:00", kind: "dead-air", choice: "review" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(sampleMoments);
+        render();
+      });
+
+      // Single source of truth: map each detected moment + the creator's choice to a
+      // review state and a plain-language issue. Keeping a moment is always valid and
+      // never penalised — natural rhythm is preserved unless the creator changes it.
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          const kind = kinds[moment.kind];
+          // Only honour a choice the kind actually offers, so a stale value can never
+          // act as an option the UI would not show for this moment.
+          const allowed = kind.steps;
+          const choice = allowed.includes(moment.choice) ? moment.choice : "review";
+          let state;
+          let issue = null;
+
+          if (choice === "keep") {
+            state = "kept";
+            issue = {
+              title: `${kind.label} at ${moment.at}: kept`,
+              action: "Left natural on purpose — no change in the export.",
+              tone: "info",
+            };
+          } else if (choice !== "review") {
+            state = "cleaned";
+            issue = {
+              title: `${kind.label} at ${moment.at}: ${choices[choice].toLowerCase()}`,
+              action: "Cleaned up for the finished episode.",
+              tone: "info",
+            };
+          } else if (kind.captionRisk) {
+            state = "caption";
+            issue = {
+              title: `${kind.title} (${moment.at})`,
+              action: kind.suggest,
+              tone: "blocker",
+            };
+          } else {
+            state = "review";
+            issue = {
+              title: `${kind.title} (${moment.at})`,
+              action: kind.suggest,
+              tone: "review",
+            };
+          }
+
+          return { id: moment.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review" || result.state === "caption");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      function render() {
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(
+          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
+        );
+
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Conversation ready" : "Moments to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every detected moment is settled. The conversation is ready." })]),
+        );
+      }
+
+      function badgeClass(state) {
+        if (state === "kept") {
+          return "kept";
+        }
+        if (state === "cleaned") {
+          return "cleaned";
+        }
+        if (state === "caption") {
+          return "caption";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "caption") {
+          return "captions at risk";
+        }
+        if (state === "review") {
+          return "needs review";
+        }
+        return state;
+      }
+
+      // Draw a tiny waveform: a centre "gap" for pauses, alternating bars for overlap.
+      function waveBars(kind) {
+        const heights = [40, 70, 55, 80, 30, 60, 75, 45, 65, 35, 72, 50];
+        return heights
+          .map((height, index) => {
+            const isGap = kind.preview === "gap" && index >= 4 && index <= 7;
+            const isAlt = kind.preview === "overlap" && index % 2 === 1;
+            const cls = isGap ? "low" : isAlt ? "alt" : "";
+            const shown = isGap ? 12 : height;
+            return `<i class="${cls}" style="height:${shown}%"></i>`;
+          })
+          .join("");
+      }
+
+      function renderMoment(moment, index, result) {
+        const kind = kinds[moment.kind];
+        const article = document.createElement("article");
+        article.className = "moment";
+
+        const kindOptions = Object.entries(kinds)
+          .map(([value, item]) => `<option value="${value}" ${value === moment.kind ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const allowed = kind.steps;
+        const choiceOptions = allowed
+          .map((value) => `<option value="${value}" ${value === moment.choice ? "selected" : ""}>${choices[value]}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled values (kind/choice keys and their fixed
+        // labels, fixed states, numeric bar heights). The editable timestamp is written
+        // via .value below, so typed text can never inject markup into the page.
+        article.innerHTML = `
+          <div class="wave ${kind.preview}">
+            ${waveBars(kind)}
+            <span class="tag">${moment.at}</span>
+          </div>
+          <div class="fields">
+            <div class="head">
+              <strong>${kind.label}</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <div class="fields-row">
+              <label>Timestamp<input data-field="at" aria-label="Moment timestamp" inputmode="numeric"></label>
+              <label>What we found
+                <select data-field="kind" aria-label="Detected moment">${kindOptions}</select>
+              </label>
+            </div>
+            <label>What to do
+              <select data-field="choice" aria-label="Cleanup choice">${choiceOptions}</select>
+            </label>
+          </div>
+        `;
+
+        article.querySelector('[data-field="at"]').value = moment.at;
+
+        article.addEventListener("input", (event) => updateMoment(event, index));
+        article.addEventListener("change", (event) => updateMoment(event, index));
+        return article;
+      }
+
+      function updateMoment(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        const moment = moments[index];
+        moment[field] = event.target.value;
+
+        // When the detected kind changes, drop any cleanup choice the new kind does not
+        // offer so the dropdown never keeps a stale, non-working action.
+        if (field === "kind" && !kinds[moment.kind].steps.includes(moment.choice)) {
+          moment.choice = "review";
+        }
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title and issue.action embed the editable timestamp, so build them with
+        // textContent rather than innerHTML.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
