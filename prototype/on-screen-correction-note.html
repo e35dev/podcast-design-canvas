@@ -381,6 +381,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -580,7 +596,13 @@
             message = "The note is previewing on the frame; choose whether to show it on screen.";
           }
 
-          return { id: moment.id, state, message };
+          // A correction that appears on screen is drawn with the show's title-card
+          // style, so styling and pacing the note is owned by contextual title cards.
+          const showsOnScreen = state === "placed" || state === "drafted";
+          const fixScreen = showsOnScreen ? "contextual-title-cards.html" : null;
+          const fixLabel = showsOnScreen ? "contextual title cards" : null;
+
+          return { id: moment.id, state, message, fixScreen, fixLabel };
         });
 
         const counts = {
@@ -795,6 +817,15 @@
         message.textContent = result.message;
 
         article.append(title, message);
+
+        if (result.fixScreen && result.fixLabel) {
+          const fix = document.createElement("a");
+          fix.className = "fix-link";
+          fix.href = result.fixScreen;
+          fix.textContent = "Style in " + result.fixLabel;
+          article.append(fix);
+        }
+
         return article;
       }
 
