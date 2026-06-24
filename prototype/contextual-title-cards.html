@@ -79,6 +79,24 @@
         background: #ffffff;
       }
 
+      .card.filtered-out {
+        display: none;
+      }
+
+      .overlap-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 12px 0;
+      }
+
+      .overlap-rollup {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .fields {
         display: grid;
         gap: 10px;
@@ -341,6 +359,7 @@
         <aside class="panel" aria-live="polite" aria-label="Title review summary">
           <h2>Title review summary</h2>
           <div id="status" class="status ready">Titles reviewed</div>
+          <div id="overlapFilter" class="overlap-filter"></div>
           <div id="issues" class="issues"></div>
           <p class="summary-note">Only approved titles appear in the export. Rejected suggestions stay out and won't be offered again this episode.</p>
         </aside>
@@ -379,9 +398,11 @@
       ];
 
       let cards = structuredClone(sampleCards);
+      let showOverlapOnly = false;
 
       const cardsElement = document.querySelector("#cards");
       const statusElement = document.querySelector("#status");
+      const overlapFilterElement = document.querySelector("#overlapFilter");
       const issuesElement = document.querySelector("#issues");
 
       document.querySelector("#addCard").addEventListener("click", () => {
@@ -402,6 +423,7 @@
           const source = sources[card.source] || sources.manual;
           let state;
           let issue = null;
+          let overlap = false;
 
           if (card.decision === "rejected") {
             state = "rejected";
@@ -424,6 +446,23 @@
               action: "This came from low-confidence context. Confirm the wording fits, edit it, or reject it.",
               tone: "review",
             };
+          } else if (card.placement === "full-card") {
+            overlap = true;
+            if (card.decision === "approved") {
+              state = "approved";
+              issue = {
+                title: `"${card.text || "Untitled"}" covers the speaker frame`,
+                action: "You approved this full title card — the speaker stays dimmed at this moment.",
+                tone: "info",
+              };
+            } else {
+              state = "review";
+              issue = {
+                title: `"${card.text || "Untitled"}" covers the speaker frame`,
+                action: "This full title card dims the speaker. Approve to accept the overlap, or switch to a corner or lower-third placement.",
+                tone: "review",
+              };
+            }
           } else if (card.decision === "approved") {
             state = "approved";
           } else {
@@ -435,7 +474,7 @@
             };
           }
 
-          return { id: card.id, state, issue };
+          return { id: card.id, state, issue, overlap };
         });
 
         const hasReview = results.some((result) => result.state === "review" || result.state === "suggested");
@@ -447,8 +486,18 @@
       // a caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(cards);
+        if (showOverlapOnly && !evaluation.results.some((r) => r.overlap)) {
+          showOverlapOnly = false;
+        }
         cardsElement.replaceChildren(
-          ...cards.map((card, index) => renderCard(card, index, evaluation.results[index])),
+          ...cards.map((card, index) => {
+            const result = evaluation.results[index];
+            const el = renderCard(card, index, result);
+            if (showOverlapOnly && !result.overlap) {
+              el.classList.add("filtered-out");
+            }
+            return el;
+          }),
         );
         updateSummary(evaluation);
       }
@@ -456,6 +505,26 @@
       function updateSummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready" ? "Titles reviewed" : "Titles need review";
+
+        const total = evaluation.results.length;
+        const overlapCount = evaluation.results.filter((r) => r.overlap).length;
+        overlapFilterElement.replaceChildren();
+        const rollup = document.createElement("p");
+        rollup.className = "overlap-rollup";
+        rollup.textContent = overlapCount === 0
+          ? "No title cards overlap the speaker frame."
+          : `${overlapCount} of ${total} title ${total === 1 ? "card" : "cards"} ${overlapCount === 1 ? "covers" : "cover"} the speaker frame.`;
+        overlapFilterElement.append(rollup);
+        if (overlapCount > 0) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "secondary";
+          btn.textContent = showOverlapOnly
+            ? `Show all ${total} title cards`
+            : `Show only the ${overlapCount} that overlap the speaker`;
+          btn.addEventListener("click", () => { showOverlapOnly = !showOverlapOnly; render(); });
+          overlapFilterElement.append(btn);
+        }
 
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
@@ -479,6 +548,9 @@
           const preview = node.querySelector("[data-title]");
           if (preview && cards[index]) {
             preview.textContent = cards[index].text || "Title";
+          }
+          if (showOverlapOnly) {
+            node.classList.toggle("filtered-out", !evaluation.results[index].overlap);
           }
         });
         updateSummary(evaluation);
