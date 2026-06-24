@@ -31,7 +31,6 @@ const TOOL_STAGE = {
   "show-template-adaptation.html": "Make it reusable",
   "start-from-previous-episode.html": "Make it reusable",
   "episode-chapter-markers.html": "Make it reusable",
-  "episode-watch-through-preview.html": "Review & publish",
   "destination-crop-preview.html": "Review & publish",
   "thumbnail-cover-frame.html": "Review & publish",
   "show-notes-assembly.html": "Review & publish",

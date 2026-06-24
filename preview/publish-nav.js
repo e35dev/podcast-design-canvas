@@ -6,6 +6,7 @@
 //   <script src="../preview/publish-nav.js" defer></script>
 
 const PUBLISH_FLOW = [
+  { id: "episode-watch-through-preview", file: "episode-watch-through-preview.html", label: "Watch-through preview" },
   { id: "export-package-handoff", file: "export-package-handoff.html", label: "Export package handoff" },
   { id: "publish-checklist", file: "publish-checklist.html", label: "Publish checklist" },
 ];
@@ -113,6 +114,11 @@ function renderPublishNav() {
     nextLink.href = next.file;
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
+  } else {
+    const start = document.createElement("a");
+    start.href = "show-notes-assembly.html";
+    start.textContent = "Continue: Show notes assembly";
+    wrap.appendChild(start);
   }
 
   const stepLabel = document.createElement("span");
