@@ -128,6 +128,7 @@
       }
     </style>
     <script src="../preview/publish-nav.js" defer></script>
+    <script src="clip-candidate-review.js"></script>
   </head>
   <body data-publish-step="clip-candidate-review">
     <main>
@@ -468,22 +469,16 @@
       }
 
       function renderFilters() {
-        filtersEl.innerHTML = "";
-        var filters = [
-          { id: "all", label: "All" },
-          { id: "active", label: "Active" },
-          { id: "approved", label: "Approved" },
-          { id: "adjusted", label: "Adjusted" },
-          { id: "dismissed", label: "Dismissed" }
-        ];
+        filtersEl.replaceChildren();
+        var filters = clipCandidateReview.clipFilterOptions(activeFilter);
         for (var i = 0; i < filters.length; i++) {
           (function (f) {
             var btn = document.createElement("button");
             btn.className = "filter-btn";
             btn.textContent = f.label;
-            btn.setAttribute("aria-pressed", String(activeFilter === f.id));
+            btn.setAttribute("aria-pressed", String(f.pressed));
             btn.addEventListener("click", function () {
-              activeFilter = f.id;
+              activeFilter = f.nextFilter;
               render();
             });
             filtersEl.appendChild(btn);
@@ -492,7 +487,7 @@
       }
 
       function renderReadiness() {
-        readinessEl.innerHTML = "";
+        readinessEl.replaceChildren();
         var s = candidateSummary(candidates);
         var approved = approvedCount(candidates);
 
@@ -548,7 +543,7 @@
       }
 
       function renderEpisodeInfo() {
-        episodeInfoEl.innerHTML = "";
+        episodeInfoEl.replaceChildren();
         var lines = [
           { label: "Episode", value: episode.title },
           { label: "Host", value: episode.host },
@@ -572,7 +567,7 @@
       }
 
       function render() {
-        candidatesEl.innerHTML = "";
+        candidatesEl.replaceChildren();
         var visible = filteredCandidates();
         for (var i = 0; i < visible.length; i++) {
           candidatesEl.appendChild(renderClip(visible[i]));
