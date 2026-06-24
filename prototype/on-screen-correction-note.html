@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>On-Screen Correction Note Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        margin-bottom: 12px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 780px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        gap: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .moment-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .moment-meta {
+        display: grid;
+        gap: 4px;
+      }
+
+      .time {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .quote {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      input,
+      select {
+        min-height: 40px;
+      }
+
+      textarea {
+        min-height: 74px;
+        resize: vertical;
+      }
+
+      .badge,
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 800;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.needed,
+      .status.needed {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .badge.drafted,
+      .status.drafted {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.placed,
+      .status.placed {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.dismissed,
+      .status.dismissed {
+        color: #58635f;
+        background: #e8eeeb;
+      }
+
+      .preview-frame {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        border: 1px solid #101816;
+        background:
+          linear-gradient(180deg, rgba(16, 24, 22, 0) 52%, rgba(16, 24, 22, 0.7)),
+          linear-gradient(135deg, #1b5f56, #26453f);
+      }
+
+      .speaker-layout {
+        position: absolute;
+        inset: 18px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 14px;
+      }
+
+      .speaker {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .speaker.secondary {
+        background: linear-gradient(160deg, #8e9fcb, #39496e);
+      }
+
+      .speaker::before {
+        content: "";
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        width: 18%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #edf7f4;
+      }
+
+      .speaker::after {
+        content: "";
+        position: absolute;
+        right: 34%;
+        bottom: 13%;
+        left: 34%;
+        height: 28%;
+        border-radius: 999px 999px 0 0;
+        background: #d9ece8;
+      }
+
+      .speaker-name {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        border-radius: 5px;
+        background: rgba(16, 24, 22, 0.78);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 5px 8px;
+      }
+
+      .correction-note {
+        position: absolute;
+        right: 22px;
+        left: 22px;
+        display: grid;
+        gap: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.36);
+        border-radius: 8px;
+        background: rgba(246, 251, 249, 0.96);
+        color: #17231f;
+        box-shadow: 0 14px 36px rgba(16, 24, 22, 0.24);
+        padding: 12px 14px;
+      }
+
+      .correction-note.subtle {
+        bottom: 22px;
+        left: auto;
+        max-width: 56%;
+      }
+
+      .correction-note.held {
+        top: 50%;
+        transform: translateY(-50%);
+        max-width: 760px;
+        margin: 0 auto;
+        text-align: center;
+        padding: 18px 20px;
+      }
+
+      .correction-note strong {
+        color: #0e5e53;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .correction-note span {
+        line-height: 1.35;
+      }
+
+      .frame-empty {
+        position: absolute;
+        right: 22px;
+        bottom: 22px;
+        max-width: 360px;
+        border-radius: 8px;
+        background: rgba(16, 24, 22, 0.78);
+        color: #ffffff;
+        padding: 12px 14px;
+        font-weight: 700;
+      }
+
+      .transcript-card {
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .transcript-card strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .transcript-card p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary-card {
+        display: grid;
+        gap: 4px;
+        min-height: 70px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .summary-card strong {
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .summary-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.needed {
+        border-left-color: var(--block);
+      }
+
+      .issue.placed {
+        border-left-color: var(--accent);
+      }
+
+      .issue.dismissed {
+        border-left-color: #8a948f;
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 800;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      @media (max-width: 900px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-grid,
+        .fields-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .summary-grid,
+        .fields-row,
+        .speaker-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-frame {
+          aspect-ratio: 4 / 3;
+        }
+
+        .correction-note.subtle {
+          left: 18px;
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>On-screen correction note</h1>
+      <p class="lede">Mark a spoken moment that needs a brief correction, write a neutral note, and preview it on the episode frame before deciding whether it belongs in the final cut.</p>
+
+      <section class="workspace" aria-label="On-screen correction note workspace">
+        <div class="panel">
+          <h2>Moments to review</h2>
+          <div id="moments" class="moments"></div>
+          <div class="actions">
+            <button type="button" id="addMoment">Add sample correction</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Correction preview and summary">
+          <h2>Episode preview</h2>
+          <div id="frame" class="preview-frame"></div>
+          <div id="transcript" class="transcript-card"></div>
+
+          <h2>Correction summary</h2>
+          <div id="status" class="status needed">Review corrections</div>
+          <div id="summary" class="summary-grid"></div>
+          <div id="issues" class="issues"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const prominenceOptions = [
+        { id: "subtle", label: "Subtle lower note" },
+        { id: "held", label: "Held clarification beat" },
+      ];
+
+      const decisionOptions = [
+        { id: "needed", label: "Write note first" },
+        { id: "draft", label: "Preview note only" },
+        { id: "place", label: "Show on screen" },
+        { id: "dismiss", label: "Skip this correction" },
+      ];
+
+      const sampleMoments = [
+        {
+          id: "m1",
+          time: "12:48",
+          speaker: "Host",
+          transcript: "We launched the first beta in 2018, before the remote studio push.",
+          note: "Correction: the first beta launched in 2019.",
+          prominence: "subtle",
+          decision: "place",
+        },
+        {
+          id: "m2",
+          time: "24:16",
+          speaker: "Guest",
+          transcript: "The study came from Stanford, if I remember right.",
+          note: "Correction: the referenced study was published by MIT.",
+          prominence: "held",
+          decision: "draft",
+        },
+        {
+          id: "m3",
+          time: "37:02",
+          speaker: "Host",
+          transcript: "I might be mixing up the year on that acquisition.",
+          note: "",
+          prominence: "subtle",
+          decision: "needed",
+        },
+        {
+          id: "m4",
+          time: "51:33",
+          speaker: "Guest",
+          transcript: "Actually, leave that example in; the meaning is clear from the next sentence.",
+          note: "",
+          prominence: "subtle",
+          decision: "dismiss",
+        },
+      ];
+
+      const addSamples = [
+        {
+          time: "58:21",
+          speaker: "Host",
+          transcript: "That quote was from Baldwin, not Morrison.",
+          note: "Correction: the quote is attributed to Toni Morrison.",
+          prominence: "subtle",
+          decision: "draft",
+        },
+        {
+          time: "01:04:09",
+          speaker: "Guest",
+          transcript: "The grant total was ten million, maybe more.",
+          note: "",
+          prominence: "held",
+          decision: "needed",
+        },
+      ];
+
+      let moments = structuredClone(sampleMoments);
+      let activeMomentId = moments[0].id;
+      let addSampleIndex = 0;
+
+      const momentsElement = document.querySelector("#moments");
+      const frameElement = document.querySelector("#frame");
+      const transcriptElement = document.querySelector("#transcript");
+      const statusElement = document.querySelector("#status");
+      const summaryElement = document.querySelector("#summary");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addMoment").addEventListener("click", () => {
+        const next = structuredClone(addSamples[addSampleIndex % addSamples.length]);
+        addSampleIndex += 1;
+        next.id = `m${Date.now()}-${addSampleIndex}`;
+        moments.push(next);
+        activeMomentId = next.id;
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(sampleMoments);
+        activeMomentId = moments[0].id;
+        addSampleIndex = 0;
+        render();
+      });
+
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          const noteText = moment.note.trim();
+          let state = "needed";
+          let message = "Write a short correction before deciding whether viewers should see it.";
+
+          if (moment.decision === "dismiss") {
+            state = "dismissed";
+            message = "This spoken moment will stay as-is, with no note on screen.";
+          } else if (!noteText) {
+            state = "needed";
+          } else if (moment.decision === "place") {
+            state = "placed";
+            message = "Viewers will see this correction at the selected moment.";
+          } else {
+            state = "drafted";
+            message = "The note is previewing on the frame; choose whether to show it on screen.";
+          }
+
+          return { id: moment.id, state, message };
+        });
+
+        const counts = {
+          needed: 0,
+          drafted: 0,
+          placed: 0,
+          dismissed: 0,
+        };
+
+        for (const result of results) {
+          counts[result.state] += 1;
+        }
+
+        const overall = counts.needed > 0
+          ? "needed"
+          : counts.drafted > 0
+            ? "drafted"
+            : counts.placed > 0
+              ? "placed"
+              : "dismissed";
+
+        return { overall, counts, results };
+      }
+
+      function render() {
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(
+          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
+        );
+
+        const activeIndex = Math.max(0, moments.findIndex((moment) => moment.id === activeMomentId));
+        renderFrame(moments[activeIndex], evaluation.results[activeIndex]);
+        renderTranscript(moments[activeIndex]);
+
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = statusLabel(evaluation.overall);
+
+        summaryElement.replaceChildren(
+          ...Object.entries(evaluation.counts).map(([state, count]) => renderSummaryCard(state, count)),
+        );
+
+        issuesElement.replaceChildren(...evaluation.results.map((result, index) => renderIssue(moments[index], result)));
+      }
+
+      function renderMoment(moment, index, result) {
+        const article = document.createElement("article");
+        article.className = "moment";
+
+        const head = document.createElement("div");
+        head.className = "moment-head";
+
+        const meta = document.createElement("div");
+        meta.className = "moment-meta";
+
+        const time = document.createElement("span");
+        time.className = "time";
+        time.textContent = moment.time;
+
+        const quote = document.createElement("p");
+        quote.className = "quote";
+        quote.textContent = moment.transcript;
+
+        meta.append(time, quote);
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${result.state}`;
+        badge.textContent = stateLabel(result.state);
+
+        head.append(meta, badge);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const note = document.createElement("textarea");
+        note.dataset.field = "note";
+        note.value = moment.note;
+
+        const row = document.createElement("div");
+        row.className = "fields-row";
+        row.append(
+          renderField("How it appears", optionSelect("prominence", prominenceOptions, moment.prominence)),
+          renderField("Use in episode", optionSelect("decision", decisionOptions, moment.decision)),
+        );
+
+        const previewButton = document.createElement("button");
+        previewButton.type = "button";
+        previewButton.className = activeMomentId === moment.id ? "" : "secondary";
+        previewButton.textContent = activeMomentId === moment.id ? "Previewing this moment" : "Preview this moment";
+        previewButton.addEventListener("click", () => {
+          activeMomentId = moment.id;
+          render();
+        });
+
+        fields.append(renderField("Correction text", note), row, previewButton);
+        article.append(head, fields);
+        article.addEventListener("input", (event) => updateMoment(event, index));
+        article.addEventListener("change", (event) => updateMoment(event, index));
+        return article;
+      }
+
+      function updateMoment(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+
+        moments[index][field] = event.target.value;
+        activeMomentId = moments[index].id;
+        render();
+      }
+
+      function renderFrame(moment, result) {
+        frameElement.replaceChildren();
+
+        const layout = document.createElement("div");
+        layout.className = "speaker-layout";
+        layout.append(renderSpeaker("Host", "primary"), renderSpeaker("Guest", "secondary"));
+        frameElement.append(layout);
+
+        if ((result.state === "drafted" || result.state === "placed") && moment.note.trim()) {
+          const note = document.createElement("div");
+          note.className = `correction-note ${moment.prominence === "held" ? "held" : "subtle"}`;
+
+          const label = document.createElement("strong");
+          label.textContent = "Correction";
+
+          const text = document.createElement("span");
+          text.textContent = moment.note.trim();
+
+          note.append(label, text);
+          frameElement.append(note);
+          return;
+        }
+
+        const empty = document.createElement("div");
+        empty.className = "frame-empty";
+        empty.textContent = result.state === "dismissed"
+          ? "No correction note will appear for this moment."
+          : "Write a correction to preview how viewers would see it.";
+        frameElement.append(empty);
+      }
+
+      function renderSpeaker(name, variant) {
+        const speaker = document.createElement("div");
+        speaker.className = `speaker ${variant}`;
+
+        const label = document.createElement("span");
+        label.className = "speaker-name";
+        label.textContent = name;
+
+        speaker.append(label);
+        return speaker;
+      }
+
+      function renderTranscript(moment) {
+        transcriptElement.replaceChildren();
+
+        const title = document.createElement("strong");
+        title.textContent = `${moment.time} - ${moment.speaker}`;
+
+        const text = document.createElement("p");
+        text.textContent = moment.transcript;
+
+        transcriptElement.append(title, text);
+      }
+
+      function optionSelect(field, options, selectedValue) {
+        const select = document.createElement("select");
+        select.dataset.field = field;
+
+        select.replaceChildren(
+          ...options.map((item) => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.label;
+            option.selected = item.id === selectedValue;
+            return option;
+          }),
+        );
+
+        return select;
+      }
+
+      function renderField(labelText, control) {
+        const label = document.createElement("label");
+        label.append(document.createTextNode(labelText), control);
+        return label;
+      }
+
+      function renderSummaryCard(state, count) {
+        const card = document.createElement("div");
+        card.className = "summary-card";
+
+        const value = document.createElement("strong");
+        value.textContent = count;
+
+        const label = document.createElement("span");
+        label.textContent = stateLabel(state);
+
+        card.append(value, label);
+        return card;
+      }
+
+      function renderIssue(moment, result) {
+        const article = document.createElement("article");
+        article.className = `issue ${result.state}`;
+
+        const title = document.createElement("strong");
+        title.textContent = `${moment.time} - ${stateLabel(result.state)}`;
+
+        const message = document.createElement("span");
+        message.textContent = result.message;
+
+        article.append(title, message);
+        return article;
+      }
+
+      function statusLabel(state) {
+        return {
+          needed: "Some corrections need wording",
+          drafted: "Preview notes need a final choice",
+          placed: "Correction notes will appear",
+          dismissed: "No notes will appear",
+        }[state];
+      }
+
+      function stateLabel(state) {
+        return {
+          needed: "Needs wording",
+          drafted: "Previewing note",
+          placed: "On screen",
+          dismissed: "Skipped",
+        }[state];
+      }
+
+      render();
+    </script>
+  </body>
+</html>
