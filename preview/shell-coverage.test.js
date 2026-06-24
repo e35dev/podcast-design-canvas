@@ -39,6 +39,10 @@ assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
 assert.match(shell, /Episode path/, "shell documents the seven-step episode path");
+assert.ok(
+  shell.indexOf("Episode path") < shell.indexOf("Episode ingest setup"),
+  "episode path section precedes ingest setup in shell workflow order",
+);
 assert.match(shell, /Episode ingest setup/, "shell documents the ingest setup path");
 assert.ok(
   shell.indexOf("Episode ingest setup") < shell.indexOf("Speaker setup"),
@@ -62,7 +66,10 @@ assert.ok(
 assert.ok(shell.includes("episode-readiness.html"), "shell links to episode readiness in setup path");
 assert.ok(shell.includes("social-context-intake.html"), "shell links to social context intake in ingest path");
 assert.ok(shell.includes("speaker-attribution-review.html"), "shell links to speaker attribution in setup path");
+assert.ok(shell.includes("guest-profile-reuse.html"), "shell links to guest profile reuse in setup path");
+assert.ok(shell.includes("speaker-eye-line-coherence.html"), "shell links to eye-line coherence in setup path");
 assert.ok(shell.includes("preset-style-picker.html"), "shell links to preset style picker in visual path");
+assert.ok(shell.includes("layout-safe-areas.html"), "shell links to layout safe areas in visual path");
 assert.ok(shell.includes("speaker-framing-safety.html"), "shell links to speaker framing in visual path");
 assert.ok(shell.includes("episode-watch-through-preview.html"), "shell links to watch-through in publish path");
 assert.ok(shell.includes("destination-crop-preview.html"), "shell links to destination crop in publish path");
@@ -76,6 +83,7 @@ assert.ok(
   "cleanup helper section precedes contextual visuals in shell workflow order",
 );
 assert.ok(shell.includes("pause-crosstalk-cleanup.html"), "shell links to pause cleanup in helper path");
+assert.ok(shell.includes("transcript-glossary.html"), "shell links to transcript glossary in helper path");
 assert.ok(shell.includes("on-screen-correction-note.html"), "shell links to correction note in helper path");
 assert.match(shell, /Add contextual visuals/, "shell documents the contextual visuals path");
 assert.match(shell, /Make it reusable/, "shell documents the reuse path");
@@ -88,7 +96,9 @@ assert.ok(
   "reuse path section precedes secondary tools in shell workflow order",
 );
 assert.ok(shell.includes("contextual-broll-moments.html"), "shell links to b-roll in visuals path");
+assert.ok(shell.includes("sensitive-moment-review.html"), "shell links to sensitive moment review in visuals path");
 assert.ok(shell.includes("show-segment-system.html"), "shell links to show segments in reuse path");
+assert.ok(shell.includes("episode-chapter-markers.html"), "shell links to chapter markers in reuse path");
 
 console.log(
   `preview shell coverage: ${prototypes.length} prototypes, all reachable, no dead links`,
