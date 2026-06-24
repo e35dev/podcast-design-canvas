@@ -40,6 +40,19 @@
     broll: "B-roll",
   };
 
+  // When the creator reached this screen through a "Place videos in layout" link, the link
+  // carries from=<path> naming where they came from. The back link then returns there instead
+  // of dumping them on the generic shell, so the placement detour is a real round trip. Keyed by
+  // the same from= values the path navs emit; each maps to that path's originating screen.
+  const PLACEMENT_ORIGINS = {
+    ingest: { file: "speaker-role-mapping.html", label: "ingest setup" },
+    style: { file: "canvas-layer-controls.html", label: "the visual direction" },
+    "speaker-setup": { file: "speaker-eye-line-coherence.html", label: "speaker setup" },
+    reuse: { file: "start-from-previous-episode.html", label: "starting from a previous episode" },
+    episode: { file: "source-media-health.html", label: "the episode flow" },
+    visuals: { file: "contextual-broll-moments.html", label: "contextual visuals" },
+  };
+
   function formatList(items) {
     if (items.length === 0) return "";
     if (items.length === 1) return items[0];
@@ -163,6 +176,26 @@
         actionStatus.textContent = message;
       }
     }
+
+    const backLink = doc.getElementById("layout-back");
+
+    // If a "Place videos in layout" link brought the creator here, point the back link at the
+    // screen they left (carrying the shell path along) so they return to their place in the flow
+    // instead of the generic shell. Unknown or absent origin keeps the default shell link.
+    (function applyOriginBackLink() {
+      if (!backLink || typeof backLink.setAttribute !== "function") return;
+      const loc = options.location || global.location;
+      const search = loc && loc.search;
+      if (!search) return;
+      const params = new URLSearchParams(search);
+      const origin = PLACEMENT_ORIGINS[params.get("from")];
+      if (!origin) return;
+      const path = params.get("path");
+      const href = "../prototype/" + origin.file + (path ? "?path=" + encodeURIComponent(path) : "");
+      backLink.setAttribute("href", href);
+      if ("href" in backLink) backLink.href = href;
+      backLink.textContent = "← Back to " + origin.label;
+    })();
 
     // When Continue is gated, a screen-reader user focusing it should hear WHY, not just that
     // it is dimmed. The live placement status names which required videos are still missing
