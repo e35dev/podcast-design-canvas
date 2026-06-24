@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      fieldset { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px; margin: 0 0 14px; }
+      legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
+      label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
+      .field { margin-bottom: 12px; }
+      .field:last-child { margin-bottom: 0; }
+      input[type="color"] { width: 40px; height: 32px; border: 1px solid var(--line); border-radius: 4px; padding: 2px; cursor: pointer; vertical-align: middle; }
+      .color-row { display: flex; align-items: center; gap: 8px; }
+      .color-label { font-size: 12px; color: var(--muted); min-width: 60px; }
+      .type-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .type-options button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 8px; cursor: pointer; font-size: 13px;
+      }
+      .type-options button[aria-pressed="true"] { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .lower-third-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .lower-third-options button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 8px; cursor: pointer; font-size: 13px;
+      }
+      .lower-third-options button[aria-pressed="true"] { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.defaults { background: #eceeed; color: #55615d; }
+      button.save {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      button.save.saved { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .preview-frame {
+        position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+        margin-bottom: 14px;
+      }
+      .preview-frame .speaker {
+        position: absolute; top: 14%; width: 30%; aspect-ratio: 1; border-radius: 50%; background: #e8f4f1;
+      }
+      .preview-frame .speaker.host { left: 12%; }
+      .preview-frame .speaker.guest { right: 12%; }
+      .preview-frame .lower-third {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 14px;
+      }
+      .preview-frame .lower-third .name { font-weight: 800; font-size: 14px; }
+      .preview-frame .lower-third .role { font-size: 11px; opacity: 0.85; }
+      .preview-frame .show-title {
+        position: absolute; top: 10px; left: 12px; font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 4px;
+      }
+      .preview-frame .caption-bar {
+        position: absolute; bottom: 42%; left: 10%; right: 10%; text-align: center;
+        font-size: 13px; line-height: 1.3; padding: 4px 8px; border-radius: 4px;
+        background: rgba(0,0,0,0.65); color: #fff; transition: font-weight 0.15s, font-size 0.15s;
+      }
+      .preview-frame .caption-bar.bold {
+        font-weight: 800; font-size: 15px; background: rgba(0,0,0,0.82);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      }
+      .preview-card {
+        border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff;
+      }
+      .preview-card .card-body { padding: 10px 12px; }
+      .preview-card .card-body strong { display: block; margin-bottom: 2px; }
+      .preview-card .card-body span { color: var(--muted); font-size: 12px; }
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; margin-top: 14px; }
+      .warning strong { display: block; margin-bottom: 4px; }
+      .warning span { color: var(--muted); }
+      .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      .summary li { color: var(--muted); }
+      .status-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="show-brand-kit-setup">
+    <main>
+      <h1>Show Brand Kit Setup Prototype</h1>
+      <p class="lede">
+        Add show branding once, preview how it affects presets and frames, and reuse it across future episodes without forcing a single house style.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <div class="status-row">
+            <h2 style="margin:0;">Brand Inputs</h2>
+            <span class="badge defaults" id="statusBadge">using defaults</span>
+          </div>
+
+          <fieldset>
+            <legend>Show Colors</legend>
+            <div class="field">
+              <div class="color-row">
+                <input type="color" id="primaryColor" value="#0f6a57" aria-label="Primary show color">
+                <span class="color-label">Primary</span>
+                <input type="color" id="accentColor" value="#1a3a35" aria-label="Accent show color">
+                <span class="color-label">Accent</span>
+                <input type="color" id="textColor" value="#ffffff" aria-label="Text color on brand surfaces">
+                <span class="color-label">Text</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Type Style</legend>
+            <div class="type-options" id="typeOptions" role="group" aria-label="Type style preference">
+              <button type="button" data-type="sans" aria-pressed="true" style="font-family:Inter,sans-serif;">Modern sans</button>
+              <button type="button" data-type="serif" aria-pressed="false" style="font-family:Georgia,serif;">Classic serif</button>
+              <button type="button" data-type="rounded" aria-pressed="false" style="font-family:system-ui;letter-spacing:0.02em;">Playful rounded</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Lower-Third Style</legend>
+            <div class="lower-third-options" id="lowerThirdOptions" role="group" aria-label="Lower-third style">
+              <button type="button" data-lower="bar" aria-pressed="true">Solid bar</button>
+              <button type="button" data-lower="pill" aria-pressed="false">Floating pill</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Caption Emphasis</legend>
+            <div class="lower-third-options" id="captionOptions" role="group" aria-label="Caption emphasis level">
+              <button type="button" data-caption="subtle" aria-pressed="true">Subtle</button>
+              <button type="button" data-caption="bold" aria-pressed="false">Bold highlights</button>
+            </div>
+          </fieldset>
+
+          <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+            <button type="button" class="save" id="saveBtn">Save to show template</button>
+            <button type="button" class="save" id="resetBtn">Reset to defaults</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Live Preview</h2>
+          <h3 style="font-size:13px; color:var(--muted); margin-bottom:8px;">Speaker frame with brand</h3>
+          <div class="preview-frame" id="previewFrame">
+            <div class="show-title" id="previewShowTitle">Tech Talk Weekly</div>
+            <div class="speaker host"></div>
+            <div class="speaker guest"></div>
+            <div class="caption-bar" id="previewCaption">so we rebuilt the whole deploy pipeline</div>
+            <div class="lower-third" id="previewLowerThird">
+              <div class="name" id="previewName">Sarah Chen</div>
+              <div class="role">Host</div>
+            </div>
+          </div>
+
+          <h3 style="font-size:13px; color:var(--muted); margin-bottom:8px;">Preset card with brand</h3>
+          <div class="preview-card" id="previewCard">
+            <div class="preview-frame" id="cardFrame" style="margin:0; border-radius:8px 8px 0 0; aspect-ratio:16/9;">
+              <div class="speaker host" style="width:24%; top:18%;"></div>
+              <div class="speaker guest" style="width:24%; top:18%;"></div>
+              <div class="lower-third" id="cardLowerThird">
+                <div class="name" style="font-size:12px;">James Rivera</div>
+                <div class="role" style="font-size:10px;">Guest</div>
+              </div>
+            </div>
+            <div class="card-body" id="cardBody">
+              <strong>Conversational Focus</strong>
+              <span>Split-screen layout with branded lower-thirds and subtle caption emphasis.</span>
+            </div>
+          </div>
+
+          <div class="warning" id="contrastWarning" hidden>
+            <strong>Readability concern</strong>
+            <span>The current text color may be hard to read on the primary background. Consider adjusting the text color or primary color to keep lower-thirds and captions legible in long-form viewing.</span>
+          </div>
+
+          <h3 style="margin-top:20px;">Connected workflow</h3>
+          <ul class="summary">
+            <li>brand colors apply to preset cards in <a href="preset-style-picker.html">preset style picker</a></li>
+            <li>lower-third style carries into <a href="canvas-layer-controls.html">canvas layer controls</a></li>
+            <li>caption emphasis level feeds <a href="audio-caption-quality-review.html">caption quality review</a></li>
+            <li>saved brand kit reuses through <a href="show-template-adaptation.html">show template adaptation</a></li>
+            <li>readability concerns surface in <a href="export-readiness-review.html">export readiness review</a></li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+    <script>
+      var state = {
+        primary: "#0f6a57",
+        accent: "#1a3a35",
+        text: "#ffffff",
+        type: "sans",
+        lower: "bar",
+        caption: "subtle",
+        saved: false,
+        modified: false,
+      };
+
+      var defaults = { primary: "#0f6a57", accent: "#1a3a35", text: "#ffffff", type: "sans", lower: "bar", caption: "subtle" };
+
+      var typeFamilies = {
+        sans: "Inter, ui-sans-serif, system-ui, sans-serif",
+        serif: "Georgia, 'Times New Roman', serif",
+        rounded: "system-ui, 'Nunito', sans-serif",
+      };
+
+      function luminance(hex) {
+        var r = parseInt(hex.slice(1, 3), 16) / 255;
+        var g = parseInt(hex.slice(3, 5), 16) / 255;
+        var b = parseInt(hex.slice(5, 7), 16) / 255;
+        r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+        g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+        b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(hex1, hex2) {
+        var l1 = luminance(hex1);
+        var l2 = luminance(hex2);
+        var lighter = Math.max(l1, l2);
+        var darker = Math.min(l1, l2);
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      function isModified() {
+        return state.primary !== defaults.primary || state.accent !== defaults.accent ||
+          state.text !== defaults.text || state.type !== defaults.type ||
+          state.lower !== defaults.lower || state.caption !== defaults.caption;
+      }
+
+      function render() {
+        state.modified = isModified();
+        var badge = document.getElementById("statusBadge");
+        if (state.saved) {
+          badge.textContent = "saved to template";
+          badge.className = "badge ready";
+        } else if (state.modified) {
+          badge.textContent = "previewing";
+          badge.className = "badge review";
+        } else {
+          badge.textContent = "using defaults";
+          badge.className = "badge defaults";
+        }
+
+        var family = typeFamilies[state.type];
+        var previewFrame = document.getElementById("previewFrame");
+        var cardFrame = document.getElementById("cardFrame");
+        previewFrame.style.background = "linear-gradient(160deg, " + state.primary + ", " + state.accent + ")";
+        cardFrame.style.background = "linear-gradient(160deg, " + state.primary + ", " + state.accent + ")";
+
+        var showTitle = document.getElementById("previewShowTitle");
+        showTitle.style.background = state.primary;
+        showTitle.style.color = state.text;
+        showTitle.style.fontFamily = family;
+
+        var lowerThirds = [document.getElementById("previewLowerThird"), document.getElementById("cardLowerThird")];
+        for (var i = 0; i < lowerThirds.length; i++) {
+          var lt = lowerThirds[i];
+          lt.style.fontFamily = family;
+          lt.style.color = state.text;
+          lt.style.background = state.primary;
+          if (state.lower === "bar") {
+            lt.style.borderRadius = "0";
+            lt.style.margin = "0";
+            lt.style.textAlign = "left";
+          } else {
+            lt.style.borderRadius = "20px";
+            lt.style.margin = "0 10px 10px";
+            lt.style.textAlign = "center";
+          }
+        }
+
+        var cardBody = document.getElementById("cardBody");
+        cardBody.querySelector("strong").style.fontFamily = family;
+        cardBody.querySelector("span").textContent = "Split-screen layout with branded lower-thirds and " + state.caption + " caption emphasis.";
+
+        var caption = document.getElementById("previewCaption");
+        if (state.caption === "bold") {
+          caption.classList.add("bold");
+        } else {
+          caption.classList.remove("bold");
+        }
+
+        var ratio = contrastRatio(state.text, state.primary);
+        var warning = document.getElementById("contrastWarning");
+        warning.hidden = ratio >= 4.5;
+
+        document.getElementById("saveBtn").className = state.saved ? "save saved" : "save";
+      }
+
+      document.getElementById("primaryColor").addEventListener("input", function (e) {
+        state.primary = e.target.value; state.saved = false; render();
+      });
+      document.getElementById("accentColor").addEventListener("input", function (e) {
+        state.accent = e.target.value; state.saved = false; render();
+      });
+      document.getElementById("textColor").addEventListener("input", function (e) {
+        state.text = e.target.value; state.saved = false; render();
+      });
+
+      document.getElementById("typeOptions").addEventListener("click", function (e) {
+        var btn = e.target.closest("button[data-type]");
+        if (!btn) { return; }
+        state.type = btn.dataset.type; state.saved = false;
+        this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+        render();
+      });
+
+      document.getElementById("lowerThirdOptions").addEventListener("click", function (e) {
+        var btn = e.target.closest("button[data-lower]");
+        if (!btn) { return; }
+        state.lower = btn.dataset.lower; state.saved = false;
+        this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+        render();
+      });
+
+      document.getElementById("captionOptions").addEventListener("click", function (e) {
+        var btn = e.target.closest("button[data-caption]");
+        if (!btn) { return; }
+        state.caption = btn.dataset.caption; state.saved = false;
+        this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+        render();
+      });
+
+      document.getElementById("saveBtn").addEventListener("click", function () {
+        state.saved = true; render();
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", function () {
+        state.primary = defaults.primary; state.accent = defaults.accent; state.text = defaults.text;
+        state.type = defaults.type; state.lower = defaults.lower; state.caption = defaults.caption;
+        state.saved = false;
+        document.getElementById("primaryColor").value = defaults.primary;
+        document.getElementById("accentColor").value = defaults.accent;
+        document.getElementById("textColor").value = defaults.text;
+        document.querySelectorAll("#typeOptions button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.type === defaults.type)); });
+        document.querySelectorAll("#lowerThirdOptions button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lower === defaults.lower)); });
+        document.querySelectorAll("#captionOptions button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.caption === defaults.caption)); });
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { state: state, defaults: defaults, luminance: luminance, contrastRatio: contrastRatio };
+      }
+    </script>
+  </body>
+</html>

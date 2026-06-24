@@ -314,7 +314,7 @@ assert.equal(
 );
 assert.equal(
   stylePath.nodes.prevStep.href,
-  "#preset-pacing-controls?path=episode",
+  "#show-brand-kit-setup?path=episode",
   "episode style path steps back with route context",
 );
 assert.equal(

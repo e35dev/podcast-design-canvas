@@ -196,15 +196,15 @@ assert.equal(
   "embedded style nav routes the pacing step's previous link through the preview app hash",
 );
 assert.equal(
-  linkWithText(embeddedPacingNav.nodes, "Next: Layout safe areas").href,
-  "../preview/app.html#layout-safe-areas",
+  linkWithText(embeddedPacingNav.nodes, "Next: Show brand kit").href,
+  "../preview/app.html#show-brand-kit-setup",
   "embedded style nav routes the pacing step's next link through the preview app hash",
 );
 
 const embeddedMiddleNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", true);
 assert.equal(
-  linkWithText(embeddedMiddleNav.nodes, "Previous: Preset pacing").href,
-  "../preview/app.html#preset-pacing-controls",
+  linkWithText(embeddedMiddleNav.nodes, "Previous: Show brand kit").href,
+  "../preview/app.html#show-brand-kit-setup",
   "embedded style nav routes previous style steps through the preview app hash",
 );
 assert.equal(
@@ -230,7 +230,7 @@ assert.equal(
 // Path context: a creator on the guided episode path keeps ?path=episode on style links.
 const pathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", false, "?path=episode");
 assert.ok(
-  linkWithText(pathNav.nodes, "Previous: Preset pacing").href.includes("?path=episode"),
+  linkWithText(pathNav.nodes, "Previous: Show brand kit").href.includes("?path=episode"),
   "style nav keeps the episode path context on the previous link",
 );
 assert.ok(
@@ -239,7 +239,7 @@ assert.ok(
 );
 const noPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", false, "");
 assert.ok(
-  !linkWithText(noPathNav.nodes, "Previous: Preset pacing").href.includes("?path="),
+  !linkWithText(noPathNav.nodes, "Previous: Show brand kit").href.includes("?path="),
   "style nav adds no path suffix when there is no path context",
 );
 

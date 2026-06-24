@@ -26,6 +26,7 @@ function createPreviewAppRouting(order) {
     "preset-style-picker",
     "preset-comparison-preview",
     "preset-pacing-controls",
+    "show-brand-kit-setup",
     "layout-safe-areas",
     "speaker-framing-safety",
     "canvas-layer-controls",

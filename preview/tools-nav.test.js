@@ -56,6 +56,7 @@ const styleFlow = new Set([
   "preset-style-picker.html",
   "preset-comparison-preview.html",
   "preset-pacing-controls.html",
+  "show-brand-kit-setup.html",
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",

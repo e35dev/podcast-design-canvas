@@ -9,6 +9,7 @@ const STYLE_FLOW = [
   { id: "preset-style-picker", file: "preset-style-picker.html", label: "Preset style picker" },
   { id: "preset-comparison-preview", file: "preset-comparison-preview.html", label: "Preset comparison" },
   { id: "preset-pacing-controls", file: "preset-pacing-controls.html", label: "Preset pacing" },
+  { id: "show-brand-kit-setup", file: "show-brand-kit-setup.html", label: "Show brand kit" },
   { id: "layout-safe-areas", file: "layout-safe-areas.html", label: "Layout safe areas" },
   { id: "speaker-framing-safety", file: "speaker-framing-safety.html", label: "Speaker framing safety" },
   { id: "canvas-layer-controls", file: "canvas-layer-controls.html", label: "Canvas layer controls" },
