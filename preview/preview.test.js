@@ -34,6 +34,8 @@ assert.match(html, /draggable="true"/, "preview shell marks example canvas track
 assert.match(html, /data-slot="host"/, "preview shell labels the host video slot for drag-in placement");
 assert.match(html, /data-slot="guest"/, "preview shell labels the guest video slot for drag-in placement");
 assert.match(html, /data-slot="broll"/, "preview shell labels the b-roll slot for drag-in placement");
+assert.match(html, /Reset layout/, "preview shell lets creators reset the example canvas layout");
+assert.match(html, /canvas-slot-status/, "preview shell shows live slot fill status on the example canvas");
 assert.ok(html.includes("dragover"), "preview shell handles drag-over on example canvas slots");
 assert.ok(
   html.includes("./app.html#canvas-layer-controls?path=episode"),

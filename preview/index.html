@@ -324,6 +324,39 @@
         padding: 0 10px;
       }
 
+      .canvas-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+
+      .canvas-slot-status {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .canvas-reset {
+        min-height: 34px;
+        border: 1px solid #bfd0ca;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--accent);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      .canvas-reset:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .canvas-footer {
         position: absolute;
         right: 18px;
@@ -443,6 +476,10 @@
               <span class="drag-chip" draggable="true" data-track="host" tabindex="0">Host track · Dana Brooks</span>
               <span class="drag-chip" draggable="true" data-track="guest" tabindex="0">Guest track · Marcus Lee</span>
               <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
+            </div>
+            <div class="canvas-toolbar">
+              <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 3 layout slots filled</p>
+              <button type="button" class="canvas-reset" id="canvas-reset">Reset layout</button>
             </div>
             <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
               <span class="canvas-chip scene">Interview scene · intro beat</span>
@@ -924,6 +961,27 @@
           });
         });
 
+        var slotStatus = document.getElementById("canvas-slot-status");
+        var resetButton = document.getElementById("canvas-reset");
+
+        function filledSlotCount() {
+          return document.querySelectorAll(".drop-zone.filled").length;
+        }
+
+        function updateSlotStatus(message) {
+          if (!slotStatus) return;
+          if (message) {
+            slotStatus.textContent = message;
+            return;
+          }
+          var filled = filledSlotCount();
+          if (filled === 3) {
+            slotStatus.textContent = "All layout slots filled — open canvas layer controls to stack layers.";
+            return;
+          }
+          slotStatus.textContent = filled + " of 3 layout slots filled";
+        }
+
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
           zone.addEventListener("dragover", function (event) {
             event.preventDefault();
@@ -937,6 +995,7 @@
             zone.classList.remove("drag-over");
             var track = event.dataTransfer.getData("text/plain");
             if (track !== zone.dataset.slot) {
+              updateSlotStatus("That track belongs in a different slot.");
               return;
             }
             zone.classList.add("filled");
@@ -947,8 +1006,20 @@
               zone.insertBefore(placed, zone.firstChild);
             }
             placed.textContent = trackLabels[track];
+            updateSlotStatus();
           });
         });
+
+        if (resetButton) {
+          resetButton.addEventListener("click", function () {
+            document.querySelectorAll(".drop-zone.filled").forEach(function (zone) {
+              zone.classList.remove("filled");
+              var placed = zone.querySelector(".placed-track");
+              if (placed) placed.remove();
+            });
+            updateSlotStatus("0 of 3 layout slots filled");
+          });
+        }
       }());
     </script>
   </body>
