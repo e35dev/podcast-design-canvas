@@ -272,6 +272,14 @@
         color: var(--accent);
       }
 
+      /* Compact, left-aligned action inside a moment card (does not stretch the grid). */
+      button.apply-similar {
+        justify-self: start;
+        min-height: 34px;
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+
       .summary-note {
         color: var(--muted);
         font-size: 13px;
@@ -385,6 +393,10 @@
         { id: "p2", at: "00:18:39", kind: "crosstalk", choice: "review" },
         { id: "p3", at: "00:26:05", kind: "false-start", choice: "keep" },
         { id: "p4", at: "00:41:50", kind: "trailing-silence", choice: "review" },
+        // A second long dead-air, still undecided, so the same-kind "Apply to similar"
+        // control is visible and exercisable on load: p1 is already set to shorten, so
+        // applying it here changes a real moment (review -> shorten) and is never a no-op.
+        { id: "p5", at: "00:52:30", kind: "dead-air", choice: "review" },
       ];
 
       let moments = structuredClone(sampleMoments);
@@ -453,6 +465,34 @@
         const hasReview = results.some((result) => result.state === "review" || result.state === "caption");
         const overall = hasReview ? "review" : "ready";
         return { overall, results };
+      }
+
+      // Long episodes flag the same kind of moment over and over, so a creator can
+      // decide once and apply it to the rest. These three helpers share one source of
+      // truth — the other moments of the same kind that currently hold a DIFFERENT
+      // choice — so the control only appears when it would change something, its count
+      // never overstates its reach, and it always propagates a real decision.
+      function similarToChange(index, list) {
+        const me = list[index];
+        if (!me) {
+          return [];
+        }
+        return list.filter((other, i) => i !== index && other.kind === me.kind && other.choice !== me.choice);
+      }
+
+      function canApplySimilar(index, list) {
+        return similarToChange(index, list).length > 0;
+      }
+
+      function countSimilar(index, list) {
+        return similarToChange(index, list).length;
+      }
+
+      // Apply this moment's choice to every other moment of the same kind. Same-kind
+      // moments that already match are left untouched; everything else is unchanged.
+      function applySimilar(index, list) {
+        const me = list[index];
+        return list.map((other) => (other.kind === me.kind ? { ...other, choice: me.choice } : other));
       }
 
       // Full rebuild: used on load, add, reset, and select changes (selects don't hold
@@ -569,6 +609,9 @@
             <label>What to do
               <select data-field="choice" aria-label="Cleanup choice">${choiceOptions}</select>
             </label>
+            ${canApplySimilar(index, moments)
+              ? `<button type="button" class="secondary apply-similar" data-action="apply-similar">Apply to ${countSimilar(index, moments)} similar</button>`
+              : ""}
           </div>
         `;
 
@@ -576,6 +619,18 @@
         // The waveform tag shows the editable timestamp, so set it via textContent —
         // never interpolate a user-editable value into the innerHTML scaffold above.
         article.querySelector("[data-tag]").textContent = moment.at;
+
+        // "Apply to similar" propagates this moment's choice to the other same-kind
+        // moments and rebuilds. It carries no user text (only the controlled count), so
+        // it is safe in the scaffold above; the click is wired here rather than through
+        // the field delegation since it is an action, not a field edit.
+        const applyButton = article.querySelector('[data-action="apply-similar"]');
+        if (applyButton) {
+          applyButton.addEventListener("click", () => {
+            moments = applySimilar(index, moments);
+            render();
+          });
+        }
 
         // Text fields update live on input but only refresh badges/summary, so the
         // field keeps focus. Selects re-render fully on change (safe — no caret).
@@ -624,6 +679,12 @@
       }
 
       render();
+
+      // Exported only for the committed Node test (pause-crosstalk-cleanup.test.js).
+      // In the page `module` is undefined, so this block is skipped and nothing changes.
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { kinds, choices, sampleMoments, evaluate, similarToChange, canApplySimilar, countSimilar, applySimilar };
+      }
     </script>
   </body>
 </html>
