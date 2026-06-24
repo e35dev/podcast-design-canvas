@@ -533,6 +533,8 @@
               title: check.title(frame.name || "This speaker"),
               action: check.suggest,
               tone: "review",
+              fixScreen: "layout-safe-areas.html",
+              fixLabel: "layout safe areas",
             };
           }
 
@@ -794,6 +796,12 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen && issue.fixLabel) {
+          const openLink = document.createElement("a");
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel}`;
+          article.append(openLink);
+        }
         return article;
       }
 
