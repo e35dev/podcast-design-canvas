@@ -72,6 +72,18 @@ Before a preset preview is shown, visible speaker mismatches should route throug
 
 Changing a control should update the live preview through the owning spec, not open a separate configuration screen. A preset the creator likes should be saveable as a reusable show layout through `docs/show-template-adaptation.md` Template Contents, Adaptation Flow.
 
+## Readability Safeguards
+
+A polished preset is not automatically a legible one. The plain-language controls can combine into a direction that looks strong on a preset card but reads poorly on the finished episode—high-emphasis captions over a sponsor-ready branding strength, layered density that crowds the caption and title safe areas, or branding that lowers contrast under title moments. Before the creator commits a preset, choices that affect legibility should route through `docs/accessibility-readability-checks.md` Checks so the preview raises a readability concern in creator language with the next action attached, not an internal error.
+
+Route a readability check when a preset choice would affect legibility:
+
+- caption presence set to high-emphasis against a busy or sponsor-ready branding strength
+- layout density layered enough to crowd the caption or title safe areas described in `docs/layout-safe-areas.md`
+- branding strength that lowers contrast under captions or title moments
+
+Each concern should hand off to `docs/accessibility-readability-checks.md` Checks with the creator action attached—raise caption contrast, reduce density, or soften branding—so the creator fixes legibility inside preset selection instead of discovering it at export. A preset that only needs a readability adjustment should stay in the previewing or needs adjustment state rather than blocking the first-edit path.
+
 ## Comparison Preview Flow
 
 When one preset direction looks promising but a creator wants to compare it against another, comparison should stay inside preset selection rather than sending the creator into a separate planning tool.
