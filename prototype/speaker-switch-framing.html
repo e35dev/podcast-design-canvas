@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      /* Preview canvas — shows how speakers are framed at a given moment */
+      .preview-canvas {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #1a3a35, #0d1f1c);
+        margin-bottom: 14px;
+      }
+
+      .speaker-frame {
+        position: absolute;
+        border-radius: 6px;
+        overflow: hidden;
+        transition: all 0.4s ease;
+      }
+
+      .speaker-frame .face {
+        position: absolute;
+        top: 18%;
+        left: 50%;
+        width: 36%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        transition: all 0.4s ease;
+      }
+
+      .speaker-frame .name-tag {
+        position: absolute;
+        bottom: 8%;
+        left: 8%;
+        right: 8%;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.55);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .speaker-frame.active {
+        box-shadow: 0 0 0 2px var(--accent);
+      }
+
+      .speaker-frame.host {
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+      }
+
+      .speaker-frame.host .face {
+        background: #e8f4f1;
+      }
+
+      .speaker-frame.guest1 {
+        background: linear-gradient(160deg, #8da0c9, #2a3d6b);
+      }
+
+      .speaker-frame.guest1 .face {
+        background: #e0e8f7;
+      }
+
+      .speaker-frame.guest2 {
+        background: linear-gradient(160deg, #c9a88d, #6b4a2a);
+      }
+
+      .speaker-frame.guest2 .face {
+        background: #f5ece3;
+      }
+
+      .moment-label {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      .moment-nav {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .moment-nav button {
+        flex: 1;
+        min-height: 36px;
+        padding: 6px 10px;
+        font-size: 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .moment-nav button.active {
+        border-color: var(--accent);
+        background: #dff5ef;
+        color: #075246;
+      }
+
+      .moment-nav button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Switch styles */
+      .style-cards {
+        display: grid;
+        gap: 10px;
+      }
+
+      .style-card {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: border-color 0.15s ease;
+      }
+
+      .style-card:hover {
+        border-color: #a3c4be;
+      }
+
+      .style-card:focus-within {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .style-card.selected {
+        border-color: var(--accent);
+        background: #f0faf7;
+      }
+
+      .style-card input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+        margin: 0;
+      }
+
+      .style-card .style-info strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+
+      .style-card .style-info span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .style-icon {
+        width: 48px;
+        height: 28px;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        background: #e8f0ee;
+        flex-shrink: 0;
+      }
+
+      .style-icon .dot {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--accent);
+        transition: all 0.3s ease;
+      }
+
+      /* Speed controls */
+      .controls {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      /* Per-moment overrides */
+      .overrides {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .override-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+      }
+
+      .override-row .moment-info {
+        display: grid;
+        gap: 2px;
+      }
+
+      .override-row .moment-info strong {
+        font-size: 13px;
+      }
+
+      .override-row .moment-info span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .badge.preset {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.overridden {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.conflict {
+        color: #a52828;
+        background: #fde8e8;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Count change note */
+      .count-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: #f0f6ff;
+        border: 1px solid #c4d5f0;
+        margin-top: 14px;
+      }
+
+      .count-note strong {
+        font-size: 13px;
+        color: #2a4c8a;
+      }
+
+      .count-note span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .moment-nav {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="speaker-switch-framing">
+    <main>
+      <h1>Speaker switch framing</h1>
+      <p class="lede">Control how the episode reframes when speakers change. Pick a default switch style from the preset and override specific moments where the conversation needs a different feel.</p>
+
+      <section class="workspace" aria-label="Speaker switch framing workspace">
+        <div class="panel">
+          <h2>Preview</h2>
+          <div class="preview-canvas" id="canvas" aria-label="Speaker framing preview"></div>
+          <div class="moment-nav" id="moments" role="tablist" aria-label="Episode moments"></div>
+          <h2>Per-moment overrides</h2>
+          <div class="overrides" id="overrides"></div>
+          <div class="actions">
+            <button type="button" id="resetOverrides" class="secondary">Reset all to preset default</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Switch style settings">
+          <h2>Switch style</h2>
+          <div class="style-cards" id="styleCards" role="radiogroup" aria-label="Choose a switch style"></div>
+
+          <div class="controls">
+            <label>Transition speed
+              <select id="speed" aria-label="How quickly the reframe happens">
+                <option value="instant">Instant</option>
+                <option value="smooth" selected>Smooth</option>
+                <option value="slow">Slow</option>
+              </select>
+            </label>
+            <label>Pin a speaker as featured
+              <select id="pinSpeaker" aria-label="Pin a speaker as featured for a segment">
+                <option value="">No one pinned</option>
+                <option value="host">Host &mdash; Dana Brooks</option>
+                <option value="guest1">Guest 1 &mdash; Marcus Lee</option>
+                <option value="guest2">Guest 2 &mdash; Priya Anand</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="countNote"></div>
+
+          <h2 style="margin-top: 18px;">Summary</h2>
+          <div id="statusBadge" class="status ready">Switch framing ready</div>
+          <div class="issues" id="issues"></div>
+          <p class="summary-note">Override any moment where the default style doesn't fit the conversation. Overrides are saved with the episode and carry into the template when you save one.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var SWITCH_STYLES = [
+        {
+          id: "featured",
+          label: "Featured speaker",
+          desc: "Active speaker fills the main frame, others shrink",
+          layout: function (active, speakers) {
+            return speakers.map(function (s, i) {
+              if (s === active) {
+                return { x: 2, y: 2, w: 62, h: 96, faceTop: 16, faceW: 34 };
+              }
+              var small = speakers.filter(function (sp) { return sp !== active; });
+              var si = small.indexOf(s);
+              return { x: 66 + si * 17, y: 56, w: 15, h: 40, faceTop: 14, faceW: 44 };
+            });
+          },
+        },
+        {
+          id: "equal",
+          label: "Equal presence",
+          desc: "All speakers stay the same size regardless of who talks",
+          layout: function (active, speakers) {
+            var count = speakers.length;
+            var w = Math.floor(94 / count);
+            return speakers.map(function (s, i) {
+              return { x: 3 + i * (w + 2), y: 8, w: w, h: 84, faceTop: 18, faceW: 36 };
+            });
+          },
+        },
+        {
+          id: "sidebyside",
+          label: "Side by side",
+          desc: "Two speakers share the frame with a subtle highlight on the active one",
+          layout: function (active, speakers) {
+            return speakers.map(function (s, i) {
+              var isActive = s === active;
+              var count = speakers.length;
+              var w = Math.floor(90 / count);
+              return { x: 3 + i * (w + 3), y: isActive ? 4 : 10, w: w, h: isActive ? 92 : 80, faceTop: 18, faceW: 36 };
+            });
+          },
+        },
+        {
+          id: "pip",
+          label: "Picture in picture",
+          desc: "Active speaker large, others in a small inset",
+          layout: function (active, speakers) {
+            return speakers.map(function (s, i) {
+              if (s === active) {
+                return { x: 0, y: 0, w: 100, h: 100, faceTop: 20, faceW: 28 };
+              }
+              var small = speakers.filter(function (sp) { return sp !== active; });
+              var si = small.indexOf(s);
+              return { x: 72 - si * 20, y: 4, w: 18, h: 32, faceTop: 16, faceW: 44 };
+            });
+          },
+        },
+        {
+          id: "reaction",
+          label: "Reaction aware",
+          desc: "Briefly hold on a listener's visible reaction before switching",
+          layout: function (active, speakers) {
+            return speakers.map(function (s, i) {
+              if (s === active) {
+                return { x: 2, y: 2, w: 55, h: 96, faceTop: 16, faceW: 34 };
+              }
+              var small = speakers.filter(function (sp) { return sp !== active; });
+              var si = small.indexOf(s);
+              return { x: 60, y: 4 + si * 48, w: 38, h: 44, faceTop: 16, faceW: 38 };
+            });
+          },
+        },
+      ];
+
+      var MOMENTS = [
+        { id: "m1", label: "Host introduces topic", active: "host", speakers: ["host", "guest1", "guest2"], override: null, state: "ready", countChange: null },
+        { id: "m2", label: "Guest 1 responds", active: "guest1", speakers: ["host", "guest1", "guest2"], override: null, state: "ready", countChange: null },
+        { id: "m3", label: "Quick exchange", active: "guest2", speakers: ["host", "guest1", "guest2"], override: null, state: "needs review", countChange: null },
+        { id: "m4", label: "Solo host wrap-up", active: "host", speakers: ["host"], override: null, state: "ready", countChange: { expected: 3, actual: 1, note: "Guests left before the wrap-up. Host frames full." } },
+        { id: "m5", label: "Sponsor read", active: "host", speakers: ["host", "guest1"], override: null, state: "conflict", countChange: null },
+      ];
+
+      var SPEAKER_NAMES = {
+        host: "Dana Brooks",
+        guest1: "Marcus Lee",
+        guest2: "Priya Anand",
+      };
+
+      var SPEAKER_CLASSES = {
+        host: "host",
+        guest1: "guest1",
+        guest2: "guest2",
+      };
+
+      var currentStyle = "featured";
+      var currentMoment = 0;
+
+      function getStyle(id) {
+        for (var i = 0; i < SWITCH_STYLES.length; i++) {
+          if (SWITCH_STYLES[i].id === id) return SWITCH_STYLES[i];
+        }
+        return SWITCH_STYLES[0];
+      }
+
+      function effectiveStyle(moment) {
+        return moment.override || currentStyle;
+      }
+
+      function renderCanvas() {
+        var canvas = document.getElementById("canvas");
+        var moment = MOMENTS[currentMoment];
+        var style = getStyle(effectiveStyle(moment));
+        var pinned = document.getElementById("pinSpeaker").value;
+        var active = pinned && moment.speakers.indexOf(pinned) >= 0 ? pinned : moment.active;
+        var positions = style.layout(active, moment.speakers);
+
+        canvas.innerHTML = "";
+        for (var i = 0; i < moment.speakers.length; i++) {
+          var sp = moment.speakers[i];
+          var pos = positions[i];
+          var frame = document.createElement("div");
+          frame.className = "speaker-frame " + SPEAKER_CLASSES[sp] + (sp === active ? " active" : "");
+          frame.style.left = pos.x + "%";
+          frame.style.top = pos.y + "%";
+          frame.style.width = pos.w + "%";
+          frame.style.height = pos.h + "%";
+
+          var face = document.createElement("div");
+          face.className = "face";
+          face.style.top = pos.faceTop + "%";
+          face.style.width = pos.faceW + "%";
+          frame.appendChild(face);
+
+          var tag = document.createElement("div");
+          tag.className = "name-tag";
+          tag.textContent = SPEAKER_NAMES[sp] || sp;
+          frame.appendChild(tag);
+
+          canvas.appendChild(frame);
+        }
+
+        var label = document.createElement("div");
+        label.className = "moment-label";
+        label.textContent = moment.label;
+        canvas.appendChild(label);
+
+        var speedVal = document.getElementById("speed").value;
+        var dur = speedVal === "instant" ? "0s" : speedVal === "slow" ? "0.8s" : "0.4s";
+        var allFrames = canvas.querySelectorAll(".speaker-frame");
+        for (var j = 0; j < allFrames.length; j++) {
+          allFrames[j].style.transitionDuration = dur;
+        }
+      }
+
+      function renderMoments() {
+        var container = document.getElementById("moments");
+        container.innerHTML = "";
+        for (var i = 0; i < MOMENTS.length; i++) {
+          (function (idx) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = MOMENTS[idx].label;
+            btn.className = idx === currentMoment ? "active" : "";
+            btn.setAttribute("role", "tab");
+            btn.setAttribute("aria-selected", idx === currentMoment ? "true" : "false");
+            btn.addEventListener("click", function () {
+              currentMoment = idx;
+              render();
+            });
+            container.appendChild(btn);
+          })(i);
+        }
+      }
+
+      function renderStyleCards() {
+        var container = document.getElementById("styleCards");
+        container.innerHTML = "";
+        for (var i = 0; i < SWITCH_STYLES.length; i++) {
+          (function (style) {
+            var card = document.createElement("div");
+            card.className = "style-card" + (currentStyle === style.id ? " selected" : "");
+
+            var radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "switchStyle";
+            radio.value = style.id;
+            radio.checked = currentStyle === style.id;
+            radio.id = "style-" + style.id;
+            radio.addEventListener("change", function () {
+              currentStyle = style.id;
+              render();
+            });
+
+            var info = document.createElement("div");
+            info.className = "style-info";
+            var strong = document.createElement("strong");
+            strong.textContent = style.label;
+            var span = document.createElement("span");
+            span.textContent = style.desc;
+            info.appendChild(strong);
+            info.appendChild(span);
+
+            var icon = document.createElement("div");
+            icon.className = "style-icon";
+            var d1 = document.createElement("div");
+            d1.className = "dot";
+            d1.style.cssText = "width:10px;height:10px;left:6px;top:9px;";
+            var d2 = document.createElement("div");
+            d2.className = "dot";
+            d2.style.cssText = "width:6px;height:6px;right:6px;top:11px;opacity:0.5;";
+            icon.appendChild(d1);
+            icon.appendChild(d2);
+
+            card.appendChild(radio);
+            card.appendChild(info);
+            card.appendChild(icon);
+
+            card.addEventListener("click", function (e) {
+              if (e.target !== radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event("change"));
+              }
+            });
+
+            container.appendChild(card);
+          })(SWITCH_STYLES[i]);
+        }
+      }
+
+      function renderOverrides() {
+        var container = document.getElementById("overrides");
+        container.innerHTML = "";
+        for (var i = 0; i < MOMENTS.length; i++) {
+          (function (idx) {
+            var m = MOMENTS[idx];
+            var row = document.createElement("div");
+            row.className = "override-row";
+
+            var info = document.createElement("div");
+            info.className = "moment-info";
+            var strong = document.createElement("strong");
+            strong.textContent = m.label;
+            var span = document.createElement("span");
+            span.textContent = m.override
+              ? "Overridden to " + getStyle(m.override).label
+              : "Using preset default (" + getStyle(currentStyle).label + ")";
+            info.appendChild(strong);
+            info.appendChild(span);
+
+            var badge = document.createElement("span");
+            if (m.state === "conflict") {
+              badge.className = "badge conflict";
+              badge.textContent = "conflict";
+            } else if (m.override) {
+              badge.className = "badge overridden";
+              badge.textContent = "overridden";
+            } else if (m.state === "needs review") {
+              badge.className = "badge review";
+              badge.textContent = "needs review";
+            } else {
+              badge.className = "badge preset";
+              badge.textContent = "preset";
+            }
+
+            row.appendChild(info);
+            row.appendChild(badge);
+
+            row.style.cursor = "pointer";
+            row.addEventListener("click", function () {
+              currentMoment = idx;
+              if (m.state === "conflict") {
+                window.location.href = "contextual-broll-moments.html";
+                return;
+              }
+              if (!m.override) {
+                m.override = currentStyle === "featured" ? "sidebyside" : "featured";
+                m.state = "ready";
+              } else {
+                m.override = null;
+              }
+              render();
+            });
+
+            container.appendChild(row);
+          })(i);
+        }
+      }
+
+      function renderCountNote() {
+        var container = document.getElementById("countNote");
+        var m = MOMENTS[currentMoment];
+        container.innerHTML = "";
+        if (!m.countChange) return;
+
+        var note = document.createElement("div");
+        note.className = "count-note";
+        var inner = document.createElement("div");
+        var strong = document.createElement("strong");
+        strong.textContent = "Speaker count changed";
+        var span = document.createElement("span");
+        span.textContent = m.countChange.note;
+        inner.appendChild(strong);
+        inner.appendChild(document.createElement("br"));
+        inner.appendChild(span);
+        note.appendChild(inner);
+        container.appendChild(note);
+      }
+
+      function renderSummary() {
+        var statusBadge = document.getElementById("statusBadge");
+        var issuesContainer = document.getElementById("issues");
+
+        var hasReview = false;
+        var hasConflict = false;
+        var overrideCount = 0;
+
+        for (var i = 0; i < MOMENTS.length; i++) {
+          if (MOMENTS[i].state === "needs review") hasReview = true;
+          if (MOMENTS[i].state === "conflict") hasConflict = true;
+          if (MOMENTS[i].override) overrideCount++;
+        }
+
+        if (hasConflict) {
+          statusBadge.className = "status review";
+          statusBadge.textContent = "Conflicts to resolve";
+        } else if (hasReview) {
+          statusBadge.className = "status review";
+          statusBadge.textContent = "Moments to review";
+        } else {
+          statusBadge.className = "status ready";
+          statusBadge.textContent = "Switch framing ready";
+        }
+
+        issuesContainer.innerHTML = "";
+
+        for (var i = 0; i < MOMENTS.length; i++) {
+          var m = MOMENTS[i];
+          if (m.state === "conflict") {
+            var issue = document.createElement("article");
+            issue.className = "issue";
+            var s = document.createElement("strong");
+            s.textContent = m.label + ": switch overlaps with a b-roll moment";
+            var sp = document.createElement("span");
+            sp.textContent = "The reframe for this moment conflicts with a placed b-roll overlay. Override the switch style or adjust the b-roll timing.";
+            issue.appendChild(s);
+            issue.appendChild(sp);
+            var link = document.createElement("a");
+            link.className = "fix-link";
+            link.href = "contextual-broll-moments.html";
+            link.textContent = "Open b-roll moments \u2192";
+            issue.appendChild(link);
+            issuesContainer.appendChild(issue);
+          } else if (m.state === "needs review") {
+            var issue = document.createElement("article");
+            issue.className = "issue";
+            var s = document.createElement("strong");
+            s.textContent = m.label + ": long stretch with no reframe";
+            var sp = document.createElement("span");
+            sp.textContent = "This exchange may look static with the current style. Consider overriding to a more dynamic option for this moment.";
+            issue.appendChild(s);
+            issue.appendChild(sp);
+            issuesContainer.appendChild(issue);
+          }
+        }
+
+        if (overrideCount > 0) {
+          var note = document.createElement("article");
+          note.className = "issue info";
+          var s = document.createElement("strong");
+          s.textContent = overrideCount + " moment" + (overrideCount === 1 ? "" : "s") + " overridden from preset default";
+          var sp = document.createElement("span");
+          sp.textContent = "Overrides are saved with the episode and carry into the template when you save one.";
+          note.appendChild(s);
+          note.appendChild(sp);
+          issuesContainer.appendChild(note);
+        }
+
+        if (!hasConflict && !hasReview && overrideCount === 0) {
+          var p = document.createElement("p");
+          p.textContent = "Every speaker switch uses the preset default and is ready for export.";
+          issuesContainer.appendChild(p);
+        }
+      }
+
+      function render() {
+        renderCanvas();
+        renderMoments();
+        renderStyleCards();
+        renderOverrides();
+        renderCountNote();
+        renderSummary();
+      }
+
+      document.getElementById("speed").addEventListener("change", function () {
+        var frames = document.querySelectorAll(".speaker-frame");
+        var dur = this.value === "instant" ? "0s" : this.value === "slow" ? "0.8s" : "0.4s";
+        for (var i = 0; i < frames.length; i++) {
+          frames[i].style.transitionDuration = dur;
+        }
+      });
+
+      document.getElementById("pinSpeaker").addEventListener("change", function () {
+        renderCanvas();
+      });
+
+      document.getElementById("resetOverrides").addEventListener("click", function () {
+        for (var i = 0; i < MOMENTS.length; i++) {
+          MOMENTS[i].override = null;
+        }
+        MOMENTS[2].state = "needs review";
+        MOMENTS[4].state = "conflict";
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
