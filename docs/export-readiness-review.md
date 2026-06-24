@@ -186,7 +186,7 @@ When raw speaker files would affect the exported episode, readiness should surfa
 
 | Warning type | Source spec | Relevant section |
 | --- | --- | --- |
-| per-speaker file health | `docs/source-media-health.md` | Health Checks, Readiness Summary |
+| per-speaker file health | `docs/source-media-health.md` | Health Checks, Batch Import Summary |
 | ingest handoff | `docs/episode-ingest-readiness.md` | Readiness Checks, Issue Resolution Mapping |
 | checklist blocking | `docs/publish-checklist.md` | Checklist Item Mapping, Review Approvals |
 

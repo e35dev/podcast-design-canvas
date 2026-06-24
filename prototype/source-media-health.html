@@ -320,6 +320,107 @@
         margin: 14px 0 0;
       }
 
+      .batch-import {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        margin-bottom: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .batch-import.all-clear {
+        border-color: #b8ddd4;
+        background: #f3fbf8;
+      }
+
+      .batch-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .batch-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .batch-status.all-clear {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .batch-status.attention {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .batch-status.action {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      .batch-detail {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .batch-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .batch-links {
+        display: grid;
+        gap: 8px;
+      }
+
+      .batch-link {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 10px 12px;
+      }
+
+      .batch-link strong {
+        font-size: 14px;
+      }
+
+      .batch-link span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .batch-link button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .speaker.filtered-out {
+        display: none;
+      }
+
+      .speaker:focus-within,
+      .speaker.jump-highlight {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -346,11 +447,19 @@
   <body>
     <main>
       <h1>Source media health</h1>
-      <p class="lede">Check whether each speaker's recording is good enough for a polished, full-length episode before you spend time on styling. We only flag what would show up in the finished video &mdash; choices you make on purpose are fine.</p>
+      <p class="lede">Check whether each speaker's recording is good enough for a polished, full-length episode before you spend time on styling. When several files arrive at once, one batch summary rolls up the whole import so you can jump straight to the tracks that need work.</p>
 
       <section class="workspace" aria-label="Source media health workspace">
         <div class="panel">
           <h2>Speaker files</h2>
+          <div class="batch-import" id="batchImport" aria-live="polite">
+            <div class="batch-head">
+              <span id="batchStatus" class="batch-status all-clear">All clear</span>
+              <p id="batchDetail" class="batch-detail"></p>
+            </div>
+            <div class="batch-toolbar" id="batchToolbar"></div>
+            <div class="batch-links" id="batchLinks"></div>
+          </div>
           <div class="speakers" id="speakers"></div>
           <div class="actions">
             <button type="button" id="addSpeaker">Add a speaker file</button>
@@ -465,13 +574,21 @@
       const sampleSpeakers = [
         { id: "host", role: "Host", name: "Host — Dana Brooks", condition: "good", disposition: "keep" },
         { id: "guest-1", role: "Guest 1", name: "Guest 1 — Marcus Lee", condition: "dark", disposition: "keep" },
+        { id: "guest-2", role: "Guest 2", name: "Guest 2 — Priya Shah", condition: "incomplete", disposition: "keep" },
+        { id: "guest-3", role: "Guest 3", name: "Guest 3 — Alex Kim", condition: "quiet", disposition: "keep" },
       ];
 
       let speakers = structuredClone(sampleSpeakers);
+      let showFlaggedOnly = false;
 
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const batchImportElement = document.querySelector("#batchImport");
+      const batchStatusElement = document.querySelector("#batchStatus");
+      const batchDetailElement = document.querySelector("#batchDetail");
+      const batchToolbarElement = document.querySelector("#batchToolbar");
+      const batchLinksElement = document.querySelector("#batchLinks");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -487,8 +604,37 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         speakers = structuredClone(sampleSpeakers);
+        showFlaggedOnly = false;
         render();
       });
+
+      // Rolled-up batch status follows the most serious track: action needed wins over
+      // attention suggested, which wins over all clear.
+      function batchCategory(state) {
+        if (state === "unavailable" || state === "needs replacement") {
+          return "action";
+        }
+        if (state === "review suggested") {
+          return "attention";
+        }
+        return "clear";
+      }
+
+      function summarizeBatch(results) {
+        const categories = results.map((result) => batchCategory(result.state));
+        const actionCount = categories.filter((category) => category === "action").length;
+        const attentionCount = categories.filter((category) => category === "attention").length;
+        const clearCount = categories.filter((category) => category === "clear").length;
+
+        let rollup = "all clear";
+        if (actionCount > 0) {
+          rollup = "action needed";
+        } else if (attentionCount > 0) {
+          rollup = "attention suggested";
+        }
+
+        return { rollup, actionCount, attentionCount, clearCount, flaggedCount: actionCount + attentionCount };
+      }
 
       // Single source of truth: map each speaker's detected condition + creator choice
       // to one of the spec's readiness states, plus a creator-facing issue.
@@ -546,10 +692,90 @@
         return { overall, results };
       }
 
+      function renderBatchSummary(batch, results) {
+        const statusClass = batch.rollup === "action needed"
+          ? "action"
+          : batch.rollup === "attention suggested"
+            ? "attention"
+            : "all-clear";
+
+        batchImportElement.className = `batch-import ${statusClass === "all-clear" ? "all-clear" : ""}`;
+        batchStatusElement.className = `batch-status ${statusClass}`;
+        batchStatusElement.textContent = batch.rollup === "all clear" ? "All clear" : batch.rollup;
+
+        if (batch.rollup === "all clear") {
+          batchDetailElement.textContent = `${batch.clearCount} speaker ${batch.clearCount === 1 ? "file" : "files"} imported and ready to style.`;
+        } else if (batch.rollup === "action needed") {
+          batchDetailElement.textContent = `${batch.actionCount} ${batch.actionCount === 1 ? "track needs" : "tracks need"} replacement before styling. ${batch.clearCount} ${batch.clearCount === 1 ? "track is" : "tracks are"} already clear.`;
+        } else {
+          batchDetailElement.textContent = `${batch.attentionCount} ${batch.attentionCount === 1 ? "track wants" : "tracks want"} a look. ${batch.clearCount} ${batch.clearCount === 1 ? "track is" : "tracks are"} already clear.`;
+        }
+
+        batchToolbarElement.replaceChildren();
+        if (batch.flaggedCount > 0) {
+          const filterButton = document.createElement("button");
+          filterButton.type = "button";
+          filterButton.className = "secondary";
+          filterButton.textContent = showFlaggedOnly
+            ? `Show all ${results.length} tracks`
+            : `Show tracks that need work (${batch.flaggedCount})`;
+          filterButton.addEventListener("click", () => {
+            showFlaggedOnly = !showFlaggedOnly;
+            render();
+          });
+          batchToolbarElement.append(filterButton);
+        }
+
+        const flagged = results.filter((result) => batchCategory(result.state) !== "clear");
+        batchLinksElement.replaceChildren(
+          ...(flagged.length
+            ? flagged.map((result) => {
+                const row = document.createElement("article");
+                row.className = "batch-link";
+                const copy = document.createElement("div");
+                const strong = document.createElement("strong");
+                strong.textContent = result.name;
+                const span = document.createElement("span");
+                span.textContent = result.issue ? result.issue.action : result.state;
+                copy.append(strong, span);
+                const jump = document.createElement("button");
+                jump.type = "button";
+                jump.className = "secondary";
+                jump.textContent = "Open track";
+                jump.addEventListener("click", () => jumpToSpeaker(result.id));
+                row.append(copy, jump);
+                return row;
+              })
+            : []),
+        );
+      }
+
+      function jumpToSpeaker(id) {
+        showFlaggedOnly = false;
+        render();
+        const target = speakersElement.querySelector(`[data-speaker-id="${id}"]`);
+        if (!target) {
+          return;
+        }
+        target.classList.add("jump-highlight");
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        window.setTimeout(() => target.classList.remove("jump-highlight"), 1600);
+      }
+
       function render() {
         const evaluation = evaluate(speakers);
+        const batch = summarizeBatch(evaluation.results);
+        if (showFlaggedOnly && batch.flaggedCount === 0) {
+          showFlaggedOnly = false;
+        }
+        renderBatchSummary(batch, evaluation.results);
+
         speakersElement.replaceChildren(
-          ...speakers.map((speaker, index) => renderSpeaker(speaker, index, evaluation.results[index])),
+          ...speakers.map((speaker, index) => {
+            const result = evaluation.results[index];
+            const flagged = batchCategory(result.state) !== "clear";
+            return renderSpeaker(speaker, index, result, showFlaggedOnly && !flagged);
+          }),
         );
 
         statusElement.className = `status ${evaluation.overall}`;
@@ -577,10 +803,11 @@
         return "ready";
       }
 
-      function renderSpeaker(speaker, index, result) {
+      function renderSpeaker(speaker, index, result, filteredOut = false) {
         const condition = conditions[speaker.condition];
         const article = document.createElement("article");
-        article.className = "speaker";
+        article.className = filteredOut ? "speaker filtered-out" : "speaker";
+        article.dataset.speakerId = speaker.id;
 
         const conditionOptions = Object.entries(conditions)
           .map(([value, item]) => `<option value="${value}" ${value === speaker.condition ? "selected" : ""}>${item.label}</option>`)

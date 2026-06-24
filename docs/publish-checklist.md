@@ -48,7 +48,7 @@ Each checklist item below maps to an existing spec section:
 
 | Checklist item | Source spec | Relevant section |
 | --- | --- | --- |
-| source media ready | `docs/episode-ingest-readiness.md`, `docs/source-media-health.md` | Readiness Checks; Health Checks, Readiness Summary |
+| source media ready | `docs/episode-ingest-readiness.md`, `docs/source-media-health.md` | Readiness Checks; Health Checks, Batch Import Summary |
 | captions reviewed | `docs/audio-caption-quality-review.md`, `docs/speaker-attribution-review.md` | Caption Confidence, Caption Style Presets, Review Flow; Review States, Publish Readiness |
 | glossary corrections applied | `docs/transcript-glossary.md` | Application |
 | thumbnail selected | `docs/thumbnail-cover-frame.md` | Review Criteria, Export Connection |
