@@ -236,6 +236,17 @@
         color: var(--muted);
       }
 
+      .issue a.routed-link {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .issue a.routed-link:hover,
+      .issue a.routed-link:focus-visible {
+        text-decoration: underline;
+        outline: none;
+      }
+
       .bulk {
         display: grid;
         gap: 12px;
@@ -561,6 +572,7 @@
               tone: "info",
               title: "Timing should be repaired before relabeling",
               action: "Open sync repair so the visible speaker and caption moment line up.",
+              fixSurface: "speaker-sync-repair",
             };
           } else if (!moment.assignedSpeaker) {
             state = "needs speaker";
@@ -770,8 +782,19 @@
         const title = document.createElement("strong");
         title.textContent = issue.title;
 
-        const action = document.createElement("span");
-        action.textContent = issue.action;
+        // When an issue routes to a fix screen, the next step is a real link the
+        // creator can open — not just a status note — so "Open sync repair"
+        // actually navigates to the sync repair screen.
+        let action;
+        if (issue.fixSurface) {
+          action = document.createElement("a");
+          action.className = "routed-link";
+          action.href = `${issue.fixSurface}.html`;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
 
         article.append(title, action);
         return article;
