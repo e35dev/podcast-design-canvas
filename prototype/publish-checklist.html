@@ -164,6 +164,22 @@
         border-left-color: var(--blocked);
       }
 
+      .warning .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .warning .fix-link:hover,
+      .warning .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .destination-notice {
         border-left: 4px solid var(--review);
         border-radius: 6px;
@@ -240,12 +256,16 @@
           label: "Source media",
           detail: "Speaker tracks are synced and usable.",
           requiredFor: ["youtube", "review", "archive"],
+          fixScreen: "source-media-health.html",
+          fixLabel: "source media health",
         },
         {
           id: "captions",
           label: "Captions",
           detail: "Captions and glossary corrections are reviewed.",
           requiredFor: ["youtube", "review"],
+          fixScreen: "audio-caption-quality-review.html",
+          fixLabel: "caption quality review",
         },
         {
           id: "thumbnail",
@@ -253,6 +273,8 @@
           detail: "A publish-ready cover frame is selected.",
           requiredFor: ["youtube"],
           reopenOnDestinationChange: true,
+          fixScreen: "thumbnail-cover-frame.html",
+          fixLabel: "thumbnail cover frame",
         },
         {
           id: "metadata",
@@ -260,6 +282,8 @@
           detail: "Title, description, chapters, and guest links are complete.",
           requiredFor: ["youtube"],
           reopenOnDestinationChange: true,
+          fixScreen: "episode-chapter-markers.html",
+          fixLabel: "chapter markers",
         },
         {
           id: "watermark",
@@ -274,6 +298,8 @@
           detail: "Master export settings are preserved.",
           requiredFor: ["archive"],
           reopenOnDestinationChange: true,
+          fixScreen: "export-readiness-review.html",
+          fixLabel: "export readiness review",
         },
       ];
 
@@ -486,7 +512,18 @@
       function renderWarning({ item, state }) {
         const warning = document.createElement("article");
         warning.className = `warning ${state}`;
-        warning.innerHTML = `<strong>${item.label}: ${stateLabels[state]}</strong><p>${item.detail}</p>`;
+        const strong = document.createElement("strong");
+        strong.textContent = `${item.label}: ${stateLabels[state]}`;
+        const detail = document.createElement("p");
+        detail.textContent = item.detail;
+        warning.append(strong, detail);
+        if (item.fixScreen && (state === "review" || state === "blocked")) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = item.fixScreen;
+          openLink.textContent = `Open ${item.fixLabel} →`;
+          warning.append(openLink);
+        }
         return warning;
       }
 
