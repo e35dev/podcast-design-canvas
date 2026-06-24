@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Metadata Publishing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .mini {
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 1px 8px;
+      }
+
+      .mini.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .mini.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .mini.missing {
+        color: #8b1e1e;
+        background: #ffe0e0;
+      }
+
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      input[type="text"],
+      select {
+        min-height: 40px;
+      }
+
+      textarea {
+        min-height: 64px;
+        resize: vertical;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .card .thumb {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: linear-gradient(160deg, #46665f, #18302b);
+      }
+
+      .card .thumb .face {
+        position: absolute;
+        top: 24%;
+        left: 50%;
+        width: 24%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .card .thumb .title-on {
+        position: absolute;
+        left: 6%;
+        bottom: 8%;
+        right: 30%;
+        color: #fff;
+        font-weight: 800;
+        font-size: 15px;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      }
+
+      .card .thumb.missing {
+        background: repeating-linear-gradient(135deg, #d7ddda, #d7ddda 10px, #e7ece9 10px, #e7ece9 20px);
+      }
+
+      .card .thumb.missing .face,
+      .card .thumb.missing .title-on {
+        display: none;
+      }
+
+      .card .thumb .placeholder {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: #6f817b;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .card .thumb.missing .placeholder {
+        display: flex;
+      }
+
+      .card .body {
+        padding: 12px 14px;
+      }
+
+      .card .ep-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin: 0 0 4px;
+        word-break: break-word;
+      }
+
+      .card .ep-meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+
+      .card .ep-desc {
+        font-size: 13px;
+        color: #2c3a36;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .card .chapters {
+        margin-top: 10px;
+        display: grid;
+        gap: 3px;
+      }
+
+      .card .chapters .ch {
+        display: flex;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .card .chapters .ch b {
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+        margin-top: 14px;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Episode metadata publishing</h1>
+      <p class="lede">Confirm the title, description, chapters, and thumbnail before you publish &mdash; and see exactly how the episode will look where it's going, not as a blank CMS form. Edit a field and the published preview updates as you type.</p>
+
+      <section class="workspace" aria-label="Episode metadata workspace">
+        <div class="panel">
+          <h2>Publish details</h2>
+          <div class="field">
+            <label for="title">Episode title <span id="title-state" class="mini ready">ready</span></label>
+            <input id="title" type="text" aria-label="Episode title">
+          </div>
+          <div class="field">
+            <label for="desc">Short description <span id="desc-state" class="mini ready">ready</span></label>
+            <textarea id="desc" aria-label="Short description"></textarea>
+          </div>
+          <div class="field">
+            <label for="dest">Publish destination</label>
+            <select id="dest" aria-label="Publish destination">
+              <option value="youtube">YouTube full episode</option>
+              <option value="podcast">Podcast (audio)</option>
+              <option value="client">Private client review</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="thumb">Thumbnail <span id="thumb-state" class="mini ready">ready</span></label>
+            <select id="thumb" aria-label="Thumbnail">
+              <option value="selected">Selected from the episode</option>
+              <option value="none">Not selected yet</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="chapters">Chapters</label>
+            <select id="chapters" aria-label="Chapters">
+              <option value="on">Include confirmed chapters</option>
+              <option value="off">No chapters</option>
+            </select>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Published preview">
+          <h2>How it will look published</h2>
+          <div class="card" id="card">
+            <div class="thumb" data-thumb>
+              <span class="face"></span>
+              <span class="title-on" data-thumb-title></span>
+              <span class="placeholder">No thumbnail selected</span>
+            </div>
+            <div class="body">
+              <p class="ep-title" data-card-title></p>
+              <p class="ep-meta" data-card-meta></p>
+              <p class="ep-desc" data-card-desc></p>
+              <div class="chapters" data-chapters></div>
+            </div>
+          </div>
+          <div id="status" class="status ready">Ready to publish</div>
+          <p class="summary-note">A missing title, description, or required thumbnail keeps the episode in review, with the consequence shown &mdash; never a silent publish.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const state = {
+        title: "How we shipped in 30 days",
+        desc: "Dana sits down with Marcus to unpack the launch: the one decision that changed everything, what they cut, and what they'd do again.",
+        dest: "youtube",
+        thumb: "selected",
+        chapters: "on",
+      };
+
+      // Fixed sample chapters for the preview.
+      const chapters = [
+        { at: "00:00", title: "Cold open" },
+        { at: "02:15", title: "The launch story" },
+        { at: "18:40", title: "What they cut" },
+        { at: "41:50", title: "What they'd do again" },
+      ];
+
+      const destinations = {
+        youtube: "YouTube full episode",
+        podcast: "Podcast (audio)",
+        client: "Private client review",
+      };
+
+      const card = document.querySelector("#card");
+      const statusElement = document.querySelector("#status");
+
+      function bindText(id, key) {
+        const el = document.querySelector(`#${id}`);
+        el.value = state[key];
+        el.addEventListener("input", (event) => {
+          state[key] = event.target.value;
+          render();
+        });
+      }
+      function bindSelect(id, key) {
+        const el = document.querySelector(`#${id}`);
+        el.value = state[key];
+        el.addEventListener("change", (event) => {
+          state[key] = event.target.value;
+          render();
+        });
+      }
+
+      bindText("title", "title");
+      bindText("desc", "desc");
+      bindSelect("dest", "dest");
+      bindSelect("thumb", "thumb");
+      bindSelect("chapters", "chapters");
+
+      function fieldState(value, required) {
+        if (!value.trim()) {
+          return required ? "missing" : "review";
+        }
+        return "ready";
+      }
+
+      function setMini(id, status) {
+        const el = document.querySelector(`#${id}`);
+        el.className = `mini ${status}`;
+        el.textContent = status === "missing" ? "missing" : status === "review" ? "add more" : "ready";
+      }
+
+      function render() {
+        const titleState = fieldState(state.title, true);
+        const descState = fieldState(state.desc, false);
+        // YouTube requires a thumbnail; other destinations don't.
+        const thumbRequired = state.dest === "youtube";
+        const thumbState = state.thumb === "none" ? (thumbRequired ? "missing" : "review") : "ready";
+
+        setMini("title-state", titleState);
+        setMini("desc-state", descState);
+        setMini("thumb-state", thumbState);
+
+        // Published preview — all editable text written via textContent.
+        const thumb = card.querySelector("[data-thumb]");
+        thumb.className = `thumb ${state.thumb === "none" ? "missing" : ""}`;
+        card.querySelector("[data-thumb-title]").textContent = state.title || "Untitled episode";
+        card.querySelector("[data-card-title]").textContent = state.title || "Untitled episode";
+        card.querySelector("[data-card-meta]").textContent = `${destinations[state.dest]} · Episode 14`;
+        card.querySelector("[data-card-desc]").textContent = state.desc || "Add a description so viewers know what this episode is about.";
+
+        const chaptersEl = card.querySelector("[data-chapters]");
+        if (state.chapters === "on") {
+          chaptersEl.replaceChildren(...chapters.map((ch) => {
+            const row = document.createElement("div");
+            row.className = "ch";
+            const at = document.createElement("b");
+            at.textContent = ch.at;
+            const title = document.createElement("span");
+            title.textContent = ch.title;
+            row.append(at, title);
+            return row;
+          }));
+        } else {
+          chaptersEl.replaceChildren();
+        }
+
+        const blocked = titleState !== "ready" || thumbState === "missing";
+        statusElement.className = `status ${blocked ? "review" : "ready"}`;
+        statusElement.textContent = blocked
+          ? (titleState !== "ready" ? "Add a title to publish" : "This destination needs a thumbnail")
+          : "Ready to publish";
+      }
+
+      render();
+    </script>
+  </body>
+</html>
