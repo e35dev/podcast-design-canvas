@@ -157,6 +157,11 @@
         background: #ffe0e0;
       }
 
+      .badge.ignored {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
       .status {
         display: inline-flex;
         align-items: center;
@@ -329,14 +334,14 @@
         "dead-air": {
           label: "Long dead air",
           preview: "gap",
-          steps: ["review", "shorten", "keep"],
+          steps: ["review", "shorten", "keep", "ignore"],
           title: "A long silence interrupts the flow here",
           suggest: "Shorten the pause, or keep it if the silence is doing real work.",
         },
         "false-start": {
           label: "Repeated false start",
           preview: "gap",
-          steps: ["review", "shorten", "keep"],
+          steps: ["review", "shorten", "keep", "ignore"],
           title: "A false start repeats the same opening",
           suggest: "Tighten the false start, or keep it if it sounds natural.",
         },
@@ -344,28 +349,28 @@
           label: "Heavy cross-talk",
           preview: "overlap",
           captionRisk: true,
-          steps: ["review", "reduce", "keep"],
+          steps: ["review", "reduce", "keep", "ignore"],
           title: "Cross-talk makes this answer hard to caption",
           suggest: "Lower the background speaker so the captions stay reliable, or keep the overlap.",
         },
         interruption: {
           label: "Interruption over an answer",
           preview: "overlap",
-          steps: ["review", "reduce", "keep"],
+          steps: ["review", "reduce", "keep", "ignore"],
           title: "An interruption talks over the guest's answer",
           suggest: "Lower the interrupting speaker, or keep it if the back-and-forth matters.",
         },
         cough: {
           label: "Cough or bump",
           preview: "overlap",
-          steps: ["review", "soften", "keep"],
+          steps: ["review", "soften", "keep", "ignore"],
           title: "A cough lands during another speaker's point",
           suggest: "Soften the noise, or keep it if it isn't distracting.",
         },
         "trailing-silence": {
           label: "Silence after a speaker leaves",
           preview: "gap",
-          steps: ["review", "shorten", "keep"],
+          steps: ["review", "shorten", "keep", "ignore"],
           title: "Extended silence after a speaker drops off",
           suggest: "Trim the trailing silence, or keep it as a natural beat.",
         },
@@ -378,13 +383,14 @@
         soften: "Soften the noise",
         reduce: "Lower the other speaker",
         keep: "Keep it natural",
+        ignore: "Ignore for export",
       };
 
       const sampleMoments = [
         { id: "p1", at: "00:04:12", kind: "dead-air", choice: "shorten" },
         { id: "p2", at: "00:18:39", kind: "crosstalk", choice: "review" },
         { id: "p3", at: "00:26:05", kind: "false-start", choice: "keep" },
-        { id: "p4", at: "00:41:50", kind: "trailing-silence", choice: "review" },
+        { id: "p4", at: "00:41:50", kind: "trailing-silence", choice: "ignore" },
       ];
 
       let moments = structuredClone(sampleMoments);
@@ -424,6 +430,13 @@
               action: "Left natural on purpose — no change in the export.",
               tone: "info",
             };
+          } else if (choice === "ignore") {
+            state = "ignored for export";
+            issue = {
+              title: `${kind.label} at ${moment.at}: ignored for export`,
+              action: "Left unchanged and hidden from export readiness for this episode.",
+              tone: "info",
+            };
           } else if (choice !== "review") {
             state = "cleaned";
             issue = {
@@ -447,12 +460,12 @@
             };
           }
 
-          return { id: moment.id, state, issue };
+          return { id: moment.id, state, issue, pending: state === "review" || state === "caption" };
         });
 
-        const hasReview = results.some((result) => result.state === "review" || result.state === "caption");
-        const overall = hasReview ? "review" : "ready";
-        return { overall, results };
+        const pending = results.filter((result) => result.pending).length;
+        const overall = pending ? "review" : "ready";
+        return { overall, results, pending };
       }
 
       // Full rebuild: used on load, add, reset, and select changes (selects don't hold
@@ -467,7 +480,9 @@
 
       function updateSummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
-        statusElement.textContent = evaluation.overall === "ready" ? "Conversation ready" : "Moments to review";
+        statusElement.textContent = evaluation.overall === "ready"
+          ? "Conversation ready"
+          : `${evaluation.pending} ${evaluation.pending === 1 ? "moment still to review" : "moments still to review"}`;
 
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
@@ -504,6 +519,9 @@
         if (state === "cleaned") {
           return "cleaned";
         }
+        if (state === "ignored for export") {
+          return "ignored";
+        }
         if (state === "caption") {
           return "caption";
         }
@@ -513,6 +531,9 @@
       function badgeLabel(state) {
         if (state === "caption") {
           return "captions at risk";
+        }
+        if (state === "ignored for export") {
+          return "ignored for export";
         }
         if (state === "review") {
           return "needs review";
