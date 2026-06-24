@@ -421,7 +421,8 @@
         gap: 10px;
       }
 
-      button {
+      button,
+      .actions a.action-link {
         min-height: 40px;
         border: 1px solid #0f5d53;
         border-radius: 6px;
@@ -433,9 +434,23 @@
         cursor: pointer;
       }
 
-      button.secondary {
+      .actions a.action-link {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+      }
+
+      button.secondary,
+      .actions a.action-link {
         background: #ffffff;
         color: var(--accent);
+      }
+
+      .actions a.action-link:hover,
+      .actions a.action-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .status {
@@ -469,6 +484,17 @@
 
       .issue strong { display: block; margin-bottom: 4px; }
       .issue span { color: var(--muted); }
+      .issue a.routed-link {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .issue a.routed-link:hover,
+      .issue a.routed-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
 
       .summary-note {
         color: var(--muted);
@@ -564,6 +590,8 @@
         ignore: "Ignore for this episode",
         attribution: "Open attribution review",
       };
+
+      const attributionReviewSurface = "speaker-attribution-review";
 
       const repairSummaryActions = {
         "align-host": "Aligned to host",
@@ -692,6 +720,12 @@
         return Boolean(track.repairConfirmed || track.resolution === "repaired");
       }
 
+      function routeToAttributionReview(index, repairConfirmed = false) {
+        tracks[index].repairConfirmed = repairConfirmed;
+        tracks[index].resolution = "needs attribution review";
+        render();
+      }
+
       function evaluate(list) {
         const results = list.map((track) => {
           const issue = issues[track.issue];
@@ -731,6 +765,7 @@
                 ? `${repairSummaryCopy(track, issue)} Open attribution review for the affected span before marking captions ready.`
                 : "Open attribution review for the affected span before marking captions ready.",
               tone: "review",
+              fixSurface: attributionReviewSurface,
             };
           } else if (track.resolution === "repaired") {
             state = "repaired";
@@ -1061,8 +1096,12 @@
           applyButton.type = "button";
           applyButton.textContent = "Confirm repair";
           applyButton.addEventListener("click", () => {
+            if (tracks[index].issue === "attribution") {
+              routeToAttributionReview(index, true);
+              return;
+            }
             tracks[index].repairConfirmed = true;
-            tracks[index].resolution = tracks[index].issue === "attribution" ? "needs attribution review" : "repaired";
+            tracks[index].resolution = "repaired";
             render();
           });
 
@@ -1100,16 +1139,14 @@
           actions.append(ignoreButton);
 
           if (issues[track.issue].repairs.includes("attribution")) {
-            const attributionButton = document.createElement("button");
-            attributionButton.type = "button";
-            attributionButton.className = "secondary";
-            attributionButton.textContent = "Open attribution review";
-            attributionButton.addEventListener("click", () => {
-              tracks[index].repairConfirmed = false;
-              tracks[index].resolution = "needs attribution review";
-              render();
+            const attributionLink = document.createElement("a");
+            attributionLink.className = "action-link";
+            attributionLink.href = `${attributionReviewSurface}.html`;
+            attributionLink.textContent = "Open attribution review";
+            attributionLink.addEventListener("click", () => {
+              routeToAttributionReview(index, false);
             });
-            actions.appendChild(attributionButton);
+            actions.appendChild(attributionLink);
           }
 
           article.appendChild(actions);
@@ -1352,14 +1389,26 @@
         return lane;
       }
 
+      function renderIssueAction(issue) {
+        if (issue.fixSurface) {
+          const action = document.createElement("a");
+          action.className = "routed-link";
+          action.href = `${issue.fixSurface}.html`;
+          action.textContent = issue.action;
+          return action;
+        }
+
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        return span;
+      }
+
       function renderIssue(issue) {
         const article = document.createElement("article");
         article.className = `issue ${issue.tone === "blocker" ? "blocker" : issue.tone === "info" ? "info" : ""}`;
         const strong = document.createElement("strong");
         strong.textContent = issue.title;
-        const span = document.createElement("span");
-        span.textContent = issue.action;
-        article.append(strong, span);
+        article.append(strong, renderIssueAction(issue));
         return article;
       }
 
@@ -1368,7 +1417,7 @@
       // Exported only for the committed Node test (speaker-sync-repair.test.js). In the
       // page `module` is undefined, so this block is skipped and nothing changes.
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack };
+        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack, renderIssue, renderIssueAction };
       }
     </script>
     <script src="../preview/episode-flow-nav.js" defer></script>

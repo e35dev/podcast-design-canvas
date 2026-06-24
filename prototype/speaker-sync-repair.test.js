@@ -57,6 +57,16 @@ function allText(node, out = []) {
   return out;
 }
 
+function findNode(node, predicate) {
+  if (!node) return null;
+  if (predicate(node)) return node;
+  for (const child of node._children || []) {
+    const found = findNode(child, predicate);
+    if (found) return found;
+  }
+  return null;
+}
+
 function buttonsFor(issueKey) {
   const track = { id: "t", name: "Guest 1 — Marcus Lee", issue: issueKey, proposedRepair: "", resolution: null, previewMoment: "episode-start" };
   const result = M.evaluate([track]).results[0];
@@ -87,7 +97,33 @@ assert.ok(M.issues["duplicate"].blocksExport === true && !M.issues["duplicate"].
   assert.ok(buttonsFor(k).includes("Mark intentional"), k + ": keeps 'Mark intentional'");
 });
 
-// 4. The hazard the gate prevents: an unresolved blocking issue blocks export, and
+// 4. Attribution review hand-off is a real link to the owning review screen.
+const attributionTrack = {
+  id: "caption-drift",
+  name: "Guest 1 — Marcus Lee",
+  issue: "attribution",
+  proposedRepair: "align-host",
+  resolution: null,
+  previewMoment: "drift-point",
+};
+const attributionResult = M.evaluate([attributionTrack]).results[0];
+const attributionCard = M.renderTrack(attributionTrack, 0, attributionResult);
+const attributionLink = findNode(
+  attributionCard,
+  (node) => node.tagName === "a" && node.textContent === "Open attribution review",
+);
+assert.ok(attributionLink, "attribution issue renders an Open attribution review link");
+assert.strictEqual(attributionLink.href, "speaker-attribution-review.html", "attribution action links to attribution review");
+assert.strictEqual(attributionLink.className, "action-link", "attribution action is styled as an action link");
+
+const attributionSummary = M.evaluate([{ ...attributionTrack, resolution: "needs attribution review" }]).results[0].summary;
+const issueCard = M.renderIssue(attributionSummary);
+const issueLink = findNode(issueCard, (node) => node.tagName === "a" && node.textContent.includes("Open attribution review"));
+assert.ok(issueLink, "summary issue renders the attribution review hand-off as a link");
+assert.strictEqual(issueLink.href, "speaker-attribution-review.html", "summary issue links to attribution review");
+assert.strictEqual(issueLink.className, "routed-link", "summary issue uses the routed link class");
+
+// 5. The hazard the gate prevents: an unresolved blocking issue blocks export, and
 //    "accepted" (what the button used to do) is non-blocking — so without the gate the
 //    button would silently clear a real export blocker.
 const endsEarly = { id: "x", name: "Guest", issue: "ends-early", proposedRepair: "replace", resolution: null, previewMoment: "episode-start" };
