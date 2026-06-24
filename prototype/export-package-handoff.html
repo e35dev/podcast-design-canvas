@@ -212,6 +212,10 @@
         return destination.packages.filter(([, , tone]) => tone === "review").length;
       }
 
+      function destinationTemplate(destination) {
+        return destination.meta.find(([label]) => label === "Template")?.[1] || "Selected template";
+      }
+
       function actionMessage(action, destination) {
         const blocked = destinationHasRequiredBlock(destination);
         const completeCount = completePackageCount(destination);
@@ -227,7 +231,7 @@
         if (action === "metadata") {
           return {
             title: "Metadata copied",
-            detail: `${destination.meta[2][1]} metadata, duration, export time, and package status are ready for publishing notes.`,
+            detail: `${destinationTemplate(destination)} metadata, duration, export time, and package status are ready for publishing notes.`,
           };
         }
 
@@ -365,6 +369,7 @@
           destinationHasRequiredBlock,
           completePackageCount,
           ignoredWarningCount,
+          destinationTemplate,
           actionMessage,
           packageStatusText,
         };
