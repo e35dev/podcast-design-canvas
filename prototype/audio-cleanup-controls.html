@@ -854,7 +854,8 @@
       }
 
       function waveMarkup(heights, cleaned) {
-        return heights
+        const bars = Array.isArray(heights) ? heights : [];
+        return bars
           .map((height) => `<i class="${cleaned ? "soft" : ""}" style="height:${height}%"></i>`)
           .join("");
       }
