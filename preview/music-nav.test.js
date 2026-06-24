@@ -87,14 +87,14 @@ function appendStaticLink(body, href, text = href) {
   return link;
 }
 
-function makeWindow(fileName, embedded = false) {
-  const window = { location: { pathname: `/prototype/${fileName}` } };
+function makeWindow(fileName, embedded = false, search = "") {
+  const window = { location: { pathname: `/prototype/${fileName}`, search } };
   window.self = window;
   window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
   return window;
 }
 
-function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = []) {
+function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = [], search = "") {
   const head = createElement("head");
   const body = createElement("body");
   const listeners = {};
@@ -126,7 +126,8 @@ function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = []) {
 
   vm.runInNewContext(navScript, {
     document,
-    window: makeWindow(fileName, embedded),
+    window: makeWindow(fileName, embedded, search),
+    URLSearchParams,
   });
 
   const nodes = flatten(body);
@@ -188,7 +189,7 @@ const standaloneMusicLinks = renderNavFor(
   false,
   [
     "music-ducking-under-speech.html",
-    "intro-outro-builder.html",
+    "social-context-intake.html",
     "#readiness",
     "https://example.com/music-cue-setup.html",
   ],
@@ -199,9 +200,9 @@ assert.equal(
   "standalone music nav leaves in-page music links as direct prototype links",
 );
 assert.equal(
-  linkWithText(standaloneMusicLinks, "intro-outro-builder.html").href,
-  "intro-outro-builder.html",
-  "music nav leaves non-music in-page links alone",
+  linkWithText(standaloneMusicLinks, "social-context-intake.html").href,
+  "social-context-intake.html",
+  "music nav leaves unrelated in-page links alone",
 );
 assert.equal(
   linkWithText(standaloneMusicLinks, "#readiness").href,
@@ -250,5 +251,157 @@ assert.equal(
   "embedded music nav normalizes dynamically rendered music links before navigation",
 );
 assert.equal(dynamicDuckingLink.target, "_top", "dynamic embedded music links target the parent app");
+
+const pathNav = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", false, [], "?path=episode");
+assert.ok(
+  linkWithText(pathNav, "Previous: Music cue setup").href.includes("?path=episode"),
+  "music nav keeps the episode path context on the previous link",
+);
+assert.equal(
+  linkWithText(pathNav, "Continue: Pause & cross-talk cleanup").href,
+  "pause-crosstalk-cleanup.html?path=episode",
+  "music nav keeps episode path context on the cleanup handoff",
+);
+const noPathNav = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", false, [], "");
+assert.ok(
+  !linkWithText(noPathNav, "Previous: Music cue setup").href.includes("?path="),
+  "music nav adds no path suffix when there is no path context",
+);
+
+const embeddedPathNav = renderNavFor("music-cue-setup.html", "music-cue-setup", true, [], "?path=episode");
+assert.equal(
+  linkWithText(embeddedPathNav, "Preview app").href,
+  "../preview/app.html#music-cue-setup?path=episode",
+  "embedded music nav keeps episode path context on the preview app link",
+);
+
+function renderNavWithInPageLinks(fileName, musicStep, embedded, search, hrefs) {
+  const head = createElement("head");
+  const body = createElement("body");
+  const listeners = { click: null };
+  if (musicStep) {
+    body.dataset = { musicStep };
+  }
+  const allNodes = () => [...flatten(head), ...flatten(body)];
+  const document = {
+    readyState: "complete",
+    head,
+    body,
+    createElement,
+    getElementById(id) {
+      return allNodes().find((node) => node.id === id) || null;
+    },
+    querySelector(selector) {
+      if (!selector.startsWith(".")) return null;
+      const className = selector.slice(1);
+      return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
+    },
+    querySelectorAll(selector) {
+      if (selector !== "a[href]") return [];
+      return allNodes().filter((node) => node.tagName === "a" && node.getAttribute("href"));
+    },
+    addEventListener(type, handler) {
+      if (type === "click") listeners.click = handler;
+    },
+  };
+  for (const href of hrefs) {
+    appendStaticLink(body, href, href);
+  }
+
+  vm.runInNewContext(navScript, {
+    document,
+    window: makeWindow(fileName, embedded, search || ""),
+    URLSearchParams,
+  });
+
+  return { nodes: flatten(body), listeners };
+}
+
+const inPageMusicLinks = renderNavWithInPageLinks(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  false,
+  "?path=episode",
+  ["music-ducking-under-speech.html", "audio-cleanup-controls.html"],
+);
+assert.equal(
+  linkWithText(inPageMusicLinks.nodes, "music-ducking-under-speech.html").href,
+  "music-ducking-under-speech.html?path=episode",
+  "music nav keeps episode path context on in-page music links",
+);
+assert.equal(
+  linkWithText(inPageMusicLinks.nodes, "audio-cleanup-controls.html").href,
+  "audio-cleanup-controls.html?path=episode",
+  "music nav keeps episode path context on in-page entry links",
+);
+
+const introOutroFixLink = renderNavWithInPageLinks(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  false,
+  "?path=episode",
+  ["intro-outro-builder.html"],
+);
+assert.equal(
+  linkWithText(introOutroFixLink.nodes, "intro-outro-builder.html").href,
+  "intro-outro-builder.html?path=episode",
+  "music cue intro/outro fix links keep episode path context",
+);
+
+const publishFixLink = renderNavWithInPageLinks(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  false,
+  "?path=episode",
+  ["show-notes-assembly.html"],
+);
+assert.equal(
+  linkWithText(publishFixLink.nodes, "show-notes-assembly.html").href,
+  "show-notes-assembly.html?path=publish",
+  "music cue sponsor-bed fix links route to the publish path",
+);
+
+const readinessFixLink = renderNavWithInPageLinks(
+  "music-ducking-under-speech.html",
+  "music-ducking-under-speech",
+  false,
+  "?path=episode",
+  ["export-readiness-review.html"],
+);
+assert.equal(
+  linkWithText(readinessFixLink.nodes, "export-readiness-review.html").href,
+  "export-readiness-review.html?path=episode",
+  "music ducking export readiness fix links keep episode path context",
+);
+
+const embeddedIntroOutroFix = renderNavWithInPageLinks(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  true,
+  "?path=episode",
+  ["intro-outro-builder.html"],
+);
+const embeddedIntroOutro = linkWithText(embeddedIntroOutroFix.nodes, "intro-outro-builder.html");
+assert.equal(
+  embeddedIntroOutro.href,
+  "../preview/app.html#intro-outro-builder?path=episode",
+  "embedded music fix links route intro/outro through the preview app",
+);
+assert.equal(embeddedIntroOutro.target, "_top", "embedded music fix links target the parent app");
+
+const dynamicFix = renderNavWithInPageLinks(
+  "music-cue-setup.html",
+  "music-cue-setup",
+  true,
+  "?path=episode",
+  [],
+);
+const dynamicLink = appendStaticLink(dynamicFix.nodes[0], "export-readiness-review.html", "export-readiness-review.html");
+dynamicFix.listeners.click({ target: dynamicLink });
+assert.equal(
+  dynamicLink.href,
+  "../preview/app.html#export-readiness-review?path=episode",
+  "embedded music nav normalizes dynamically rendered fix links before navigation",
+);
 
 console.log("music nav: two-step music path links audio cleanup to pause cleanup");

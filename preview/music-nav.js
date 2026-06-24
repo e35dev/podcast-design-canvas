@@ -13,11 +13,22 @@ const MUSIC_FLOW = [
 const MUSIC_ENTRY = { file: "audio-cleanup-controls.html", label: "Audio cleanup" };
 const MUSIC_HANDOFF = { file: "pause-crosstalk-cleanup.html", label: "Pause & cross-talk cleanup" };
 
+// Music screens hand off to these owning screens when a review item needs a fix.
+const MUSIC_FIX_PATHS = {
+  "intro-outro-builder.html": "episode",
+  "export-readiness-review.html": "episode",
+  "show-notes-assembly.html": "publish",
+};
+
 const PREVIEW_APP_MUSIC_TARGETS = new Set([
   screenIdFromFile(MUSIC_ENTRY.file),
   screenIdFromFile(MUSIC_HANDOFF.file),
   ...MUSIC_FLOW.map((step) => step.id),
 ]);
+
+const PREVIEW_APP_CROSS_PATH_TARGETS = new Set(
+  Object.keys(MUSIC_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
 
 function currentMusicIndex() {
   const fromBody = document.body.dataset.musicStep;
@@ -50,12 +61,80 @@ function isEmbeddedInPreviewApp() {
   }
 }
 
+function pathFromQuery(query) {
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function queryWithoutHash(file) {
+  return ((file || "").split("#")[0].split("?")[1] || "");
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
+}
+
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  return path === "episode" ? "?path=episode" : "";
+}
+
+function routeSearchFromFile(file) {
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  const path = filePath || shellPath;
+  return path === "episode" || path === "publish" ? `?path=${path}` : "";
+}
+
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}`;
+  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
-  return previewAppHref(step.file);
+  return previewAppHref(hrefWithPath(step.file));
+}
+
+function hrefWithPath(file) {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== "episode") {
+    return file;
+  }
+  if (pathFromQuery(queryWithoutHash(file)) === "episode") {
+    return file;
+  }
+  return mergeRouteSearch(file, { path: "episode" });
+}
+
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function resolveMusicLink(file) {
+  const base = linkBase(file);
+  if (Object.prototype.hasOwnProperty.call(MUSIC_FIX_PATHS, base)) {
+    return mergeRouteSearch(file, { path: MUSIC_FIX_PATHS[base] });
+  }
+  return hrefWithPath(file);
+}
+
+function routesThroughPreviewApp(file) {
+  return isPreviewAppMusicTarget(file) || PREVIEW_APP_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -65,13 +144,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setMusicScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppMusicTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = resolveMusicLink(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = file;
+  link.href = resolved;
 }
 
 function isLocalScreenHref(href) {
@@ -79,7 +159,10 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeMusicHref(href) {
-  return isLocalScreenHref(href) && isPreviewAppMusicTarget(href);
+  return isLocalScreenHref(href) && (
+    isPreviewAppMusicTarget(href) ||
+    Object.prototype.hasOwnProperty.call(MUSIC_FIX_PATHS, linkBase(href))
+  );
 }
 
 function normalizeMusicScreenLink(link) {
