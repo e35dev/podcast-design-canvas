@@ -240,6 +240,19 @@ assert.match(
 );
 assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), false, "b-roll remains empty and optional");
 
+controller.placeVideoFile(controller.zonesBySlot.broll, video("broll.mp4"));
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll is in place\./,
+  "readiness copy acknowledges b-roll when the optional slot is filled",
+);
+controller.removeVideo(controller.zonesBySlot.broll);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll can be added later\./,
+  "readiness copy invites b-roll again after the optional slot is cleared",
+);
+
 controller.applyLayout("panel");
 assert.equal(
   controller.zonesBySlot.host.classList.contains("filled"),

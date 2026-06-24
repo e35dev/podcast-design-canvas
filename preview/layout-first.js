@@ -169,18 +169,22 @@
       const duplicates = duplicateFileNames();
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
+      const brollZone = zonesBySlot["broll"];
+      const brollNote = brollZone && brollZone.classList.contains("filled")
+        ? "Optional b-roll is in place."
+        : "Optional b-roll can be added later.";
       if (duplicates.length > 0) {
         slotStatus.textContent =
           "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
       } else if (filled === total) {
-        slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
+        slotStatus.textContent = `Required speaker videos ready. ${brollNote}`;
       } else {
         const missingNames = requiredSlots()
           .filter((zone) => !zone.classList.contains("filled"))
           .map((zone) => SLOT_LABELS[zone.dataset.slot] || zone.dataset.slot);
         const noun = missingNames.length > 1 ? "videos" : "video";
         slotStatus.textContent =
-          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. Optional b-roll can be added later.`;
+          `${filled} of ${total} required speaker videos ready. Still need the ${formatList(missingNames)} ${noun}. ${brollNote}`;
       }
       updateContinueState();
     }
