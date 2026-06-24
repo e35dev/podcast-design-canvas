@@ -14,7 +14,11 @@ const navScript = fs.readFileSync(path.join(__dirname, "music-nav.js"), "utf8");
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "music nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "music nav links to the guided episode flow");
-assert.ok(navScript.includes("app.html"), "music nav links to the preview app");
+assert.ok(navScript.includes("currentPreviewAppHref"), "music nav builds preview app href from the active step");
+assert.ok(
+  navScript.includes("setTopTargetWhenEmbedded(app)"),
+  "music nav preview app link uses embedded target handling",
+);
 assert.ok(navScript.includes("audio-cleanup-controls.html"), "music nav entry links to audio cleanup");
 assert.ok(navScript.includes("pause-crosstalk-cleanup.html"), "music nav hands off to pause cleanup");
 assert.ok(navScript.includes('document.querySelector(".music-nav")'), "music nav guards against double render");
@@ -124,6 +128,16 @@ const handoff = linkWithText(secondNav, "Continue: Pause & cross-talk cleanup");
 assert.equal(handoff.href, "pause-crosstalk-cleanup.html", "last music screen hands off to pause cleanup");
 
 const embeddedFirstNav = renderNavFor("music-cue-setup.html", "music-cue-setup", true);
+const embeddedHome = linkWithText(embeddedFirstNav, "← Preview shell");
+assert.equal(embeddedHome.href, "../preview/", "embedded music nav keeps the shell-home href");
+assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#music-cue-setup",
+  "embedded music nav opens the current screen in the preview app",
+);
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 assert.equal(
   linkWithText(embeddedFirstNav, "Previous: Audio cleanup").href,
   "../preview/app.html#audio-cleanup-controls",
@@ -133,6 +147,13 @@ assert.equal(
   linkWithText(embeddedFirstNav, "Next: Music ducking under speech").href,
   "../preview/app.html#music-ducking-under-speech",
   "embedded music nav routes next step through the preview app hash",
+);
+
+const embeddedSecondNav = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", true);
+assert.equal(
+  linkWithText(embeddedSecondNav, "Preview app").href,
+  "../preview/app.html#music-ducking-under-speech",
+  "embedded music nav keeps preview app on the active ducking step",
 );
 
 console.log("music nav: two-step music path links audio cleanup to pause cleanup");
