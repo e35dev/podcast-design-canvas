@@ -1013,9 +1013,30 @@
       }
     }
 
-    layoutButtons.forEach((button) => {
+    layoutButtons.forEach((button, index) => {
+      // Advertise the arrow-key shortcuts the same way a placed video does, so a keyboard user
+      // discovers they can step through layouts without tabbing button to button.
+      if (typeof button.setAttribute === "function") {
+        button.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight Home End");
+      }
       button.addEventListener("click", () => {
         applyLayout(button.dataset.layout);
+      });
+      // Arrow keys move between layout options and apply the one they land on, matching the
+      // arrow-key operation of placed videos; Home/End jump to the first/last layout. Focus
+      // stays on the picker so the creator can keep stepping through layouts.
+      button.addEventListener("keydown", (event) => {
+        const key = event && event.key;
+        let nextIndex = null;
+        if (key === "ArrowRight" || key === "ArrowDown") nextIndex = (index + 1) % layoutButtons.length;
+        else if (key === "ArrowLeft" || key === "ArrowUp") nextIndex = (index - 1 + layoutButtons.length) % layoutButtons.length;
+        else if (key === "Home") nextIndex = 0;
+        else if (key === "End") nextIndex = layoutButtons.length - 1;
+        if (nextIndex === null) return;
+        if (event && typeof event.preventDefault === "function") event.preventDefault();
+        const target = layoutButtons[nextIndex];
+        applyLayout(target.dataset.layout);
+        if (target && typeof target.focus === "function") target.focus();
       });
     });
 

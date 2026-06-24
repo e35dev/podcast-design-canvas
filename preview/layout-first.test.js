@@ -1222,4 +1222,25 @@ fireKey(placedVideoIn("host"), "Delete");
 assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "Delete removes the focused placed video");
 assert.match(actionStatus.textContent, /Removed the Host video/, "a keyboard removal is announced to screen readers");
 
+// The layout picker is operable with the arrow keys, the same way placed videos are: a
+// keyboard user can step through layouts and the focused one is applied, without tabbing
+// button to button. Home/End jump to the first/last layout.
+controller.resetVideos();
+controller.applyLayout("interview");
+assert.ok(
+  (layoutButtons[0].getAttribute("aria-keyshortcuts") || "").includes("ArrowRight"),
+  "layout options advertise their arrow-key shortcuts",
+);
+layoutButtons[0].listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowRight applies the next layout (solo)");
+assert.equal(lastFocused, layoutButtons[1], "ArrowRight moves focus to the next layout option");
+layoutButtons[1].listeners.keydown({ key: "End", preventDefault() {} });
+assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "End applies the last layout (panel)");
+layoutButtons[2].listeners.keydown({ key: "ArrowLeft", preventDefault() {} });
+assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowLeft applies the previous layout");
+layoutButtons[1].listeners.keydown({ key: "Home", preventDefault() {} });
+assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "Home applies the first layout (interview)");
+layoutButtons[0].listeners.keydown({ key: "Enter", preventDefault() {} });
+assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "a non-arrow key leaves the layout selection unchanged");
+
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
