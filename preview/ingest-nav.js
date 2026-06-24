@@ -39,8 +39,9 @@ function previewAppHref(file) {
 }
 
 function routeSearchFromFile(file) {
-  const query = queryWithoutHash(file);
-  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  const filePath = pathFromQuery(queryWithoutHash(file));
+  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  const path = filePath || shellPath;
   return path === "episode" || path === "ingest" ? `?path=${path}` : "";
 }
 
@@ -48,19 +49,29 @@ function queryWithoutHash(file) {
   return ((file || "").split("#")[0].split("?")[1] || "");
 }
 
-function hrefHasPath(file, path) {
-  return pathFromQuery(queryWithoutHash(file)) === path;
-}
-
-function appendPath(file, path) {
-  const [base, hash = ""] = (file || "").split("#");
-  const separator = base.includes("?") ? "&" : "?";
-  return `${base}${separator}path=${path}${hash ? `#${hash}` : ""}`;
-}
-
 function pathFromQuery(query) {
-  const part = (query || "").split("&").find((item) => item.startsWith("path="));
-  return part ? part.split("=")[1] : "";
+  return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
+}
+
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -111,15 +122,14 @@ function shouldHandoffToEpisodePath() {
 }
 
 function hrefWithPath(file) {
-  const suffix = pathQuerySuffix();
-  if (!suffix) {
+  const shellPath = new URLSearchParams(window.location.search).get("path");
+  if (shellPath !== "episode" && shellPath !== "ingest") {
     return file;
   }
-  const path = suffix.replace("?path=", "");
-  if (hrefHasPath(file, path)) {
+  if (pathFromQuery(queryWithoutHash(file)) === shellPath) {
     return file;
   }
-  return appendPath(file, path);
+  return mergeRouteSearch(file, { path: shellPath });
 }
 
 function currentIngestIndex() {

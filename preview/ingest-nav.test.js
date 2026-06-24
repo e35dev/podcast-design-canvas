@@ -176,6 +176,21 @@ assert.equal(
   "social-context-intake.html?path=ingest",
   "ingest nav does not duplicate ingest path query params",
 );
+assert.equal(
+  hrefWithPathFor("speaker-role-mapping.html?path=episode&draft=roles", "?path=ingest"),
+  "speaker-role-mapping.html?path=ingest&draft=roles",
+  "ingest nav replaces conflicting path values with the shell ingest context",
+);
+assert.equal(
+  hrefWithPathFor("social-context-intake.html?draft=links#review", "?path=ingest"),
+  "social-context-intake.html?draft=links&path=ingest#review",
+  "ingest nav preserves unrelated flags and hash segments when merging path context",
+);
+assert.equal(
+  (hrefWithPathFor("speaker-role-mapping.html?path=episode", "?path=ingest").match(/path=/g) || []).length,
+  1,
+  "ingest nav emits a single canonical path query param",
+);
 
 const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
