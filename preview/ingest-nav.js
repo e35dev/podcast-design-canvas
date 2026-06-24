@@ -25,6 +25,10 @@ function currentIngestIndex() {
 }
 
 function renderIngestNav() {
+  if (document.querySelector(".ingest-nav")) {
+    return;
+  }
+
   const index = currentIngestIndex();
   if (index < 0) {
     return;
@@ -123,6 +127,7 @@ function renderIngestNav() {
 
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
+  stepLabel.setAttribute("aria-current", "step");
   stepLabel.textContent = `Setup step ${index + 1} of ${INGEST_FLOW.length} · ${step.label}`;
   wrap.appendChild(stepLabel);
 
