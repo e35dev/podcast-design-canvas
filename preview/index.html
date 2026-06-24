@@ -1021,6 +1021,14 @@
             var track = chip.dataset.track;
             placeTrack(document.querySelector('.drop-zone[data-slot="' + track + '"]'), track);
           });
+          // Touch/pointer equivalent of dragging: tapping a chip places it into its own slot.
+          // HTML5 drag-and-drop is unreliable on touch, so without this a touch user cannot
+          // fill the gated slots. placeTrack is idempotent, so the click that some browsers
+          // synthesize after Enter/Space simply re-confirms the same placement.
+          chip.addEventListener("click", function () {
+            var track = chip.dataset.track;
+            placeTrack(document.querySelector('.drop-zone[data-slot="' + track + '"]'), track);
+          });
         });
 
         var slotStatus = document.getElementById("canvas-slot-status");

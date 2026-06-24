@@ -289,4 +289,48 @@ assert.strictEqual(chips[0].focused, true, "removing a track returns focus to it
 keydown(chips[0], "Enter");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false", "re-placing the removed track restores Continue");
 
+// Touch/pointer placement: tapping a chip fires a click, which must place it into its own
+// slot just like dragging or Enter/Space. HTML5 drag-and-drop is unreliable on touch, so
+// without this a touch-only creator cannot fill the gated slots. Start from a clean reset.
+resetButton.click();
+assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "reset re-gates Continue before the tap checks");
+
+chips[0].click();
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
+  true,
+  "tapping the host chip fills the host slot",
+);
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "host").querySelector(".placed-track").textContent,
+  "Host track · Dana Brooks",
+  "tap placement writes the same placed-track label as a drop",
+);
+chips[1].click();
+assert.strictEqual(
+  continueLink.attributes["aria-disabled"],
+  "false",
+  "tapping host and guest unlocks Continue just like dragging",
+);
+assert.strictEqual(
+  continueLink.href,
+  "./app.html#speaker-role-mapping?path=episode",
+  "tap placement carries the same speaker-roles handoff target",
+);
+assert.match(slotStatus.textContent, /Required speaker videos ready/, "tap placement updates readiness identically");
+
+// Idempotent: a second tap re-confirms the same placement — this mirrors the click some
+// browsers synthesize after Enter/Space — without re-gating Continue or corrupting state.
+chips[0].click();
+assert.strictEqual(
+  zones.find((zone) => zone.dataset.slot === "host").classList.contains("filled"),
+  true,
+  "re-tapping a placed chip keeps it placed",
+);
+assert.strictEqual(
+  continueLink.attributes["aria-disabled"],
+  "false",
+  "re-tapping does not re-gate Continue",
+);
+
 console.log("layout-first canvas handoff: per-slot status, continue unlock, and b-roll readiness verified");
