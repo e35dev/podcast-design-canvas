@@ -57,6 +57,8 @@
 
   function createLayoutFirstController(doc, options = {}) {
     const urlApi = options.URL || global.URL || {};
+    const storage = options.storage || global.sessionStorage;
+    const handoff = options.handoff || global.PodcastLayoutHandoff;
     const layoutButtons = toArray(doc.querySelectorAll("[data-layout]"));
     const zones = toArray(doc.querySelectorAll(".drop-zone[data-slot]"));
     const zonesBySlot = {};
@@ -107,7 +109,13 @@
       continueLink.classList.toggle("is-disabled", !ready);
       continueLink.setAttribute("aria-disabled", ready ? "false" : "true");
       if (ready && continueLink.dataset.readyHref) {
-        continueLink.href = continueLink.dataset.readyHref;
+        const state = handoff && handoff.stateFromZones(currentLayout, zones);
+        if (handoff && state) {
+          handoff.save(storage, state);
+          continueLink.href = handoff.hrefWithState(continueLink.dataset.readyHref, state);
+        } else {
+          continueLink.href = continueLink.dataset.readyHref;
+        }
       } else {
         continueLink.removeAttribute("href");
       }
@@ -152,6 +160,7 @@
       if (placed) placed.remove();
       const input = zone.querySelector("[data-file-input]");
       if (input) input.value = "";
+      zone.dataset.fileName = "";
     }
 
     function clearAllZones() {
@@ -172,6 +181,7 @@
       setError("");
       clearZone(zone);
       zone.classList.add("filled");
+      zone.dataset.fileName = file.name || "";
 
       const wrap = doc.createElement("div");
       wrap.className = "placed-video";

@@ -251,6 +251,26 @@
         margin-top: 14px;
       }
 
+      .layout-handoff {
+        display: grid;
+        gap: 6px;
+        margin-top: 14px;
+        border: 1px solid #b8d7d0;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .layout-handoff strong {
+        color: var(--accent);
+      }
+
+      .layout-handoff p {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
       .issue {
         border-left: 4px solid var(--warn);
         border-radius: 6px;
@@ -324,6 +344,7 @@
       }
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
+      <script src="../preview/layout-handoff.js"></script>
   </head>
   <body data-ingest-step="speaker-role-mapping">
     <main>
@@ -343,6 +364,7 @@
         <aside class="panel" aria-live="polite" aria-label="Role mapping summary">
           <h2>Role summary</h2>
           <div id="status" class="status ready">Roles confirmed</div>
+          <div id="layout-handoff" class="layout-handoff" hidden></div>
           <div id="issues" class="issues"></div>
           <p class="summary-note">A track is never locked into a role you have not seen. Confirm a suggestion in one step, or change it from the short list of podcast roles.</p>
         </aside>
@@ -387,11 +409,27 @@
         { id: "t4", name: "Side channel", role: "", signal: "file-name", decision: "suggested" },
       ];
 
-      let tracks = structuredClone(sampleTracks);
+      const layoutHandoffApi = window.PodcastLayoutHandoff;
+      function layoutHandoffStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+      const layoutHandoff = layoutHandoffApi
+        ? layoutHandoffApi.load(layoutHandoffStorage(), window.location.search)
+        : null;
+      const initialTracks = layoutHandoffApi
+        ? layoutHandoffApi.tracksFromState(layoutHandoff, sampleTracks)
+        : structuredClone(sampleTracks);
+
+      let tracks = structuredClone(initialTracks);
 
       const tracksElement = document.querySelector("#tracks");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const layoutHandoffElement = document.querySelector("#layout-handoff");
 
       document.querySelector("#addTrack").addEventListener("click", () => {
         const next = tracks.length + 1;
@@ -400,7 +438,7 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        tracks = structuredClone(sampleTracks);
+        tracks = structuredClone(initialTracks);
         render();
       });
 
@@ -482,6 +520,20 @@
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "Every track has a confirmed role. Ready for preset selection." })]),
         );
+        renderLayoutHandoff();
+      }
+
+      function renderLayoutHandoff() {
+        if (!layoutHandoffElement || !layoutHandoff) {
+          return;
+        }
+        const slotNames = layoutHandoff.slots.map((slot) => slot.label).join(", ");
+        const heading = document.createElement("strong");
+        heading.textContent = `From layout start: ${layoutHandoff.layoutLabel}`;
+        const copy = document.createElement("p");
+        copy.textContent = `Placed slots ready for role mapping: ${slotNames}.`;
+        layoutHandoffElement.replaceChildren(heading, copy);
+        layoutHandoffElement.hidden = false;
       }
 
       // Map a review state to the badge style. "suggested" and "review" stay distinct

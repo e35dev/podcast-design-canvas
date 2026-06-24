@@ -8,6 +8,7 @@ const path = require("path");
 const assert = require("assert");
 
 const { createLayoutFirstController, isVideoFile } = require("./layout-first.js");
+const layoutHandoff = require("./layout-handoff.js");
 
 const html = fs.readFileSync(path.join(__dirname, "layout-first.html"), "utf8");
 const app = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
@@ -158,12 +159,21 @@ const urlApi = {
     revokedUrls.push(url);
   },
 };
+const stored = {};
+const storage = {
+  setItem(key, value) {
+    stored[key] = value;
+  },
+  getItem(key) {
+    return stored[key] || null;
+  },
+};
 
 function video(name) {
   return { name, type: "video/mp4" };
 }
 
-const controller = createLayoutFirstController(documentStub, { URL: urlApi });
+const controller = createLayoutFirstController(documentStub, { URL: urlApi, handoff: layoutHandoff, storage });
 elementsById["layout-continue"].dataset.readyHref = "./app.html#speaker-role-mapping?path=episode";
 
 assert.match(html, /Start with a podcast layout/, "layout-first landing opens with layout selection");
@@ -175,6 +185,7 @@ assert.match(html, /Continue to production workspace/, "layout-first has a produ
 assert.match(html, /data-ready-href=".\/app.html#speaker-role-mapping\?path=episode"/, "layout-first stores the ready handoff target separately");
 assert.doesNotMatch(html, /id="layout-continue"[^>]* href=/, "disabled Continue has no initial href");
 assert.match(html, /type="file" accept="video\/\*"/, "layout-first supports choosing video files");
+assert.match(html, /script src=".\/layout-handoff.js"/, "layout-first loads shared handoff state");
 assert.match(html, /script src=".\/layout-first.js"/, "layout-first uses source-backed behavior");
 assert.ok(app.includes("layout-first.html"), "preview app links back to the layout-first start");
 assert.ok(root.includes("preview/layout-first.html"), "root catalog leads with the layout-first landing");
@@ -214,8 +225,13 @@ assert.equal(
 );
 assert.equal(
   elementsById["layout-continue"].href,
-  "./app.html#speaker-role-mapping?path=episode",
-  "enabled Continue restores the production workspace target",
+  "./app.html#speaker-role-mapping?path=episode&layout=interview&slots=host%2Cguest",
+  "enabled Continue carries the selected layout and placed slots into the workspace target",
+);
+assert.equal(
+  JSON.parse(stored[layoutHandoff.STORAGE_KEY]).layout,
+  "interview",
+  "enabled Continue stores the layout handoff for the role-mapping workspace",
 );
 assert.match(
   elementsById["layout-slot-status"].textContent,

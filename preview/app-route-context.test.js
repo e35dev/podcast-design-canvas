@@ -166,6 +166,25 @@ assert.equal(
   "episode path context steps forward to source media health",
 );
 
+const layoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest,guest-b");
+assert.equal(
+  layoutStartRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff keeps the selected layout and required placed slots on role mapping",
+);
+assert.equal(
+  layoutStartRoles.nodes.nextStep.href,
+  "#source-media-health?path=episode",
+  "layout-first handoff does not leak layout params into later episode screens",
+);
+
+const invalidLayoutStartRoles = runApp("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest");
+assert.equal(
+  invalidLayoutStartRoles.nodes.frame.src,
+  "../prototype/speaker-role-mapping.html?path=episode",
+  "invalid layout-first slot handoff is stripped by the preview app",
+);
+
 episodeRoles.reroute("#source-media-health?path=episode");
 assert.equal(
   episodeRoles.nodes.frame.src,

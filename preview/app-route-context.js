@@ -90,12 +90,28 @@ function createPreviewAppRouting(order) {
     "client-review-copy-flow",
     "publish-checklist",
   ]);
+  const layoutHandoffSlots = {
+    interview: ["host", "guest"],
+    solo: ["host"],
+    panel: ["host", "guest", "guest-b"],
+  };
+
+  function normalizedLayoutSlots(layout, value) {
+    const required = layoutHandoffSlots[layout];
+    if (!required) {
+      return "";
+    }
+    const incoming = new Set(String(value || "").split(",").filter(Boolean));
+    return required.every((slot) => incoming.has(slot)) ? required.join(",") : "";
+  }
 
   function routeSearchFor(screen, rawSearch) {
     const params = new URLSearchParams(rawSearch || "");
     const out = new URLSearchParams();
     const from = params.get("from");
     const path = params.get("path");
+    const layout = params.get("layout");
+    const layoutSlots = normalizedLayoutSlots(layout, params.get("slots"));
     if (fromContextScreens.has(screen) && visualsEntryContexts.has(from)) {
       out.set("from", from);
     }
@@ -118,6 +134,10 @@ function createPreviewAppRouting(order) {
     }
     if (path === "publish" && pathedPublishScreens.has(screen)) {
       out.set("path", "publish");
+    }
+    if (screen === "speaker-role-mapping" && path === "episode" && layoutSlots) {
+      out.set("layout", layout);
+      out.set("slots", layoutSlots);
     }
     const search = out.toString();
     return search ? `?${search}` : "";
