@@ -57,6 +57,13 @@ const visualsFlow = new Set([
   "sensitive-moment-review.html",
 ]);
 
+const reuseFlow = new Set([
+  "show-segment-system.html",
+  "show-template-adaptation.html",
+  "start-from-previous-episode.html",
+  "episode-chapter-markers.html",
+]);
+
 const prototypes = fs
   .readdirSync(path.join(root, "prototype"))
   .filter((name) => name.endsWith(".html"));
@@ -108,6 +115,15 @@ for (const file of prototypes) {
     assert.ok(
       !html.includes("../preview/tools-nav.js"),
       `visuals screen does not double up with tools nav: ${file}`,
+    );
+  } else if (reuseFlow.has(file)) {
+    assert.ok(
+      html.includes("../preview/reuse-nav.js"),
+      `reuse screen uses reuse navigation: ${file}`,
+    );
+    assert.ok(
+      !html.includes("../preview/tools-nav.js"),
+      `reuse screen does not double up with tools nav: ${file}`,
     );
   } else {
     // Every secondary screen links back to the shell.

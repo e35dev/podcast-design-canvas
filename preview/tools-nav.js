@@ -20,10 +20,10 @@ const TOOL_STAGE = {
   "accessibility-readability-checks.html": "Clean up audio & captions",
   "line-pickup-insert.html": "Clean up audio & captions",
   "on-screen-correction-note.html": "Clean up audio & captions",
-  "show-segment-system.html": "Make it reusable",
-  "show-template-adaptation.html": "Make it reusable",
-  "start-from-previous-episode.html": "Make it reusable",
-  "episode-chapter-markers.html": "Make it reusable",
+  
+  
+  
+  
   "destination-crop-preview.html": "Review & publish",
   "thumbnail-cover-frame.html": "Review & publish",
   "show-notes-assembly.html": "Review & publish",
