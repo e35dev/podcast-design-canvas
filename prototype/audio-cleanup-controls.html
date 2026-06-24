@@ -954,7 +954,7 @@
         wave.innerHTML = waveMarkup(heights, cleaned);
         const copy = document.createElement("p");
         copy.className = "preview-note";
-        copy.textContent = note;
+        copy.textContent = typeof note === "string" ? note : "";
 
         card.append(heading, wave, copy);
 
