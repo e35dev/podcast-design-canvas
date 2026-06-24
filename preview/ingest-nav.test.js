@@ -79,7 +79,7 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
-function renderNavFor(fileName, ingestStep) {
+function renderNavFor(fileName, ingestStep, search = "") {
   const head = createElement("head");
   const body = createElement("body");
   if (ingestStep) {
@@ -106,7 +106,8 @@ function renderNavFor(fileName, ingestStep) {
 
   vm.runInNewContext(navSource, {
     document,
-    window: { location: { pathname: `/prototype/${fileName}` } },
+    window: { location: { pathname: `/prototype/${fileName}`, search } },
+    URLSearchParams,
   });
 
   return { head, body, nodes: [...flatten(head), ...flatten(body)] };
@@ -123,10 +124,14 @@ assert.ok(
   "first ingest screen renders next link",
 );
 
-const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping");
+const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest");
 assert.ok(
   middleNav.nodes.some((node) => node.textContent === "Previous: Episode readiness"),
   "middle ingest screen renders previous link",
+);
+assert.ok(
+  middleNav.nodes.some((node) => node.textContent === "Next: Social links"),
+  "ingest path at speaker roles links forward to social context",
 );
 const currentStep = middleNav.nodes.find((node) =>
   node.textContent === "Setup step 2 of 3 · Speaker roles",
@@ -134,7 +139,17 @@ const currentStep = middleNav.nodes.find((node) =>
 assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
 
-const lastNav = renderNavFor("social-context-intake.html", "social-context-intake");
+const episodeRoleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=episode");
+assert.ok(
+  episodeRoleNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
+  "episode shell path at speaker roles skips social context",
+);
+assert.ok(
+  !episodeRoleNav.nodes.some((node) => node.textContent === "Next: Social links"),
+  "episode shell path does not link to social context from speaker roles",
+);
+
+const lastNav = renderNavFor("social-context-intake.html", "social-context-intake", "?path=ingest");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Source media health"),
   "last ingest screen hands off to source media health",
@@ -161,6 +176,7 @@ vm.runInNewContext(navSource, {
     },
   },
   window: { location: { pathname: "/prototype/speaker-role-mapping.html" } },
+  URLSearchParams,
 });
 assert.equal(
   flatten(duplicateNav.body).filter((node) => node.className === "ingest-nav").length,

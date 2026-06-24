@@ -17,7 +17,9 @@ const navJs = read("episode-flow-nav.js");
 const shell = read("index.html");
 
 // 1) The ordered core flow as declared by the shared nav script.
-const navFlow = [...navJs.matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+const episodeFlowMatch = navJs.match(/const EPISODE_FLOW = \[([\s\S]*?)\];/);
+assert.ok(episodeFlowMatch, "nav script declares EPISODE_FLOW");
+const navFlow = [...episodeFlowMatch[1].matchAll(/file:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
 assert.ok(navFlow.length >= 4, "nav script declares the core flow steps");
 
 // 2) The ordered core flow as listed in the shell's <ol class="flow"> block.

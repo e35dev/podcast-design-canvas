@@ -109,13 +109,17 @@ assert.ok(firstNav.nodes.some((node) => node.id === "episode-flow-nav-styles"), 
 assert.ok(firstNav.nodes.some((node) => node.textContent === "Episode flow home"), "flow nav renders home link");
 assert.ok(firstNav.nodes.some((node) => node.textContent === "Guided episode flow"), "flow nav renders guided flow link");
 assert.ok(
+  firstNav.nodes.some((node) => node.textContent === "Previous: Speaker roles"),
+  "first flow screen links back to speaker roles in the shell path",
+);
+assert.ok(
   firstNav.nodes.some((node) => node.textContent === "Next: Speaker sync repair"),
   "first flow screen renders next link",
 );
-assert.ok(
-  !firstNav.nodes.some((node) => node.textContent.startsWith("Previous:")),
-  "first flow screen does not render a previous link",
+const firstStep = firstNav.nodes.find((node) =>
+  node.textContent === "Current step: 3 of 7 · Source media health",
 );
+assert.ok(firstStep, "first flow screen counts shell preamble steps in the step label");
 
 const middleNav = renderNavFor("audio-cleanup-controls.html");
 assert.ok(
@@ -127,7 +131,7 @@ assert.ok(
   "middle flow screen renders next link",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Current step: 3 of 5 · Audio cleanup"
+  node.textContent === "Current step: 5 of 7 · Audio cleanup"
 );
 assert.ok(currentStep, "middle flow screen renders visible current-step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current step exposes aria-current");

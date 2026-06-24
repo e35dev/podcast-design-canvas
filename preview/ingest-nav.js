@@ -11,6 +11,26 @@ const INGEST_FLOW = [
   { id: "social-context-intake", file: "social-context-intake.html", label: "Social links" },
 ];
 
+function pathQuerySuffix() {
+  const path = new URLSearchParams(window.location.search).get("path");
+  if (path === "episode") {
+    return "?path=episode";
+  }
+  if (path === "ingest") {
+    return "?path=ingest";
+  }
+  return "";
+}
+
+function isEpisodeShellPath() {
+  return new URLSearchParams(window.location.search).get("path") === "episode";
+}
+
+function hrefWithPath(file) {
+  const suffix = pathQuerySuffix();
+  return suffix ? `${file}${suffix}` : file;
+}
+
 function currentIngestIndex() {
   const fromBody = document.body.dataset.ingestStep;
   if (fromBody) {
@@ -88,6 +108,7 @@ function renderIngestNav() {
   const step = INGEST_FLOW[index];
   const previous = index > 0 ? INGEST_FLOW[index - 1] : null;
   const next = index < INGEST_FLOW.length - 1 ? INGEST_FLOW[index + 1] : null;
+  const episodeHandoff = isEpisodeShellPath() && step.id === "speaker-role-mapping";
 
   const nav = document.createElement("nav");
   nav.className = "ingest-nav";
@@ -108,17 +129,17 @@ function renderIngestNav() {
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
+    prevLink.href = hrefWithPath(previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   }
 
-  if (next) {
+  if (next && !episodeHandoff) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
+    nextLink.href = hrefWithPath(next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
-  } else {
+  } else if (episodeHandoff || !next) {
     const start = document.createElement("a");
     start.href = "source-media-health.html";
     start.textContent = "Continue: Source media health";

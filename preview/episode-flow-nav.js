@@ -12,6 +12,9 @@ const EPISODE_FLOW = [
   { file: "export-readiness-review.html", label: "Export readiness" },
 ];
 
+const EPISODE_SHELL_PREFIX = 2;
+const EPISODE_PREAMBLE = { file: "speaker-role-mapping.html", label: "Speaker roles" };
+
 function currentStepIndex() {
   const name = window.location.pathname.split("/").pop() || "";
   return EPISODE_FLOW.findIndex((step) => step.file === name);
@@ -28,9 +31,9 @@ function renderEpisodeFlowNav() {
   }
 
   const step = EPISODE_FLOW[index];
-  const total = EPISODE_FLOW.length;
-  const previous = index > 0 ? EPISODE_FLOW[index - 1] : null;
-  const next = index < total - 1 ? EPISODE_FLOW[index + 1] : null;
+  const total = EPISODE_FLOW.length + EPISODE_SHELL_PREFIX;
+  const previous = index > 0 ? EPISODE_FLOW[index - 1] : EPISODE_PREAMBLE;
+  const next = index < EPISODE_FLOW.length - 1 ? EPISODE_FLOW[index + 1] : null;
 
   if (!document.getElementById("episode-flow-nav-styles")) {
     const style = document.createElement("style");
@@ -103,7 +106,7 @@ function renderEpisodeFlowNav() {
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
+    prevLink.href = index === 0 ? `${EPISODE_PREAMBLE.file}?path=episode` : previous.file;
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   }
@@ -118,7 +121,7 @@ function renderEpisodeFlowNav() {
   const stepLabel = document.createElement("span");
   stepLabel.className = "step";
   stepLabel.setAttribute("aria-current", "step");
-  stepLabel.textContent = `Current step: ${index + 1} of ${total} · ${step.label}`;
+  stepLabel.textContent = `Current step: ${index + 1 + EPISODE_SHELL_PREFIX} of ${total} · ${step.label}`;
   wrap.appendChild(stepLabel);
 
   nav.appendChild(wrap);
