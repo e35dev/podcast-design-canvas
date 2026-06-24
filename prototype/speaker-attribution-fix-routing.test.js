@@ -1,7 +1,7 @@
 "use strict";
 
 // Guards speaker attribution review hand-off links (#583): timing issues open sync
-// repair and unassigned captions open speaker role mapping where buckets are confirmed.
+// repair; unassigned captions and speaker mismatches open role mapping.
 // Run with: `node prototype/speaker-attribution-fix-routing.test.js`
 
 const fs = require("fs");
@@ -57,6 +57,14 @@ assert.ok(
   "needs speaker routed copy names the role mapping screen",
 );
 assert.ok(
+  source.includes("suggestedSpeaker && moment.assignedSpeaker !== moment.suggestedSpeaker"),
+  "speaker mismatch reviews are evaluated separately from unassigned captions",
+);
+assert.ok(
+  source.includes("Open speaker role mapping to confirm speaker buckets"),
+  "speaker mismatch routed copy names the role mapping screen",
+);
+assert.ok(
   source.includes("Open sync repair so the visible speaker and caption moment line up."),
   "sync repair routed copy names the sync repair screen",
 );
@@ -78,4 +86,4 @@ assert.ok(
 // Keep the DOM built without innerHTML, consistent with the other prototypes.
 assert.ok(!/innerHTML/.test(source), "attribution review builds the DOM without innerHTML");
 
-console.log("speaker attribution review: timing issues open sync repair and unassigned captions open speaker role mapping");
+console.log("speaker attribution review: timing issues open sync repair; unassigned and mismatched captions open speaker role mapping");
