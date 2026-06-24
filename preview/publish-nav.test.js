@@ -20,6 +20,7 @@ assert.ok(navScript.includes('document.querySelector(".publish-nav")'), "publish
 assert.ok(!/innerHTML/.test(navScript), "publish nav builds the DOM without innerHTML");
 
 const publishScreens = [
+  "long-form-navigation.html",
   "episode-watch-through-preview.html",
   "destination-crop-preview.html",
   "thumbnail-cover-frame.html",
@@ -163,7 +164,7 @@ function normalizePublishClickFor(href, search = "", embedded = false) {
   return sandbox.result;
 }
 
-const firstNav = renderNavFor("episode-watch-through-preview.html");
+const firstNav = renderNavFor("long-form-navigation.html");
 const exportBackLink = linkWithText(firstNav, "Previous: Export readiness");
 assert.ok(exportBackLink, "first publish screen renders export readiness as its previous step");
 assert.equal(
@@ -185,11 +186,11 @@ assert.ok(
 // VM-render the forward path the same way ingest-nav does (#676): prev AND next,
 // the finish handoff, and the visible step label — not just the previous link.
 assert.ok(
-  linkWithText(firstNav, "Next: Destination crop preview"),
+  linkWithText(firstNav, "Next: Watch-through preview"),
   "first publish screen renders the next publish step",
 );
 const firstStep = firstNav.find(
-  (node) => node.textContent === "Publish step 1 of 9 · Watch-through preview",
+  (node) => node.textContent === "Publish step 1 of 10 · Long-form navigation",
 );
 assert.ok(firstStep, "first publish screen renders its visible step label");
 assert.equal(firstStep.attributes["aria-current"], "step", "current publish step exposes aria-current");
@@ -212,11 +213,11 @@ assert.ok(
   "last publish screen does not render a next link",
 );
 
-const embeddedFirstNav = renderNavFor("episode-watch-through-preview.html", true);
+const embeddedFirstNav = renderNavFor("long-form-navigation.html", true);
 const embeddedPreviewApp = linkWithText(embeddedFirstNav, "Preview app");
 assert.equal(
   embeddedPreviewApp.href,
-  "../preview/app.html#episode-watch-through-preview",
+  "../preview/app.html#long-form-navigation",
   "embedded publish nav opens the current screen in the preview app",
 );
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
@@ -227,10 +228,10 @@ assert.equal(
   "embedded publish nav routes previous through the preview app hash",
 );
 assert.equal(embeddedBackLink.target, "_top", "embedded previous link targets the parent app");
-const embeddedNextLink = linkWithText(embeddedFirstNav, "Next: Destination crop preview");
+const embeddedNextLink = linkWithText(embeddedFirstNav, "Next: Watch-through preview");
 assert.equal(
   embeddedNextLink.href,
-  "../preview/app.html#destination-crop-preview",
+  "../preview/app.html#episode-watch-through-preview",
   "embedded publish nav routes next through the preview app hash",
 );
 assert.equal(embeddedNextLink.target, "_top", "embedded next link targets the parent app");
@@ -419,44 +420,18 @@ assert.equal(
   "embedded publish nav normalizes dynamic clip review transcript handoffs before navigation",
 );
 
-// Other cross-stage fix hand-offs from publish-prep screens (the publish checklist's
-// readiness fixes, metadata's chapter/social links, the export package's framing
-// owners) route the same way: publish context standalone, through the app embedded.
-const checklistFixLinks = renderNavFor(
-  "publish-checklist.html",
-  false,
-  "?path=publish",
-  ["audio-caption-quality-review.html", "source-media-health.html", "episode-chapter-markers.html"],
-);
+// Cross-stage fix hand-offs that publish-prep screens own here (export package /
+// destination crop framing & layout owners, metadata's social-context link) route
+// through the preview app when embedded. The publish-checklist caption / chapter /
+// source-media fixes are owned by the dedicated checklist normalizer and guarded by
+// publish-checklist-fix-routing.test.js, so they are not re-asserted here.
+const embeddedFramingFix = normalizePublishClickFor("speaker-framing-safety.html", "?path=publish", true);
 assert.equal(
-  linkWithText(checklistFixLinks, "audio-caption-quality-review.html").href,
-  "audio-caption-quality-review.html?path=publish",
-  "publish nav keeps publish context on checklist caption fix hand-offs",
+  embeddedFramingFix.href,
+  "../preview/app.html#speaker-framing-safety?path=publish",
+  "embedded publish nav routes export-package framing fix hand-offs through the preview app",
 );
-assert.equal(
-  linkWithText(checklistFixLinks, "source-media-health.html").href,
-  "source-media-health.html?path=publish",
-  "publish nav keeps publish context on checklist source media fix hand-offs",
-);
-
-const embeddedChecklistFixLinks = renderNavFor(
-  "publish-checklist.html",
-  true,
-  "?path=publish",
-  ["audio-caption-quality-review.html", "episode-chapter-markers.html"],
-);
-const embeddedCaptionFix = linkWithText(embeddedChecklistFixLinks, "audio-caption-quality-review.html");
-assert.equal(
-  embeddedCaptionFix.href,
-  "../preview/app.html#audio-caption-quality-review?path=publish",
-  "embedded publish nav routes checklist caption fix hand-offs through the preview app",
-);
-assert.equal(embeddedCaptionFix.target, "_top", "embedded cross-stage fix hand-offs target the parent app");
-assert.equal(
-  linkWithText(embeddedChecklistFixLinks, "episode-chapter-markers.html").href,
-  "../preview/app.html#episode-chapter-markers?path=publish",
-  "embedded publish nav routes checklist chapter fix hand-offs through the preview app",
-);
+assert.equal(embeddedFramingFix.target, "_top", "embedded framing fix hand-offs target the parent app");
 
 const embeddedMetadataSocial = renderNavFor(
   "episode-metadata-publishing.html",

@@ -86,6 +86,7 @@ function createPreviewAppRouting(order) {
     "show-notes-assembly",
     "episode-metadata-publishing",
     "export-package-handoff",
+    "clip-candidate-review",
     "client-review-copy-flow",
     "publish-checklist",
   ]);

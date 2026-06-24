@@ -360,4 +360,71 @@ assert.equal(
   "embedded reuse nav keeps the current screen in the preview app href",
 );
 
+const templateRoleFix = renderNavWithInPageLinks(
+  "show-template-adaptation.html",
+  "show-template-adaptation",
+  false,
+  "?path=episode",
+  ["speaker-role-mapping.html"],
+);
+assert.equal(
+  linkWithText(templateRoleFix.nodes, "speaker-role-mapping.html").href,
+  "speaker-role-mapping.html?path=episode",
+  "template adaptation role fix links keep episode path context",
+);
+
+const templateLayoutFix = renderNavWithInPageLinks(
+  "show-template-adaptation.html",
+  "show-template-adaptation",
+  false,
+  "?path=episode",
+  ["layout-safe-areas.html"],
+);
+assert.equal(
+  linkWithText(templateLayoutFix.nodes, "layout-safe-areas.html").href,
+  "layout-safe-areas.html?path=episode",
+  "template adaptation layout fix links keep episode path context",
+);
+
+const embeddedTemplateLayout = renderNavWithInPageLinks(
+  "show-template-adaptation.html",
+  "show-template-adaptation",
+  true,
+  "?path=episode",
+  ["layout-safe-areas.html"],
+);
+const embeddedLayout = linkWithText(embeddedTemplateLayout.nodes, "layout-safe-areas.html");
+assert.equal(
+  embeddedLayout.href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded reuse fix links route layout safe areas through the preview app",
+);
+assert.equal(embeddedLayout.target, "_top", "embedded layout fix links target the parent app");
+
+const previousEpisodeRoleFix = renderNavWithInPageLinks(
+  "start-from-previous-episode.html",
+  "start-from-previous-episode",
+  false,
+  "?path=episode",
+  ["speaker-role-mapping.html?path=ingest"],
+);
+assert.equal(
+  linkWithText(previousEpisodeRoleFix.nodes, "speaker-role-mapping.html?path=ingest").href,
+  "speaker-role-mapping.html?path=ingest",
+  "reuse nav preserves explicit ingest path on start-from-previous role fixes",
+);
+
+const embeddedPreviousRoleFix = renderNavWithInPageLinks(
+  "start-from-previous-episode.html",
+  "start-from-previous-episode",
+  true,
+  "?path=episode",
+  ["speaker-role-mapping.html?path=ingest"],
+);
+assert.equal(
+  linkWithText(embeddedPreviousRoleFix.nodes, "speaker-role-mapping.html?path=ingest").href,
+  "../preview/app.html#speaker-role-mapping?path=ingest",
+  "embedded reuse nav routes ingest-path role fixes through the preview app",
+);
+
 console.log("reuse nav: make-it-reusable screens connected into one path");

@@ -2,7 +2,8 @@
 
 // Guards the caption-review hand-off links (#583): a flagged caption line opens the
 // screen that owns its fix — uncertain names -> transcript glossary, cross-talk ->
-// pause & cross-talk cleanup, lower-third collision -> layout safe areas.
+// pause & cross-talk cleanup, lower-third collision -> layout safe areas, and a
+// wrong speaker label -> speaker attribution review (not a wording edit here).
 // Run with: `node prototype/audio-caption-quality-review.test.js`
 
 const fs = require("fs");
@@ -21,7 +22,14 @@ const expected = {
   "transcript-glossary.html": /low-confidence[\s\S]*?transcript-glossary\.html/,
   "pause-crosstalk-cleanup.html": /crosstalk[\s\S]*?pause-crosstalk-cleanup\.html/,
   "layout-safe-areas.html": /collision[\s\S]*?layout-safe-areas\.html/,
+  "speaker-attribution-review.html": /speaker-mismatch[\s\S]*?speaker-attribution-review\.html/,
 };
+
+// A wrong speaker label is handed to attribution review, not treated as a wording edit.
+assert.ok(
+  /"speaker-mismatch":\s*\["review",\s*"confirm"\]/.test(html),
+  "speaker-mismatch offers only review/confirm here; the fix happens in attribution review",
+);
 for (const [file, pattern] of Object.entries(expected)) {
   assert.ok(pattern.test(html), `flag routes to ${file}`);
   assert.ok(fs.existsSync(path.join(dir, file)), `fix screen exists: ${file}`);

@@ -322,6 +322,7 @@
         crosstalk: { label: "Word lost to cross-talk", weak: true, title: "A word was hard to hear over cross-talk", fixScreen: "pause-crosstalk-cleanup.html", fixLabel: "pause & cross-talk cleanup" },
         collision: { label: "Collides with a lower-third", weak: false, layout: true, title: "This caption overlaps the lower-third", fixScreen: "layout-safe-areas.html", fixLabel: "layout safe areas" },
         "long-line": { label: "Line is too long to read", weak: false, layout: true, title: "This line is too long to read in time", fixScreen: "layout-safe-areas.html", fixLabel: "layout safe areas" },
+        "speaker-mismatch": { label: "Wrong speaker label", weak: true, title: "This line may be labeled with the wrong speaker", fixScreen: "speaker-attribution-review.html", fixLabel: "speaker attribution review", reviewAction: "Confirm the speaker, or open speaker attribution review to reassign the line." },
       };
 
       // The creator's decision for a line. These record what the creator did — "edit" is
@@ -341,6 +342,8 @@
         crosstalk: ["review", "confirm", "edit"],
         collision: ["review", "move"],
         "long-line": ["review", "split", "edit"],
+        // A wrong speaker label is fixed in attribution review, not by editing wording here.
+        "speaker-mismatch": ["review", "confirm"],
       };
 
       const sampleLines = [
@@ -348,6 +351,7 @@
         { id: "l2", text: "Today we're joined by Anika Rao.", flag: "low-confidence", action: "review" },
         { id: "l3", text: "I think the the launch was huge.", flag: "crosstalk", action: "review" },
         { id: "l4", text: "Founder and CEO of Northwind Labs since 2019.", flag: "collision", action: "review" },
+        { id: "l5", text: "I want to add one thing before we move on.", flag: "speaker-mismatch", action: "review" },
       ];
 
       let lines = structuredClone(sampleLines);
@@ -386,7 +390,7 @@
             state = "confirmed";
           } else if (action === "review") {
             state = "review";
-            issue = { title: flag.title, action: "Confirm the wording, fix it, or resolve the overlap.", tone: "review" };
+            issue = { title: flag.title, action: flag.reviewAction || "Confirm the wording, fix it, or resolve the overlap.", tone: "review" };
             // Offer a direct route to the screen that owns this fix.
             if (flag.fixScreen) {
               issue.fixScreen = flag.fixScreen;

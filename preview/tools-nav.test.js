@@ -40,6 +40,7 @@ const ingestFlow = new Set([
 ]);
 
 const publishFlow = new Set([
+  "long-form-navigation.html",
   "episode-watch-through-preview.html",
   "destination-crop-preview.html",
   "thumbnail-cover-frame.html",

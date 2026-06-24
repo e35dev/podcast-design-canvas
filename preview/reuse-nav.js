@@ -23,6 +23,8 @@ const REUSE_FIX_PATHS = {
   "social-context-intake.html": "episode",
   "pause-crosstalk-cleanup.html": "episode",
   "transcript-search-navigation.html": "episode",
+  "speaker-role-mapping.html": "episode",
+  "layout-safe-areas.html": "episode",
 };
 
 const PREVIEW_APP_REUSE_TARGETS = new Set([
@@ -107,7 +109,7 @@ function routeSearchFromFile(file) {
   const filePath = pathFromQuery(queryWithoutHash(file));
   const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
   const path = filePath || shellPath;
-  return path === "episode" || path === "reuse" ? `?path=${path}` : "";
+  return path === "episode" || path === "reuse" || path === "ingest" ? `?path=${path}` : "";
 }
 
 function setTopTargetWhenEmbedded(link) {
@@ -148,6 +150,9 @@ function linkBase(href) {
 function resolveReuseLink(file) {
   const base = linkBase(file);
   if (Object.prototype.hasOwnProperty.call(REUSE_FIX_PATHS, base)) {
+    if (base === "speaker-role-mapping.html" && pathFromQuery(queryWithoutHash(file)) === "ingest") {
+      return file;
+    }
     return mergeRouteSearch(file, { path: REUSE_FIX_PATHS[base] });
   }
   return hrefWithPath(file);

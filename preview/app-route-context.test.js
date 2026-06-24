@@ -400,6 +400,35 @@ assert.equal(
   "publish path context is preserved when stepping forward inside publish prep",
 );
 
+publishPath.reroute("#export-package-handoff?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/export-package-handoff.html?path=publish",
+  "publish path context loads export package handoff with its route context",
+);
+assert.equal(
+  publishPath.nodes.nextStep.href,
+  "#clip-candidate-review?path=publish",
+  "publish path context is preserved when stepping from export package handoff to clip review",
+);
+
+publishPath.reroute("#clip-candidate-review?path=publish");
+assert.equal(
+  publishPath.nodes.frame.src,
+  "../prototype/clip-candidate-review.html?path=publish",
+  "publish path context loads clip review with its route context",
+);
+assert.equal(
+  publishPath.nodes.prevStep.href,
+  "#export-package-handoff?path=publish",
+  "publish path context is preserved when stepping back from clip review",
+);
+assert.equal(
+  publishPath.nodes.nextStep.href,
+  "#client-review-copy-flow?path=publish",
+  "publish path context is preserved when stepping forward from clip review",
+);
+
 publishPath.reroute("#export-readiness-review?path=publish");
 assert.equal(
   publishPath.nodes.frame.src,
