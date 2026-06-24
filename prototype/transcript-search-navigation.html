@@ -126,7 +126,7 @@
     <main>
       <h1>Transcript Search Navigation Prototype</h1>
       <p class="lede">
-        Search reviewed transcript moments, jump into the episode preview with speaker context, and hand off fixes to the review surface that owns them.
+        Search reviewed transcript moments, jump into the episode preview with speaker context, and open the right fix for each flagged moment.
       </p>
 
       <section class="workspace" aria-label="Transcript search navigation">
@@ -411,7 +411,7 @@
 
         const detail = createText(
           "div",
-          `Preview jump starts at ${result.leadIn}. Owning surface: ${ownerLabels[result.owner]}.`,
+          `Preview jump starts at ${result.leadIn}. Fix in ${ownerLabels[result.owner]}.`,
           "detail",
         );
 
@@ -500,7 +500,7 @@
         const cards = [
           ["Visible", String(visible), "matching moments in this search"],
           ["Jumped", String(jumped), "moments opened in preview"],
-          ["Hand-offs", String(handed), "sent to owning review"],
+          ["Hand-offs", String(handed), "sent to the right review screen"],
           ["Pinned", String(pinned), "clip candidates kept separate"],
         ].map(([label, value, detail]) => {
           const card = document.createElement("div");
@@ -523,14 +523,14 @@
           title: active.issue === "match" ? "Preview result is in context" : issueLabels[active.issue],
           detail: active.owner === "none"
             ? "This result can be inspected in the preview without clearing unrelated review warnings."
-            : `${ownerLabels[active.owner]} still owns the fix; search only navigates to the moment.`,
+            : `${ownerLabels[active.owner]} still needs the fix; search only navigates to the moment.`,
         });
 
         if (handOffs.length) {
           issues.push({
             tone: "route",
             title: `${handOffs.length} ${handOffs.length === 1 ? "result" : "results"} handed off`,
-            detail: "Hand-offs route to owning review surfaces instead of marking the transcript search result as fixed.",
+            detail: "Hand-offs open the right review screen instead of marking the transcript search result as fixed.",
           });
         }
 
