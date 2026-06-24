@@ -78,6 +78,24 @@
         background: #ffffff;
       }
 
+      .line.filtered-out {
+        display: none;
+      }
+
+      .review-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 12px 0;
+      }
+
+      .review-rollup {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .caption-preview {
         border-radius: 6px;
         background: #10201d;
@@ -284,6 +302,7 @@
         <aside class="panel" aria-live="polite" aria-label="Caption review summary">
           <h2>Caption review summary</h2>
           <div id="status" class="status ready">Captions look good</div>
+          <div id="reviewFilter" class="review-filter"></div>
           <div id="issues" class="issues"></div>
           <p class="summary-note">We only surface lines worth your attention. Confident lines stay out of your way, so you review just the few that need you.</p>
         </aside>
@@ -329,9 +348,11 @@
       ];
 
       let lines = structuredClone(sampleLines);
+      let showReviewOnly = false;
 
       const linesElement = document.querySelector("#lines");
       const statusElement = document.querySelector("#status");
+      const reviewFilterElement = document.querySelector("#reviewFilter");
       const issuesElement = document.querySelector("#issues");
 
       document.querySelector("#addLine").addEventListener("click", () => {
@@ -384,8 +405,18 @@
       // caret, so replacing them is safe).
       function render() {
         const evaluation = evaluate(lines);
+        if (showReviewOnly && !evaluation.results.some((r) => r.state === "review")) {
+          showReviewOnly = false;
+        }
         linesElement.replaceChildren(
-          ...lines.map((line, index) => renderLine(line, index, evaluation.results[index])),
+          ...lines.map((line, index) => {
+            const result = evaluation.results[index];
+            const el = renderLine(line, index, result);
+            if (showReviewOnly && result.state !== "review") {
+              el.classList.add("filtered-out");
+            }
+            return el;
+          }),
         );
         updateSummary(evaluation);
       }
@@ -393,6 +424,26 @@
       function updateSummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready" ? "Captions look good" : "Lines to review";
+
+        const total = evaluation.results.length;
+        const reviewCount = evaluation.results.filter((r) => r.state === "review").length;
+        reviewFilterElement.replaceChildren();
+        const rollup = document.createElement("p");
+        rollup.className = "review-rollup";
+        rollup.textContent = reviewCount === 0
+          ? "No caption lines need review."
+          : `${reviewCount} of ${total} caption ${total === 1 ? "line" : "lines"} still ${reviewCount === 1 ? "needs" : "need"} review.`;
+        reviewFilterElement.append(rollup);
+        if (reviewCount > 0) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "secondary";
+          btn.textContent = showReviewOnly
+            ? `Show all ${total} caption lines`
+            : `Show only the ${reviewCount} that need review`;
+          btn.addEventListener("click", () => { showReviewOnly = !showReviewOnly; render(); });
+          reviewFilterElement.append(btn);
+        }
 
         const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
         issuesElement.replaceChildren(
@@ -415,6 +466,9 @@
           const preview = node.querySelector("[data-preview]");
           if (preview && lines[index]) {
             preview.textContent = lines[index].text || "(empty caption)";
+          }
+          if (showReviewOnly) {
+            node.classList.toggle("filtered-out", evaluation.results[index].state !== "review");
           }
         });
         updateSummary(evaluation);
