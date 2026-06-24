@@ -399,7 +399,14 @@
       .batch-toolbar {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 10px;
+      }
+
+      .batch-filter-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
       }
 
       .batch-links {
@@ -482,6 +489,7 @@
             </div>
             <div class="batch-condition-tags" id="batchConditionTags" hidden></div>
             <div class="batch-toolbar" id="batchToolbar"></div>
+            <p class="batch-filter-note" id="batchFilterNote" hidden>Showing only files that need work; ready files stay hidden until you show all.</p>
             <div class="batch-links" id="batchLinks"></div>
           </div>
           <div class="speakers" id="speakers"></div>
@@ -614,6 +622,7 @@
       const batchToolbarElement = document.querySelector("#batchToolbar");
       const batchLinksElement = document.querySelector("#batchLinks");
       const batchConditionTagsElement = document.querySelector("#batchConditionTags");
+      const batchFilterNoteElement = document.querySelector("#batchFilterNote");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -800,6 +809,7 @@
           });
           batchToolbarElement.append(filterButton);
         }
+        batchFilterNoteElement.hidden = !(batch.flaggedCount > 0 && showFlaggedOnly);
 
         const flagged = results.filter((result) => batchCategory(result.state) !== "clear");
         renderBatchConditionTags(flagged);
