@@ -811,7 +811,12 @@
       function rollupOpenLinkLabel(result) {
         const bucket = trackBucketLabel(result.name);
         const issueLabel = issues[result.issue]?.label;
-        return issueLabel ? `Open ${bucket} · ${issueLabel}` : `Open ${bucket}`;
+        const repairLabel = result.proposedRepair ? repairs[result.proposedRepair] : null;
+        if (issueLabel && repairLabel) {
+          return `Open ${bucket} · ${issueLabel} → ${repairLabel}`;
+        }
+        const detail = issueLabel || repairLabel;
+        return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
       }
 
       function renderRollupIssueTags(needsWork) {
