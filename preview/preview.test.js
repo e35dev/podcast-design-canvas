@@ -149,6 +149,19 @@ assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Watch-through preview"),
   "last flow screen hands off to the connected publish path",
 );
+const publishHandoff = lastNav.nodes.find(
+  (node) => node.tagName === "a" && node.textContent === "Continue: Watch-through preview",
+);
+assert.ok(publishHandoff, "last flow screen renders publish prep handoff link");
+assert.equal(
+  publishHandoff.href,
+  "episode-watch-through-preview.html",
+  "last flow screen publish handoff opens watch-through preview",
+);
+assert.ok(
+  fs.existsSync(path.join(root, "prototype", publishHandoff.href)),
+  "publish prep handoff target exists",
+);
 
 const duplicateNav = renderNavFor("speaker-sync-repair.html");
 vm.runInNewContext(navSource, {
