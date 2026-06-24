@@ -153,6 +153,16 @@
     const errorCard = doc.getElementById("layout-error-card");
     const errorText = doc.getElementById("layout-error");
     const layoutCanvas = doc.getElementById("layout-canvas");
+    const actionStatus = doc.getElementById("layout-action-status");
+
+    // Announce a discrete keyboard placement action (move, swap, remove) to screen readers via
+    // a polite live region. Drag/mouse actions are seen; keyboard actions otherwise produced
+    // only the recomputed readiness line, never naming what the key press actually did.
+    function announceAction(message) {
+      if (actionStatus) {
+        actionStatus.textContent = message;
+      }
+    }
 
     // When Continue is gated, a screen-reader user focusing it should hear WHY, not just that
     // it is dimmed. The live placement status names which required videos are still missing
@@ -611,11 +621,22 @@
         draggingFromSlot = null;
         clearDragAffordances();
       });
-      // Keyboard equivalent of dragging a placed video onto another slot: the arrow keys move it
-      // to the previous/next visible slot, moving into an empty slot or swapping with a filled
-      // one through the same moveSlotVideo path as drag. Focus follows the video to its new slot
-      // so a keyboard user stays oriented after the move.
+      // Full keyboard operation of a placed video, with spoken feedback:
+      //  - Arrow keys move it to the previous/next visible slot (move into an empty slot, or
+      //    swap with a filled one) through the same moveSlotVideo path as drag; focus follows
+      //    the video so a keyboard user stays oriented.
+      //  - Delete/Backspace removes it (the same as the Remove button), returning focus to the
+      //    slot's file input.
+      // Each action is announced to screen readers, since keyboard actions otherwise gave no
+      // feedback beyond the recomputed readiness line.
       wrap.addEventListener("keydown", (event) => {
+        if (event.key === "Delete" || event.key === "Backspace") {
+          event.preventDefault();
+          const removedName = slotName(zone);
+          removeVideo(zone);
+          announceAction("Removed the " + removedName + " video.");
+          return;
+        }
         let delta = 0;
         if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
           delta = -1;
@@ -630,7 +651,13 @@
         if (!target) {
           return;
         }
+        const wasSwap = target.classList.contains("filled");
+        const fromName = slotName(zone);
+        const toName = slotName(target);
         moveSlotVideo(zone, target);
+        announceAction(wasSwap
+          ? "Swapped the " + fromName + " and " + toName + " videos."
+          : "Moved the video to the " + toName + " slot.");
         const moved = target.querySelector && target.querySelector(".placed-video");
         if (moved && typeof moved.focus === "function") {
           moved.focus();

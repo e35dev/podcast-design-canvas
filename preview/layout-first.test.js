@@ -127,6 +127,7 @@ const elementsById = {
   "layout-error-card": new Element("div", { hidden: true }),
   "layout-error": new Element("p"),
   "layout-canvas": new Element("div"),
+  "layout-action-status": new Element("p"),
 };
 
 const layoutButtons = [
@@ -1183,5 +1184,22 @@ assert.equal(controller.zonesBySlot.host.dataset.fileName, "k-host.mp4", "and sw
 const beforeKey = controller.zonesBySlot.host.dataset.fileName;
 controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "Tab", preventDefault() {} });
 assert.equal(controller.zonesBySlot.host.dataset.fileName, beforeKey, "a non-arrow key does not move the placed video");
+
+// Keyboard actions are announced to screen readers via the polite live region, and Delete
+// removes the focused video (the same as the Remove button).
+const actionStatus = elementsById["layout-action-status"];
+controller.resetVideos();
+controller.applyLayout("interview");
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "ann-host.mp4", type: "video/mp4", size: 7, lastModified: 7 });
+controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.match(actionStatus.textContent, /Moved the video to the Guest slot/, "a keyboard move is announced to screen readers");
+// Guest now holds the video; place one in host and swap to check the swap announcement.
+controller.placeVideoFile(controller.zonesBySlot.host, { name: "ann-host2.mp4", type: "video/mp4", size: 8, lastModified: 8 });
+controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.match(actionStatus.textContent, /Swapped the Host and Guest videos/, "a keyboard swap is announced to screen readers");
+// Delete removes the focused video and announces it.
+controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "Delete", preventDefault() {} });
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "Delete removes the focused placed video");
+assert.match(actionStatus.textContent, /Removed the Host video/, "a keyboard removal is announced to screen readers");
 
 console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");

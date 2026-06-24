@@ -19,6 +19,7 @@
 
       * { box-sizing: border-box; }
       body { margin: 0; color: var(--ink); background: #ffffff; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
       main { max-width: 1180px; margin: 0 auto; padding: 40px 20px 56px; }
       h1 { margin: 0 0 8px; font-size: 32px; line-height: 1.1; }
       .lede { margin: 0 0 24px; color: var(--muted); max-width: 760px; }
@@ -391,6 +392,7 @@
               </div>
               <button type="button" class="reset-btn" id="layout-reset">Reset videos</button>
               <a class="continue-btn is-disabled" id="layout-continue" data-ready-href="./app.html#speaker-role-mapping?path=episode" aria-disabled="true">Continue to production workspace →</a>
+              <p id="layout-action-status" class="sr-only" aria-live="polite"></p>
             </aside>
           </div>
         </div>
