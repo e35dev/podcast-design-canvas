@@ -149,8 +149,8 @@ const firstNav = renderNavFor("contextual-broll-moments.html", "contextual-broll
 const cleanupBackLink = linkWithText(firstNav, "Previous: On-screen correction note");
 assert.equal(
   cleanupBackLink.href,
-  "on-screen-correction-note.html",
-  "first visuals screen links back to cleanup",
+  "on-screen-correction-note.html?from=cleanup",
+  "first visuals screen links back to cleanup with cleanup context",
 );
 const defaultNextLink = linkWithText(firstNav, "Next: Contextual title cards");
 assert.equal(
@@ -219,8 +219,8 @@ assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targe
 const embeddedCleanupBack = linkWithText(embeddedFirstNav, "Previous: On-screen correction note");
 assert.equal(
   embeddedCleanupBack.href,
-  "../preview/app.html#on-screen-correction-note",
-  "embedded visuals nav routes the cleanup back-link through the preview app hash",
+  "../preview/app.html#on-screen-correction-note?from=cleanup",
+  "embedded visuals nav routes the cleanup back-link through the preview app hash with cleanup context",
 );
 assert.equal(embeddedCleanupBack.target, "_top", "embedded cleanup back-link targets the parent app");
 const embeddedNext = linkWithText(embeddedFirstNav, "Next: Contextual title cards");

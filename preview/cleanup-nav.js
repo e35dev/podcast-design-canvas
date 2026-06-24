@@ -21,6 +21,9 @@ const PREVIEW_APP_CLEANUP_TARGETS = new Set([
   ...CLEANUP_FLOW.map((step) => step.id),
   "contextual-broll-moments",
 ]);
+const CLEANUP_ENTRY_BACKLINK = { file: "publish-checklist.html?path=publish", label: "Publish checklist" };
+const CLEANUP_ENTRY_CONTEXTS = new Set(["cleanup", "style"]);
+const CLEANUP_RETURN_PATHS = new Set(["publish"]);
 
 function currentCleanupIndex() {
   const fromBody = document.body.dataset.cleanupStep;
@@ -57,38 +60,38 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
-function cleanupContextSuffix() {
-  const from = new URLSearchParams(window.location.search).get("from");
-  if (from === "cleanup") {
-    return "?from=cleanup";
+function supportedRouteSearch(params) {
+  const from = params.get("from");
+  if (CLEANUP_ENTRY_CONTEXTS.has(from)) {
+    return `?from=${from}`;
   }
-  if (from === "style") {
-    return "?from=style";
+
+  const path = params.get("path");
+  if (CLEANUP_RETURN_PATHS.has(path)) {
+    return `?path=${path}`;
   }
+
   return "";
 }
 
-function routeSearchFromFile(file) {
+function cleanupEntrySearchFromWindow() {
+  const from = new URLSearchParams(window.location.search).get("from");
+  return CLEANUP_ENTRY_CONTEXTS.has(from) ? `?from=${from}` : "";
+}
+
+function routeSearchFromFile(file, fallbackSearch = cleanupEntrySearchFromWindow()) {
   const query = ((file || "").split("#")[0].split("?")[1] || "");
-  let from = new URLSearchParams(query).get("from");
-  if (!from) {
-    from = new URLSearchParams(cleanupContextSuffix().replace(/^\?/, "")).get("from");
-  }
-  if (from === "style") {
-    return "?from=style";
-  }
-  if (from === "cleanup") {
-    return "?from=cleanup";
-  }
-  return "";
+  const explicit = supportedRouteSearch(new URLSearchParams(query));
+  if (explicit) return explicit;
+  return fallbackSearch;
 }
 
 function hrefWithCleanupContext(file) {
   const base = (file || "").split("?")[0];
-  if (new URLSearchParams((file || "").split("?")[1] || "").get("from")) {
+  if (routeSearchFromFile(file, "")) {
     return file;
   }
-  const suffix = cleanupContextSuffix();
+  const suffix = cleanupEntrySearchFromWindow();
   if (suffix && CLEANUP_FLOW.some((step) => step.file === base)) {
     return `${base}${suffix}`;
   }
@@ -202,6 +205,7 @@ function renderCleanupNav() {
 
   const previewApp = document.createElement("a");
   previewApp.href = "../preview/app.html";
+  setTopTargetWhenEmbedded(previewApp);
   previewApp.textContent = "Preview app";
   wrap.appendChild(previewApp);
 
@@ -213,8 +217,7 @@ function renderCleanupNav() {
     wrap.appendChild(prevLink);
   } else {
     const prep = document.createElement("a");
-    prep.href = "publish-checklist.html";
-    setCleanupScreenLink(prep, "publish-checklist.html");
+    setCleanupScreenLink(prep, CLEANUP_ENTRY_BACKLINK.file);
     prep.textContent = "Previous: Publish checklist";
     wrap.appendChild(prep);
   }

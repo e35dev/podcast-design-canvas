@@ -14,7 +14,7 @@ const VISUALS_FLOW = [
 
 const VISUALS_SCREEN_IDS = new Set(VISUALS_FLOW.map((step) => step.id));
 const VISUALS_ENTRY_BACKLINKS = {
-  cleanup: { href: "on-screen-correction-note.html", label: "On-screen correction note" },
+  cleanup: { href: "on-screen-correction-note.html?from=cleanup", label: "On-screen correction note" },
   style: { href: "canvas-layer-controls.html", label: "Canvas layer controls" },
 };
 
