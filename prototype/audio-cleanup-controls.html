@@ -189,6 +189,24 @@
         background: #e8edf5;
       }
 
+      .rollup-effect-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-effect-tags .rollup-effect-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #5e6b67;
+        background: #eef2f0;
+      }
+
       .speaker.filtered-out {
         display: none;
       }
@@ -610,6 +628,21 @@
         return wrap;
       }
 
+      function renderRollupChoiceEffectTags() {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-effect-tags";
+        wrap.setAttribute("aria-label", "Expected cleanup outcomes for active choices");
+
+        for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
+          const tag = document.createElement("span");
+          tag.className = "rollup-effect-tag";
+          tag.textContent = `${choice.label} — ${choice.effect}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(reviewCount) {
         const rollup = buildRollup();
         rollupElement.className = `cleanup-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -635,6 +668,10 @@
           const momentTags = renderRollupMomentTags();
           if (momentTags.childElementCount) {
             rollupElement.appendChild(momentTags);
+          }
+          const effectTags = renderRollupChoiceEffectTags();
+          if (effectTags.childElementCount) {
+            rollupElement.appendChild(effectTags);
           }
         }
 
