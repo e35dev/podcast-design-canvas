@@ -52,4 +52,23 @@ assert.strictEqual(
   "flow page has one step per core-flow screen",
 );
 
+assert.match(navJs, /episode-flow\.html/, "core flow nav links to the guided episode flow");
+
+const catalog = fs.readFileSync(path.join(root, "index.html"), "utf8");
+assert.match(catalog, /href="preview\/"/, "root catalog links to the preview shell");
+assert.match(catalog, /href="preview\/episode-flow\.html"/, "root catalog links to the guided episode flow");
+assert.match(shell, /href="\.\.\/index\.html"/, "preview shell links back to the root catalog");
+
+const screenSlugs = [
+  ...new Set(
+    [...catalog.matchAll(/\["([a-z0-9-]+)",\s*"[^"]+",\s*"[^"]+"\]/g)].map((match) => match[1]),
+  ),
+];
+for (const slug of screenSlugs) {
+  assert.ok(
+    fs.existsSync(path.join(root, "prototype", `${slug}.html`)),
+    `root catalog screen ${slug} resolves to a prototype file`,
+  );
+}
+
 console.log(`flow consistency: ${navFlow.length} core steps aligned across shell, nav, and flow page`);

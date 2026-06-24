@@ -38,6 +38,10 @@ for (const file of linked) {
 assert.match(shell, /More tools/, "shell has a secondary tools section");
 assert.match(shell, /aria-label="Podcast Design Canvas preview shell"/, "shell keeps its landmark");
 assert.match(shell, /href="\.\.\/index\.html"/, "shell links back to the full screen catalog");
+assert.match(shell, /href="\.\/episode-flow\.html"/, "shell links to the guided episode flow");
+
+const flowPage = fs.readFileSync(path.join(__dirname, "episode-flow.html"), "utf8");
+assert.match(flowPage, /href="\.\/index\.html"/, "guided flow links back to the preview shell");
 
 console.log(
   `preview shell coverage: ${prototypes.length} prototypes, all reachable, no dead links`,
