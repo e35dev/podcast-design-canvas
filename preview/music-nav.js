@@ -226,6 +226,13 @@ function renderMusicNav() {
     return;
   }
 
+  const placementHandoff = typeof createMusicLayoutPlacementHandoff === "function"
+    ? createMusicLayoutPlacementHandoff({
+        readSearch: () => window.location.search,
+        setTopTarget: setTopTargetWhenEmbedded,
+      })
+    : null;
+
   if (!document.getElementById("music-nav-styles")) {
     const style = document.createElement("style");
     style.id = "music-nav-styles";
@@ -309,6 +316,13 @@ function renderMusicNav() {
   setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
+
+  if (placementHandoff && placementHandoff.shouldOfferOnStep(step.id)) {
+    const placement = document.createElement("a");
+    placementHandoff.applyPlacementLink(placement);
+    placement.textContent = "Place videos in layout";
+    wrap.appendChild(placement);
+  }
 
   if (previous) {
     const prevLink = document.createElement("a");

@@ -10,8 +10,10 @@ const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 const navScript = fs.readFileSync(path.join(__dirname, "music-nav.js"), "utf8");
+const handoffScript = fs.readFileSync(path.join(__dirname, "music-layout-placement-handoff.js"), "utf8");
+const combinedNavScript = `${handoffScript}\n${navScript}`;
 
-new vm.Script(navScript);
+new vm.Script(combinedNavScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "music nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "music nav links to the guided episode flow");
 assert.ok(navScript.includes("currentPreviewAppHref"), "music nav builds preview app href from the active step");
@@ -124,7 +126,7 @@ function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = [], s
     },
   };
 
-  vm.runInNewContext(navScript, {
+  vm.runInNewContext(combinedNavScript, {
     document,
     window: makeWindow(fileName, embedded, search),
     URLSearchParams,
@@ -142,6 +144,12 @@ function linkWithText(nodes, text) {
 }
 
 const firstNav = renderNavFor("music-cue-setup.html", "music-cue-setup");
+const placementLink = linkWithText(firstNav, "Place videos in layout");
+assert.equal(
+  placementLink.href,
+  "../preview/layout-first.html?from=music",
+  "music cue setup links to layout-first placement with music context",
+);
 const entryLink = linkWithText(firstNav, "Previous: Audio cleanup");
 assert.equal(entryLink.href, "audio-cleanup-controls.html", "first music screen returns to audio cleanup");
 
@@ -177,6 +185,10 @@ assert.equal(
 );
 
 const embeddedSecondNav = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", true);
+assert.ok(
+  !embeddedSecondNav.some((node) => node.textContent === "Place videos in layout"),
+  "ducking step does not offer layout-first placement",
+);
 assert.equal(
   linkWithText(embeddedSecondNav, "Preview app").href,
   "../preview/app.html#music-ducking-under-speech",
@@ -308,7 +320,7 @@ function renderNavWithInPageLinks(fileName, musicStep, embedded, search, hrefs) 
     appendStaticLink(body, href, href);
   }
 
-  vm.runInNewContext(navScript, {
+  vm.runInNewContext(combinedNavScript, {
     document,
     window: makeWindow(fileName, embedded, search || ""),
     URLSearchParams,
