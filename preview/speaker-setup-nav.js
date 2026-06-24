@@ -11,6 +11,7 @@ const SPEAKER_SETUP_FLOW = [
   { id: "guest-profile-reuse", file: "guest-profile-reuse.html", label: "Guest profile reuse" },
   { id: "speaker-visual-match", file: "speaker-visual-match.html", label: "Speaker visual match" },
   { id: "speaker-eye-line-coherence", file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" },
+  { id: "off-camera-speaker-presence", file: "off-camera-speaker-presence.html", label: "Off-camera speaker presence" },
 ];
 
 const SPEAKER_SETUP_ENTRY = { file: "speaker-role-mapping.html?path=episode", label: "Speaker roles" };

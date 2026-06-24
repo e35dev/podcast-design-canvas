@@ -79,6 +79,7 @@ const speakerSetupFlow = new Set([
   "guest-profile-reuse.html",
   "speaker-visual-match.html",
   "speaker-eye-line-coherence.html",
+  "off-camera-speaker-presence.html",
 ]);
 
 const cleanupFlow = new Set([

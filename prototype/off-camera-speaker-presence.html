@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Off-Camera Speaker Presence Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace {
+        display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+        gap: 24px; margin-top: 28px;
+      }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .participants { display: grid; gap: 12px; }
+      .participant {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
+        display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start;
+      }
+      .participant.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15,106,87,0.10); }
+      .presence-glyph {
+        width: 48px; height: 48px; border-radius: 50%; background: var(--surface);
+        border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+        font-size: 20px; font-weight: 700; color: var(--muted); flex-shrink: 0;
+      }
+      .presence-glyph.ready { background: #e8f4f1; color: var(--accent); border-color: #b1d5ca; }
+      .presence-glyph.review { background: #fff8ec; color: var(--review); border-color: #e8d2a0; }
+      .participant-body { display: grid; gap: 6px; }
+      .participant-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+      .participant-name { font-weight: 700; }
+      .participant-role { font-size: 13px; color: var(--muted); }
+      .badge {
+        display: inline-flex; align-items: center; font-size: 12px; font-weight: 600;
+        padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+      }
+      .badge.ready { background: #e8f4f1; color: var(--accent); }
+      .badge.review { background: #fff8ec; color: var(--review); }
+      .badge.undecided { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+      .style-select {
+        font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); padding: 5px 8px; width: 100%; cursor: pointer;
+      }
+      .preview-card {
+        border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 16px;
+      }
+      .preview-frame {
+        aspect-ratio: 16 / 9; background: linear-gradient(160deg, #3a5a54, #1a2e2b);
+        position: relative; display: flex; align-items: flex-end;
+      }
+      .presence-element {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        padding: 10px 12px; display: flex; align-items: center; gap: 8px;
+      }
+      .presence-element.name-card { background: rgba(26,46,43,0.82); }
+      .presence-element.photo { background: rgba(26,46,43,0.6); }
+      .presence-element.avatar { background: rgba(26,46,43,0.7); }
+      .presence-element.waveform { background: transparent; }
+      .presence-element.placeholder { background: transparent; }
+      .presence-element.hidden { display: none; }
+      .presence-element.undecided { background: rgba(155,93,0,0.2); border-top: 1px dashed rgba(155,93,0,0.4); }
+      .presence-name { color: #fff; font-weight: 700; font-size: 14px; }
+      .presence-role { color: rgba(255,255,255,0.7); font-size: 12px; }
+      .presence-photo-circle {
+        width: 34px; height: 34px; border-radius: 50%; background: #e8f4f1; flex-shrink: 0;
+      }
+      .presence-waveform { display: flex; align-items: center; gap: 2px; height: 22px; }
+      .presence-waveform span {
+        display: block; width: 3px; border-radius: 999px; background: rgba(255,255,255,0.7);
+      }
+      .preview-meta { padding: 9px 12px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+      .issues { display: grid; gap: 10px; margin-bottom: 14px; }
+      .issue {
+        border-left: 3px solid var(--review); border-radius: 6px; background: #fff;
+        padding: 10px 12px; display: grid; gap: 4px;
+      }
+      .issue strong { font-size: 14px; }
+      .issue span, .issue a { font-size: 13px; color: var(--muted); display: block; }
+      .fix-link {
+        color: var(--accent); text-decoration: underline; cursor: pointer;
+      }
+      .fix-link:hover { color: #0a5040; }
+      .fix-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+      .status {
+        font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 6px;
+        background: var(--surface); border: 1px solid var(--line);
+      }
+      .status.ready { background: #e8f4f1; color: var(--accent); border-color: #b1d5ca; }
+      .status.review { background: #fff8ec; color: var(--review); border-color: #e8d2a0; }
+      .connected-note { margin-top: 20px; }
+      .connected-note ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+      .connected-note li { font-size: 13px; color: var(--muted); }
+      button.reset-btn {
+        margin-top: 14px; min-height: 34px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); font: inherit; font-size: 13px; padding: 5px 12px; cursor: pointer;
+      }
+      button.reset-btn:hover { background: var(--surface); }
+      @media (max-width: 860px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/speaker-setup-nav.js" defer></script>
+  </head>
+  <body data-setup-step="off-camera-speaker-presence">
+    <main>
+      <h1>Off-Camera Speaker Presence Prototype</h1>
+      <p class="lede">
+        Give each audio-only participant an intentional on-screen presence for the moments when they speak —
+        so the episode stays designed even when a guest is on the phone or a producer speaks off camera.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Participants</h2>
+          <div class="participants" id="participants"></div>
+          <button class="reset-btn" id="reset">Reset to sample</button>
+        </div>
+
+        <aside class="panel">
+          <h2>Preview</h2>
+          <div class="preview-card">
+            <div class="preview-frame" id="previewFrame">
+              <div class="presence-element" id="presenceEl">
+                <div class="presence-photo-circle" id="presencePhoto" hidden></div>
+                <div class="presence-waveform" id="presenceWave" hidden>
+                  <span style="height:8px"></span>
+                  <span style="height:14px"></span>
+                  <span style="height:20px"></span>
+                  <span style="height:16px"></span>
+                  <span style="height:10px"></span>
+                  <span style="height:18px"></span>
+                  <span style="height:12px"></span>
+                </div>
+                <div>
+                  <div class="presence-name" id="presenceName"></div>
+                  <div class="presence-role" id="presenceRole"></div>
+                </div>
+              </div>
+            </div>
+            <div class="preview-meta" id="previewMeta"></div>
+          </div>
+
+          <div class="issues" id="issues"></div>
+          <div class="status" id="status"></div>
+
+          <div class="connected-note">
+            <h3 style="font-size:14px;margin-bottom:6px;">Connected workflow</h3>
+            <ul>
+              <li>audio-only role confirmed in speaker role mapping before this screen</li>
+              <li>photo and handle from social context intake or guest profile</li>
+              <li>placement and layering stay in canvas layer controls</li>
+              <li>saved presence style carries forward through show template adaptation</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const styles = {
+        undecided: { label: "Not chosen yet", glyph: "?", desc: "Choose a presence style for this participant." },
+        "name-card": { label: "Name card", glyph: "N", desc: "Name, role, and handle as a lower-third style card." },
+        photo: { label: "Social photo", glyph: "P", desc: "Photo from social context, held while they speak.", needsPhoto: true },
+        avatar: { label: "Show avatar", glyph: "A", desc: "Branded avatar or show monogram." },
+        waveform: { label: "Audio waveform", glyph: "W", desc: "Animated audio presence element while they speak." },
+        placeholder: { label: "Quiet placeholder", glyph: "–", desc: "Low-key frame that stays out of on-camera speakers' way." },
+        hidden: { label: "Off-screen", glyph: "×", desc: "Keep this participant entirely out of frame." },
+      };
+
+      const styleOrder = ["undecided", "name-card", "photo", "avatar", "waveform", "placeholder", "hidden"];
+
+      const sampleParticipants = [
+        { id: "caller", name: "Alex Rivera", role: "Call-in guest", style: "undecided", hasPhoto: false, roleConfirmed: true },
+        { id: "producer", name: "Sam Chen", role: "Producer", style: "waveform", hasPhoto: false, roleConfirmed: true },
+        { id: "narrator", name: "V.O. Narrator", role: "Voiceover", style: "photo", hasPhoto: false, roleConfirmed: false },
+      ];
+
+      let participants = structuredClone(sampleParticipants);
+      let selected = participants[0].id;
+
+      const participantsElement = document.querySelector("#participants");
+      const previewFrameElement = document.querySelector("#presenceEl");
+      const presenceNameElement = document.querySelector("#presenceName");
+      const presenceRoleElement = document.querySelector("#presenceRole");
+      const presencePhotoElement = document.querySelector("#presencePhoto");
+      const presenceWaveElement = document.querySelector("#presenceWave");
+      const previewMetaElement = document.querySelector("#previewMeta");
+      const issuesElement = document.querySelector("#issues");
+      const statusElement = document.querySelector("#status");
+
+      function evaluate(list) {
+        const results = list.map((p) => {
+          const style = styles[p.style] || styles.undecided;
+          let state = "ready";
+          let issue = null;
+
+          if (!p.roleConfirmed) {
+            state = "review";
+            issue = {
+              title: `${p.name}: audio-only role not confirmed`,
+              action: "Open speaker role mapping to confirm this participant is intentionally off camera.",
+              tone: "review",
+              fixScreen: "speaker-role-mapping.html",
+              fixLabel: "speaker role mapping",
+            };
+          } else if (p.style === "undecided") {
+            state = "review";
+            issue = {
+              title: `${p.name}: presence style not chosen`,
+              action: "Choose how this participant appears when they speak.",
+              tone: "review",
+            };
+          } else if (style.needsPhoto && !p.hasPhoto) {
+            state = "review";
+            issue = {
+              title: `${p.name}: no photo source available`,
+              action: "Open social context intake to add a photo link for this participant.",
+              tone: "review",
+              fixScreen: "social-context-intake.html",
+              fixLabel: "social context intake",
+            };
+          }
+
+          return { ...p, state, issue };
+        });
+
+        const hasReview = results.some((r) => r.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = "issue";
+        const title = document.createElement("strong");
+        title.textContent = issue.title;
+        let action;
+        if (issue.fixScreen && issue.fixLabel) {
+          action = document.createElement("a");
+          action.className = "fix-link";
+          action.href = issue.fixScreen;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
+        article.append(title, action);
+        return article;
+      }
+
+      function renderParticipant(p, result) {
+        const style = styles[p.style] || styles.undecided;
+        const article = document.createElement("article");
+        article.className = `participant${p.id === selected ? " selected" : ""}`;
+        article.addEventListener("click", () => { selected = p.id; render(); });
+
+        const glyph = document.createElement("div");
+        glyph.className = `presence-glyph ${result.state}`;
+        glyph.textContent = style.glyph;
+
+        const body = document.createElement("div");
+        body.className = "participant-body";
+
+        const head = document.createElement("div");
+        head.className = "participant-head";
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "participant-name";
+        nameSpan.textContent = p.name;
+        const roleSpan = document.createElement("div");
+        roleSpan.className = "participant-role";
+        roleSpan.textContent = p.role;
+        const badge = document.createElement("span");
+        badge.className = `badge ${result.state === "ready" ? "ready" : result.state === "review" ? "review" : "undecided"}`;
+        badge.textContent = result.state === "ready" ? style.label : "needs review";
+        head.append(nameSpan, roleSpan, badge);
+
+        const select = document.createElement("select");
+        select.className = "style-select";
+        select.setAttribute("aria-label", `Presence style for ${p.name}`);
+        for (const key of styleOrder) {
+          const option = document.createElement("option");
+          option.value = key;
+          option.textContent = styles[key].label;
+          option.selected = p.style === key;
+          select.appendChild(option);
+        }
+        select.addEventListener("change", (e) => {
+          participants = participants.map((x) => x.id === p.id ? { ...x, style: e.target.value } : x);
+          selected = p.id;
+          render();
+        });
+
+        body.append(head, select);
+        article.append(glyph, body);
+        return article;
+      }
+
+      function renderPreview(p) {
+        const style = styles[p.style] || styles.undecided;
+        previewFrameElement.className = `presence-element ${p.style || "undecided"}`;
+        presenceNameElement.textContent = p.name;
+        presenceRoleElement.textContent = p.role;
+        presencePhotoElement.hidden = p.style !== "photo";
+        presenceWaveElement.hidden = p.style !== "waveform";
+        previewMetaElement.textContent = style.desc || "Choose a style to preview this participant.";
+      }
+
+      function render() {
+        const evaluation = evaluate(participants);
+
+        participantsElement.replaceChildren(
+          ...participants.map((p, i) => renderParticipant(p, evaluation.results[i])),
+        );
+
+        const current = participants.find((p) => p.id === selected) || participants[0];
+        if (current) renderPreview(current);
+
+        const issues = evaluation.results.map((r) => r.issue).filter(Boolean);
+        issuesElement.replaceChildren(...issues.map(renderIssue));
+
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready"
+          ? "All participants have a presence style"
+          : `${issues.length} participant${issues.length === 1 ? "" : "s"} need attention`;
+      }
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        participants = structuredClone(sampleParticipants);
+        selected = participants[0].id;
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, styles };
+      }
+    </script>
+  </body>
+</html>

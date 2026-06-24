@@ -25,6 +25,7 @@ const setupScreens = [
   "guest-profile-reuse.html",
   "speaker-visual-match.html",
   "speaker-eye-line-coherence.html",
+  "off-camera-speaker-presence.html",
 ];
 
 for (const file of setupScreens) {
@@ -127,7 +128,13 @@ assert.equal(
   "first speaker setup screen links to the next setup step",
 );
 
-const lastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence");
+const eyeLineNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence");
+assert.ok(
+  eyeLineNav.nodes.some((node) => node.textContent === "Next: Off-camera speaker presence"),
+  "eye-line coherence screen links to off-camera speaker presence",
+);
+
+const lastNav = renderNavFor("off-camera-speaker-presence.html", "off-camera-speaker-presence");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Pick a preset style"),
   "last speaker setup screen hands off to the visual direction path",
@@ -177,7 +184,14 @@ assert.equal(
   "embedded speaker setup nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence", true);
+const embeddedEyeLineNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence", true);
+assert.equal(
+  linkWithText(embeddedEyeLineNav.nodes, "Next: Off-camera speaker presence").href,
+  "../preview/app.html#off-camera-speaker-presence",
+  "embedded speaker setup nav routes eye-line next step through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("off-camera-speaker-presence.html", "off-camera-speaker-presence", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Pick a preset style");
 assert.equal(
   embeddedHandoff.href,
