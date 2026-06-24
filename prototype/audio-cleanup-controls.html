@@ -171,6 +171,24 @@
         background: #dff5ef;
       }
 
+      .rollup-moment-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-moment-tags .rollup-moment-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #3f4d66;
+        background: #e8edf5;
+      }
+
       .speaker.filtered-out {
         display: none;
       }
@@ -575,6 +593,23 @@
         return wrap;
       }
 
+      function renderRollupMomentTags() {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-moment-tags";
+        wrap.setAttribute("aria-label", "Suggested preview moments for active cleanup choices");
+
+        for (const choice of choices.filter((entry) => enabled.has(entry.id))) {
+          const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
+          if (!moment) continue;
+          const tag = document.createElement("span");
+          tag.className = "rollup-moment-tag";
+          tag.textContent = `${choice.label} — ${moment.label}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(reviewCount) {
         const rollup = buildRollup();
         rollupElement.className = `cleanup-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -596,6 +631,10 @@
           const choiceTags = renderRollupChoiceTags();
           if (choiceTags.childElementCount) {
             rollupElement.appendChild(choiceTags);
+          }
+          const momentTags = renderRollupMomentTags();
+          if (momentTags.childElementCount) {
+            rollupElement.appendChild(momentTags);
           }
         }
 
