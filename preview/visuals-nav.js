@@ -10,6 +10,7 @@ const VISUALS_FLOW = [
   { id: "contextual-title-cards", file: "contextual-title-cards.html", label: "Contextual title cards" },
   { id: "screen-share-moment-review", file: "screen-share-moment-review.html", label: "Screen share moment review" },
   { id: "sensitive-moment-review", file: "sensitive-moment-review.html", label: "Sensitive moment review" },
+  { id: "off-camera-speaker-presence", file: "off-camera-speaker-presence.html", label: "Off-camera speaker presence" },
 ];
 
 const VISUALS_SCREEN_IDS = new Set(VISUALS_FLOW.map((step) => step.id));

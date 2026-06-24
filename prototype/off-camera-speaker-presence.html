@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Off-Camera Speaker Presence Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+      .panel + .panel { margin-top: 18px; }
+
+      .speakers { display: grid; gap: 14px; }
+
+      .speaker-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .speaker-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .speaker-name { font-weight: 700; font-size: 14px; }
+      .speaker-role { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+      .presence-preview {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #1a1a1a;
+        color: #fff;
+        padding: 20px;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+      }
+      .presence-preview .on-camera {
+        width: 100px; height: 72px; border-radius: 6px;
+        background: #2d4a3e; display: flex; align-items: center;
+        justify-content: center; font-size: 11px; color: #8eb8a8;
+        flex-shrink: 0;
+      }
+      .presence-element {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 6px;
+        min-height: 72px;
+      }
+      .presence-element .avatar {
+        width: 48px; height: 48px; border-radius: 50%;
+        background: var(--accent); display: flex; align-items: center;
+        justify-content: center; font-size: 18px; font-weight: 700; color: #fff;
+      }
+      .presence-element .card-name {
+        font-size: 13px; font-weight: 700; text-align: center;
+      }
+      .presence-element .card-handle {
+        font-size: 11px; color: #8eb8a8;
+      }
+      .presence-element .waveform {
+        display: flex; align-items: center; gap: 2px; height: 28px;
+      }
+      .presence-element .waveform .bar {
+        width: 3px; background: var(--accent); border-radius: 2px;
+      }
+      .presence-element .monogram {
+        width: 48px; height: 48px; border-radius: 8px;
+        background: #2d4a3e; display: flex; align-items: center;
+        justify-content: center; font-size: 18px; font-weight: 700; color: #8eb8a8;
+        border: 1px solid #3d5a4e;
+      }
+      .presence-element .placeholder {
+        width: 48px; height: 48px; border-radius: 6px;
+        background: #222; border: 1px dashed #444;
+      }
+
+      .speaking-badge {
+        position: absolute; top: 8px; right: 10px;
+        font-size: 10px; color: #8eb8a8; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+      }
+
+      .style-choices {
+        display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+      }
+      .style-choice {
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        border: 1px solid var(--line); border-radius: 6px; background: #fff;
+        padding: 8px 12px; cursor: pointer; font: inherit; font-size: 12px;
+        color: var(--muted); min-width: 90px; text-align: center;
+      }
+      .style-choice:hover { border-color: #b9c8c3; }
+      .style-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .style-choice[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 700; box-shadow: 0 0 0 2px rgba(19,111,99,.14); }
+
+      .style-icon {
+        width: 40px; height: 28px; border: 1px solid var(--line); border-radius: 4px;
+        background: #f0f2f1; display: flex; align-items: center; justify-content: center;
+        font-size: 14px; color: var(--muted);
+      }
+
+      .focus-control {
+        margin-top: 10px; display: flex; align-items: center; gap: 10px;
+        font-size: 13px;
+      }
+      .focus-control label { color: var(--muted); font-weight: 700; font-size: 12px; }
+      .focus-control input[type="range"] { flex: 1; max-width: 180px; }
+      .focus-control .focus-label { font-size: 12px; color: var(--muted); min-width: 60px; }
+
+      .speaker-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+      .badge {
+        display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
+        padding: 0 10px; font-weight: 700; font-size: 12px; white-space: nowrap;
+      }
+      .badge.ready { color: #075246; background: #dff5ef; }
+      .badge.needs-style { color: #7a4400; background: #fff1d6; }
+      .badge.hidden-speaker { color: var(--muted); background: #eee; }
+
+      button {
+        min-height: 34px; border: 1px solid var(--accent); border-radius: 6px;
+        background: var(--accent); color: #fff; font: inherit; font-size: 13px;
+        font-weight: 700; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+      }
+      button.secondary { background: #fff; color: var(--accent); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .routed-link {
+        font-size: 13px; font-weight: 700; color: var(--accent);
+        text-decoration: none; white-space: nowrap;
+      }
+      .routed-link:hover { text-decoration: underline; }
+      .routed-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .summary-row {
+        display: flex; align-items: center; gap: 10px;
+        flex-wrap: wrap; margin-bottom: 12px;
+      }
+      .summary-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+      .context-row {
+        font-size: 13px; margin-bottom: 4px;
+      }
+      .context-row .label { color: var(--muted); font-weight: 700; }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/visuals-nav.js" defer></script>
+  </head>
+  <body data-visuals-step="off-camera-speaker-presence">
+    <main>
+      <h1>Off-Camera Speaker Presence</h1>
+      <p class="lede">Choose how audio-only participants appear on screen. Each speaker gets a designed presence instead of a blank frame — matched to the show's preset style.</p>
+
+      <div class="workspace">
+        <div>
+          <div class="speakers" id="speakers"></div>
+        </div>
+        <div>
+          <div class="panel" id="readiness"></div>
+          <div class="panel">
+            <h2 style="font-size:15px;margin-bottom:10px;">Preview Contexts</h2>
+            <div id="preview-contexts"></div>
+          </div>
+          <div class="panel">
+            <h2 style="font-size:15px;margin-bottom:10px;">Connections</h2>
+            <div style="margin-top:4px;">
+              <a class="routed-link" href="speaker-role-mapping.html">Speaker roles →</a>
+            </div>
+            <div style="margin-top:8px;">
+              <a class="routed-link" href="social-context-intake.html">Social context →</a>
+            </div>
+            <div style="margin-top:8px;">
+              <a class="routed-link" href="canvas-layer-controls.html">Canvas layer controls →</a>
+            </div>
+            <div style="margin-top:8px;">
+              <a class="routed-link" href="show-template-adaptation.html">Save to show template →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      var episode = {
+        title: "Design Systems in Practice",
+        host: "Ava Chen",
+        preset: "Modern Clean"
+      };
+
+      var PRESENCE_STYLES = [
+        { id: "name-card", label: "Name card", icon: "Aa" },
+        { id: "photo", label: "Photo", icon: "\ud83d\uddbc" },
+        { id: "monogram", label: "Monogram", icon: "M" },
+        { id: "waveform", label: "Waveform", icon: "\u223f" },
+        { id: "quiet", label: "Quiet frame", icon: "\u2013" }
+      ];
+
+      var INITIAL_SPEAKERS = [
+        {
+          id: 1,
+          name: "Jordan Lee",
+          role: "Call-in guest",
+          handle: "@jordanlee",
+          initials: "JL",
+          reason: "Joined by phone — audio only",
+          style: "name-card",
+          focus: 50,
+          hidden: false,
+          speakingMoments: ["12:04 — Solo answer on API design", "34:18 — Follow-up with host"]
+        },
+        {
+          id: 2,
+          name: "Sam Torres",
+          role: "Producer",
+          handle: "@samtorres",
+          initials: "ST",
+          reason: "Off camera — speaks during intros",
+          style: null,
+          focus: 30,
+          hidden: false,
+          speakingMoments: ["00:22 — Episode intro", "1:10:45 — Wrap-up prompt"]
+        },
+        {
+          id: 3,
+          name: "River Okafor",
+          role: "Voiceover narrator",
+          handle: "",
+          initials: "RO",
+          reason: "Post-production voiceover",
+          style: null,
+          focus: 40,
+          hidden: false,
+          speakingMoments: ["05:00 — Chapter introduction", "28:30 — Transition narration", "55:12 — Segment bridge"]
+        }
+      ];
+
+      var speakers = [];
+      for (var i = 0; i < INITIAL_SPEAKERS.length; i++) {
+        var s = INITIAL_SPEAKERS[i];
+        speakers.push({
+          id: s.id, name: s.name, role: s.role, handle: s.handle,
+          initials: s.initials, reason: s.reason, style: s.style,
+          focus: s.focus, hidden: s.hidden,
+          speakingMoments: s.speakingMoments.slice()
+        });
+      }
+
+      function statusOf(speaker) {
+        if (speaker.hidden) return "hidden-speaker";
+        if (!speaker.style) return "needs-style";
+        return "ready";
+      }
+
+      function statusLabel(status) {
+        var labels = {
+          "ready": "Styled",
+          "needs-style": "Needs style",
+          "hidden-speaker": "Hidden"
+        };
+        return labels[status] || status;
+      }
+
+      function speakerSummary(list) {
+        var ready = 0;
+        var needsStyle = 0;
+        var hidden = 0;
+        for (var i = 0; i < list.length; i++) {
+          var st = statusOf(list[i]);
+          if (st === "ready") ready++;
+          else if (st === "needs-style") needsStyle++;
+          else if (st === "hidden-speaker") hidden++;
+        }
+        return { ready: ready, needsStyle: needsStyle, hidden: hidden, total: list.length };
+      }
+
+      function focusLabel(value) {
+        if (value <= 20) return "Minimal";
+        if (value <= 40) return "Subtle";
+        if (value <= 60) return "Balanced";
+        if (value <= 80) return "Prominent";
+        return "Full focus";
+      }
+
+      // --- DOM rendering ---
+
+      var speakersEl = document.getElementById("speakers");
+      var readinessEl = document.getElementById("readiness");
+      var contextsEl = document.getElementById("preview-contexts");
+
+      function renderPresencePreview(speaker) {
+        var preview = document.createElement("div");
+        preview.className = "presence-preview";
+        preview.setAttribute("aria-label", "Preview of " + speaker.name + " presence style");
+
+        var onCam = document.createElement("div");
+        onCam.className = "on-camera";
+        onCam.textContent = episode.host;
+        preview.appendChild(onCam);
+
+        var element = document.createElement("div");
+        element.className = "presence-element";
+
+        var style = speaker.style || "quiet";
+
+        if (style === "name-card") {
+          var nameEl = document.createElement("div");
+          nameEl.className = "card-name";
+          nameEl.textContent = speaker.name;
+          element.appendChild(nameEl);
+          if (speaker.handle) {
+            var handleEl = document.createElement("div");
+            handleEl.className = "card-handle";
+            handleEl.textContent = speaker.handle;
+            element.appendChild(handleEl);
+          }
+          var roleEl = document.createElement("div");
+          roleEl.className = "card-handle";
+          roleEl.textContent = speaker.role;
+          element.appendChild(roleEl);
+        } else if (style === "photo") {
+          var avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent = speaker.initials;
+          avatar.setAttribute("aria-label", speaker.name + " photo");
+          element.appendChild(avatar);
+          var photoName = document.createElement("div");
+          photoName.className = "card-name";
+          photoName.textContent = speaker.name;
+          element.appendChild(photoName);
+        } else if (style === "monogram") {
+          var mono = document.createElement("div");
+          mono.className = "monogram";
+          mono.textContent = speaker.initials;
+          element.appendChild(mono);
+        } else if (style === "waveform") {
+          var wave = document.createElement("div");
+          wave.className = "waveform";
+          wave.setAttribute("aria-label", "Audio waveform for " + speaker.name);
+          var heights = [8, 14, 20, 26, 18, 24, 12, 16, 22, 10, 18, 24, 14];
+          for (var b = 0; b < heights.length; b++) {
+            var bar = document.createElement("div");
+            bar.className = "bar";
+            bar.style.height = heights[b] + "px";
+            wave.appendChild(bar);
+          }
+          element.appendChild(wave);
+          var waveName = document.createElement("div");
+          waveName.className = "card-name";
+          waveName.textContent = speaker.name;
+          element.appendChild(waveName);
+        } else {
+          var ph = document.createElement("div");
+          ph.className = "placeholder";
+          element.appendChild(ph);
+        }
+
+        preview.appendChild(element);
+
+        if (!speaker.hidden) {
+          var badge = document.createElement("div");
+          badge.className = "speaking-badge";
+          badge.textContent = "speaking";
+          preview.appendChild(badge);
+        }
+
+        return preview;
+      }
+
+      function renderSpeaker(speaker) {
+        var card = document.createElement("div");
+        card.className = "speaker-card";
+
+        var head = document.createElement("div");
+        head.className = "speaker-head";
+        var name = document.createElement("span");
+        name.className = "speaker-name";
+        name.textContent = speaker.name;
+        var status = statusOf(speaker);
+        var badge = document.createElement("span");
+        badge.className = "badge " + status;
+        badge.textContent = statusLabel(status);
+        head.appendChild(name);
+        head.appendChild(badge);
+        card.appendChild(head);
+
+        var role = document.createElement("div");
+        role.className = "speaker-role";
+        role.textContent = speaker.role + " · " + speaker.reason;
+        card.appendChild(role);
+
+        if (!speaker.hidden) {
+          card.appendChild(renderPresencePreview(speaker));
+
+          // Style choices
+          var choices = document.createElement("div");
+          choices.className = "style-choices";
+          choices.setAttribute("role", "group");
+          choices.setAttribute("aria-label", "Presence style for " + speaker.name);
+
+          for (var i = 0; i < PRESENCE_STYLES.length; i++) {
+            (function (ps) {
+              var btn = document.createElement("button");
+              btn.className = "style-choice";
+              btn.setAttribute("aria-pressed", String(speaker.style === ps.id));
+              var icon = document.createElement("span");
+              icon.className = "style-icon";
+              icon.textContent = ps.icon;
+              icon.setAttribute("aria-hidden", "true");
+              var label = document.createElement("span");
+              label.textContent = ps.label;
+              btn.appendChild(icon);
+              btn.appendChild(label);
+              btn.addEventListener("click", function () {
+                speaker.style = ps.id;
+                render();
+              });
+              choices.appendChild(btn);
+            })(PRESENCE_STYLES[i]);
+          }
+          card.appendChild(choices);
+
+          // Focus slider
+          var focus = document.createElement("div");
+          focus.className = "focus-control";
+          var focLbl = document.createElement("label");
+          focLbl.textContent = "Speaking focus";
+          focLbl.setAttribute("for", "focus-" + speaker.id);
+          var slider = document.createElement("input");
+          slider.type = "range";
+          slider.id = "focus-" + speaker.id;
+          slider.min = "0";
+          slider.max = "100";
+          slider.value = String(speaker.focus);
+          slider.setAttribute("aria-label", "Speaking focus for " + speaker.name);
+          var focVal = document.createElement("span");
+          focVal.className = "focus-label";
+          focVal.textContent = focusLabel(speaker.focus);
+          slider.addEventListener("input", function () {
+            speaker.focus = parseInt(slider.value, 10);
+            focVal.textContent = focusLabel(speaker.focus);
+          });
+          focus.appendChild(focLbl);
+          focus.appendChild(slider);
+          focus.appendChild(focVal);
+          card.appendChild(focus);
+        }
+
+        // Actions
+        var actions = document.createElement("div");
+        actions.className = "speaker-actions";
+
+        if (speaker.hidden) {
+          var showBtn = document.createElement("button");
+          showBtn.textContent = "Restore presence";
+          showBtn.addEventListener("click", function () {
+            speaker.hidden = false;
+            render();
+          });
+          actions.appendChild(showBtn);
+        } else {
+          var hideBtn = document.createElement("button");
+          hideBtn.className = "secondary";
+          hideBtn.textContent = "Hide completely";
+          hideBtn.addEventListener("click", function () {
+            speaker.hidden = true;
+            render();
+          });
+          actions.appendChild(hideBtn);
+
+          var templateBtn = document.createElement("a");
+          templateBtn.className = "routed-link";
+          templateBtn.href = "show-template-adaptation.html";
+          templateBtn.textContent = "Save to template →";
+          actions.appendChild(templateBtn);
+        }
+
+        card.appendChild(actions);
+        return card;
+      }
+
+      function renderReadiness() {
+        readinessEl.innerHTML = "";
+        var s = speakerSummary(speakers);
+
+        var title = document.createElement("h2");
+        title.style.cssText = "font-size:15px;margin:0 0 10px;";
+        title.textContent = "Presence Readiness";
+        readinessEl.appendChild(title);
+
+        var row = document.createElement("div");
+        row.className = "summary-row";
+
+        var total = document.createElement("span");
+        total.style.cssText = "font-weight:700;font-size:14px;";
+        total.textContent = s.total + " off-camera speakers";
+        row.appendChild(total);
+
+        if (s.ready > 0) {
+          var readyBadge = document.createElement("span");
+          readyBadge.className = "badge ready";
+          readyBadge.textContent = s.ready + " styled";
+          row.appendChild(readyBadge);
+        }
+        if (s.needsStyle > 0) {
+          var needsBadge = document.createElement("span");
+          needsBadge.className = "badge needs-style";
+          needsBadge.textContent = s.needsStyle + " need a style";
+          row.appendChild(needsBadge);
+        }
+        if (s.hidden > 0) {
+          var hidBadge = document.createElement("span");
+          hidBadge.className = "badge hidden-speaker";
+          hidBadge.textContent = s.hidden + " hidden";
+          row.appendChild(hidBadge);
+        }
+        readinessEl.appendChild(row);
+
+        var note = document.createElement("p");
+        note.className = "summary-note";
+        if (s.needsStyle === 0) {
+          note.textContent = "Every off-camera speaker has a presence style or is intentionally hidden. The episode can proceed to export.";
+        } else {
+          note.textContent = "Choose a presence style for each unstyled speaker so they appear intentionally on screen instead of as a blank frame.";
+        }
+        readinessEl.appendChild(note);
+      }
+
+      function renderContexts() {
+        contextsEl.innerHTML = "";
+        var contexts = [
+          "Solo moment — only the off-camera speaker is talking",
+          "Split view — off-camera beside an on-camera speaker",
+          "Under the preset — with brand colors and lower-thirds",
+          "Hand-off — focus returning to on-camera speakers",
+          "Quiet stretch — present but not actively speaking"
+        ];
+        for (var i = 0; i < contexts.length; i++) {
+          var p = document.createElement("p");
+          p.className = "summary-note";
+          p.style.marginTop = i === 0 ? "0" : "6px";
+          p.textContent = contexts[i];
+          contextsEl.appendChild(p);
+        }
+      }
+
+      function render() {
+        speakersEl.innerHTML = "";
+        for (var i = 0; i < speakers.length; i++) {
+          speakersEl.appendChild(renderSpeaker(speakers[i]));
+        }
+        renderReadiness();
+        renderContexts();
+      }
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          episode: episode,
+          PRESENCE_STYLES: PRESENCE_STYLES,
+          INITIAL_SPEAKERS: INITIAL_SPEAKERS,
+          speakers: speakers,
+          statusOf: statusOf,
+          statusLabel: statusLabel,
+          speakerSummary: speakerSummary,
+          focusLabel: focusLabel,
+        };
+      }
+    </script>
+  </body>
+</html>
