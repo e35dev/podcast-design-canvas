@@ -228,7 +228,7 @@
 
       var PRESENCE_STYLES = [
         { id: "name-card", label: "Name card", icon: "Aa" },
-        { id: "photo", label: "Photo", icon: "\ud83d\uddbc" },
+        { id: "social-avatar", label: "Social avatar", icon: "\ud83d\uddbc" },
         { id: "monogram", label: "Monogram", icon: "M" },
         { id: "waveform", label: "Waveform", icon: "\u223f" },
         { id: "quiet", label: "Quiet frame", icon: "\u2013" }
@@ -356,16 +356,22 @@
           roleEl.className = "card-handle";
           roleEl.textContent = speaker.role;
           element.appendChild(roleEl);
-        } else if (style === "photo") {
+        } else if (style === "social-avatar") {
           var avatar = document.createElement("div");
           avatar.className = "avatar";
           avatar.textContent = speaker.initials;
-          avatar.setAttribute("aria-label", speaker.name + " photo");
+          avatar.setAttribute("aria-label", speaker.name + " avatar from social context");
           element.appendChild(avatar);
-          var photoName = document.createElement("div");
-          photoName.className = "card-name";
-          photoName.textContent = speaker.name;
-          element.appendChild(photoName);
+          var avatarName = document.createElement("div");
+          avatarName.className = "card-name";
+          avatarName.textContent = speaker.name;
+          element.appendChild(avatarName);
+          if (speaker.handle) {
+            var avatarHandle = document.createElement("div");
+            avatarHandle.className = "card-handle";
+            avatarHandle.textContent = speaker.handle + " · pulled from social context";
+            element.appendChild(avatarHandle);
+          }
         } else if (style === "monogram") {
           var mono = document.createElement("div");
           mono.className = "monogram";
