@@ -393,6 +393,12 @@
           element.appendChild(ph);
         }
 
+        // Apply focus level to the presence element sizing
+        var focusScale = 0.5 + (speaker.focus / 100) * 0.5;
+        element.style.opacity = String(0.5 + (speaker.focus / 100) * 0.5);
+        element.style.transform = "scale(" + focusScale.toFixed(2) + ")";
+        element.style.transformOrigin = "center center";
+
         preview.appendChild(element);
 
         if (!speaker.hidden) {
@@ -458,6 +464,23 @@
           }
           card.appendChild(choices);
 
+          // Speaking moments
+          if (speaker.speakingMoments.length > 0) {
+            var momentsDiv = document.createElement("div");
+            momentsDiv.style.cssText = "margin-top:10px;";
+            var momentsLabel = document.createElement("div");
+            momentsLabel.style.cssText = "font-size:12px;font-weight:700;color:#5e6b67;margin-bottom:4px;";
+            momentsLabel.textContent = "Speaking moments in this episode";
+            momentsDiv.appendChild(momentsLabel);
+            for (var m = 0; m < speaker.speakingMoments.length; m++) {
+              var momentLine = document.createElement("div");
+              momentLine.style.cssText = "font-size:12px;color:#5e6b67;padding:2px 0;";
+              momentLine.textContent = speaker.speakingMoments[m];
+              momentsDiv.appendChild(momentLine);
+            }
+            card.appendChild(momentsDiv);
+          }
+
           // Focus slider
           var focus = document.createElement("div");
           focus.className = "focus-control";
@@ -477,6 +500,7 @@
           slider.addEventListener("input", function () {
             speaker.focus = parseInt(slider.value, 10);
             focVal.textContent = focusLabel(speaker.focus);
+            render();
           });
           focus.appendChild(focLbl);
           focus.appendChild(slider);
