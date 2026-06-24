@@ -81,6 +81,22 @@
         margin: 0 0 22px;
       }
 
+      .flow.ingest {
+        margin-bottom: 28px;
+      }
+
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+
+      .section-lede {
+        margin: 0 0 16px;
+        color: var(--muted);
+        max-width: 640px;
+        font-size: 14px;
+      }
+
       .guided-flow a {
         display: inline-block;
         background: var(--accent);
@@ -137,36 +153,61 @@
 
       <p class="catalog-link"><a href="../index.html">Browse the full screen catalog →</a></p>
 
-      <p class="guided-flow"><a href="./episode-flow.html">▶ Open the guided episode flow &mdash; all five steps connected</a></p>
+      <p class="guided-flow"><a href="./episode-flow.html">▶ Open the guided episode flow &mdash; seven connected steps</a></p>
 
+      <h2 class="section-title">Ingest setup</h2>
+      <p class="section-lede">Confirm files, speakers, and social links before you check media health and continue through the episode path.</p>
+      <ol class="flow ingest">
+        <li>
+          <a href="../prototype/episode-readiness.html">
+            1. Check episode readiness
+            <span>Confirm every speaker has a file and a name before editing.</span>
+          </a>
+        </li>
+        <li>
+          <a href="../prototype/speaker-role-mapping.html">
+            2. Map speaker roles
+            <span>Choose who is hosting and who is joining as a guest.</span>
+          </a>
+        </li>
+        <li>
+          <a href="../prototype/social-context-intake.html">
+            3. Add social links
+            <span>Help the edit get names, spellings, and references right.</span>
+          </a>
+        </li>
+      </ol>
+
+      <h2 class="section-title">Core episode path</h2>
+      <p class="section-lede">After setup, walk from imported speaker files through cleanup, captions, and export readiness.</p>
       <ol class="flow">
         <li>
           <a href="../prototype/source-media-health.html">
-            1. Check source media health
+            4. Check source media health
             <span>Review imported speaker files before styling.</span>
           </a>
         </li>
         <li>
           <a href="../prototype/speaker-sync-repair.html">
-            2. Repair speaker sync
+            5. Repair speaker sync
             <span>Fix timing between separate speaker recordings.</span>
           </a>
         </li>
         <li>
           <a href="../prototype/audio-cleanup-controls.html">
-            3. Clean up audio
+            6. Clean up audio
             <span>Balance sound with plain-language quality choices.</span>
           </a>
         </li>
         <li>
           <a href="../prototype/audio-caption-quality-review.html">
-            4. Review caption quality
+            7. Review caption quality
             <span>Confirm captions stay trustworthy after audio changes.</span>
           </a>
         </li>
         <li>
           <a href="../prototype/export-readiness-review.html">
-            5. Review export readiness
+            8. Review export readiness
             <span>Confirm the episode is ready to publish.</span>
           </a>
         </li>
