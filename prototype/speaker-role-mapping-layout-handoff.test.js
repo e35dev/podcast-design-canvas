@@ -67,6 +67,11 @@ assert.ok(
   dupTracks.length === 2 && dupTracks.every((track) => track.sig === SIG),
   "the handoff carries each recording's identity (sig) into role-mapping tracks",
 );
+assert.deepEqual(
+  dupTracks.map((track) => track.name),
+  ["Host: rec.mp4", "Guest: rec.mp4"],
+  "duplicate carried file names are labelled by slot before role mapping renders them",
+);
 const distinctTracks = handoff.tracksFromState(
   handoff.stateFromSlots("interview", [
     { slot: "host", name: "a.mp4", sig: "name:a.mp4|size:1|mtime:1" },
@@ -89,6 +94,17 @@ assert.strictEqual(dupEval.overall, "review", "the same recording in two speaker
 assert.ok(
   dupEval.results.some((result) => result.issue && /same recording/i.test(result.issue.title)),
   "role mapping surfaces a same-recording issue",
+);
+const dupEvalFromHandoff = evaluate(dupTracks.map((track, index) => ({
+  ...track,
+  id: `dup-${index}`,
+  decision: "confirmed",
+})));
+const carriedSharedIssue = dupEvalFromHandoff.issues.find((issue) => /same recording/i.test(issue.title));
+assert.ok(carriedSharedIssue, "carried duplicate recordings still surface a same-recording summary");
+assert.ok(
+  /Host: rec\.mp4/.test(carriedSharedIssue.title) && /Guest: rec\.mp4/.test(carriedSharedIssue.title),
+  "the carried same-recording summary names each conflicting slot distinctly",
 );
 const okEval = evaluate([
   { id: "h", name: "a.mp4", role: "host", sig: "name:a.mp4|size:1|mtime:1", signal: "file-name", decision: "confirmed" },

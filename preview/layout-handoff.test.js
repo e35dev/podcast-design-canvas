@@ -203,6 +203,18 @@ assert.equal(
   "suggested",
   "a solo layout's host track is suggested, so role mapping cannot auto-pass with zero review",
 );
+const sameNameTracks = handoff.tracksFromState(
+  handoff.stateFromSlots("interview", [
+    { slot: "host", name: "rec.mp4", sig: "name:rec.mp4|size:1|mtime:1" },
+    { slot: "guest", name: "rec.mp4", sig: "name:rec.mp4|size:2|mtime:2" },
+  ]),
+  [],
+);
+assert.deepEqual(
+  sameNameTracks.map((track) => track.name),
+  ["Host: rec.mp4", "Guest: rec.mp4"],
+  "duplicate carried file names are prefixed with the slot label so role mapping can tell them apart",
+);
 assert.deepEqual(
   handoff.assignedSourceCounts([
     { name: "Host", role: "host", sig: "same" },

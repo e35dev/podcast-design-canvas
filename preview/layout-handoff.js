@@ -286,6 +286,20 @@
     });
   }
 
+  function carriedTrackName(slot) {
+    const baseName = slot && slot.name ? slot.name : "";
+    return baseName || `${slot.label} video`;
+  }
+
+  function duplicateCarriedTrackNames(slots) {
+    const counts = {};
+    (slots || []).forEach((slot) => {
+      const name = carriedTrackName(slot);
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return counts;
+  }
+
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
     const queryPlacements = placementEntriesFromQuery(params);
@@ -336,6 +350,7 @@
     if (!state) {
       return clone(fallbackTracks || []);
     }
+    const duplicateNames = duplicateCarriedTrackNames(state.slots);
     // Carried tracks always start "suggested", never "confirmed" — including the host. The role
     // came from the layout slot→role table, not from anything the creator reviewed, and the
     // role-mapping screen promises "a track is never locked into a role you have not seen." Seeding
@@ -343,7 +358,11 @@
     // zero review; making every carried track suggested keeps the one-tap confirm the screen needs.
     return state.slots.map((slot, index) => ({
       id: `layout-${slot.slot}-${index + 1}`,
-      name: slot.name || `${slot.label} video`,
+      // If two carried rows would display the same visible name (for example two slots both
+      // holding "rec.mp4"), prefix the slot label so role mapping can distinguish them.
+      name: duplicateNames[carriedTrackName(slot)] > 1
+        ? `${slot.label}: ${carriedTrackName(slot)}`
+        : carriedTrackName(slot),
       role: slot.role,
       sig: slot.sig || "",
       signal: "file-name",
