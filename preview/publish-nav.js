@@ -6,7 +6,12 @@
 //   <script src="../preview/publish-nav.js" defer></script>
 
 const PUBLISH_FLOW = [
-  { id: "episode-watch-through-preview", file: "episode-watch-through-preview.html", label: "Watch-through preview" },
+  {
+    id: "episode-watch-through-preview",
+    file: "episode-watch-through-preview.html",
+    label: "Watch-through preview",
+    previous: { file: "export-readiness-review.html", label: "Export readiness" },
+  },
   { id: "destination-crop-preview", file: "destination-crop-preview.html", label: "Destination crop preview" },
   { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
   { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
@@ -25,6 +30,11 @@ function currentPublishIndex() {
 
   const name = window.location.pathname.split("/").pop() || "";
   return PUBLISH_FLOW.findIndex((step) => step.file === name);
+}
+
+function previousPublishStep(index) {
+  const step = PUBLISH_FLOW[index];
+  return step.previous || (index > 0 ? PUBLISH_FLOW[index - 1] : null);
 }
 
 function renderPublishNav() {
@@ -89,7 +99,7 @@ function renderPublishNav() {
   }
 
   const step = PUBLISH_FLOW[index];
-  const previous = index > 0 ? PUBLISH_FLOW[index - 1] : null;
+  const previous = previousPublishStep(index);
   const next = index < PUBLISH_FLOW.length - 1 ? PUBLISH_FLOW[index + 1] : null;
 
   const nav = document.createElement("nav");
