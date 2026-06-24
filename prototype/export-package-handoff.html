@@ -26,11 +26,20 @@
       .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
       .toolbar, .actions { display: flex; flex-wrap: wrap; gap: 10px; }
       .toolbar { margin-bottom: 18px; }
-      button {
+      button,
+      a.handoff-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
         color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+        text-decoration: none;
       }
-      button:disabled { opacity: 0.52; cursor: not-allowed; }
+      button:disabled,
+      a.handoff-link[aria-disabled="true"] { opacity: 0.52; cursor: not-allowed; }
+      a.handoff-link[aria-disabled="true"] { pointer-events: none; }
+      a.handoff-link:hover { text-decoration: underline; }
+      a.handoff-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
       .summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
       .summary-head strong { display: block; margin-bottom: 4px; font-size: 15px; }
@@ -95,7 +104,7 @@
             <button type="button" id="downloadPackage">Download package</button>
             <button type="button" id="copyMetadata">Copy metadata</button>
             <button type="button" id="createReviewCopy">Create review copy</button>
-            <button type="button" id="startNextEpisode">Start next episode</button>
+            <a class="handoff-link" id="startNextEpisode" aria-disabled="true">Start next episode &rarr;</a>
           </div>
           <div class="handoff-note" id="handoffNote" aria-live="polite"></div>
         </div>
@@ -116,6 +125,8 @@
     </main>
 
     <script>
+      const nextEpisodeSurface = "start-from-previous-episode.html";
+
       const destinations = {
         youtube: {
           title: "YouTube full episode package",
@@ -199,7 +210,7 @@
       const downloadButton = document.querySelector("#downloadPackage");
       const metadataButton = document.querySelector("#copyMetadata");
       const reviewCopyButton = document.querySelector("#createReviewCopy");
-      const nextEpisodeButton = document.querySelector("#startNextEpisode");
+      const nextEpisodeLink = document.querySelector("#startNextEpisode");
 
       function destinationHasRequiredBlock(destination) {
         return destination.packages.some(([, , tone]) => tone === "blocked");
@@ -266,13 +277,6 @@
               };
         }
 
-        if (action === "next") {
-          return {
-            title: "Next episode started",
-            detail: "The finished package stays archived while the next draft opens with this show template ready to reuse.",
-          };
-        }
-
         return blocked
           ? {
               title: "Resolve required item first",
@@ -316,6 +320,17 @@
         });
       }
 
+      function updateNextEpisodeHandoff(destination) {
+        const blocked = destinationHasRequiredBlock(destination);
+        nextEpisodeLink.setAttribute("aria-disabled", String(blocked));
+
+        if (blocked) {
+          nextEpisodeLink.removeAttribute("href");
+        } else {
+          nextEpisodeLink.href = nextEpisodeSurface;
+        }
+      }
+
       function render() {
         renderButtons();
         const destination = destinations[selected];
@@ -355,6 +370,7 @@
         const blocked = destinationHasRequiredBlock(destination);
         downloadButton.disabled = blocked;
         reviewCopyButton.disabled = blocked;
+        updateNextEpisodeHandoff(destination);
         const message = actionMessage(handoffAction, destination);
         handoffNoteEl.replaceChildren();
         appendTextBlock(handoffNoteEl, message.title, message.detail);
@@ -372,11 +388,6 @@
 
       reviewCopyButton.addEventListener("click", () => {
         handoffAction = "review";
-        render();
-      });
-
-      nextEpisodeButton.addEventListener("click", () => {
-        handoffAction = "next";
         render();
       });
 
