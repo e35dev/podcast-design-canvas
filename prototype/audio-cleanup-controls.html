@@ -822,6 +822,8 @@
       }
 
       function applyChoice(bars, choiceId, momentId) {
+        if (!Array.isArray(bars) || !bars.length) return bars;
+
         switch (choiceId) {
           case "noise":
             if (momentId === "noisy-room") {
