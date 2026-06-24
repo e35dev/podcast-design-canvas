@@ -14,6 +14,7 @@ const navScript = fs.readFileSync(path.join(__dirname, "style-nav.js"), "utf8");
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "style nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "style nav links to the guided episode flow");
+assert.ok(navScript.includes("app.html"), "style nav links to the preview app");
 assert.ok(navScript.includes("episode-watch-through-preview.html"), "style nav hands off to the publish prep path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
