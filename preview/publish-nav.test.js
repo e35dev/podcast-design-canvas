@@ -175,7 +175,7 @@ assert.equal(
 
 const middleNav = renderNavFor("destination-crop-preview.html");
 assert.ok(
-  linkWithText(middleNav, "Previous: Watch-through preview"),
+  linkWithText(middleNav, "Previous: Destination presets"),
   "middle publish screen renders the previous publish step",
 );
 assert.ok(
@@ -190,7 +190,7 @@ assert.ok(
   "first publish screen renders the next publish step",
 );
 const firstStep = firstNav.find(
-  (node) => node.textContent === "Publish step 1 of 10 · Long-form navigation",
+  (node) => node.textContent === "Publish step 1 of 11 · Long-form navigation",
 );
 assert.ok(firstStep, "first publish screen renders its visible step label");
 assert.equal(firstStep.attributes["aria-current"], "step", "current publish step exposes aria-current");
@@ -247,10 +247,10 @@ assert.equal(
   "../preview/app.html#destination-crop-preview?path=publish",
   "embedded publish nav preserves publish context on the current preview app link",
 );
-const publishPathPrevious = linkWithText(publishPathNav, "Previous: Watch-through preview");
+const publishPathPrevious = linkWithText(publishPathNav, "Previous: Destination presets");
 assert.equal(
   publishPathPrevious.href,
-  "../preview/app.html#episode-watch-through-preview?path=publish",
+  "../preview/app.html#publish-destination-presets?path=publish",
   "embedded publish nav preserves publish path context on previous links",
 );
 const publishPathNext = linkWithText(publishPathNav, "Next: Thumbnail cover frame");
@@ -327,8 +327,8 @@ const embeddedExplicitPublishPath = renderNavFor(
   "?draft=notes&path=publish",
 );
 assert.equal(
-  linkWithText(embeddedExplicitPublishPath, "Next: Destination crop preview").href,
-  "../preview/app.html#destination-crop-preview?path=publish",
+  linkWithText(embeddedExplicitPublishPath, "Next: Destination presets").href,
+  "../preview/app.html#publish-destination-presets?path=publish",
   "embedded publish nav reads publish context with URLSearchParams instead of positional parsing",
 );
 const embeddedMetadataLinks = renderNavFor(

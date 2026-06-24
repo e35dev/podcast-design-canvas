@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Publish Destination Presets Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .destinations { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+      .dest-btn {
+        text-align: left; border: 1px solid var(--line); border-radius: 8px; background: #fff;
+        padding: 12px; cursor: pointer; font: inherit; color: var(--ink); display: grid; gap: 4px;
+      }
+      .dest-btn[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: #f1f9f6; }
+      .dest-btn b { font-size: 14px; }
+      .dest-btn span { color: var(--muted); font-size: 12px; }
+      .dest-btn .primary-tag {
+        display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800;
+        border-radius: 4px; padding: 2px 6px; margin-top: 4px; width: fit-content;
+      }
+      .defaults-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+      .defaults-table th, .defaults-table td {
+        text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 13px;
+      }
+      .defaults-table th { color: var(--muted); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+      .defaults-table td.val { font-weight: 700; }
+      .defaults-table td.val.overridden { color: var(--review); }
+      .defaults-table button.override-btn {
+        border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--accent);
+        font: inherit; font-size: 12px; font-weight: 700; padding: 3px 8px; cursor: pointer;
+      }
+      .defaults-table button.override-btn.active { border-color: var(--review); background: #fff8ee; color: var(--review); }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+      .badge.defaults { background: #eceeed; color: #55615d; }
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; margin-bottom: 10px; }
+      .warning strong { display: block; margin-bottom: 4px; }
+      .warning span { color: var(--muted); }
+      .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      .summary li { color: var(--muted); }
+      .status-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+      button.save-default {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      button.save-default.saved { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+      .additional-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 10px 12px; margin-bottom: 8px;
+      }
+      .additional-row strong { font-size: 13px; }
+      .additional-row span { color: var(--muted); font-size: 12px; }
+      .toggle {
+        position: relative; width: 40px; height: 22px; border-radius: 11px; border: none;
+        background: #b9c8c3; cursor: pointer; padding: 0; transition: background 0.15s;
+      }
+      .toggle[aria-checked="true"] { background: var(--accent); }
+      .toggle::after {
+        content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+        border-radius: 50%; background: #fff; transition: transform 0.15s;
+      }
+      .toggle[aria-checked="true"]::after { transform: translateX(18px); }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .destinations { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/publish-nav.js" defer></script>
+  </head>
+  <body data-publish-step="publish-destination-presets">
+    <main>
+      <h1>Publish Destination Presets Prototype</h1>
+      <p class="lede">
+        Choose where the episode is going and get sensible defaults for video, audio, captions, and packaging without configuring encoder settings.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <div class="status-row">
+            <h2 style="margin:0;">Primary Destination</h2>
+            <span class="badge defaults" id="statusBadge">not selected</span>
+          </div>
+
+          <div class="destinations" id="destinations" role="group" aria-label="Primary destination"></div>
+
+          <h3 style="margin-top:18px;">Preset Defaults</h3>
+          <table class="defaults-table" id="defaultsTable" aria-label="Publishing defaults for selected destination">
+            <thead>
+              <tr><th>Setting</th><th>Value</th><th></th></tr>
+            </thead>
+            <tbody id="defaultsBody"></tbody>
+          </table>
+
+          <h3>Additional Destinations</h3>
+          <div id="additionalList"></div>
+
+          <div style="margin-top:14px; display:flex; gap:10px;">
+            <button type="button" class="save-default" id="saveBtn">Save as show default</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Publishing Consequences</h2>
+          <div id="consequences"></div>
+
+          <h3 style="margin-top:20px;">Connected workflow</h3>
+          <ul class="summary">
+            <li>destination choice shapes metadata fields in <a href="episode-metadata-publishing.html">episode metadata</a></li>
+            <li>thumbnail requirement follows destination in <a href="thumbnail-cover-frame.html">thumbnail cover frame</a></li>
+            <li>caption behavior adapts per destination in <a href="audio-caption-quality-review.html">caption quality review</a></li>
+            <li>final package contents reflect destination in <a href="export-package-handoff.html">export package handoff</a></li>
+            <li>destination readiness feeds <a href="publish-checklist.html">publish checklist</a></li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+    <script>
+      var PRESETS = [
+        {
+          id: "youtube",
+          name: "YouTube full episode",
+          desc: "Full-length video with chapters, captions, and metadata ready for YouTube upload.",
+          defaults: {
+            "Video size": "1920 × 1080",
+            "Audio mix": "Stereo, normalized to −14 LUFS",
+            "Captions": "Embedded + sidecar SRT",
+            "Thumbnail": "Required",
+            "Metadata": "Title, description, chapters, tags",
+            "File naming": "show-name-ep-number",
+          },
+          consequences: [
+            { text: "Thumbnail must be selected before export", level: "blocked" },
+            { text: "Chapter markers carry into the YouTube description", level: "ready" },
+            { text: "Caption file ships alongside the video for manual upload", level: "ready" },
+          ],
+        },
+        {
+          id: "client-review",
+          name: "Private client review",
+          desc: "Watermarked review copy for client approval before final delivery.",
+          defaults: {
+            "Video size": "1920 × 1080",
+            "Audio mix": "Stereo, normalized to −14 LUFS",
+            "Captions": "Burned in",
+            "Thumbnail": "Not required",
+            "Metadata": "Episode title, review date",
+            "File naming": "review-client-date",
+          },
+          consequences: [
+            { text: "Review watermark will be visible on the exported video", level: "review" },
+            { text: "Captions are burned in and cannot be toggled by the viewer", level: "ready" },
+            { text: "No thumbnail file is generated for this destination", level: "ready" },
+          ],
+        },
+        {
+          id: "archive",
+          name: "Archive master",
+          desc: "High-quality archive copy for long-term storage without platform compression.",
+          defaults: {
+            "Video size": "1920 × 1080",
+            "Audio mix": "Stereo, normalized to −14 LUFS",
+            "Captions": "Sidecar SRT only",
+            "Thumbnail": "Not required",
+            "Metadata": "Episode title, production date",
+            "File naming": "archive-show-ep-date",
+          },
+          consequences: [
+            { text: "Archive copy ships without chapter metadata", level: "review" },
+            { text: "No watermark applied to the archive master", level: "ready" },
+          ],
+        },
+        {
+          id: "sponsor-approval",
+          name: "Sponsor approval copy",
+          desc: "Segment-only copy showing sponsor placement for disclosure review.",
+          defaults: {
+            "Video size": "1280 × 720",
+            "Audio mix": "Stereo, normalized to −16 LUFS",
+            "Captions": "Burned in",
+            "Thumbnail": "Not required",
+            "Metadata": "Sponsor name, segment timecodes",
+            "File naming": "sponsor-review-name-date",
+          },
+          consequences: [
+            { text: "Only the sponsor segment is included, not the full episode", level: "review" },
+            { text: "Disclosure text must be confirmed before this copy can export", level: "blocked" },
+          ],
+        },
+      ];
+
+      var state = {
+        primary: null,
+        additional: {},
+        overrides: {},
+        saved: false,
+      };
+
+      function renderDestinations() {
+        var container = document.getElementById("destinations");
+        container.replaceChildren();
+        for (var i = 0; i < PRESETS.length; i++) {
+          var p = PRESETS[i];
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "dest-btn";
+          btn.dataset.dest = p.id;
+          btn.setAttribute("aria-pressed", String(state.primary === p.id));
+
+          var b = document.createElement("b");
+          b.textContent = p.name;
+          var span = document.createElement("span");
+          span.textContent = p.desc;
+          btn.appendChild(b);
+          btn.appendChild(span);
+
+          if (state.primary === p.id) {
+            var tag = document.createElement("span");
+            tag.className = "primary-tag";
+            tag.textContent = "primary";
+            btn.appendChild(tag);
+          }
+
+          btn.addEventListener("click", (function (id) {
+            return function () {
+              state.primary = id;
+              state.saved = false;
+              state.overrides = {};
+              render();
+            };
+          })(p.id));
+
+          container.appendChild(btn);
+        }
+      }
+
+      function getPreset(id) {
+        for (var i = 0; i < PRESETS.length; i++) {
+          if (PRESETS[i].id === id) { return PRESETS[i]; }
+        }
+        return null;
+      }
+
+      function renderDefaults() {
+        var tbody = document.getElementById("defaultsBody");
+        tbody.replaceChildren();
+        var preset = getPreset(state.primary);
+        if (!preset) {
+          var empty = document.createElement("tr");
+          var td = document.createElement("td");
+          td.colSpan = 3;
+          td.style.color = "var(--muted)";
+          td.textContent = "Choose a destination to see its defaults.";
+          empty.appendChild(td);
+          tbody.appendChild(empty);
+          return;
+        }
+
+        var keys = Object.keys(preset.defaults);
+        for (var i = 0; i < keys.length; i++) {
+          var key = keys[i];
+          var row = document.createElement("tr");
+
+          var labelTd = document.createElement("td");
+          labelTd.textContent = key;
+
+          var valTd = document.createElement("td");
+          valTd.className = "val";
+          var isOverridden = Object.prototype.hasOwnProperty.call(state.overrides, key);
+          valTd.textContent = isOverridden ? state.overrides[key] : preset.defaults[key];
+          if (isOverridden) { valTd.classList.add("overridden"); }
+
+          var actionTd = document.createElement("td");
+          var overBtn = document.createElement("button");
+          overBtn.type = "button";
+          overBtn.className = "override-btn" + (isOverridden ? " active" : "");
+          overBtn.textContent = isOverridden ? "Reset" : "Override";
+          overBtn.addEventListener("click", (function (k, defaultVal, wasOverridden) {
+            return function () {
+              if (wasOverridden) {
+                delete state.overrides[k];
+              } else {
+                state.overrides[k] = defaultVal + " (custom)";
+              }
+              state.saved = false;
+              render();
+            };
+          })(key, preset.defaults[key], isOverridden));
+          actionTd.appendChild(overBtn);
+
+          row.appendChild(labelTd);
+          row.appendChild(valTd);
+          row.appendChild(actionTd);
+          tbody.appendChild(row);
+        }
+      }
+
+      function renderAdditional() {
+        var container = document.getElementById("additionalList");
+        container.replaceChildren();
+        for (var i = 0; i < PRESETS.length; i++) {
+          var p = PRESETS[i];
+          if (p.id === state.primary) { continue; }
+
+          var row = document.createElement("div");
+          row.className = "additional-row";
+
+          var info = document.createElement("div");
+          var strong = document.createElement("strong");
+          strong.textContent = p.name;
+          var span = document.createElement("span");
+          span.textContent = state.additional[p.id] ? " — will export separately" : "";
+          info.appendChild(strong);
+          info.appendChild(span);
+
+          var toggle = document.createElement("button");
+          toggle.type = "button";
+          toggle.className = "toggle";
+          toggle.setAttribute("role", "switch");
+          toggle.setAttribute("aria-checked", String(Boolean(state.additional[p.id])));
+          toggle.setAttribute("aria-label", "Also prepare " + p.name);
+          toggle.addEventListener("click", (function (id) {
+            return function () {
+              state.additional[id] = !state.additional[id];
+              state.saved = false;
+              render();
+            };
+          })(p.id));
+
+          row.appendChild(info);
+          row.appendChild(toggle);
+          container.appendChild(row);
+        }
+      }
+
+      function renderConsequences() {
+        var container = document.getElementById("consequences");
+        container.replaceChildren();
+        var preset = getPreset(state.primary);
+        if (!preset) {
+          var note = document.createElement("div");
+          note.className = "warning";
+          var s = document.createElement("strong");
+          s.textContent = "No destination selected";
+          var sp = document.createElement("span");
+          sp.textContent = "Choose a primary destination to see what happens at export time.";
+          note.appendChild(s);
+          note.appendChild(sp);
+          container.appendChild(note);
+          return;
+        }
+
+        for (var i = 0; i < preset.consequences.length; i++) {
+          var c = preset.consequences[i];
+          var w = document.createElement("div");
+          w.className = "warning" + (c.level === "blocked" ? " blocked" : "");
+          var strong = document.createElement("strong");
+          strong.textContent = c.text;
+          var badge = document.createElement("span");
+          badge.className = "badge " + c.level;
+          badge.textContent = c.level;
+          w.appendChild(strong);
+          w.appendChild(badge);
+          container.appendChild(w);
+        }
+
+        var overrideKeys = Object.keys(state.overrides);
+        if (overrideKeys.length > 0) {
+          var ow = document.createElement("div");
+          ow.className = "warning";
+          var os = document.createElement("strong");
+          os.textContent = overrideKeys.length + " setting" + (overrideKeys.length > 1 ? "s" : "") + " overridden from the " + preset.name + " preset";
+          var osp = document.createElement("span");
+          osp.textContent = "Overrides stay scoped to this destination and do not affect additional destinations.";
+          ow.appendChild(os);
+          ow.appendChild(osp);
+          container.appendChild(ow);
+        }
+      }
+
+      function renderStatus() {
+        var badge = document.getElementById("statusBadge");
+        if (state.saved) {
+          badge.textContent = "saved as show default";
+          badge.className = "badge ready";
+        } else if (state.primary) {
+          badge.textContent = "selected";
+          badge.className = "badge review";
+        } else {
+          badge.textContent = "not selected";
+          badge.className = "badge defaults";
+        }
+        document.getElementById("saveBtn").className = state.saved ? "save-default saved" : "save-default";
+      }
+
+      function render() {
+        renderDestinations();
+        renderDefaults();
+        renderAdditional();
+        renderConsequences();
+        renderStatus();
+      }
+
+      document.getElementById("saveBtn").addEventListener("click", function () {
+        if (state.primary) {
+          state.saved = true;
+          render();
+        }
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { PRESETS: PRESETS, state: state };
+      }
+    </script>
+  </body>
+</html>

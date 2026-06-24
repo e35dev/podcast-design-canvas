@@ -81,6 +81,7 @@ function createPreviewAppRouting(order) {
   const ingestPathContexts = new Set(["episode", "ingest"]);
   const pathedPublishScreens = new Set([
     "episode-watch-through-preview",
+    "publish-destination-presets",
     "destination-crop-preview",
     "thumbnail-cover-frame",
     "show-notes-assembly",

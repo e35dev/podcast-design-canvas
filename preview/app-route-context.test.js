@@ -413,7 +413,7 @@ assert.equal(
 );
 assert.equal(
   publishPath.nodes.nextStep.href,
-  "#destination-crop-preview?path=publish",
+  "#publish-destination-presets?path=publish",
   "publish path context steps forward inside publish prep",
 );
 
@@ -425,7 +425,7 @@ assert.equal(
 );
 assert.equal(
   publishPath.nodes.prevStep.href,
-  "#episode-watch-through-preview?path=publish",
+  "#publish-destination-presets?path=publish",
   "publish path context is preserved when stepping back inside publish prep",
 );
 assert.equal(
