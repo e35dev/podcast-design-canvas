@@ -63,6 +63,13 @@
         text-decoration: none;
       }
 
+      .top-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: baseline;
+      }
+
       .stepper {
         list-style: none;
         display: flex;
@@ -400,7 +407,10 @@
           <h1>Guided episode flow</h1>
           <p class="lede">One connected path from confirming your files and speaker roles to a publish-ready episode. Each step builds on the last, and the final readiness reflects every choice you made.</p>
         </div>
-        <a class="back" href="./index.html">← All screens</a>
+        <div class="top-links">
+          <a class="back" href="index.html">← Preview shell</a>
+          <a class="back" href="../index.html">Full screen catalog</a>
+        </div>
       </div>
 
       <ol class="stepper" id="stepper" aria-label="Episode steps"></ol>

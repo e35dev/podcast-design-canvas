@@ -51,6 +51,8 @@ assert.ok(flow.includes("readyStatus"), "flow renders ready-count status text");
 assert.ok(flow.includes("nextStatus"), "flow renders next-action status text");
 assert.ok(flow.includes("Continue to"), "flow explains the next step when ready");
 assert.ok(flow.includes("steps ready"), "flow summarizes progress in creator-facing copy");
+assert.ok(flow.includes('href="index.html"') || flow.includes('href="./index.html"'), "guided flow links back to the preview shell");
+assert.ok(flow.includes('href="../index.html"'), "guided flow links to the full screen catalog");
 assert.ok(flow.includes('speaker.bucket = "ready"'), "readiness step can resolve a speaker bucket");
 assert.ok(flow.includes("Add speaker name"), "readiness exposes a fix action for missing names");
 assert.ok(flow.includes("Confirm roles"), "roles step exposes a confirm action");
