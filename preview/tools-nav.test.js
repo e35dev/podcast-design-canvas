@@ -59,6 +59,7 @@ const styleFlow = new Set([
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
+  "show-brand-kit-setup.html",
 ]);
 
 const visualsFlow = new Set([

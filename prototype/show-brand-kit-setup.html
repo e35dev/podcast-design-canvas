@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+
+      fieldset {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 16px; margin: 0 0 14px;
+      }
+      fieldset legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
+      label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+      .field { margin-bottom: 14px; }
+      .field:last-child { margin-bottom: 0; }
+      input[type="text"], select {
+        width: 100%; min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px;
+        background: #fff; color: var(--ink); font: inherit; padding: 7px 10px;
+      }
+      input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .color-row { display: flex; gap: 10px; align-items: center; }
+      .color-swatch {
+        width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); flex-shrink: 0;
+      }
+      .color-row input[type="text"] { flex: 1; }
+
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 28px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; font-size: 13px;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.defaults { background: #eceeed; color: #55615d; }
+
+      .preview-card {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px; margin-bottom: 12px;
+      }
+      .preview-card strong { display: block; margin-bottom: 6px; font-size: 14px; }
+      .preview-frame {
+        border-radius: 6px; padding: 18px; min-height: 80px;
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        font-weight: 700; font-size: 15px;
+      }
+      .preview-frame .logo-placeholder {
+        width: 48px; height: 48px; border-radius: 8px; border: 2px dashed var(--line);
+        display: flex; align-items: center; justify-content: center; font-size: 11px;
+        color: var(--muted); text-align: center; flex-shrink: 0; overflow: hidden;
+      }
+      .preview-frame .logo-placeholder img {
+        width: 100%; height: 100%; object-fit: contain;
+      }
+      .preview-frame .show-title { font-size: 18px; }
+      .speaker-slot {
+        display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+        border-radius: 6px; font-size: 14px;
+      }
+      .speaker-slot .role { font-weight: 700; min-width: 50px; }
+      .speaker-slot .name { flex: 1; }
+      .preview-caption {
+        border-radius: 4px; padding: 6px 10px; margin-top: 10px; font-size: 13px; text-align: center;
+      }
+
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .warning strong { display: block; margin-bottom: 4px; }
+      .warning span { color: var(--muted); }
+      .warning.ok { border-left-color: var(--accent); }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      button {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 14px; cursor: pointer;
+      }
+      button:hover { background: #f0f4f2; }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.52; cursor: not-allowed; }
+      .status-note {
+        margin-top: 12px; border: 1px solid #c7d7d1; border-radius: 7px; background: #fff;
+        padding: 11px 12px; color: var(--muted);
+      }
+      .status-note strong { display: block; margin-bottom: 4px; color: var(--ink); }
+
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="show-brand-kit-setup">
+    <main>
+      <h1>Show Brand Kit Setup Prototype</h1>
+      <p class="lede">
+        Add show branding once, preview how it affects presets, captions, and canvas layouts, and reuse it across future episodes without forcing a single house style.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Brand inputs</h2>
+
+          <fieldset>
+            <legend>Identity</legend>
+            <div class="field">
+              <label for="showName">Show name</label>
+              <input type="text" id="showName" value="The Deep Dive Podcast" placeholder="Your show name">
+            </div>
+            <div class="field">
+              <label for="logoUpload">Logo</label>
+              <input type="text" id="logoUpload" value="" placeholder="Upload or paste a logo URL (optional)">
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Colors</legend>
+            <div class="field">
+              <label for="primaryColor">Primary color</label>
+              <div class="color-row">
+                <div class="color-swatch" id="primarySwatch" style="background:#0f6a57;"></div>
+                <input type="text" id="primaryColor" value="#0f6a57" placeholder="#hex">
+              </div>
+            </div>
+            <div class="field">
+              <label for="accentColor">Accent color</label>
+              <div class="color-row">
+                <div class="color-swatch" id="accentSwatch" style="background:#f5a623;"></div>
+                <input type="text" id="accentColor" value="#f5a623" placeholder="#hex">
+              </div>
+            </div>
+            <div class="field">
+              <label for="bgColor">Background</label>
+              <div class="color-row">
+                <div class="color-swatch" id="bgSwatch" style="background:#1a1a2e;"></div>
+                <input type="text" id="bgColor" value="#1a1a2e" placeholder="#hex">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Typography &amp; style</legend>
+            <div class="field">
+              <label for="typeStyle">Type style preference</label>
+              <select id="typeStyle">
+                <option value="clean">Clean sans-serif</option>
+                <option value="editorial">Editorial serif</option>
+                <option value="bold">Bold display</option>
+                <option value="mono">Monospace technical</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="captionEmphasis">Caption emphasis level</label>
+              <select id="captionEmphasis">
+                <option value="subtle">Subtle — small, translucent background</option>
+                <option value="standard" selected>Standard — readable with background</option>
+                <option value="prominent">Prominent — large, high-contrast</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="lowerThird">Lower-third style</label>
+              <select id="lowerThird">
+                <option value="minimal">Minimal bar</option>
+                <option value="branded" selected>Branded with show colors</option>
+                <option value="fullWidth">Full-width banner</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <div class="actions">
+            <button type="button" id="saveToTemplate">Save to show template</button>
+            <button type="button" id="resetDefaults">Reset to defaults</button>
+          </div>
+          <div class="status-note" id="statusNote" aria-live="polite"></div>
+        </div>
+
+        <aside class="panel">
+          <h2>Live preview</h2>
+          <div id="previews"></div>
+
+          <h3 style="margin-top: 18px;">Guardrails</h3>
+          <div id="guardrails" style="display: grid; gap: 10px;"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      var DEFAULTS = {
+        showName: "The Deep Dive Podcast",
+        primaryColor: "#0f6a57",
+        accentColor: "#f5a623",
+        bgColor: "#1a1a2e",
+        typeStyle: "clean",
+        captionEmphasis: "standard",
+        lowerThird: "branded",
+        logoUpload: "",
+      };
+
+      var TYPE_FONTS = {
+        clean: "Inter, ui-sans-serif, system-ui, sans-serif",
+        editorial: "Georgia, 'Times New Roman', serif",
+        bold: "'Impact', 'Arial Black', sans-serif",
+        mono: "'Courier New', monospace",
+      };
+
+      function readInputs() {
+        return {
+          showName: document.getElementById("showName").value || DEFAULTS.showName,
+          primaryColor: document.getElementById("primaryColor").value || DEFAULTS.primaryColor,
+          accentColor: document.getElementById("accentColor").value || DEFAULTS.accentColor,
+          bgColor: document.getElementById("bgColor").value || DEFAULTS.bgColor,
+          typeStyle: document.getElementById("typeStyle").value,
+          captionEmphasis: document.getElementById("captionEmphasis").value,
+          lowerThird: document.getElementById("lowerThird").value,
+          logoUpload: document.getElementById("logoUpload").value,
+        };
+      }
+
+      function isValidHex(c) {
+        return /^#[0-9a-fA-F]{3,8}$/.test(c);
+      }
+
+      function luminance(hex) {
+        var c = hex.replace("#", "");
+        if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+        var r = parseInt(c.substring(0,2), 16) / 255;
+        var g = parseInt(c.substring(2,4), 16) / 255;
+        var b = parseInt(c.substring(4,6), 16) / 255;
+        r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+        g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+        b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(hex1, hex2) {
+        var l1 = luminance(hex1);
+        var l2 = luminance(hex2);
+        var lighter = Math.max(l1, l2);
+        var darker = Math.min(l1, l2);
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      function textColorOn(bg) {
+        return luminance(bg) > 0.5 ? "#17211f" : "#ffffff";
+      }
+
+      function checkGuardrails(inputs) {
+        var issues = [];
+        if (isValidHex(inputs.primaryColor) && isValidHex(inputs.bgColor)) {
+          var ratio = contrastRatio(inputs.primaryColor, inputs.bgColor);
+          if (ratio < 3) {
+            issues.push({
+              tone: "review",
+              title: "Low contrast: primary on background",
+              detail: "Primary color " + inputs.primaryColor + " has a contrast ratio of " + ratio.toFixed(1) + ":1 against " + inputs.bgColor + ". Consider adjusting for caption and lower-third readability during long-form viewing.",
+            });
+          }
+        }
+        if (inputs.captionEmphasis === "prominent" && inputs.lowerThird === "fullWidth") {
+          issues.push({
+            tone: "review",
+            title: "Captions and lower-thirds may crowd the frame",
+            detail: "Prominent captions with a full-width lower-third can obscure speaker faces when both appear. Consider reducing one.",
+          });
+        }
+        if (issues.length === 0) {
+          issues.push({
+            tone: "ok",
+            title: "Brand kit looks good",
+            detail: "Colors pass contrast checks and caption/lower-third combination leaves speaker faces visible.",
+          });
+        }
+        return issues;
+      }
+
+      function renderPreviews(inputs) {
+        var container = document.getElementById("previews");
+        container.replaceChildren();
+
+        var bg = isValidHex(inputs.bgColor) ? inputs.bgColor : DEFAULTS.bgColor;
+        var primary = isValidHex(inputs.primaryColor) ? inputs.primaryColor : DEFAULTS.primaryColor;
+        var accent = isValidHex(inputs.accentColor) ? inputs.accentColor : DEFAULTS.accentColor;
+        var fontFamily = TYPE_FONTS[inputs.typeStyle] || TYPE_FONTS.clean;
+
+        // Realistic episode speakers used across other prototypes
+        var speakers = [
+          { role: "Host", name: "Marcus Rivera" },
+          { role: "Guest 1", name: "Sarah Chen" },
+          { role: "Guest 2", name: "David Okafor" },
+        ];
+
+        // Speaker frame preview with logo and multi-speaker layout
+        var frameCard = document.createElement("div");
+        frameCard.className = "preview-card";
+        var frameTitle = document.createElement("strong");
+        frameTitle.textContent = "Speaker frame · Episode 47 at 14:32";
+        var frame = document.createElement("div");
+        frame.className = "preview-frame";
+        frame.style.background = bg;
+        frame.style.color = textColorOn(bg);
+        frame.style.fontFamily = fontFamily;
+        frame.style.flexDirection = "column";
+        frame.style.alignItems = "stretch";
+        frame.style.gap = "8px";
+
+        // Logo + show title header
+        var header = document.createElement("div");
+        header.style.display = "flex";
+        header.style.alignItems = "center";
+        header.style.gap = "10px";
+        header.style.marginBottom = "4px";
+
+        var logoEl = document.createElement("div");
+        logoEl.className = "logo-placeholder";
+        if (inputs.logoUpload) {
+          var img = document.createElement("img");
+          img.src = inputs.logoUpload;
+          img.alt = inputs.showName + " logo";
+          img.onerror = function () {
+            logoEl.replaceChildren();
+            logoEl.textContent = "Logo";
+            logoEl.style.borderStyle = "solid";
+            logoEl.style.borderColor = primary;
+          };
+          logoEl.style.borderStyle = "solid";
+          logoEl.style.borderColor = primary;
+          logoEl.replaceChildren(img);
+        } else {
+          logoEl.textContent = "No logo";
+        }
+        logoEl.style.color = textColorOn(bg);
+
+        var titleSpan = document.createElement("span");
+        titleSpan.className = "show-title";
+        titleSpan.textContent = inputs.showName;
+        header.append(logoEl, titleSpan);
+        frame.appendChild(header);
+
+        // Speaker slots showing realistic episode speakers
+        speakers.forEach(function (sp) {
+          var slot = document.createElement("div");
+          slot.className = "speaker-slot";
+          slot.style.background = "rgba(255,255,255,0.08)";
+          var role = document.createElement("span");
+          role.className = "role";
+          role.textContent = sp.role;
+          role.style.color = accent;
+          var name = document.createElement("span");
+          name.className = "name";
+          name.textContent = sp.name;
+          slot.append(role, name);
+          frame.appendChild(slot);
+        });
+
+        // Caption bar showing realistic dialogue
+        var caption = document.createElement("div");
+        caption.className = "preview-caption";
+        caption.style.fontFamily = fontFamily;
+        var captionSizes = { subtle: "12px", standard: "14px", prominent: "18px" };
+        caption.style.fontSize = captionSizes[inputs.captionEmphasis] || "14px";
+        var captionOpacity = inputs.captionEmphasis === "subtle" ? "0.75" : "1";
+        caption.style.background = primary;
+        caption.style.opacity = captionOpacity;
+        caption.style.color = textColorOn(primary);
+        caption.textContent = "Sarah: And that changed everything about how we approach the show.";
+
+        frameCard.append(frameTitle, frame, caption);
+        container.appendChild(frameCard);
+
+        // Lower-third preview on the active speaker
+        var ltCard = document.createElement("div");
+        ltCard.className = "preview-card";
+        var ltTitle = document.createElement("strong");
+        ltTitle.textContent = "Lower-third · Sarah Chen speaking";
+        var ltFrame = document.createElement("div");
+        ltFrame.className = "preview-frame";
+        ltFrame.style.background = bg;
+        ltFrame.style.color = textColorOn(bg);
+        ltFrame.style.fontFamily = fontFamily;
+        ltFrame.style.flexDirection = "column";
+        ltFrame.style.alignItems = "stretch";
+
+        var speakerLabel = document.createElement("div");
+        speakerLabel.style.textAlign = "center";
+        speakerLabel.style.marginBottom = "10px";
+        speakerLabel.textContent = "Sarah Chen, Guest · Science & Society Lab";
+
+        var ltBar = document.createElement("div");
+        var ltStyles = {
+          minimal: { padding: "6px 14px", borderBottom: "3px solid " + primary },
+          branded: { padding: "8px 14px", background: primary, color: textColorOn(primary), borderRadius: "4px" },
+          fullWidth: { padding: "10px 14px", background: primary, color: textColorOn(primary), width: "100%" },
+        };
+        var lts = ltStyles[inputs.lowerThird] || ltStyles.branded;
+        Object.assign(ltBar.style, lts);
+        ltBar.style.fontWeight = "700";
+        ltBar.style.fontSize = "13px";
+        ltBar.textContent = inputs.showName + " · Episode 47";
+
+        ltFrame.append(speakerLabel, ltBar);
+        ltCard.append(ltTitle, ltFrame);
+        container.appendChild(ltCard);
+      }
+
+      function renderGuardrails(inputs) {
+        var container = document.getElementById("guardrails");
+        container.replaceChildren();
+        var issues = checkGuardrails(inputs);
+        issues.forEach(function (item) {
+          var el = document.createElement("div");
+          el.className = "warning" + (item.tone === "ok" ? " ok" : "");
+          var title = document.createElement("strong");
+          title.textContent = item.title;
+          var detail = document.createElement("span");
+          detail.textContent = item.detail;
+          el.append(title, detail);
+          container.appendChild(el);
+        });
+      }
+
+      function updateSwatches(inputs) {
+        var pairs = [
+          ["primarySwatch", inputs.primaryColor],
+          ["accentSwatch", inputs.accentColor],
+          ["bgSwatch", inputs.bgColor],
+        ];
+        pairs.forEach(function (pair) {
+          var el = document.getElementById(pair[0]);
+          el.style.background = isValidHex(pair[1]) ? pair[1] : "#ccc";
+        });
+      }
+
+      function statusForInputs(inputs) {
+        var isDefault = inputs.primaryColor === DEFAULTS.primaryColor &&
+          inputs.accentColor === DEFAULTS.accentColor &&
+          inputs.bgColor === DEFAULTS.bgColor &&
+          inputs.typeStyle === DEFAULTS.typeStyle &&
+          inputs.captionEmphasis === DEFAULTS.captionEmphasis &&
+          inputs.lowerThird === DEFAULTS.lowerThird &&
+          !inputs.logoUpload;
+        return isDefault ? "using defaults" : "previewing";
+      }
+
+      var savedToTemplate = false;
+
+      function renderStatusNote(inputs) {
+        var container = document.getElementById("statusNote");
+        container.replaceChildren();
+        var s = document.createElement("strong");
+        var d = document.createElement("span");
+        if (savedToTemplate) {
+          s.textContent = "Saved to template";
+          d.textContent = "Brand kit for " + inputs.showName + " is saved. Future episodes will start with these settings.";
+        } else {
+          var status = statusForInputs(inputs);
+          s.textContent = status === "using defaults" ? "Using defaults" : "Previewing brand kit";
+          d.textContent = status === "using defaults"
+            ? "No brand inputs set yet. Add colors, logo, or type style to see how they affect presets and layouts."
+            : "Brand choices for " + inputs.showName + " are previewing on speaker frames, captions, and lower-thirds. Save to template to reuse across future episodes.";
+        }
+        container.append(s, d);
+      }
+
+      function render() {
+        var inputs = readInputs();
+        updateSwatches(inputs);
+        renderPreviews(inputs);
+        renderGuardrails(inputs);
+        renderStatusNote(inputs);
+      }
+
+      // Listen on change (dropdowns) and input (text fields) without re-rendering the
+      // input elements themselves — no focus/caret loss on keystroke.
+      ["showName", "logoUpload", "primaryColor", "accentColor", "bgColor"].forEach(function (id) {
+        document.getElementById(id).addEventListener("input", function () {
+          savedToTemplate = false;
+          render();
+        });
+      });
+      ["typeStyle", "captionEmphasis", "lowerThird"].forEach(function (id) {
+        document.getElementById(id).addEventListener("change", function () {
+          savedToTemplate = false;
+          render();
+        });
+      });
+
+      document.getElementById("saveToTemplate").addEventListener("click", function () {
+        savedToTemplate = true;
+        render();
+      });
+
+      document.getElementById("resetDefaults").addEventListener("click", function () {
+        document.getElementById("showName").value = DEFAULTS.showName;
+        document.getElementById("logoUpload").value = DEFAULTS.logoUpload;
+        document.getElementById("primaryColor").value = DEFAULTS.primaryColor;
+        document.getElementById("accentColor").value = DEFAULTS.accentColor;
+        document.getElementById("bgColor").value = DEFAULTS.bgColor;
+        document.getElementById("typeStyle").value = DEFAULTS.typeStyle;
+        document.getElementById("captionEmphasis").value = DEFAULTS.captionEmphasis;
+        document.getElementById("lowerThird").value = DEFAULTS.lowerThird;
+        savedToTemplate = false;
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          DEFAULTS: DEFAULTS,
+          TYPE_FONTS: TYPE_FONTS,
+          isValidHex: isValidHex,
+          luminance: luminance,
+          contrastRatio: contrastRatio,
+          textColorOn: textColorOn,
+          checkGuardrails: checkGuardrails,
+          statusForInputs: statusForInputs,
+        };
+      }
+    </script>
+  </body>
+</html>
