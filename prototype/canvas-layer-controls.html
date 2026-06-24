@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Canvas Layer Controls Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .layers {
+        display: grid;
+        gap: 8px;
+      }
+
+      .layer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .layer.hidden-layer {
+        opacity: 0.55;
+      }
+
+      .layer-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: linear-gradient(140deg, #6db5a8, #1d554d);
+        flex: none;
+      }
+
+      .layer-icon.captions {
+        background: linear-gradient(140deg, #8aabff, #2a4c8a);
+      }
+
+      .layer-icon.brand {
+        background: linear-gradient(140deg, #f0b84a, #a15c00);
+      }
+
+      .layer-icon.background {
+        background: linear-gradient(140deg, #c9d2cf, #5e6b67);
+      }
+
+      .layer-meta {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+      }
+
+      .layer-name {
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .layer-type {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .layer-controls {
+        display: flex;
+        gap: 6px;
+        flex: none;
+      }
+
+      .layer-btn {
+        min-height: 30px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+
+      .layer-btn:hover,
+      .layer-btn:focus-visible {
+        color: var(--ink);
+        border-color: var(--accent);
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .layer-btn.active {
+        background: #f0f8f6;
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .stack-note {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 10px 0 0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .checks {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .check {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .check.info {
+        border-left-color: var(--accent);
+      }
+
+      .check strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .check span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .fix-link:hover,
+      .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="canvas-layer-controls">
+    <main>
+      <h1>Canvas layer controls</h1>
+      <p class="lede">Adjust the layer stack for this podcast layout — toggle visibility, lock brand elements, and reorder. Safety checks update as you work so layout conflicts surface before you save or apply the layout across the episode.</p>
+
+      <section class="workspace" aria-label="Canvas layer controls workspace">
+        <div class="panel">
+          <h2>Layer stack</h2>
+          <div class="layers" id="layers"></div>
+          <p class="stack-note">Layers at the top of the stack render in front. Drag to reorder — sample data is static for this prototype.</p>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Layout safety summary">
+          <h2>Layout safety</h2>
+          <div id="status" class="status ready">Layout ready</div>
+          <div id="checks" class="checks"></div>
+          <p class="summary-note">Resolve these before saving the layout as a template or applying it across the episode.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const layerTypes = {
+        broll: "B-roll zone",
+        speaker: "Speaker frame",
+        captions: "Captions",
+        brand: "Brand element",
+        background: "Background",
+      };
+
+      // Stack order: index 0 is the topmost layer (rendered in front).
+      const sampleLayers = [
+        { id: "l1", name: "B-roll zone", type: "broll", visible: true, locked: false },
+        { id: "l2", name: "Speaker frame 1", type: "speaker", visible: true, locked: false },
+        { id: "l3", name: "Captions", type: "captions", visible: true, locked: false },
+        { id: "l4", name: "Speaker frame 2", type: "speaker", visible: false, locked: false },
+        { id: "l5", name: "Show logo", type: "brand", visible: true, locked: false },
+        { id: "l6", name: "Background", type: "background", visible: true, locked: true },
+      ];
+
+      let layers = structuredClone(sampleLayers);
+
+      const layersEl = document.querySelector("#layers");
+      const statusEl = document.querySelector("#status");
+      const checksEl = document.querySelector("#checks");
+
+      // Evaluate the current layer stack and produce safety checks with fix-screen
+      // routing for issues the creator cannot resolve inside this panel alone.
+      function evaluate(list) {
+        const checks = [];
+
+        // Captions may be covered: a visible b-roll or brand layer sits above captions
+        // in the stack (lower index = rendered in front), which risks overlapping the
+        // caption safe area.
+        const captionIdx = list.findIndex((l) => l.type === "captions");
+        if (captionIdx > 0) {
+          const covering = list
+            .slice(0, captionIdx)
+            .filter((l) => l.visible && (l.type === "broll" || l.type === "brand"));
+          if (covering.length > 0) {
+            checks.push({
+              title: "Captions may be covered",
+              action:
+                covering.length === 1
+                  ? "A layer sits above captions in the stack and may overlap the caption safe area."
+                  : `${covering.length} layers sit above captions and may overlap the caption safe area.`,
+              tone: "warn",
+              fixScreen: "layout-safe-areas.html",
+              fixLabel: "Fix safe areas",
+            });
+          }
+        }
+
+        // Hidden speaker frames: frames set to not visible won't appear in the export.
+        const hiddenSpeakers = list.filter((l) => l.type === "speaker" && !l.visible);
+        if (hiddenSpeakers.length > 0) {
+          checks.push({
+            title: `${hiddenSpeakers.length} speaker frame${hiddenSpeakers.length === 1 ? "" : "s"} hidden`,
+            action:
+              "Hidden speaker frames are excluded from the export. Review framing to confirm this layout still works with the episode's speakers.",
+            tone: "warn",
+            fixScreen: "speaker-framing-safety.html",
+            fixLabel: "Review framing",
+          });
+        }
+
+        // Unlocked brand elements: resolved inline by locking — no fix screen needed.
+        const unlockedBrand = list.filter((l) => l.type === "brand" && !l.locked && l.visible);
+        if (unlockedBrand.length > 0) {
+          checks.push({
+            title: `${unlockedBrand.length} brand element${unlockedBrand.length === 1 ? "" : "s"} unlocked`,
+            action:
+              "Lock brand elements to prevent accidental moves when editing other layers. Use the Lock button on the layer.",
+            tone: "info",
+          });
+        }
+
+        const hasWarn = checks.some((c) => c.tone === "warn");
+        return { overall: hasWarn ? "review" : "ready", checks };
+      }
+
+      function render() {
+        const evaluation = evaluate(layers);
+        layersEl.replaceChildren(...layers.map((layer, index) => renderLayer(layer, index)));
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusEl.className = `status ${evaluation.overall}`;
+        statusEl.textContent = evaluation.overall === "ready" ? "Layout ready" : "Layout needs review";
+        checksEl.replaceChildren(
+          ...(evaluation.checks.length
+            ? evaluation.checks.map(renderCheck)
+            : [Object.assign(document.createElement("p"), { textContent: "No layout conflicts. This canvas layout is safe to apply or save as a template." })]),
+        );
+      }
+
+      function renderLayer(layer, index) {
+        const article = document.createElement("article");
+        article.className = `layer${layer.visible ? "" : " hidden-layer"}`;
+
+        const icon = document.createElement("div");
+        icon.className = `layer-icon ${layer.type}`;
+
+        const meta = document.createElement("div");
+        meta.className = "layer-meta";
+
+        const name = document.createElement("span");
+        name.className = "layer-name";
+        name.textContent = layer.name;
+
+        const type = document.createElement("span");
+        type.className = "layer-type";
+        type.textContent = layerTypes[layer.type] || layer.type;
+
+        meta.append(name, type);
+
+        const controls = document.createElement("div");
+        controls.className = "layer-controls";
+
+        const visBtn = document.createElement("button");
+        visBtn.type = "button";
+        visBtn.className = `layer-btn${layer.visible ? "" : " active"}`;
+        visBtn.textContent = layer.visible ? "Hide" : "Show";
+        visBtn.setAttribute("aria-label", `${layer.visible ? "Hide" : "Show"} ${layer.name}`);
+        visBtn.addEventListener("click", () => {
+          layers[index].visible = !layers[index].visible;
+          render();
+        });
+
+        const lockBtn = document.createElement("button");
+        lockBtn.type = "button";
+        lockBtn.className = `layer-btn${layer.locked ? " active" : ""}`;
+        lockBtn.textContent = layer.locked ? "Unlock" : "Lock";
+        lockBtn.setAttribute("aria-label", `${layer.locked ? "Unlock" : "Lock"} ${layer.name}`);
+        lockBtn.addEventListener("click", () => {
+          layers[index].locked = !layers[index].locked;
+          render();
+        });
+
+        controls.append(visBtn, lockBtn);
+        article.append(icon, meta, controls);
+        return article;
+      }
+
+      function renderCheck(c) {
+        const article = document.createElement("article");
+        article.className = `check ${c.tone}`;
+
+        const strong = document.createElement("strong");
+        strong.textContent = c.title;
+
+        const span = document.createElement("span");
+        span.textContent = c.action;
+
+        article.append(strong, span);
+
+        if (c.fixScreen) {
+          const link = document.createElement("a");
+          link.className = "fix-link";
+          link.href = c.fixScreen;
+          link.textContent = `Open ${c.fixLabel} →`;
+          article.append(link);
+        }
+
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
