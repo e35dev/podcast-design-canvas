@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Eye-Line Coherence Prototype</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --accent: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.82fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .moments { display: grid; gap: 14px; }
+      .moment {
+        display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 14px;
+        border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 14px;
+      }
+      .preview {
+        position: relative; width: 176px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden;
+        background: linear-gradient(160deg, #567a72, #213734);
+      }
+      .speaker {
+        position: absolute; top: 18%; width: 26%; aspect-ratio: 1; border-radius: 50%; background: #e8f4f1;
+      }
+      .speaker.host { left: 16%; }
+      .speaker.guest { right: 16%; }
+      .eye {
+        position: absolute; top: 34%; width: 10px; height: 4px; border-radius: 999px; background: #213734;
+      }
+      .host .eye { right: 18%; }
+      .guest .eye { left: 18%; }
+      .same-way .host .eye { left: 18%; right: auto; }
+      .same-way .guest .eye { left: 18%; }
+      .mirrored .guest .eye { right: 18%; left: auto; }
+      .reaction .guest { top: 14%; }
+      .lower {
+        position: absolute; left: 8%; right: 8%; bottom: 10%; height: 20%; border-radius: 5px; background: rgba(255,255,255,0.9);
+      }
+      .tag {
+        position: absolute; top: 6px; left: 6px; border-radius: 4px; background: rgba(16,24,22,0.78);
+        color: #fff; font-size: 11px; font-weight: 700; padding: 3px 6px;
+      }
+      .warn {
+        position: absolute; top: 6px; right: 6px; border-radius: 4px; background: rgba(159, 38, 38, 0.88);
+        color: #fff; font-size: 11px; font-weight: 700; padding: 3px 6px;
+      }
+      .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+      .head strong { display: block; margin-bottom: 4px; font-size: 15px; }
+      .head span, .choice span, .warning span, .summary li { color: var(--muted); }
+      .badge {
+        display: inline-flex; width: fit-content; min-height: 30px; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800;
+      }
+      .badge.ready { background: #def3ed; color: var(--accent); }
+      .badge.review { background: #fff1d7; color: var(--review); }
+      .badge.blocked { background: #ffe0e0; color: var(--blocked); }
+      .choices { display: grid; gap: 10px; margin-top: 12px; }
+      .choice {
+        display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 12px; align-items: center;
+        border: 1px solid var(--line); border-radius: 7px; background: #fcfdfd; padding: 12px;
+      }
+      .choice strong { display: block; margin-bottom: 4px; }
+      .warning { border-left: 4px solid var(--review); border-radius: 6px; background: #fff; padding: 10px 12px; }
+      .warning.blocked { border-left-color: var(--blocked); }
+      .summary { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #fff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      @media (max-width: 920px) {
+        .workspace { grid-template-columns: 1fr; }
+        .moment, .choice { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker Eye-Line Coherence Prototype</h1>
+      <p class="lede">
+        Help separately recorded speakers feel like they face one another through simple swap-and-mirror choices previewed under the chosen preset.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Shared-Frame Moments</h2>
+          <div class="moments">
+            <article class="moment">
+              <div class="preview same-way">
+                <span class="tag">split moment</span>
+                <div class="speaker host"><div class="eye"></div></div>
+                <div class="speaker guest"><div class="eye"></div></div>
+                <div class="lower"></div>
+              </div>
+              <div>
+                <div class="head">
+                  <div>
+                    <strong>Host and guest both look left</strong>
+                    <span>The conversation reads like both speakers are staring away from each other instead of sharing the same exchange.</span>
+                  </div>
+                  <span class="badge review">needs review</span>
+                </div>
+                <div class="choices">
+                  <div class="choice">
+                    <div>
+                      <strong>Swap left and right placement</strong>
+                      <span>Use the preset-supported inward-facing layout instead of forcing a custom crop decision.</span>
+                    </div>
+                    <span class="badge review">compare</span>
+                  </div>
+                  <div class="choice">
+                    <div>
+                      <strong>Mirror one speaker frame</strong>
+                      <span>Flip only the guest if the layout must stay fixed and no readable logos or text would reverse.</span>
+                    </div>
+                    <span class="badge review">warn before flip</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="moment">
+              <div class="preview mirrored reaction">
+                <span class="tag">reaction moment</span>
+                <span class="warn">logo warning</span>
+                <div class="speaker host"><div class="eye"></div></div>
+                <div class="speaker guest"><div class="eye"></div></div>
+                <div class="lower"></div>
+              </div>
+              <div>
+                <div class="head">
+                  <div>
+                    <strong>Reaction shot improves after mirroring</strong>
+                    <span>The guest now faces back into the exchange, but the visible shirt logo means the creator should confirm the flip before keeping it.</span>
+                  </div>
+                  <span class="badge review">adjusted</span>
+                </div>
+                <div class="choices">
+                  <div class="choice">
+                    <div>
+                      <strong>Keep mirrored frame</strong>
+                      <span>Accept the stronger conversation feel and save the arrangement for this recurring setup.</span>
+                    </div>
+                    <span class="badge ready">coherent</span>
+                  </div>
+                  <div class="choice">
+                    <div>
+                      <strong>Keep original placement</strong>
+                      <span>Clear the badge for this episode when the creator decides the visible logo matters more than the inward-facing reaction.</span>
+                    </div>
+                    <span class="badge review">accepted as is</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="actions">
+            <button type="button">Open shared-frame preview</button>
+            <button type="button">Swap placement</button>
+            <button type="button">Save recurring arrangement</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Guardrails</h2>
+          <div class="warning">
+            <strong>Preview under the chosen preset</strong>
+            <span>Eye-line choices should stay visible with lower-thirds and brand colors so the final conversation feel is what the creator approves.</span>
+          </div>
+          <div class="warning">
+            <strong>Keep this non-blocking</strong>
+            <span>Eye-line mismatches stay a quiet shared-frame warning, not a banner that stops broader review.</span>
+          </div>
+          <div class="warning blocked">
+            <strong>Warn before reversing readable details</strong>
+            <span>Mirroring must flag visible logos or on-shirt text before the creator confirms the flip.</span>
+          </div>
+
+          <h3 style="margin-top:20px;">Connected workflow</h3>
+          <ul class="summary">
+            <li>speaker roles and placement stay tied to role mapping and switch framing</li>
+            <li>visual match and framing safety stay separate from the facing-direction decision</li>
+            <li>confirmed arrangements can carry forward through template adaptation</li>
+            <li>shared-frame issues surface only when viewers would notice them in the finished episode</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>
