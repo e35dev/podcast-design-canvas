@@ -468,10 +468,10 @@
       }
 
       // Long episodes flag the same kind of moment over and over, so a creator can
-      // decide once and apply it to the rest. These three helpers share one source of
-      // truth — the other moments of the same kind that currently hold a DIFFERENT
-      // choice — so the control only appears when it would change something, its count
-      // never overstates its reach, and it always propagates a real decision.
+      // decide once and apply it to the rest. These helpers share one source of truth —
+      // the other moments of the same kind that currently hold a DIFFERENT choice — so
+      // the control's count never overstates its reach and applying always changes
+      // something.
       function similarToChange(index, list) {
         const me = list[index];
         if (!me) {
@@ -480,8 +480,13 @@
         return list.filter((other, i) => i !== index && other.kind === me.kind && other.choice !== me.choice);
       }
 
+      // Only offer "Apply to similar" from a card that holds an intentional cleanup
+      // choice — never from an undecided ("review") card. Spreading "decide later"
+      // would overwrite real decisions on other same-kind moments with indecision, so
+      // the source must be resolved; the targets it changes may still be undecided.
       function canApplySimilar(index, list) {
-        return similarToChange(index, list).length > 0;
+        const me = list[index];
+        return !!me && me.choice !== "review" && similarToChange(index, list).length > 0;
       }
 
       function countSimilar(index, list) {

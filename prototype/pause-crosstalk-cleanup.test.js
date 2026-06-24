@@ -51,10 +51,12 @@ const p1 = idx("p1"); // dead-air, shorten
 const p5 = idx("p5"); // dead-air, review  (the same-kind pair)
 const p2 = idx("p2"); // crosstalk, review (unique kind)
 
-// 1. The control appears only on the same-kind dead-air pair, with an exact count.
-assert.strictEqual(M.canApplySimilar(p1, sample), true, "p1 dead-air offers Apply to similar");
+// 1. The control is offered only from a RESOLVED card with a differing same-kind peer.
+assert.strictEqual(M.canApplySimilar(p1, sample), true, "p1 (dead-air, shorten) offers Apply to similar");
 assert.strictEqual(M.countSimilar(p1, sample), 1, "exactly one other dead-air differs");
-assert.strictEqual(M.canApplySimilar(p5, sample), true, "p5 dead-air offers it too");
+// p5 is the same kind as p1 but still undecided (review): it must NOT offer the
+// control, because spreading "decide later" would undo p1's real cleanup decision.
+assert.strictEqual(M.canApplySimilar(p5, sample), false, "p5 is undecided (review) -> no batch control");
 assert.strictEqual(M.canApplySimilar(p2, sample), false, "crosstalk is unique -> no control");
 
 // 2. Applying propagates a real decision, then the control disappears (never a no-op).
@@ -76,7 +78,11 @@ const three = [
 assert.strictEqual(M.countSimilar(0, three), 1, "already-matching moments are not counted");
 const t2 = M.applySimilar(0, three);
 assert.strictEqual(t2[1].choice, "shorten", "already-matching moment stays");
-assert.strictEqual(t2[2].choice, "shorten", "the differing moment is updated");
+assert.strictEqual(t2[2].choice, "shorten", "the differing moment is updated (resolved -> applied)");
+// The resolved source (a) offers the control; the undecided source (c) does not,
+// even though it has differing same-kind peers — it would only spread "review".
+assert.strictEqual(M.canApplySimilar(0, three), true, "resolved 'shorten' source offers the control");
+assert.strictEqual(M.canApplySimilar(2, three), false, "undecided 'review' source never offers it");
 
 // 5. A propagated choice is valid for the kind and evaluates normally.
 assert.strictEqual(M.evaluate(after).results[p5].state, "cleaned", "shortened dead-air reads as cleaned");
