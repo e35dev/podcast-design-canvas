@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pronunciation And Name Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .entries { display: grid; gap: 14px; }
+
+      .entry {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .frame {
+        position: relative;
+        width: 116px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .frame .speaker {
+        position: absolute;
+        top: 14%;
+        left: 50%;
+        width: 34%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .frame .caption {
+        position: absolute;
+        right: 7%;
+        bottom: 8%;
+        left: 7%;
+        border-radius: 5px;
+        background: rgba(16, 24, 22, 0.82);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.3;
+        padding: 5px 6px;
+        text-align: center;
+      }
+
+      .frame .time {
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        border-radius: 4px;
+        background: rgba(16, 24, 22, 0.8);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+      }
+
+      .fields { display: grid; gap: 10px; align-content: start; }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .meta { color: var(--muted); font-size: 13px; }
+
+      .outcome {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #f4faf8;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .outcome.guest { border-left-color: #5a3f8f; background: #f8f5ff; }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.confirmed { color: #075246; background: #dff5ef; }
+      .badge.suggested { color: #7a4400; background: #fff1d6; }
+      .badge.review { color: #5a3f8f; background: #efe8ff; }
+      .badge.guest { color: #3f4d66; background: #e8edf5; }
+      .badge.text { color: #5e6b67; background: #eef2f0; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info { border-left-color: var(--accent); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .entry { grid-template-columns: 1fr; }
+        .frame { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pronunciation and name review</h1>
+      <p class="lede">Get spoken names and terms right before publish &mdash; hear each one in context with a plain-language note like &ldquo;sounds like EYE-rin.&rdquo; We never rewrite what a speaker actually said. This is a calm readiness check, not a blocker.</p>
+
+      <section class="workspace" aria-label="Pronunciation review workspace">
+        <div class="panel">
+          <h2>Names and terms</h2>
+          <div class="entries" id="entries"></div>
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Pronunciation summary">
+          <h2>Spoken accuracy</h2>
+          <div id="status" class="status review">Review suggested pronunciations</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Confirmed pronunciations apply across repeated mentions in this episode. Guest preferences also carry forward through the guest profile.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const sources = {
+        profile: { label: "Guest profile reuse" },
+        social: { label: "Social context intake" },
+        glossary: { label: "Transcript glossary" },
+        template: { label: "Show template" },
+      };
+
+      const sampleEntries = [
+        {
+          id: "guest",
+          name: "Marcus Lee",
+          spelling: "Marcus Lee",
+          captionLine: "I'm Marcus Lee from Acme",
+          moment: "00:42",
+          suggestedNote: "Sounds like MAR-kus LEE",
+          pronunciationNote: "Sounds like MAR-kus LEE",
+          source: "profile",
+          spoken: true,
+          decision: null,
+        },
+        {
+          id: "brand",
+          name: "Acme Analytics",
+          spelling: "Acme Analytics",
+          captionLine: "We built Acme Analytics for teams",
+          moment: "12:08",
+          suggestedNote: "Sounds like AK-mee uh-NAL-ih-tix",
+          pronunciationNote: "Sounds like AK-mee uh-NAL-ih-tix",
+          source: "social",
+          spoken: true,
+          decision: null,
+        },
+        {
+          id: "acronym",
+          name: "API",
+          spelling: "API",
+          captionLine: "Our API handles the sync",
+          moment: "18:33",
+          suggestedNote: "Say each letter: A-P-I",
+          pronunciationNote: "Say each letter: A-P-I",
+          source: "glossary",
+          spoken: true,
+          decision: "confirmed",
+        },
+        {
+          id: "show",
+          name: "Design Canvas",
+          spelling: "Design Canvas",
+          captionLine: null,
+          moment: null,
+          suggestedNote: "",
+          pronunciationNote: "",
+          source: "template",
+          spoken: false,
+          decision: "not spoken in episode",
+        },
+      ];
+
+      let entries = structuredClone(sampleEntries);
+
+      const entriesElement = document.querySelector("#entries");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        entries = structuredClone(sampleEntries);
+        render();
+      });
+
+      // Single source of truth: map each entry's decision, spoken flag, and note edits
+      // to the review states defined in docs/pronunciation-name-review.md.
+      function evaluate(list) {
+        const results = list.map((entry) => {
+          let state;
+          let issue = null;
+
+          if (!entry.spoken) {
+            state = "not spoken in episode";
+            issue = {
+              title: `${entry.name}: not spoken in episode`,
+              action: "This term appears only in text, so spoken review is not needed for this episode.",
+              tone: "info",
+              outcomeClass: "",
+            };
+          } else if (entry.decision === "confirmed") {
+            state = "confirmed";
+            issue = {
+              title: `${entry.name}: confirmed`,
+              action: "Trusted for intros, outros, and review handoff.",
+              tone: "info",
+              outcomeClass: "",
+            };
+          } else if (entry.decision === "guest preferred") {
+            state = "guest preferred";
+            issue = {
+              title: `${entry.name}: guest preferred`,
+              action: "From the guest's own stated preference — saved to guest profile for future episodes.",
+              tone: "info",
+              outcomeClass: "guest",
+            };
+          } else if (
+            entry.pronunciationNote.trim()
+            && entry.suggestedNote
+            && entry.pronunciationNote.trim() !== entry.suggestedNote.trim()
+          ) {
+            state = "needs review";
+            issue = {
+              title: `Check how "${entry.name}" should sound`,
+              action: "You changed the suggested note — confirm the pronunciation or revert to the suggestion.",
+              tone: "review",
+              outcomeClass: "",
+            };
+          } else {
+            state = "suggested";
+            issue = {
+              title: `Confirm "${entry.name}" at ${entry.moment}`,
+              action: `Play "${entry.captionLine}" in context, then confirm how it should sound.`,
+              tone: "review",
+              outcomeClass: "",
+            };
+          }
+
+          return { id: entry.id, state, issue };
+        });
+
+        const open = results.some((result) => ["suggested", "needs review"].includes(result.state));
+        const overall = open ? "review" : "ready";
+        return { overall, results };
+      }
+
+      function badgeClass(state) {
+        if (state === "confirmed") return "confirmed";
+        if (state === "guest preferred") return "guest";
+        if (state === "not spoken in episode") return "text";
+        if (state === "needs review") return "review";
+        return "suggested";
+      }
+
+      function render() {
+        const evaluation = evaluate(entries);
+        entriesElement.replaceChildren(
+          ...entries.map((entry, index) => renderEntry(entry, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready"
+          ? "Pronunciations confirmed"
+          : "Review suggested pronunciations";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every spoken name is confirmed. Intros, outros, and review handoff can trust these pronunciations." })]),
+        );
+      }
+
+      function refreshStates() {
+        const evaluation = evaluate(entries);
+        Array.from(entriesElement.children).forEach((card, index) => {
+          const result = evaluation.results[index];
+          const badge = card.querySelector(".badge");
+          if (badge && result) {
+            badge.className = `badge ${badgeClass(result.state)}`;
+            badge.textContent = result.state;
+          }
+
+          const outcome = card.querySelector(".outcome");
+          if (outcome) {
+            outcome.remove();
+          }
+
+          const entry = entries[index];
+          if (entry.spoken && entry.decision && result.issue) {
+            const note = document.createElement("div");
+            note.className = `outcome ${result.issue.outcomeClass || ""}`.trim();
+            note.textContent = result.issue.action;
+            card.querySelector(".fields").appendChild(note);
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone === "info" ? "info" : ""}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      function renderFrame(entry) {
+        const frame = document.createElement("div");
+        frame.className = "frame";
+        const time = document.createElement("span");
+        time.className = "time";
+        time.textContent = entry.moment || "Text only";
+        const speaker = document.createElement("div");
+        speaker.className = "speaker";
+        const caption = document.createElement("div");
+        caption.className = "caption";
+        caption.textContent = entry.captionLine || entry.spelling;
+        frame.append(time, speaker, caption);
+        return frame;
+      }
+
+      function renderEntry(entry, index, result) {
+        const article = document.createElement("article");
+        article.className = "entry";
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const head = document.createElement("div");
+        head.className = "head";
+        const title = document.createElement("strong");
+        title.textContent = entry.name;
+        const badge = document.createElement("span");
+        badge.className = `badge ${badgeClass(result.state)}`;
+        badge.textContent = result.state;
+        head.append(title, badge);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `Spelling: ${entry.spelling} · ${sources[entry.source].label}`;
+
+        fields.append(head, meta);
+
+        if (entry.spoken) {
+          const label = document.createElement("label");
+          label.textContent = "Plain-language pronunciation note";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = entry.pronunciationNote;
+          input.placeholder = entry.suggestedNote || "Add how this should sound";
+          input.setAttribute("aria-label", `Pronunciation note for ${entry.name}`);
+          input.addEventListener("input", () => {
+            entries[index].pronunciationNote = input.value;
+            if (entries[index].decision === "confirmed" || entries[index].decision === "guest preferred") {
+              entries[index].decision = null;
+            }
+            refreshStates();
+          });
+          label.appendChild(input);
+          fields.appendChild(label);
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const confirmButton = document.createElement("button");
+          confirmButton.type = "button";
+          confirmButton.textContent = "Confirm pronunciation";
+          confirmButton.addEventListener("click", () => {
+            entries[index].decision = "confirmed";
+            render();
+          });
+
+          const guestButton = document.createElement("button");
+          guestButton.type = "button";
+          guestButton.className = "secondary";
+          guestButton.textContent = "Use guest's preference";
+          guestButton.addEventListener("click", () => {
+            entries[index].decision = "guest preferred";
+            render();
+          });
+
+          actions.append(confirmButton, guestButton);
+          fields.appendChild(actions);
+
+          if (entry.decision === "confirmed" || entry.decision === "guest preferred") {
+            const outcome = document.createElement("div");
+            outcome.className = `outcome ${result.issue.outcomeClass || ""}`.trim();
+            outcome.textContent = result.issue.action;
+            fields.appendChild(outcome);
+          }
+        }
+
+        article.append(renderFrame(entry), fields);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
