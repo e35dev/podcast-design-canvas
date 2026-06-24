@@ -17,6 +17,7 @@ assert.ok(navScript.includes("episode-flow.html"), "style nav links to the guide
 assert.ok(navScript.includes("app.html"), "style nav links to the preview app");
 assert.ok(navScript.includes("episode-watch-through-preview.html"), "style nav hands off to the publish prep path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
+assert.ok(navScript.includes("`Previous: ${STYLE_ENTRY.label}`"), "style nav names the entry back-link in creator copy");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "style nav builds the DOM without innerHTML");
 
