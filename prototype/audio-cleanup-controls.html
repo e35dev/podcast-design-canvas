@@ -171,6 +171,27 @@
         background: #dff5ef;
       }
 
+      .rollup-choice-hints {
+        display: grid;
+        gap: 8px;
+      }
+
+      .rollup-choice-hints .rollup-choice-hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #f7faf8;
+        border: 1px solid var(--line);
+      }
+
+      .rollup-choice-hints .rollup-choice-hint strong {
+        color: var(--ink);
+        font-size: 12px;
+      }
+
       .rollup-moment-tags {
         display: flex;
         flex-wrap: wrap;
@@ -668,6 +689,25 @@
         return wrap;
       }
 
+      function renderRollupChoiceHintTags() {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-choice-hints";
+        wrap.setAttribute("aria-label", "What each enabled quality choice does");
+
+        for (const { label, hint } of enabledChoiceHints(choices.filter((entry) => enabled.has(entry.id)))) {
+          const row = document.createElement("p");
+          row.className = "rollup-choice-hint";
+          const strong = document.createElement("strong");
+          strong.textContent = `${label}. `;
+          const copy = document.createElement("span");
+          copy.textContent = hint;
+          row.append(strong, copy);
+          wrap.appendChild(row);
+        }
+
+        return wrap;
+      }
+
       function renderRollupMomentTags(needsWork) {
         const wrap = document.createElement("div");
         wrap.className = "rollup-moment-tags";
@@ -749,6 +789,10 @@
           if (choiceTags.childElementCount) {
             rollupElement.appendChild(choiceTags);
           }
+          const choiceHints = renderRollupChoiceHintTags();
+          if (choiceHints.childElementCount) {
+            rollupElement.appendChild(choiceHints);
+          }
           const momentTags = renderRollupMomentTags(rollup.needsWork);
           if (momentTags.childElementCount) {
             rollupElement.appendChild(momentTags);
@@ -817,9 +861,26 @@
         previewNowElement.textContent = moment?.label ? `Previewing: ${moment.label}` : "";
       }
 
+      function previewTradeoffCopy(enabledCount, moment) {
+        const note = moment?.note;
+        return enabledCount && typeof note === "string" && note.length ? note : "";
+      }
+
+      function previewCardCaption(note) {
+        return typeof note === "string" ? note : "";
+      }
+
+      function enabledChoiceHints(activeChoices) {
+        return activeChoices.flatMap((choice) => {
+          const label = typeof choice.label === "string" && choice.label.length ? choice.label : null;
+          const hint = typeof choice.hint === "string" && choice.hint.length ? choice.hint : null;
+          return label && hint ? [{ label, hint }] : [];
+        });
+      }
+
       function renderPreviewTradeoff() {
         const moment = previewMoments.find((entry) => entry.id === preview);
-        previewTradeoffElement.textContent = enabled.size && moment?.note ? moment.note : "";
+        previewTradeoffElement.textContent = previewTradeoffCopy(enabled.size, moment);
       }
 
       function renderMomentHint() {
@@ -954,7 +1015,7 @@
         wave.innerHTML = waveMarkup(heights, cleaned);
         const copy = document.createElement("p");
         copy.className = "preview-note";
-        copy.textContent = note;
+        copy.textContent = previewCardCaption(note);
 
         card.append(heading, wave, copy);
 
@@ -1090,6 +1151,16 @@
       }
 
       render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = {
+          choices,
+          previewMoments,
+          previewTradeoffCopy,
+          previewCardCaption,
+          enabledChoiceHints,
+        };
+      }
     </script>
   </body>
 </html>

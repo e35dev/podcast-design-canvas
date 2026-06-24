@@ -95,4 +95,19 @@ assert.strictEqual(M.evaluate([endsEarly]).overall, "blocked", "ends-early block
 assert.strictEqual(M.evaluate([{ ...endsEarly, resolution: "accepted" }]).results[0].state, "accepted",
   "'accepted' is non-blocking — which is exactly why the button must be gated off here");
 
+const reviewTrack = {
+  id: "guest-1",
+  name: "Guest 1 — Marcus Lee",
+  issue: "video-late",
+  proposedRepair: "align-host",
+  resolution: null,
+  previewMoment: "episode-start",
+};
+const reviewResult = M.evaluate([reviewTrack]).results[0];
+const openLabel = M.rollupOpenLinkLabel(reviewResult);
+assert.match(openLabel, /episode start preview/i, "rollup open links include preview moment suffix");
+assert.strictEqual(M.visibleRepairEffects(["", "Guest video lines up with host"]).length, 1,
+  "empty repair effect labels are skipped");
+assert.strictEqual(M.visibleRepairEffects(["valid"]).length, 1, "valid repair effect labels remain");
+
 console.log("speaker-sync-repair (Mark intentional gate): all assertions passed");

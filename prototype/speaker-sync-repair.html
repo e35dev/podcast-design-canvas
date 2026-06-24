@@ -836,11 +836,24 @@
         const bucket = trackBucketLabel(result.name);
         const issueLabel = issues[result.issue]?.label;
         const repairLabel = repairDisplayLabel(result.proposedRepair);
+        const moment = rollupPreviewMoment(result);
+        const momentLabel = moment?.label?.toLowerCase();
+
+        let label = `Open ${bucket}`;
         if (issueLabel && repairLabel) {
-          return `Open ${bucket} · ${issueLabel} → ${repairLabel}`;
+          label += ` · ${issueLabel} → ${repairLabel}`;
+        } else {
+          const detail = issueLabel || repairLabel;
+          if (detail) label += ` · ${detail}`;
         }
-        const detail = issueLabel || repairLabel;
-        return detail ? `Open ${bucket} · ${detail}` : `Open ${bucket}`;
+        if (momentLabel) {
+          label += ` · ${momentLabel} preview`;
+        }
+        return label;
+      }
+
+      function visibleRepairEffects(effects) {
+        return effects.filter((effect) => typeof effect === "string" && effect.length);
       }
 
       function renderRollupIssueTags(needsWork) {
@@ -1267,7 +1280,7 @@
           const tags = document.createElement("div");
           tags.className = "effect-tags";
           tags.setAttribute("aria-label", "Active repair effects");
-          for (const effect of effects) {
+          for (const effect of visibleRepairEffects(effects)) {
             const tag = document.createElement("span");
             tag.className = "effect-tag";
             tag.textContent = effect;
@@ -1368,7 +1381,17 @@
       // Exported only for the committed Node test (speaker-sync-repair.test.js). In the
       // page `module` is undefined, so this block is skipped and nothing changes.
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack };
+        module.exports = {
+          issues,
+          repairs,
+          repairChoices,
+          evaluate,
+          sampleTracks,
+          renderTrack,
+          rollupOpenLinkLabel,
+          rollupPreviewMoment,
+          visibleRepairEffects,
+        };
       }
     </script>
   </body>
