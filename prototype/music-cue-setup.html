@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Music Cue Setup Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .cues { display: grid; gap: 14px; }
+
+      .cue {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .context {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #f4faf8;
+        padding: 12px;
+        font-size: 13px;
+      }
+
+      .context strong { display: block; margin-bottom: 4px; }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .tweaks {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready { color: #075246; background: #dff5ef; }
+      .badge.draft { color: #7a4400; background: #fff1d6; }
+      .badge.approval { color: #8b1e1e; background: #ffe0e0; }
+      .badge.review { color: #5a3f8f; background: #efe8ff; }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+      .status.blocked { color: #8b1e1e; background: #ffe0e0; }
+
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.blocker { border-left-color: var(--block); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      .note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .tweaks { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Music cue setup</h1>
+      <p class="lede">Add approved music to structural podcast moments with simple placement and preview — not audio lanes or waveform editing. Confirm each cue against real episode context before export.</p>
+
+      <section class="workspace" aria-label="Music cue setup workspace">
+        <div class="panel">
+          <h2>Placed cues</h2>
+          <div class="cues" id="cues"></div>
+          <div class="actions" style="margin-top: 18px;">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Episode music</h2>
+          <div id="status" class="status review">Cues need review</div>
+          <div class="issues" id="issues"></div>
+          <p class="note" id="note"></p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const purposes = {
+        intro: { label: "Intro", context: "Music ending before the first spoken line" },
+        transition: { label: "Segment transition", context: "Between two planned sections with both speakers visible" },
+        sponsor: { label: "Sponsor bed", context: "Under an active read with captions and lower-thirds visible" },
+        outro: { label: "Outro", context: "Starting near the final sign-off, not over the last sentence" },
+      };
+
+      const sources = {
+        template: "Saved show template cue",
+        upload: "Uploaded music file",
+        preset: "Starter cue from preset style",
+        sponsor: "Sponsor-provided track",
+      };
+
+      const tweakOptions = {
+        timing: ["Default timing", "Start earlier", "Start later", "Shorter"],
+        fade: ["Default fade", "Longer fade", "Quicker fade"],
+        level: ["Default level", "Quieter"],
+      };
+
+      const sampleCues = [
+        {
+          id: "intro",
+          name: "Warm opener",
+          purpose: "intro",
+          source: "template",
+          approved: true,
+          proposedTiming: "Default timing",
+          proposedFade: "Default fade",
+          proposedLevel: "Default level",
+          resolution: null,
+        },
+        {
+          id: "sponsor",
+          name: "Sponsor bed — Acme Co.",
+          purpose: "sponsor",
+          source: "sponsor",
+          approved: false,
+          proposedTiming: "Default timing",
+          proposedFade: "Longer fade",
+          proposedLevel: "Quieter",
+          resolution: null,
+        },
+        {
+          id: "outro",
+          name: "Closing theme",
+          purpose: "outro",
+          source: "upload",
+          approved: true,
+          proposedTiming: "Start later",
+          proposedFade: "Default fade",
+          proposedLevel: "Default level",
+          resolution: null,
+        },
+      ];
+
+      let cues = structuredClone(sampleCues);
+
+      const cuesElement = document.querySelector("#cues");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const noteElement = document.querySelector("#note");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        cues = structuredClone(sampleCues);
+        render();
+      });
+
+      function evaluate(list) {
+        return list.map((cue) => {
+          let state = "draft";
+          let summary = null;
+
+          if (!cue.approved && cue.resolution !== "removed") {
+            state = "missing usage approval";
+            summary = {
+              title: `${cue.name}: usage approval needed`,
+              action: "Confirm this cue is allowed in the finished episode before export.",
+              tone: "blocker",
+            };
+          } else if (cue.resolution === "confirmed") {
+            state = "ready";
+            summary = {
+              title: `${cue.name}: placement confirmed`,
+              action: `${purposes[cue.purpose].label} — ${cue.proposedTiming.toLowerCase()}, ${cue.proposedFade.toLowerCase()}, ${cue.proposedLevel.toLowerCase()}.`,
+              tone: "info",
+            };
+          } else if (cue.resolution === "removed") {
+            state = "removed";
+          } else {
+            state = "draft";
+            summary = {
+              title: `${cue.name}: preview placement`,
+              action: purposes[cue.purpose].context,
+              tone: "review",
+            };
+          }
+
+          return { ...cue, state, summary };
+        });
+      }
+
+      function overallState(results) {
+        if (results.some((result) => result.state === "missing usage approval")) return "blocked";
+        if (results.some((result) => result.state === "draft")) return "review";
+        return "ready";
+      }
+
+      function badgeClass(state) {
+        if (state === "ready") return "ready";
+        if (state === "missing usage approval") return "approval";
+        if (state === "draft") return "draft";
+        return "review";
+      }
+
+      function renderSelect(label, field, cue, options) {
+        const wrap = document.createElement("label");
+        wrap.textContent = label;
+        const select = document.createElement("select");
+        select.dataset.field = field;
+        select.dataset.id = cue.id;
+        for (const value of options) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          option.selected = cue[field] === value;
+          select.appendChild(option);
+        }
+        select.addEventListener("change", (event) => {
+          const item = cues.find((entry) => entry.id === event.target.dataset.id);
+          item[event.target.dataset.field] = event.target.value;
+          item.resolution = null;
+          renderSummaryOnly();
+          updateCueBadge(cue.id);
+        });
+        wrap.appendChild(select);
+        return wrap;
+      }
+
+      function renderCue(cue, result) {
+        const article = document.createElement("article");
+        article.className = "cue";
+        article.dataset.id = cue.id;
+
+        const head = document.createElement("div");
+        head.className = "head";
+        const title = document.createElement("strong");
+        title.textContent = cue.name;
+        const badge = document.createElement("span");
+        badge.className = `badge ${badgeClass(result.state)}`;
+        badge.textContent = result.state;
+        head.append(title, badge);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `${purposes[cue.purpose].label} · ${sources[cue.source]}`;
+
+        const context = document.createElement("div");
+        context.className = "context";
+        const contextTitle = document.createElement("strong");
+        contextTitle.textContent = "Preview context";
+        const contextCopy = document.createElement("span");
+        contextCopy.textContent = purposes[cue.purpose].context;
+        context.append(contextTitle, contextCopy);
+
+        const tweaks = document.createElement("div");
+        tweaks.className = "tweaks";
+        tweaks.append(
+          renderSelect("Timing", "proposedTiming", cue, tweakOptions.timing),
+          renderSelect("Fade", "proposedFade", cue, tweakOptions.fade),
+          renderSelect("Level", "proposedLevel", cue, tweakOptions.level),
+        );
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const confirmButton = document.createElement("button");
+        confirmButton.type = "button";
+        confirmButton.textContent = "Confirm placement";
+        confirmButton.disabled = !cue.approved;
+        confirmButton.addEventListener("click", () => {
+          const item = cues.find((entry) => entry.id === cue.id);
+          item.resolution = "confirmed";
+          render();
+        });
+
+        const approveButton = document.createElement("button");
+        approveButton.type = "button";
+        approveButton.className = "secondary";
+        approveButton.textContent = "Grant usage approval";
+        approveButton.hidden = cue.approved;
+        approveButton.addEventListener("click", () => {
+          const item = cues.find((entry) => entry.id === cue.id);
+          item.approved = true;
+          render();
+        });
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "secondary";
+        removeButton.textContent = "Remove from episode";
+        removeButton.addEventListener("click", () => {
+          const item = cues.find((entry) => entry.id === cue.id);
+          item.resolution = "removed";
+          render();
+        });
+
+        actions.append(confirmButton, approveButton, removeButton);
+        article.append(head, meta, context, tweaks, actions);
+        return article;
+      }
+
+      function updateCueBadge(id) {
+        const results = evaluate(cues);
+        const result = results.find((entry) => entry.id === id);
+        const badge = document.querySelector(`.cue[data-id="${id}"] .badge`);
+        if (badge) {
+          badge.className = `badge ${badgeClass(result.state)}`;
+          badge.textContent = result.state;
+        }
+      }
+
+      function renderSummaryOnly() {
+        const results = evaluate(cues.filter((cue) => cue.resolution !== "removed"));
+        const overall = overallState(results);
+
+        statusElement.className = `status ${overall}`;
+        statusElement.textContent = overall === "ready"
+          ? "Music ready for export"
+          : overall === "blocked"
+            ? "Usage approval needed"
+            : "Cues need review";
+
+        const summaries = results.map((result) => result.summary).filter(Boolean);
+        issuesElement.replaceChildren(...summaries.map(renderIssue));
+
+        noteElement.textContent = overall === "ready"
+          ? "All placed cues are confirmed against their preview contexts."
+          : "Preview each cue on a real episode moment, then confirm placement or grant usage approval.";
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone === "blocker" ? "blocker" : ""}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      function render() {
+        const active = cues.filter((cue) => cue.resolution !== "removed");
+        const results = evaluate(active);
+        cuesElement.replaceChildren(...active.map((cue, index) => renderCue(cue, results[index])));
+        renderSummaryOnly();
+      }
+
+      render();
+    </script>
+  </body>
+</html>
