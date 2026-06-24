@@ -126,6 +126,7 @@ const elementsById = {
   "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
   "layout-error-card": new Element("div", { hidden: true }),
   "layout-error": new Element("p"),
+  "layout-canvas": new Element("div"),
 };
 
 const layoutButtons = [
@@ -201,6 +202,14 @@ assert.equal(elementsById["layout-reset"].getAttribute("aria-disabled"), "false"
 assert.equal(elementsById["layout-reset"].disabled, false, "Reset clears its disabled property once a video is placed");
 elementsById["layout-reset"].listeners.click();
 assert.equal(elementsById["layout-reset"].getAttribute("aria-disabled"), "true", "Reset disables again after everything is cleared");
+
+// The placement canvas names the chosen layout, so a screen-reader user moving into it hears
+// which layout they are filling instead of a generic region name that never changes.
+assert.equal(
+  elementsById["layout-canvas"].getAttribute("aria-label"),
+  "Interview scene — video placement slots",
+  "the canvas region names the interview layout",
+);
 
 assert.match(html, /Start with a podcast layout/, "layout-first landing opens with layout selection");
 assert.match(html, /data-layout="interview"/, "layout-first offers an interview layout");
@@ -361,6 +370,11 @@ assert.equal(
 controller.resetVideos();
 controller.applyLayout("panel");
 assert.equal(controller.requiredSlots().length, 3, "panel requires host and two guest videos");
+assert.equal(
+  elementsById["layout-canvas"].getAttribute("aria-label"),
+  "Panel discussion — video placement slots",
+  "switching layout updates the canvas region name to the new layout",
+);
 controller.placeVideoFile(controller.zonesBySlot.host, video("panel-host.mp4"));
 controller.placeVideoFile(controller.zonesBySlot.guest, video("panel-guest-a.mp4"));
 assert.equal(

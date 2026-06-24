@@ -781,6 +781,12 @@
 
       if (sceneLabel) sceneLabel.textContent = layout.scene;
       if (runtimeLabel) runtimeLabel.textContent = layout.runtime;
+      // Name the placement canvas after the chosen layout so a screen-reader user moving into
+      // it hears which layout they're filling, instead of a generic region name that never
+      // changes when they switch interview / solo / panel.
+      if (layoutCanvas && typeof layoutCanvas.setAttribute === "function") {
+        layoutCanvas.setAttribute("aria-label", layout.scene + " — video placement slots");
+      }
       if (speakerRow) {
         speakerRow.className = "speaker-row" + (layout.rowClass ? " " + layout.rowClass : "");
       }
