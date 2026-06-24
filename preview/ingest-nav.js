@@ -17,6 +17,12 @@ const PREVIEW_APP_INGEST_TARGETS = new Set([
 ]);
 const INGEST_IN_PAGE_TARGETS = new Set(PREVIEW_APP_INGEST_TARGETS);
 
+// Core episode flow screens that ingest prototypes hand off to when readiness
+// review flags sync timing problems.
+const PREVIEW_APP_INGEST_HANDOFFS = new Map([
+  ["speaker-sync-repair", "?path=episode"],
+]);
+
 function screenIdFromFile(file) {
   const clean = (file || "").split("#")[0].split("?")[0];
   const name = clean.split("/").pop() || "";
@@ -35,8 +41,22 @@ function isEmbeddedInPreviewApp() {
   }
 }
 
+function ingestHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_INGEST_HANDOFFS.has(screen) ? PREVIEW_APP_INGEST_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppIngestRoute(file) {
+  return isPreviewAppIngestTarget(file) || ingestHandoffSearch(file) !== null;
+}
+
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = ingestHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
@@ -86,13 +106,24 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setIngestScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppIngestTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = hrefWithIngestContext(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppIngestRoute(resolved)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = hrefWithPath(resolved);
+}
+
+function hrefWithIngestHandoff(file) {
+  if (!PREVIEW_APP_INGEST_HANDOFFS.has(screenIdFromFile(file))) {
+    return file;
+  }
+  if (shouldHandoffToEpisodePath()) {
+    return mergeRouteSearch(file, { path: "episode" });
+  }
+  return file;
 }
 
 function setIngestHandoffLink(link) {
@@ -111,7 +142,32 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeIngestHref(href) {
-  return isLocalScreenHref(href) && INGEST_IN_PAGE_TARGETS.has(screenIdFromFile(href));
+  if (!isLocalScreenHref(href)) {
+    return false;
+  }
+  const screen = screenIdFromFile(href);
+  if (INGEST_IN_PAGE_TARGETS.has(screen)) {
+    return true;
+  }
+  if (PREVIEW_APP_INGEST_HANDOFFS.has(screen)) {
+    return isEmbeddedInPreviewApp() || shouldHandoffToEpisodePath();
+  }
+  return false;
+}
+
+function setIngestInPageLink(link, file) {
+  if (PREVIEW_APP_INGEST_HANDOFFS.has(screenIdFromFile(file))) {
+    const resolved = hrefWithIngestHandoff(file);
+    if (isEmbeddedInPreviewApp()) {
+      link.href = previewAppHref(resolved);
+      link.target = "_top";
+      return;
+    }
+    link.href = resolved;
+    return;
+  }
+
+  setIngestScreenLink(link, hrefWithIngestContext(file));
 }
 
 function hrefWithIngestContext(file) {
@@ -127,10 +183,6 @@ function hrefWithIngestContext(file) {
     return mergeRouteSearch(file, { path: "episode" });
   }
   return file;
-}
-
-function setIngestInPageLink(link, file) {
-  setIngestScreenLink(link, hrefWithIngestContext(file));
 }
 
 function normalizeIngestScreenLink(link) {

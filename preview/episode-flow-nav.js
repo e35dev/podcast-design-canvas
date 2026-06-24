@@ -38,6 +38,17 @@ const PREVIEW_APP_FIX_TARGETS = new Set(
   Object.keys(EXPORT_READINESS_FIX_PATHS).map((file) => screenIdFromFile(file)),
 );
 
+const EPISODE_FLOW_IN_PAGE_TARGETS = new Set([
+  screenIdFromFile(EPISODE_PREAMBLE.file),
+  ...EPISODE_FLOW.map((step) => screenIdFromFile(step.file)),
+]);
+
+// Speaker setup screens that episode flow prototypes hand off to when sync work
+// needs attribution review.
+const PREVIEW_APP_EPISODE_HANDOFFS = new Map([
+  ["speaker-attribution-review", "?path=episode"],
+]);
+
 function currentStepIndex() {
   const name = window.location.pathname.split("/").pop() || "";
   return EPISODE_FLOW.findIndex((step) => step.file === name);
@@ -112,8 +123,22 @@ function mergeRouteSearch(file, overrides = {}) {
   return `${base}${search ? `?${search}` : ""}${hash}`;
 }
 
+function episodeHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_EPISODE_HANDOFFS.has(screen) ? PREVIEW_APP_EPISODE_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppEpisodeRoute(file) {
+  return isPreviewAppEpisodeTarget(file) || episodeHandoffSearch(file) !== null;
+}
+
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = episodeHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
@@ -153,13 +178,53 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setEpisodeScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppEpisodeTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = hrefWithPath(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppEpisodeRoute(resolved)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = resolved;
+}
+
+function shouldNormalizeEpisodeHref(href) {
+  if (!isLocalScreenHref(href)) {
+    return false;
+  }
+  const screen = screenIdFromFile(href);
+  if (EPISODE_FLOW_IN_PAGE_TARGETS.has(screen)) {
+    return true;
+  }
+  if (PREVIEW_APP_EPISODE_HANDOFFS.has(screen)) {
+    return isEmbeddedInPreviewApp() || shellPath() === "episode";
+  }
+  return false;
+}
+
+function normalizeEpisodeScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (!shouldNormalizeEpisodeHref(href)) {
+    return;
+  }
+  setEpisodeScreenLink(link, href);
+}
+
+function normalizeEpisodeScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach(normalizeEpisodeScreenLink);
+}
+
+function normalizeEpisodeLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeEpisodeScreenLink(link);
+  }
 }
 
 function setExportReadinessFixLink(link) {
@@ -310,11 +375,15 @@ function renderEpisodeFlowNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeExportReadinessFixLinks(document);
+  normalizeEpisodeScreenLinks(document);
+  if (typeof document.addEventListener === "function") {
+    document.addEventListener("click", normalizeEpisodeLinkClick);
+  }
 }
 
 function initEpisodeFlowNav() {
   renderEpisodeFlowNav();
-  normalizeExportReadinessFixLinks(document);
 }
 
 if (document.readyState === "loading") {

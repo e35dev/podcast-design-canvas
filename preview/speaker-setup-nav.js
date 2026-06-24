@@ -27,6 +27,12 @@ const SETUP_IN_PAGE_TARGETS = new Set([
   ...SPEAKER_SETUP_FLOW.map((step) => step.id),
 ]);
 
+// Core episode flow screens that speaker setup prototypes hand off to when
+// attribution review finds sync timing problems.
+const PREVIEW_APP_SETUP_HANDOFFS = new Map([
+  ["speaker-sync-repair", "?path=episode"],
+]);
+
 function currentSetupIndex() {
   const fromBody = document.body.dataset.setupStep;
   if (fromBody) {
@@ -99,8 +105,22 @@ function routeSearchFromFile(file) {
   return path === "episode" ? "?path=episode" : "";
 }
 
+function setupHandoffSearch(file) {
+  const screen = screenIdFromFile(file);
+  return PREVIEW_APP_SETUP_HANDOFFS.has(screen) ? PREVIEW_APP_SETUP_HANDOFFS.get(screen) : null;
+}
+
+function isPreviewAppSetupRoute(file) {
+  return isPreviewAppSetupTarget(file) || setupHandoffSearch(file) !== null;
+}
+
 function previewAppHref(file) {
-  return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
+  const screen = screenIdFromFile(file);
+  const handoffSearch = setupHandoffSearch(file);
+  if (handoffSearch !== null) {
+    return `../preview/app.html#${screen}${handoffSearch}`;
+  }
+  return `../preview/app.html#${screen}${routeSearchFromFile(file)}`;
 }
 
 function currentPreviewAppHref(step) {
@@ -125,13 +145,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setSetupScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppSetupTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = hrefWithPath(file);
+  if (isEmbeddedInPreviewApp() && isPreviewAppSetupRoute(resolved)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = resolved;
 }
 
 function isLocalScreenHref(href) {
@@ -139,7 +160,17 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizeSetupHref(href) {
-  return isLocalScreenHref(href) && SETUP_IN_PAGE_TARGETS.has(screenIdFromFile(href));
+  if (!isLocalScreenHref(href)) {
+    return false;
+  }
+  const screen = screenIdFromFile(href);
+  if (SETUP_IN_PAGE_TARGETS.has(screen)) {
+    return true;
+  }
+  if (PREVIEW_APP_SETUP_HANDOFFS.has(screen)) {
+    return isEmbeddedInPreviewApp() || new URLSearchParams(window.location.search).get("path") === "episode";
+  }
+  return false;
 }
 
 function normalizeSetupScreenLink(link) {

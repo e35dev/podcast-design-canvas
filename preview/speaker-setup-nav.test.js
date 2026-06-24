@@ -176,13 +176,28 @@ assert.equal(
 );
 assert.equal(embeddedRoleLink.target, "_top", "embedded speaker role link targets the parent app");
 
+const standaloneSyncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode");
+assert.equal(
+  standaloneSyncRepairLink.href,
+  "speaker-sync-repair.html?path=episode",
+  "speaker setup nav keeps episode path context on attribution-to-sync handoffs",
+);
+
 const syncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode", true);
 assert.equal(
   syncRepairLink.href,
-  "speaker-sync-repair.html",
-  "speaker setup nav leaves non-setup in-page fix links unchanged",
+  "../preview/app.html#speaker-sync-repair?path=episode",
+  "embedded speaker setup nav routes attribution-to-sync handoffs through the preview app",
 );
-assert.equal(syncRepairLink.target, "", "speaker setup nav does not retarget non-setup fix links");
+assert.equal(syncRepairLink.target, "_top", "embedded sync repair handoff links target the parent app");
+
+const dynamicSyncRepairLink = normalizeSetupClickFor("speaker-sync-repair.html", "?path=episode", true);
+assert.equal(
+  dynamicSyncRepairLink.href,
+  "../preview/app.html#speaker-sync-repair?path=episode",
+  "embedded speaker setup nav normalizes dynamic sync repair handoffs before navigation",
+);
+assert.equal(dynamicSyncRepairLink.target, "_top", "dynamic embedded sync repair handoffs target the parent app");
 
 const dynamicRoleLink = normalizeSetupClickFor("speaker-role-mapping.html", "?path=episode", true);
 assert.equal(

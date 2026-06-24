@@ -259,13 +259,28 @@ assert.equal(
 );
 assert.equal(embeddedSourceMediaLink.target, "_top", "embedded source media handoff links target the parent app");
 
+const standaloneSyncRepairLink = normalizeIngestHrefFor("speaker-sync-repair.html", "?path=ingest");
+assert.equal(
+  standaloneSyncRepairLink.href,
+  "speaker-sync-repair.html?path=episode",
+  "ingest nav keeps episode handoff context on readiness-to-sync links",
+);
+
 const syncRepairLink = normalizeIngestHrefFor("speaker-sync-repair.html", "?path=ingest", true);
 assert.equal(
   syncRepairLink.href,
-  "speaker-sync-repair.html",
-  "ingest nav leaves non-ingest in-page fix links unchanged",
+  "../preview/app.html#speaker-sync-repair?path=episode",
+  "embedded ingest nav routes readiness-to-sync handoffs through the preview app",
 );
-assert.equal(syncRepairLink.target, "", "ingest nav does not retarget non-ingest fix links");
+assert.equal(syncRepairLink.target, "_top", "embedded sync repair handoff links target the parent app");
+
+const dynamicSyncRepairLink = normalizeIngestClickFor("speaker-sync-repair.html", "?path=ingest", true);
+assert.equal(
+  dynamicSyncRepairLink.href,
+  "../preview/app.html#speaker-sync-repair?path=episode",
+  "embedded ingest nav normalizes dynamic sync repair handoffs before navigation",
+);
+assert.equal(dynamicSyncRepairLink.target, "_top", "dynamic embedded sync repair handoffs target the parent app");
 
 const dynamicSocialLink = normalizeIngestClickFor("social-context-intake.html", "?path=ingest", true);
 assert.equal(

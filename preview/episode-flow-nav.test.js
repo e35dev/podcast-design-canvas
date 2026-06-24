@@ -86,6 +86,7 @@ function renderNavFor(fileName, embedded = false, search = "") {
       const className = selector.slice(1);
       return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
     },
+    addEventListener() {},
   };
 
   vm.runInNewContext(navScript, {
@@ -248,6 +249,78 @@ assert.equal(
   normalizeExportReadinessFixLink("music-cue-setup.html", "?path=episode", true).target,
   "_top",
   "embedded export readiness fix links target the parent app",
+);
+
+function createLink(href) {
+  const link = createElement("a");
+  link.href = href;
+  link.setAttribute("href", href);
+  link.getAttribute = function(name) {
+    if (name === "href") return this.href;
+    return this.attributes[name];
+  };
+  return link;
+}
+
+function normalizeEpisodeHrefFor(href, fileName = "speaker-sync-repair.html", search = "", embedded = false) {
+  const link = createLink(href);
+  const rootNode = {
+    querySelectorAll(selector) {
+      return selector === "a[href]" ? [link] : [];
+    },
+  };
+  const window = makeWindow(fileName, embedded, search);
+  const navDefinitions = navScript.replace(/\nif \(document\.readyState[\s\S]*$/m, "");
+  const sandbox = {
+    document: { readyState: "complete", addEventListener() {} },
+    window,
+    URLSearchParams,
+    rootNode,
+  };
+  vm.runInNewContext(
+    `${navDefinitions}\nnormalizeEpisodeScreenLinks(rootNode);\nglobalThis.result = { href: rootNode.querySelectorAll("a[href]")[0].href, target: rootNode.querySelectorAll("a[href]")[0].target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+function normalizeEpisodeClickFor(href, fileName = "speaker-sync-repair.html", search = "", embedded = false) {
+  const link = createLink(href);
+  link.closest = (selector) => (selector === "a[href]" ? link : null);
+  const window = makeWindow(fileName, embedded, search);
+  const navDefinitions = navScript.replace(/\nif \(document\.readyState[\s\S]*$/m, "");
+  const sandbox = {
+    document: { readyState: "complete", addEventListener() {} },
+    window,
+    URLSearchParams,
+    link,
+  };
+  vm.runInNewContext(
+    `${navDefinitions}\nnormalizeEpisodeLinkClick({ target: link });\nglobalThis.result = { href: link.href, target: link.target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-attribution-review.html", "speaker-sync-repair.html", "?path=episode").href,
+  "speaker-attribution-review.html?path=episode",
+  "episode flow nav keeps episode path context on sync-to-attribution handoffs",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-attribution-review.html", "speaker-sync-repair.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded episode flow nav routes sync-to-attribution handoffs through the preview app",
+);
+assert.equal(
+  normalizeEpisodeHrefFor("speaker-attribution-review.html", "speaker-sync-repair.html", "?path=episode", true).target,
+  "_top",
+  "embedded sync-to-attribution handoffs target the parent app",
+);
+assert.equal(
+  normalizeEpisodeClickFor("speaker-attribution-review.html", "speaker-sync-repair.html", "?path=episode", true).href,
+  "../preview/app.html#speaker-attribution-review?path=episode",
+  "embedded episode flow nav normalizes dynamic attribution handoffs before navigation",
 );
 
 console.log("episode flow nav: core episode screens connected to the preview shell and app");
