@@ -1,5 +1,6 @@
 const assert = require("assert");
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
 class Element {
@@ -110,7 +111,7 @@ const document = {
   },
 };
 
-const html = fs.readFileSync("prototype/line-pickup-insert.html", "utf8");
+const html = fs.readFileSync(path.join(__dirname, "line-pickup-insert.html"), "utf8");
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const sandbox = { document, module: { exports: {} } };
 
