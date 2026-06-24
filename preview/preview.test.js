@@ -40,6 +40,23 @@ assert.match(html, /id="canvas-continue"/, "preview shell exposes a continue han
 assert.match(html, /speaker-role-mapping\?path=episode/, "example canvas continue handoff targets speaker roles in the preview app");
 assert.ok(html.includes("dragover"), "preview shell handles drag-over on example canvas slots");
 assert.ok(
+  html.includes("keydown"),
+  "preview shell supports keyboard placement on the example canvas (not drag-only)",
+);
+assert.match(
+  html,
+  /aria-pressed/,
+  "preview shell exposes a selected (aria-pressed) state on example canvas tracks",
+);
+assert.ok(
+  html.includes("Select a track first"),
+  "preview shell guides keyboard/click placement when no track is selected",
+);
+assert.ok(
+  html.includes('zone.setAttribute("role", "button")'),
+  "preview shell makes example canvas slots keyboard-activatable",
+);
+assert.ok(
   html.includes("./app.html#canvas-layer-controls?path=episode"),
   "preview shell links the example canvas to canvas layer controls",
 );

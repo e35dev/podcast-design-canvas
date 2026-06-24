@@ -297,6 +297,17 @@
         outline-offset: 2px;
       }
 
+      .drag-chip[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #dff5ef;
+        color: #075246;
+      }
+
+      .drop-zone:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
+      }
+
       .drop-zone.drag-over {
         border-color: #ffffff;
         background: rgba(255, 255, 255, 0.18);
@@ -958,7 +969,71 @@
           broll: "B-roll clip · intro beat",
         };
 
-        document.querySelectorAll(".drag-chip").forEach(function (chip) {
+        var slotLabels = {
+          host: "Host video slot",
+          guest: "Guest video slot",
+          broll: "B-roll drop zone",
+        };
+
+        var slotStatus = document.getElementById("canvas-slot-status");
+        var resetButton = document.getElementById("canvas-reset");
+        var continueLink = document.getElementById("canvas-continue");
+        var continueNote = document.getElementById("canvas-continue-note");
+
+        var chips = document.querySelectorAll(".drag-chip");
+        var selectedTrack = null;
+
+        function isActivationKey(event) {
+          return event.key === "Enter" || event.key === " " || event.key === "Spacebar";
+        }
+
+        function clearSelection() {
+          selectedTrack = null;
+          chips.forEach(function (chip) {
+            chip.setAttribute("aria-pressed", "false");
+          });
+        }
+
+        // Keyboard/click placement: pick a track, then activate its slot. This mirrors
+        // drag-and-drop so keyboard and touch users can also pass the gated continue.
+        function selectChip(chip) {
+          var track = chip.dataset.track;
+          if (selectedTrack === track) {
+            clearSelection();
+            updateSlotStatus();
+            return;
+          }
+          clearSelection();
+          selectedTrack = track;
+          chip.setAttribute("aria-pressed", "true");
+          updateSlotStatus(
+            (trackLabels[track] || "Track") + " selected — choose the " +
+            (slotLabels[track] || "matching slot") + " to place it.",
+          );
+        }
+
+        function placeTrack(zone, track) {
+          if (track !== zone.dataset.slot) {
+            updateSlotStatus("That track belongs in a different slot.");
+            return;
+          }
+          zone.classList.add("filled");
+          var placed = zone.querySelector(".placed-track");
+          if (!placed) {
+            placed = document.createElement("span");
+            placed.className = "placed-track";
+            zone.insertBefore(placed, zone.firstChild);
+          }
+          placed.textContent = trackLabels[track];
+          if (selectedTrack === track) {
+            clearSelection();
+          }
+          updateSlotStatus();
+        }
+
+        chips.forEach(function (chip) {
+          chip.setAttribute("role", "button");
+          chip.setAttribute("aria-pressed", "false");
           chip.addEventListener("dragstart", function (event) {
             event.dataTransfer.setData("text/plain", chip.dataset.track);
             chip.classList.add("dragging");
@@ -966,12 +1041,16 @@
           chip.addEventListener("dragend", function () {
             chip.classList.remove("dragging");
           });
+          chip.addEventListener("click", function () {
+            selectChip(chip);
+          });
+          chip.addEventListener("keydown", function (event) {
+            if (isActivationKey(event)) {
+              event.preventDefault();
+              selectChip(chip);
+            }
+          });
         });
-
-        var slotStatus = document.getElementById("canvas-slot-status");
-        var resetButton = document.getElementById("canvas-reset");
-        var continueLink = document.getElementById("canvas-continue");
-        var continueNote = document.getElementById("canvas-continue-note");
 
         function requiredFilledCount() {
           var required = ["host", "guest"];
@@ -1017,6 +1096,12 @@
         }
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+          zone.setAttribute("role", "button");
+          zone.setAttribute("tabindex", "0");
+          zone.setAttribute(
+            "aria-label",
+            "Place the matching track in the " + (slotLabels[zone.dataset.slot] || zone.dataset.slot),
+          );
           zone.addEventListener("dragover", function (event) {
             event.preventDefault();
             zone.classList.add("drag-over");
@@ -1027,20 +1112,21 @@
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
             zone.classList.remove("drag-over");
-            var track = event.dataTransfer.getData("text/plain");
-            if (track !== zone.dataset.slot) {
-              updateSlotStatus("That track belongs in a different slot.");
+            placeTrack(zone, event.dataTransfer.getData("text/plain"));
+          });
+          function activateZone() {
+            if (!selectedTrack) {
+              updateSlotStatus("Select a track first, then choose its slot.");
               return;
             }
-            zone.classList.add("filled");
-            var placed = zone.querySelector(".placed-track");
-            if (!placed) {
-              placed = document.createElement("span");
-              placed.className = "placed-track";
-              zone.insertBefore(placed, zone.firstChild);
+            placeTrack(zone, selectedTrack);
+          }
+          zone.addEventListener("click", activateZone);
+          zone.addEventListener("keydown", function (event) {
+            if (isActivationKey(event)) {
+              event.preventDefault();
+              activateZone();
             }
-            placed.textContent = trackLabels[track];
-            updateSlotStatus();
           });
         });
 
@@ -1051,6 +1137,7 @@
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
             });
+            clearSelection();
             updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
           });
         }
