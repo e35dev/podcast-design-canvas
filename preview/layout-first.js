@@ -315,12 +315,13 @@
 
     // The same recording placed in two visible speaker slots would put one person in two
     // speaker frames. We compare file identity (see fileSignature), not display name, and
-    // return the creator-facing names of any slots that repeat the same recording.
+    // return the creator-facing names of any slots that repeat the same recording. The
+    // optional b-roll slot is excluded: it may legitimately mirror a speaker's own footage.
     function duplicateFileNames() {
       const seen = Object.create(null);
       const duplicates = [];
       visibleSlots().forEach((zone) => {
-        if (!zone.classList.contains("filled")) return;
+        if (isBrollSlot(zone) || !zone.classList.contains("filled")) return;
         const sig = (zone.dataset.fileSig || "").trim();
         if (!sig) return;
         if (seen[sig]) {
@@ -333,12 +334,13 @@
       return duplicates;
     }
 
-    // Visible speaker slots that share the same recording identity block Continue even
-    // when each slot looks filled. Return them in layout order for guidance focus.
+    // Visible speaker slots (never the optional b-roll slot, see isBrollSlot) that share the
+    // same recording identity block Continue even when each slot looks filled. Return them in
+    // layout order for guidance focus.
     function duplicateBlockingZones() {
       const sigToZones = Object.create(null);
       visibleSlots().forEach((zone) => {
-        if (!zone.classList.contains("filled")) return;
+        if (isBrollSlot(zone) || !zone.classList.contains("filled")) return;
         const sig = (zone.dataset.fileSig || "").trim();
         if (!sig) return;
         if (!sigToZones[sig]) sigToZones[sig] = [];
@@ -597,19 +599,36 @@
       Object.keys(invalidAside).forEach((slot) => delete invalidAside[slot]);
     }
 
+    // The optional b-roll slot is not a speaker frame: reusing a host or guest recording as a
+    // b-roll cutaway (e.g. a wide establishing shot pulled from the same raw take) is a normal,
+    // deliberate production choice, not a mistaken duplicate. Pairs involving the b-roll slot
+    // are exempt from the "a source lives in only one slot" rule applied below.
+    function isBrollSlot(zone) {
+      return Boolean(zone && zone.dataset && zone.dataset.slot === "broll");
+    }
+
     function clearMatchingSource(zone, file) {
       const incomingSig = fileSignature(file);
       if (!incomingSig) {
         return;
       }
+      const targetIsBroll = isBrollSlot(zone);
       zones.forEach((other) => {
-        if (other !== zone && other.dataset.fileSig === incomingSig) {
-          clearZone(other);
+        if (other === zone || other.dataset.fileSig !== incomingSig) {
+          return;
         }
+        if (targetIsBroll || isBrollSlot(other)) {
+          return;
+        }
+        clearZone(other);
       });
-      // A source lives in only one slot. Also drop it from the set-aside cache so a hidden
-      // slot can't later restore it as a duplicate of a placement just made in another slot.
+      // A source lives in only one speaker slot. Also drop it from the set-aside cache so a
+      // hidden slot can't later restore it as a duplicate of a placement just made in another
+      // speaker slot — but leave a b-roll set-aside alone, for the same reason as above.
       Object.keys(setAside).forEach((slot) => {
+        if (slot === "broll" || targetIsBroll) {
+          return;
+        }
         if (fileSignature(setAside[slot]) === incomingSig) {
           delete setAside[slot];
         }
