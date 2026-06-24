@@ -180,6 +180,23 @@ function setMusicScreenLink(link, file) {
   link.href = resolved;
 }
 
+function musicActionHref(file) {
+  const resolved = resolveMusicLink(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    return previewAppHref(resolved);
+  }
+  return resolved;
+}
+
+function navigateMusicAction(file) {
+  const href = musicActionHref(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    window.top.location.href = href;
+    return;
+  }
+  window.location.href = href;
+}
+
 function isLocalScreenHref(href) {
   return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
 }

@@ -429,7 +429,7 @@
         if (item.state === "speech-hard") {
           var fixCue = el("button", "", "Adjust cue placement");
           fixCue.addEventListener("click", function () {
-            window.location.href = "music-cue-setup.html";
+            navigateMusicAction("music-cue-setup.html");
           });
           var lowerHard = el("button", "secondary", "Lower music during speech");
           lowerHard.addEventListener("click", function () {

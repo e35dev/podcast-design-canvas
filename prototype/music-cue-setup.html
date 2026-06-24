@@ -415,7 +415,7 @@
         if (item.state === "overlap-speech") {
           var duck = el("button", "secondary", "Review ducking");
           duck.addEventListener("click", function () {
-            window.location.href = "music-ducking-under-speech.html";
+            navigateMusicAction("music-ducking-under-speech.html");
           });
           actions.append(duck);
         }

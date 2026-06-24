@@ -22,6 +22,8 @@ assert.ok(
 assert.ok(navScript.includes("audio-cleanup-controls.html"), "music nav entry links to audio cleanup");
 assert.ok(navScript.includes("pause-crosstalk-cleanup.html"), "music nav hands off to pause cleanup");
 assert.ok(navScript.includes('document.querySelector(".music-nav")'), "music nav guards against double render");
+assert.ok(navScript.includes("function musicActionHref"), "music nav centralizes action-button href routing");
+assert.ok(navScript.includes("function navigateMusicAction"), "music nav centralizes action-button navigation");
 assert.ok(!/innerHTML/.test(navScript), "music nav builds the DOM without innerHTML");
 
 const musicScreens = [
@@ -40,6 +42,21 @@ for (const file of musicScreens) {
   assert.ok(!html.includes("../preview/tools-nav.js"), `${file} uses music nav instead of tools nav`);
   assert.ok(html.includes("data-music-step="), `${file} declares its music step`);
 }
+
+const cueSetupHtml = fs.readFileSync(path.join(root, "prototype", "music-cue-setup.html"), "utf8");
+const duckingHtml = fs.readFileSync(path.join(root, "prototype", "music-ducking-under-speech.html"), "utf8");
+assert.ok(
+  cueSetupHtml.includes('navigateMusicAction("music-ducking-under-speech.html")'),
+  "music cue setup action uses the shared music action router",
+);
+assert.ok(
+  duckingHtml.includes('navigateMusicAction("music-cue-setup.html")'),
+  "music ducking action uses the shared music action router",
+);
+assert.ok(
+  !/window\.location\.href = "music-[^"]+\.html"/.test(`${cueSetupHtml}\n${duckingHtml}`),
+  "music action buttons no longer bypass shared routing with direct iframe navigation",
+);
 
 function createElement(tagName) {
   return {
@@ -88,9 +105,9 @@ function appendStaticLink(body, href, text = href) {
 }
 
 function makeWindow(fileName, embedded = false, search = "") {
-  const window = { location: { pathname: `/prototype/${fileName}`, search } };
+  const window = { location: { pathname: `/prototype/${fileName}`, search, href: "" } };
   window.self = window;
-  window.top = embedded ? { location: { pathname: "/preview/app.html" } } : window;
+  window.top = embedded ? { location: { pathname: "/preview/app.html", href: "" } } : window;
   return window;
 }
 
@@ -124,14 +141,19 @@ function renderNavFor(fileName, musicStep, embedded = false, staticHrefs = [], s
     },
   };
 
-  vm.runInNewContext(navScript, {
+  const window = makeWindow(fileName, embedded, search);
+  const sandbox = {
     document,
-    window: makeWindow(fileName, embedded, search),
+    window,
     URLSearchParams,
-  });
+  };
+  vm.runInNewContext(navScript, sandbox);
 
   const nodes = flatten(body);
   nodes.listeners = listeners;
+  nodes.window = window;
+  nodes.musicActionHref = sandbox.musicActionHref;
+  nodes.navigateMusicAction = sandbox.navigateMusicAction;
   return nodes;
 }
 
@@ -251,6 +273,48 @@ assert.equal(
   "embedded music nav normalizes dynamically rendered music links before navigation",
 );
 assert.equal(dynamicDuckingLink.target, "_top", "dynamic embedded music links target the parent app");
+
+const standaloneCueAction = renderNavFor("music-cue-setup.html", "music-cue-setup", false, [], "?path=episode");
+assert.equal(typeof standaloneCueAction.navigateMusicAction, "function", "music action router is globally callable");
+assert.equal(
+  standaloneCueAction.musicActionHref("music-ducking-under-speech.html"),
+  "music-ducking-under-speech.html?path=episode",
+  "standalone music action keeps the guided episode path context",
+);
+standaloneCueAction.navigateMusicAction("music-ducking-under-speech.html");
+assert.equal(
+  standaloneCueAction.window.location.href,
+  "music-ducking-under-speech.html?path=episode",
+  "standalone music action navigates the current prototype window",
+);
+
+const embeddedCueAction = renderNavFor("music-cue-setup.html", "music-cue-setup", true, [], "?path=episode");
+assert.equal(
+  embeddedCueAction.musicActionHref("music-ducking-under-speech.html"),
+  "../preview/app.html#music-ducking-under-speech?path=episode",
+  "embedded cue action resolves through the parent preview app route",
+);
+embeddedCueAction.navigateMusicAction("music-ducking-under-speech.html");
+assert.equal(
+  embeddedCueAction.window.top.location.href,
+  "../preview/app.html#music-ducking-under-speech?path=episode",
+  "embedded cue action navigates the parent preview shell",
+);
+assert.equal(embeddedCueAction.window.location.href, "", "embedded cue action does not navigate only the iframe");
+
+const embeddedDuckingAction = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", true);
+assert.equal(
+  embeddedDuckingAction.musicActionHref("music-cue-setup.html"),
+  "../preview/app.html#music-cue-setup",
+  "embedded ducking action resolves back through the parent preview app route",
+);
+embeddedDuckingAction.navigateMusicAction("music-cue-setup.html");
+assert.equal(
+  embeddedDuckingAction.window.top.location.href,
+  "../preview/app.html#music-cue-setup",
+  "embedded ducking action navigates the parent preview shell",
+);
+assert.equal(embeddedDuckingAction.window.location.href, "", "embedded ducking action does not navigate only the iframe");
 
 const pathNav = renderNavFor("music-ducking-under-speech.html", "music-ducking-under-speech", false, [], "?path=episode");
 assert.ok(
