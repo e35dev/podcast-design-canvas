@@ -160,4 +160,14 @@ assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "the target slot st
 assert.ok(ctl.zonesBySlot.guest.classList.contains("is-invalid"), "spill does not overwrite a slot that already rejected a file");
 assert.ok(!ctl.zonesBySlot.guest.classList.contains("filled"), "the rejected guest slot stays empty until the creator places there");
 
+// A batch that contains the same recording twice must place it once — in the slot it landed
+// on — not let the duplicate spill into another slot and clear the first placement. (The same
+// source can't be two different speakers.)
+ctl.resetVideos();
+ctl.applyLayout("panel");
+ctl.placeVideoFiles(ctl.zonesBySlot.host, [video("dupe.mp4"), video("dupe.mp4")]);
+assert.ok(ctl.zonesBySlot.host.classList.contains("filled"), "a duplicate batch keeps the recording in the slot it landed on");
+assert.ok(!ctl.zonesBySlot.guest.classList.contains("filled"), "a duplicate of the same recording does not spill into another slot");
+assert.ok(!ctl.zonesBySlot["guest-b"].classList.contains("filled"), "no further slot is filled by a duplicate");
+
 console.log("layout-first multi-file spill: no spill on reject; spill skips invalid slots");

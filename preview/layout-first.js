@@ -506,7 +506,19 @@
     // slots first, optional b-roll last). This lets a creator drop all of their speaker
     // recordings at once instead of one slot at a time.
     function placeVideoFiles(zone, fileList) {
-      const files = Array.prototype.slice.call(fileList || []).filter(Boolean);
+      const all = Array.prototype.slice.call(fileList || []).filter(Boolean);
+      // Drop exact-duplicate recordings within one batch. The same source can't fill two
+      // speaker slots, and spilling a duplicate would clear the slot it was first placed in
+      // (clearMatchingSource moves a source to its newest slot), leaving the target empty.
+      // Files without an identity signature (no size/mtime) are kept — we can't tell them apart.
+      const seenSig = new Set();
+      const files = all.filter((file) => {
+        const sig = fileSignature(file);
+        if (!sig) return true;
+        if (seenSig.has(sig)) return false;
+        seenSig.add(sig);
+        return true;
+      });
       if (files.length === 0) {
         return;
       }
