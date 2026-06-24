@@ -1030,7 +1030,7 @@
             if (value === "none") continue;
             const option = document.createElement("option");
             option.value = value;
-            option.textContent = item.label;
+            option.textContent = typeof item.label === "string" && item.label.length ? item.label : value;
             option.selected = value === track.issue;
             issueSelect.appendChild(option);
           }
