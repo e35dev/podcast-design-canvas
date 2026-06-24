@@ -133,6 +133,13 @@
     // creator can see which assignment failed — #1131 asks for invalid slot assignments to
     // be clearly indicated. The flag clears when a valid file lands or the slot is cleared.
     function flagInvalidSlot(zone, message) {
+      // Only the slot that just rejected a file should be flagged — a prior rejection on
+      // another slot must not keep its outline once the error names a different slot.
+      zones.forEach((candidate) => {
+        if (candidate !== zone && candidate.classList) {
+          candidate.classList.remove("is-invalid");
+        }
+      });
       if (zone && zone.classList) zone.classList.add("is-invalid");
       setError(message);
     }
@@ -190,7 +197,7 @@
       zones.forEach((zone) => {
         const indicator = slotIndicators[zone.dataset.slot];
         if (!indicator) return;
-        indicator.classList.remove("is-ready", "is-missing", "is-optional");
+        indicator.classList.remove("is-ready", "is-missing", "is-optional", "is-invalid");
         if (zone.classList.contains("is-hidden")) {
           indicator.textContent = "";
           indicator.hidden = true;
@@ -200,6 +207,9 @@
         if (zone.classList.contains("filled")) {
           indicator.textContent = "Ready";
           indicator.classList.add("is-ready");
+        } else if (zone.classList.contains("is-invalid")) {
+          indicator.textContent = "Invalid file";
+          indicator.classList.add("is-invalid");
         } else if (required.has(zone.dataset.slot)) {
           indicator.textContent = "Needs video";
           indicator.classList.add("is-missing");

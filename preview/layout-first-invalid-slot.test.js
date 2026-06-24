@@ -146,11 +146,18 @@ const ctl = createLayoutFirstController(documentStub, { URL: urlApi });
 const host = ctl.zonesBySlot.host;
 const errorText = elementsById["layout-error"];
 
+function slotState(slot) {
+  const zone = ctl.zonesBySlot[slot];
+  return zone.children.find((child) => child.className === "slot-state");
+}
+
 // A non-video file flags the specific slot and names it in the error.
 ctl.placeVideoFile(host, notVideo("poster.png"));
 assert.ok(host.classList.contains("is-invalid"), "a non-video file flags the slot it was dropped on");
 assert.ok(!host.classList.contains("filled"), "a rejected file does not fill the slot");
 assert.match(errorText.textContent, /Host/, "the error names the slot that rejected the file");
+assert.equal(slotState("host").textContent, "Invalid file", "a rejected slot badge does not read Needs video");
+assert.ok(slotState("host").classList.contains("is-invalid"), "the rejected slot badge carries the invalid state");
 
 // Placing a valid video in that slot clears the invalid flag.
 ctl.placeVideoFile(host, video("host-cam.mp4"));
@@ -162,6 +169,13 @@ const guest = ctl.zonesBySlot.guest;
 ctl.placeVideoFile(guest, emptyVideo("guest.mp4"));
 assert.ok(guest.classList.contains("is-invalid"), "an empty file flags the slot");
 assert.match(errorText.textContent, /Guest/, "the empty-file error names the slot");
+assert.equal(slotState("guest").textContent, "Invalid file", "an empty-file rejection shows Invalid file on the badge");
+
+// Rejecting on a second slot clears the first slot's stale invalid flag.
+ctl.placeVideoFile(host, notVideo("poster-again.png"));
+assert.ok(!guest.classList.contains("is-invalid"), "a new rejection clears the prior slot's invalid flag");
+assert.ok(host.classList.contains("is-invalid"), "only the slot named in the error stays flagged");
+assert.match(errorText.textContent, /Host/, "the error follows the latest rejection");
 
 // Removing/clearing the slot clears the flag (reset path goes through clearZone).
 ctl.placeVideoFile(guest, notVideo("guest.png"));
