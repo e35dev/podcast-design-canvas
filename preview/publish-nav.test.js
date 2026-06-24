@@ -15,6 +15,7 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "publish nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "publish nav links to the guided episode flow");
 assert.ok(navScript.includes("show-notes-assembly.html"), "publish nav includes show notes assembly");
+assert.ok(navScript.includes('document.querySelector(".publish-nav")'), "publish nav guards against double render");
 assert.ok(!/innerHTML/.test(navScript), "publish nav builds the DOM without innerHTML");
 
 const publishScreens = [
@@ -112,4 +113,61 @@ assert.ok(
   "middle publish screen does not reuse the export readiness back link",
 );
 
-console.log("publish nav: publish prep screens connected back to the preview shell");
+// VM-render the forward path the same way ingest-nav does (#676): prev AND next,
+// the finish handoff, and the visible step label — not just the previous link.
+assert.ok(
+  linkWithText(firstNav, "Next: Destination crop preview"),
+  "first publish screen renders the next publish step",
+);
+const firstStep = firstNav.find(
+  (node) => node.textContent === "Publish step 1 of 6 · Watch-through preview",
+);
+assert.ok(firstStep, "first publish screen renders its visible step label");
+assert.equal(firstStep.attributes["aria-current"], "step", "current publish step exposes aria-current");
+
+assert.ok(
+  linkWithText(middleNav, "Next: Thumbnail cover frame"),
+  "middle publish screen renders the next publish step",
+);
+
+const lastNav = renderNavFor("publish-checklist.html");
+assert.ok(
+  linkWithText(lastNav, "Previous: Export package handoff"),
+  "last publish screen renders the previous publish step",
+);
+const finish = linkWithText(lastNav, "Finish: back to the preview shell");
+assert.ok(finish, "last publish screen renders the finish handoff");
+assert.equal(finish.href, "../preview/", "finish handoff returns to the preview shell");
+assert.ok(
+  !lastNav.some((node) => node.textContent && node.textContent.startsWith("Next:")),
+  "last publish screen does not render a next link",
+);
+
+// Rendering twice must still leave a single nav (matches the script's guard).
+const head = createElement("head");
+const body = createElement("body");
+body.dataset = {};
+const ctx = {
+  readyState: "complete",
+  head,
+  body,
+  createElement,
+  getElementById(id) {
+    return [...flatten(head), ...flatten(body)].find((node) => node.id === id) || null;
+  },
+  querySelector(selector) {
+    if (!selector.startsWith(".")) return null;
+    const className = selector.slice(1);
+    return flatten(body).find((node) => node.className.split(" ").includes(className)) || null;
+  },
+};
+const win = { location: { pathname: "/prototype/destination-crop-preview.html" } };
+vm.runInNewContext(navScript, { document: ctx, window: win });
+vm.runInNewContext(navScript, { document: ctx, window: win });
+assert.equal(
+  flatten(body).filter((node) => node.className === "publish-nav").length,
+  1,
+  "publish nav renders once if the script runs twice",
+);
+
+console.log("publish nav: publish prep screens connected with prev/next, finish, and step labels");
