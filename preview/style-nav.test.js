@@ -25,6 +25,7 @@ const styleScreens = [
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
+  "preset-pacing-controls.html",
 ];
 
 for (const file of styleScreens) {
@@ -99,7 +100,7 @@ function renderNavFor(fileName, styleStep) {
   return { nodes: [...flatten(head), ...flatten(body)] };
 }
 
-const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+const lastNav = renderNavFor("preset-pacing-controls.html", "preset-pacing-controls");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Watch the finished episode"),
   "last visual direction screen hands off to the publish prep path",
