@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transcript Search Navigation Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --info: #2a4c8a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; font-size: 32px; line-height: 1.1; }
+      h2 { margin-bottom: 12px; }
+      .lede { color: var(--muted); max-width: 780px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.9fr); gap: 24px; margin-top: 28px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px; }
+
+      .search-bar { display: grid; gap: 12px; margin-bottom: 16px; }
+      .field-row { display: grid; grid-template-columns: minmax(0, 1fr) 160px 170px; gap: 10px; }
+      label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+      input, select {
+        width: 100%; min-height: 40px; border: 1px solid #bfcbc7; border-radius: 6px;
+        background: #ffffff; color: var(--ink); font: inherit; padding: 8px 10px;
+      }
+      .quick { display: flex; flex-wrap: wrap; gap: 8px; }
+      button {
+        min-height: 38px; border: 1px solid #b9c8c3; border-radius: 6px; background: #ffffff;
+        color: var(--ink); font: inherit; font-weight: 700; padding: 7px 11px; cursor: pointer;
+      }
+      button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
+
+      .results { display: grid; gap: 14px; }
+      .result {
+        display: grid; gap: 12px; border: 1px solid var(--line); border-radius: 8px;
+        background: #ffffff; padding: 14px;
+      }
+      .result.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(19, 111, 99, 0.12); }
+      .result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; }
+      .quote { margin: 0; font-size: 16px; line-height: 1.45; }
+      .detail { color: var(--muted); font-size: 13px; line-height: 1.45; }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+      .badge {
+        display: inline-flex; width: fit-content; align-items: center; border-radius: 999px;
+        padding: 0 11px; font-weight: 800; white-space: nowrap;
+      }
+      .badge { min-height: 28px; font-size: 13px; }
+      .badge.match { color: #075246; background: #dff5ef; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.route { color: var(--info); background: #e2ebfb; }
+
+      .preview-frame {
+        position: relative; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid #101816;
+        border-radius: 8px; background:
+          linear-gradient(180deg, rgba(16, 24, 22, 0) 55%, rgba(16, 24, 22, 0.72)),
+          linear-gradient(135deg, #174f49, #315676 58%, #6d5d83);
+      }
+      .chip {
+        position: absolute; z-index: 3; border-radius: 999px; background: rgba(246, 251, 249, 0.94);
+        color: #14211d; font-size: 12px; font-weight: 800; padding: 6px 9px;
+      }
+      .chip.time { top: 16px; left: 16px; }
+      .chip.context { top: 16px; right: 16px; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .speaker-layout {
+        position: absolute; inset: 16% 12% 20%; display: grid; grid-template-columns: 1fr 1fr; gap: 4%;
+      }
+      .speaker {
+        position: relative; overflow: hidden; border-radius: 8px;
+        background: linear-gradient(160deg, #8bc8bd, #1b5f56);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+      }
+      .speaker.guest { background: linear-gradient(160deg, #a5b4da, #405074); }
+      .speaker.active { box-shadow: inset 0 0 0 3px #fff1d6, 0 0 0 2px rgba(161, 92, 0, 0.4); }
+      .speaker::before {
+        content: ""; position: absolute; top: 19%; left: 50%; width: 25%; aspect-ratio: 1;
+        transform: translateX(-50%); border-radius: 50%; background: #eef7f4;
+      }
+      .speaker::after {
+        content: ""; position: absolute; right: 29%; bottom: 12%; left: 29%; height: 32%;
+        border-radius: 999px 999px 0 0; background: #dcefeb;
+      }
+      .lower-third {
+        position: absolute; left: 10px; bottom: 10px; z-index: 2; border-radius: 5px;
+        background: rgba(16, 24, 22, 0.82); color: #ffffff; font-size: 12px;
+        font-weight: 800; padding: 5px 8px;
+      }
+      .caption {
+        position: absolute; right: 14%; bottom: 12%; left: 14%; z-index: 3;
+        border-radius: 6px; background: rgba(16, 24, 22, 0.86); color: #ffffff;
+        font-weight: 800; line-height: 1.35; padding: 9px 12px; text-align: center;
+      }
+
+      .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+      .summary-card, .issue, .preview-note {
+        border: 1px solid var(--line); border-radius: 8px; background: #ffffff; padding: 12px;
+      }
+      .summary-card strong { display: block; font-size: 24px; line-height: 1; }
+      .summary-card span, .issue span, .preview-note span { color: var(--muted); font-size: 13px; }
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+      .issue { border-left: 4px solid var(--warn); border-radius: 6px; }
+      .issue.ready { border-left-color: var(--accent); }
+      .issue.route { border-left-color: var(--info); }
+      .issue strong, .preview-note strong { display: block; margin-bottom: 4px; }
+      .hidden-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+
+      @media (max-width: 920px) {
+        .workspace, .field-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Transcript Search Navigation Prototype</h1>
+      <p class="lede">
+        Search reviewed transcript moments, jump into the episode preview with speaker context, and hand off fixes to the review surface that owns them.
+      </p>
+
+      <section class="workspace" aria-label="Transcript search navigation">
+        <div class="panel">
+          <h2>Search Results</h2>
+          <div class="search-bar">
+            <div class="field-row">
+              <label>
+                Search term
+                <input id="searchInput" value="launch" autocomplete="off">
+              </label>
+              <label>
+                Speaker
+                <select id="speakerFilter"></select>
+              </label>
+              <label>
+                Result type
+                <select id="typeFilter"></select>
+              </label>
+            </div>
+            <div class="quick" id="quickTerms"></div>
+          </div>
+          <div class="results" id="results"></div>
+          <div class="hidden-row">
+            <span class="detail" id="hiddenNote"></span>
+            <button type="button" id="restoreDismissed">Restore dismissed</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Episode Preview</h2>
+          <div class="preview-frame" id="previewFrame"></div>
+          <div class="preview-note" id="previewNote"></div>
+
+          <div class="summary-grid" id="summaryGrid"></div>
+
+          <h3>Search Hand-Offs</h3>
+          <div class="issues" id="issues"></div>
+
+          <div class="actions" style="margin-top: 16px;">
+            <button type="button" id="resetSample">Reset sample</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const issueLabels = {
+        match: "match",
+        glossary: "needs glossary",
+        attribution: "needs attribution",
+        chapter: "needs chapter review",
+        caption: "needs caption review",
+        clip: "pinned for clip",
+      };
+
+      const ownerLabels = {
+        glossary: "Glossary review",
+        attribution: "Speaker attribution",
+        chapter: "Chapter marker review",
+        caption: "Caption quality review",
+        clip: "Clip candidate review",
+        none: "Episode preview",
+      };
+
+      const sampleResults = [
+        {
+          id: "launch-story",
+          term: "launch",
+          time: "10:42",
+          leadIn: "10:37",
+          speaker: "Guest",
+          context: "Chapter - First customers",
+          quote: "The launch only worked because the first customers kept telling us what felt confusing.",
+          caption: "The launch only worked because the first customers kept telling us what felt confusing.",
+          confidence: "reviewed caption",
+          issue: "match",
+          owner: "none",
+        },
+        {
+          id: "brand-spelling",
+          term: "Riverton",
+          time: "18:06",
+          leadIn: "18:01",
+          speaker: "Host",
+          context: "Glossary term",
+          quote: "I wrote Riverton as two words in the intro, but the guest uses one word everywhere.",
+          caption: "I wrote River ton as two words in the intro, but the guest uses one word everywhere.",
+          confidence: "corrected spelling available",
+          issue: "glossary",
+          owner: "glossary",
+        },
+        {
+          id: "voice-switch",
+          term: "Dana",
+          time: "24:18",
+          leadIn: "24:13",
+          speaker: "Guest",
+          context: "Speaker attribution",
+          quote: "Dana jumps in here, but the caption label still says Host for the first line.",
+          caption: "Host: I want to add one thing before we move on.",
+          confidence: "speaker label needs review",
+          issue: "attribution",
+          owner: "attribution",
+        },
+        {
+          id: "chapter-boundary",
+          term: "pricing",
+          time: "31:05",
+          leadIn: "31:00",
+          speaker: "Host",
+          context: "Chapter boundary",
+          quote: "That pricing story probably starts the next section, not the current one.",
+          caption: "That pricing story probably starts the next section, not the current one.",
+          confidence: "chapter title may need a look",
+          issue: "chapter",
+          owner: "chapter",
+        },
+        {
+          id: "caption-wording",
+          term: "retention",
+          time: "43:12",
+          leadIn: "43:07",
+          speaker: "Guest",
+          context: "Caption wording",
+          quote: "Retention, not revenue, was the number we watched every Friday.",
+          caption: "Revenue, not revenue, was the number we watched every Friday.",
+          confidence: "caption issue present",
+          issue: "caption",
+          owner: "caption",
+        },
+      ];
+
+      const quickTerms = ["launch", "Riverton", "Dana", "pricing", "retention"];
+      const speakerOptions = ["All speakers", "Host", "Guest"];
+      const typeOptions = ["All result types", "match", "needs glossary", "needs attribution", "needs chapter review", "needs caption review"];
+
+      let results = freshResults();
+      let activeId = "launch-story";
+      let lastHandOff = null;
+
+      const searchInput = document.querySelector("#searchInput");
+      const speakerFilter = document.querySelector("#speakerFilter");
+      const typeFilter = document.querySelector("#typeFilter");
+      const quickTermsElement = document.querySelector("#quickTerms");
+      const resultsElement = document.querySelector("#results");
+      const hiddenNoteElement = document.querySelector("#hiddenNote");
+      const restoreDismissedButton = document.querySelector("#restoreDismissed");
+      const previewFrame = document.querySelector("#previewFrame");
+      const previewNote = document.querySelector("#previewNote");
+      const summaryGrid = document.querySelector("#summaryGrid");
+      const issuesElement = document.querySelector("#issues");
+      const resetSampleButton = document.querySelector("#resetSample");
+
+      function freshResults() {
+        return sampleResults.map((result) => ({
+          ...result,
+          status: "shown",
+        }));
+      }
+
+      function createText(tag, text, className) {
+        const element = document.createElement(tag);
+        if (className) {
+          element.className = className;
+        }
+        element.textContent = text;
+        return element;
+      }
+
+      function issueClass(issue) {
+        if (issue === "match") return "match";
+        if (issue === "clip") return "route";
+        return "review";
+      }
+
+      function statusCopy(status) {
+        const labels = {
+          shown: "shown",
+          jumped: "jumped",
+          handed: "handed off",
+          pinned: "pinned",
+          dismissed: "dismissed",
+        };
+        return labels[status] || "shown";
+      }
+
+      function renderOptions() {
+        speakerFilter.replaceChildren(
+          ...speakerOptions.map((label) => {
+            const option = document.createElement("option");
+            option.value = label;
+            option.textContent = label;
+            return option;
+          }),
+        );
+
+        typeFilter.replaceChildren(
+          ...typeOptions.map((label) => {
+            const option = document.createElement("option");
+            option.value = label;
+            option.textContent = label;
+            return option;
+          }),
+        );
+
+        quickTermsElement.replaceChildren(
+          ...quickTerms.map((term) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = term;
+            button.addEventListener("click", () => {
+              searchInput.value = term;
+              refresh();
+            });
+            return button;
+          }),
+        );
+      }
+
+      function queryMatches(result) {
+        const query = searchInput.value.trim().toLowerCase();
+        const speaker = speakerFilter.value;
+        const type = typeFilter.value;
+        const text = [result.term, result.quote, result.context, result.speaker, result.caption].join(" ").toLowerCase();
+
+        if (result.status === "dismissed") {
+          return false;
+        }
+        if (query && !text.includes(query)) {
+          return false;
+        }
+        if (speaker !== "All speakers" && result.speaker !== speaker) {
+          return false;
+        }
+        if (type !== "All result types" && issueLabels[result.issue] !== type) {
+          return false;
+        }
+        return true;
+      }
+
+      function visibleResults() {
+        return results.filter(queryMatches);
+      }
+
+      function activeResult() {
+        return results.find((result) => result.id === activeId) || results[0];
+      }
+
+      function setStatus(id, status) {
+        const result = results.find((item) => item.id === id);
+        if (!result) return;
+        result.status = status;
+        activeId = id;
+        if (status === "handed") {
+          lastHandOff = result;
+        }
+        refresh();
+      }
+
+      function renderResult(result) {
+        const article = document.createElement("article");
+        article.className = result.id === activeId ? "result active" : "result";
+
+        const head = document.createElement("div");
+        head.className = "result-head";
+        const titleWrap = document.createElement("div");
+        titleWrap.append(
+          createText("div", `${result.time} - ${result.speaker}`, "meta"),
+          createText("p", result.quote, "quote"),
+        );
+        const badge = createText("span", issueLabels[result.issue], `badge ${issueClass(result.issue)}`);
+        head.append(titleWrap, badge);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.append(
+          createText("span", result.context),
+          createText("span", result.confidence),
+          createText("span", statusCopy(result.status)),
+        );
+
+        const detail = createText(
+          "div",
+          `Preview jump starts at ${result.leadIn}. Owning surface: ${ownerLabels[result.owner]}.`,
+          "detail",
+        );
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const jumpButton = document.createElement("button");
+        jumpButton.type = "button";
+        jumpButton.className = result.id === activeId ? "active" : "";
+        jumpButton.textContent = "Jump to moment";
+        jumpButton.addEventListener("click", () => setStatus(result.id, "jumped"));
+        actions.append(jumpButton);
+
+        if (result.owner !== "none") {
+          const handOffButton = document.createElement("button");
+          handOffButton.type = "button";
+          handOffButton.textContent = `Open ${ownerLabels[result.owner]}`;
+          handOffButton.addEventListener("click", () => setStatus(result.id, "handed"));
+          actions.append(handOffButton);
+        }
+
+        const pinButton = document.createElement("button");
+        pinButton.type = "button";
+        pinButton.textContent = "Pin as clip candidate";
+        pinButton.addEventListener("click", () => {
+          result.issue = "clip";
+          setStatus(result.id, "pinned");
+        });
+        actions.append(pinButton);
+
+        const dismissButton = document.createElement("button");
+        dismissButton.type = "button";
+        dismissButton.textContent = "Dismiss from this search";
+        dismissButton.addEventListener("click", () => setStatus(result.id, "dismissed"));
+        actions.append(dismissButton);
+
+        article.append(head, meta, detail, actions);
+        return article;
+      }
+
+      function renderResults() {
+        const visible = visibleResults();
+        if (visible.length) {
+          resultsElement.replaceChildren(...visible.map(renderResult));
+        } else {
+          const empty = createText("div", "No visible results match the current search and filters.", "detail");
+          resultsElement.replaceChildren(empty);
+        }
+
+        const dismissed = results.filter((result) => result.status === "dismissed").length;
+        hiddenNoteElement.textContent = dismissed
+          ? `${dismissed} dismissed ${dismissed === 1 ? "result is" : "results are"} hidden for this search only.`
+          : "Dismissed results stay recoverable and do not clear checklist warnings.";
+      }
+
+      function renderPreview() {
+        const result = activeResult();
+        const hostClass = result.speaker === "Host" ? "speaker active" : "speaker";
+        const guestClass = result.speaker === "Guest" ? "speaker guest active" : "speaker guest";
+        const timeChip = createText("span", `${result.leadIn} lead-in`, "chip time");
+        const contextChip = createText("span", result.context, "chip context");
+        const layout = document.createElement("div");
+        layout.className = "speaker-layout";
+        layout.append(createText("div", "", hostClass), createText("div", "", guestClass));
+        const lower = createText("div", result.speaker, "lower-third");
+        const caption = createText("div", result.caption, "caption");
+        previewFrame.replaceChildren(timeChip, contextChip, layout, lower, caption);
+
+        const noteTitle = statusCopy(result.status) === "shown"
+          ? "Ready to preview"
+          : statusCopy(result.status);
+        const title = createText("strong", noteTitle);
+        const detail = createText(
+          "span",
+          `${result.time} opens with context preserved so the creator can return to the same search filters.`,
+        );
+        previewNote.replaceChildren(title, detail);
+      }
+
+      function renderSummary() {
+        const visible = visibleResults().length;
+        const jumped = results.filter((result) => result.status === "jumped").length;
+        const handed = results.filter((result) => result.status === "handed").length;
+        const pinned = results.filter((result) => result.status === "pinned").length;
+
+        const cards = [
+          ["Visible", String(visible), "matching moments in this search"],
+          ["Jumped", String(jumped), "moments opened in preview"],
+          ["Hand-offs", String(handed), "sent to owning review"],
+          ["Pinned", String(pinned), "clip candidates kept separate"],
+        ].map(([label, value, detail]) => {
+          const card = document.createElement("div");
+          card.className = "summary-card";
+          card.append(createText("span", label), createText("strong", value), createText("span", detail));
+          return card;
+        });
+
+        summaryGrid.replaceChildren(...cards);
+      }
+
+      function renderIssues() {
+        const active = activeResult();
+        const handOffs = results.filter((result) => result.status === "handed");
+        const pinned = results.filter((result) => result.status === "pinned");
+        const issues = [];
+
+        issues.push({
+          tone: active.issue === "match" ? "ready" : "route",
+          title: active.issue === "match" ? "Preview result is in context" : issueLabels[active.issue],
+          detail: active.owner === "none"
+            ? "This result can be inspected in the preview without clearing unrelated review warnings."
+            : `${ownerLabels[active.owner]} still owns the fix; search only navigates to the moment.`,
+        });
+
+        if (handOffs.length) {
+          issues.push({
+            tone: "route",
+            title: `${handOffs.length} ${handOffs.length === 1 ? "result" : "results"} handed off`,
+            detail: "Hand-offs route to owning review surfaces instead of marking the transcript search result as fixed.",
+          });
+        }
+
+        if (pinned.length) {
+          issues.push({
+            tone: "route",
+            title: `${pinned.length} pinned for clip review`,
+            detail: "Pinned moments feed clip review without treating the searched line as publish-ready.",
+          });
+        }
+
+        if (lastHandOff) {
+          issues.push({
+            tone: "ready",
+            title: "Return path preserved",
+            detail: `${lastHandOff.time} can return to the same search after ${ownerLabels[lastHandOff.owner]} is checked.`,
+          });
+        }
+
+        issuesElement.replaceChildren(
+          ...issues.map((issue) => {
+            const item = document.createElement("article");
+            item.className = `issue ${issue.tone}`;
+            item.append(createText("strong", issue.title), createText("span", issue.detail));
+            return item;
+          }),
+        );
+      }
+
+      function refresh() {
+        const visible = visibleResults();
+        if (visible.length && !visible.some((result) => result.id === activeId)) {
+          activeId = visible[0].id;
+        }
+        renderResults();
+        renderPreview();
+        renderSummary();
+        renderIssues();
+      }
+
+      searchInput.addEventListener("input", refresh);
+      speakerFilter.addEventListener("change", refresh);
+      typeFilter.addEventListener("change", refresh);
+      restoreDismissedButton.addEventListener("click", () => {
+        results.forEach((result) => {
+          if (result.status === "dismissed") {
+            result.status = "shown";
+          }
+        });
+        refresh();
+      });
+      resetSampleButton.addEventListener("click", () => {
+        results = freshResults();
+        activeId = "launch-story";
+        lastHandOff = null;
+        searchInput.value = "launch";
+        speakerFilter.value = "All speakers";
+        typeFilter.value = "All result types";
+        refresh();
+      });
+
+      renderOptions();
+      refresh();
+    </script>
+  </body>
+</html>
