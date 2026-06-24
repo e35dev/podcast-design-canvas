@@ -870,21 +870,12 @@
         window.setTimeout(() => target.classList.remove("jump-highlight"), 1600);
       }
 
-      function render() {
-        const evaluation = evaluate(speakers);
+      function renderSummary(evaluation) {
         const batch = summarizeBatch(evaluation.results);
         if (showFlaggedOnly && batch.flaggedCount === 0) {
           showFlaggedOnly = false;
         }
         renderBatchSummary(batch, evaluation.results);
-
-        speakersElement.replaceChildren(
-          ...speakers.map((speaker, index) => {
-            const result = evaluation.results[index];
-            const flagged = batchCategory(result.state) !== "clear";
-            return renderSpeaker(speaker, index, result, showFlaggedOnly && !flagged);
-          }),
-        );
 
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready"
@@ -899,6 +890,27 @@
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "All speaker files are ready for preset selection." })]),
         );
+      }
+
+      function renderSpeakers(evaluation) {
+        const batch = summarizeBatch(evaluation.results);
+        if (showFlaggedOnly && batch.flaggedCount === 0) {
+          showFlaggedOnly = false;
+        }
+
+        speakersElement.replaceChildren(
+          ...speakers.map((speaker, index) => {
+            const result = evaluation.results[index];
+            const flagged = batchCategory(result.state) !== "clear";
+            return renderSpeaker(speaker, index, result, showFlaggedOnly && !flagged);
+          }),
+        );
+      }
+
+      function render() {
+        const evaluation = evaluate(speakers);
+        renderSummary(evaluation);
+        renderSpeakers(evaluation);
       }
 
       function badgeClass(state) {
@@ -977,6 +989,14 @@
             speaker.disposition = "keep";
           }
         }
+
+        // Editing the speaker name only changes creator-facing summary copy, so refresh
+        // the batch/issue summaries in place and keep the focused input alive.
+        if (field === "name") {
+          renderSummary(evaluate(speakers));
+          return;
+        }
+
         render();
       }
 
