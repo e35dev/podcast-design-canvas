@@ -27,6 +27,16 @@ const PREVIEW_APP_PUBLISH_TARGETS = new Set([
   ...PUBLISH_FLOW.map((step) => step.id),
 ]);
 
+// Cleanup screens that publish prep prototypes hand off to when clip review needs
+// the full transcript search path.
+const PUBLISH_FIX_PATHS = {
+  "transcript-search-navigation.html": { path: "publish", from: "cleanup" },
+};
+
+const PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS = new Set(
+  Object.keys(PUBLISH_FIX_PATHS).map((file) => screenIdFromFile(file)),
+);
+
 function currentPublishIndex() {
   const fromBody = document.body.dataset.publishStep;
   if (fromBody) {
@@ -80,9 +90,21 @@ function queryWithoutHash(file) {
 }
 
 function routeSearchFromFile(file) {
-  const query = queryWithoutHash(file);
-  const path = pathFromQuery(query) || pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
-  return pathSearch(path);
+  const params = new URLSearchParams(queryWithoutHash(file));
+  const from = params.get("from");
+  const filePath = params.get("path");
+  const shellPath = pathFromQuery(pathQuerySuffix().replace(/^\?/, ""));
+  const path = filePath || shellPath;
+
+  const out = new URLSearchParams();
+  if (from === "cleanup") {
+    out.set("from", from);
+  }
+  if (path === "publish") {
+    out.set("path", "publish");
+  }
+  const search = out.toString();
+  return search ? `?${search}` : "";
 }
 
 function hrefHasPublishPath(file) {
@@ -129,6 +151,22 @@ function hrefWithPath(file) {
   return mergeRouteSearch(file, { path: "publish" });
 }
 
+function linkBase(href) {
+  return (href || "").split("#")[0].split("?")[0];
+}
+
+function resolvePublishLink(file) {
+  const base = linkBase(file);
+  if (Object.prototype.hasOwnProperty.call(PUBLISH_FIX_PATHS, base)) {
+    return mergeRouteSearch(file, PUBLISH_FIX_PATHS[base]);
+  }
+  return hrefWithPath(file);
+}
+
+function routesThroughPreviewApp(file) {
+  return isPreviewAppPublishTarget(file) || PREVIEW_APP_PUBLISH_CROSS_PATH_TARGETS.has(screenIdFromFile(file));
+}
+
 function setTopTargetWhenEmbedded(link) {
   if (isEmbeddedInPreviewApp()) {
     link.target = "_top";
@@ -136,13 +174,14 @@ function setTopTargetWhenEmbedded(link) {
 }
 
 function setPublishScreenLink(link, file) {
-  if (isEmbeddedInPreviewApp() && isPreviewAppPublishTarget(file)) {
-    link.href = previewAppHref(file);
+  const resolved = resolvePublishLink(file);
+  if (isEmbeddedInPreviewApp() && routesThroughPreviewApp(file)) {
+    link.href = previewAppHref(resolved);
     link.target = "_top";
     return;
   }
 
-  link.href = hrefWithPath(file);
+  link.href = resolved;
 }
 
 function isLocalScreenHref(href) {
@@ -150,7 +189,10 @@ function isLocalScreenHref(href) {
 }
 
 function shouldNormalizePublishHref(href) {
-  return isLocalScreenHref(href) && isPreviewAppPublishTarget(href);
+  return isLocalScreenHref(href) && (
+    isPreviewAppPublishTarget(href) ||
+    Object.prototype.hasOwnProperty.call(PUBLISH_FIX_PATHS, linkBase(href))
+  );
 }
 
 function normalizePublishScreenLink(link) {

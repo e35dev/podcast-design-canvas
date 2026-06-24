@@ -26,6 +26,7 @@ const publishScreens = [
   "show-notes-assembly.html",
   "episode-metadata-publishing.html",
   "export-package-handoff.html",
+  "clip-candidate-review.html",
   "client-review-copy-flow.html",
   "publish-checklist.html",
 ];
@@ -370,6 +371,53 @@ assert.equal(
   "publish nav leaves dynamic external links unchanged",
 );
 assert.equal(dynamicExternalLink.target, "", "publish nav does not retarget dynamic external links");
+
+const clipReviewLinks = renderNavFor(
+  "clip-candidate-review.html",
+  false,
+  "?path=publish",
+  ["export-package-handoff.html", "destination-crop-preview.html", "transcript-search-navigation.html"],
+);
+assert.equal(
+  linkWithText(clipReviewLinks, "export-package-handoff.html").href,
+  "export-package-handoff.html?path=publish",
+  "publish nav keeps publish context on clip review export handoffs",
+);
+assert.equal(
+  linkWithText(clipReviewLinks, "destination-crop-preview.html").href,
+  "destination-crop-preview.html?path=publish",
+  "publish nav keeps publish context on clip review crop handoffs",
+);
+const transcriptParams = new URLSearchParams(
+  linkWithText(clipReviewLinks, "transcript-search-navigation.html").href.split("?")[1] || "",
+);
+assert.equal(transcriptParams.get("from"), "cleanup", "clip review transcript handoff keeps cleanup entry context");
+assert.equal(transcriptParams.get("path"), "publish", "clip review transcript handoff keeps publish path context");
+
+const embeddedClipLinks = renderNavFor(
+  "clip-candidate-review.html",
+  true,
+  "?path=publish",
+  ["transcript-search-navigation.html"],
+);
+const embeddedTranscriptLink = linkWithText(embeddedClipLinks, "transcript-search-navigation.html");
+assert.equal(
+  embeddedTranscriptLink.href,
+  "../preview/app.html#transcript-search-navigation?from=cleanup&path=publish",
+  "embedded publish nav routes clip review transcript handoffs through the preview app",
+);
+assert.equal(embeddedTranscriptLink.target, "_top", "embedded transcript handoff links target the parent app");
+
+const dynamicTranscriptLink = normalizePublishClickFor(
+  "transcript-search-navigation.html",
+  "?path=publish",
+  true,
+);
+assert.equal(
+  dynamicTranscriptLink.href,
+  "../preview/app.html#transcript-search-navigation?from=cleanup&path=publish",
+  "embedded publish nav normalizes dynamic clip review transcript handoffs before navigation",
+);
 
 // Rendering twice must still leave a single nav (matches the script's guard).
 const head = createElement("head");
