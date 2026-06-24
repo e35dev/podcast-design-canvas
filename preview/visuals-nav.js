@@ -62,10 +62,14 @@ function renderVisualsNav() {
         text-decoration: none;
       }
 
-      .visuals-nav a:hover,
+      .visuals-nav a:hover {
+        text-decoration: underline;
+      }
+
       .visuals-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .visuals-nav .step {

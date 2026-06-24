@@ -64,10 +64,14 @@ function renderSpeakerSetupNav() {
         text-decoration: none;
       }
 
-      .speaker-setup-nav a:hover,
+      .speaker-setup-nav a:hover {
+        text-decoration: underline;
+      }
+
       .speaker-setup-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .speaker-setup-nav .step {

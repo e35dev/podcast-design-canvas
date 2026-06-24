@@ -1,10 +1,8 @@
 "use strict";
 
-// Keyboard focus-visibility guard for the preview shell (#581).
-// The shell is the primary product entrypoint, so every focusable rule that
-// styles :focus-visible must keep a visible focus ring. A rule that sets
-// `outline: none` on :focus-visible silently strips the keyboard focus
-// indicator, which is the accessibility defect that blocked earlier work.
+// Keyboard focus-visibility guard for the preview shell (#581) and shared
+// path navigation scripts (#583). Every focusable rule that styles
+// :focus-visible must keep a visible focus ring.
 // Run with: `node preview/shell-focus-visible.test.js`
 
 const fs = require("fs");
@@ -14,10 +12,10 @@ const assert = require("assert");
 const previewDir = __dirname;
 const shellFiles = fs
   .readdirSync(previewDir)
-  .filter((name) => name.endsWith(".html"))
+  .filter((name) => name.endsWith(".html") || name.endsWith("-nav.js"))
   .map((name) => path.join(previewDir, name));
 
-assert.ok(shellFiles.length > 0, "preview shell html files exist for focus guard");
+assert.ok(shellFiles.length > 0, "preview shell and path-nav files exist for focus guard");
 
 const ruleBlock = /([^{}]+)\{([^{}]*)\}/g;
 
@@ -49,6 +47,6 @@ for (const filePath of shellFiles) {
   }
 }
 
-assert.ok(checkedFocusRules > 0, "found :focus-visible rules to verify in the shell");
+assert.ok(checkedFocusRules > 0, "found :focus-visible rules to verify in the shell and path nav");
 
-console.log(`shell focus-visible guard: ${checkedFocusRules} focus rules verified`);
+console.log(`shell focus-visible guard: ${checkedFocusRules} focus rules verified across shell and path nav`);

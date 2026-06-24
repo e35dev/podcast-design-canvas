@@ -63,10 +63,14 @@ function renderStyleNav() {
         text-decoration: none;
       }
 
-      .style-nav a:hover,
+      .style-nav a:hover {
+        text-decoration: underline;
+      }
+
       .style-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .style-nav .step {

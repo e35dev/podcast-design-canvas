@@ -64,10 +64,14 @@ function renderEpisodeFlowNav() {
         text-decoration: none;
       }
 
-      .episode-flow-nav a:hover,
+      .episode-flow-nav a:hover {
+        text-decoration: underline;
+      }
+
       .episode-flow-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .episode-flow-nav .step {

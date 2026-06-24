@@ -82,10 +82,14 @@ function renderIngestNav() {
         text-decoration: none;
       }
 
-      .ingest-nav a:hover,
+      .ingest-nav a:hover {
+        text-decoration: underline;
+      }
+
       .ingest-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .ingest-nav .step {

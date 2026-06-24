@@ -63,10 +63,14 @@ function renderReuseNav() {
         text-decoration: none;
       }
 
-      .reuse-nav a:hover,
+      .reuse-nav a:hover {
+        text-decoration: underline;
+      }
+
       .reuse-nav a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid #136f63;
+        outline-offset: 2px;
       }
 
       .reuse-nav .step {
