@@ -207,6 +207,44 @@ assert.equal(
 );
 assert.equal(dynamicRoleLink.target, "_top", "dynamic embedded setup links target the parent app");
 
+const standaloneSocialLink = normalizeSetupHrefFor("social-context-intake.html", "?path=episode");
+assert.equal(
+  standaloneSocialLink.href,
+  "social-context-intake.html?path=ingest",
+  "speaker setup nav routes social context fix links onto the ingest path",
+);
+
+const embeddedSocialLink = normalizeSetupHrefFor("social-context-intake.html", "?path=episode", true);
+assert.equal(
+  embeddedSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded speaker setup nav routes social context fix links through the preview app",
+);
+assert.equal(embeddedSocialLink.target, "_top", "embedded social context fix links target the parent app");
+
+const standalonePresetLink = normalizeSetupHrefFor("preset-comparison-preview.html", "?path=episode");
+assert.equal(
+  standalonePresetLink.href,
+  "preset-comparison-preview.html?path=episode",
+  "speaker setup nav keeps episode path context on visual match preset fix links",
+);
+
+const embeddedPresetLink = normalizeSetupHrefFor("preset-comparison-preview.html", "?path=episode", true);
+assert.equal(
+  embeddedPresetLink.href,
+  "../preview/app.html#preset-comparison-preview?path=episode",
+  "embedded speaker setup nav routes visual match preset fix links through the preview app",
+);
+assert.equal(embeddedPresetLink.target, "_top", "embedded preset comparison fix links target the parent app");
+
+const dynamicSocialLink = normalizeSetupClickFor("social-context-intake.html", "?path=episode", true);
+assert.equal(
+  dynamicSocialLink.href,
+  "../preview/app.html#social-context-intake?path=ingest",
+  "embedded speaker setup nav normalizes dynamic social context fix links before navigation",
+);
+assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded social context fix links target the parent app");
+
 const firstNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review");
 assert.equal(
   linkWithText(firstNav.nodes, "Previous: Speaker roles").href,
