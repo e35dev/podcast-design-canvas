@@ -19,7 +19,13 @@ function makeNode(tag) {
     textContent: "", value: "", selected: false,
     set innerHTML(v) { this._html = v; }, get innerHTML() { return this._html; },
     set className(v) { this._cls = v; }, get className() { return this._cls; },
-    classList: { add() {}, remove() {}, toggle() {} },
+    classList: {
+      _classes: new Set(),
+      add(...names) { names.forEach((name) => this._classes.add(name)); },
+      remove(...names) { names.forEach((name) => this._classes.delete(name)); },
+      toggle(name) { this._classes.has(name) ? this._classes.delete(name) : this._classes.add(name); },
+      contains(name) { return this._classes.has(name); },
+    },
     setAttribute() {}, getAttribute() { return null; },
     addEventListener() {},
     appendChild(c) { this._children.push(c); return c; },
@@ -131,4 +137,57 @@ assert.strictEqual(M.evaluate([endsEarly]).overall, "blocked", "ends-early block
 assert.strictEqual(M.evaluate([{ ...endsEarly, resolution: "accepted" }]).results[0].state, "accepted",
   "'accepted' is non-blocking — which is exactly why the button must be gated off here");
 
-console.log("speaker-sync-repair (Mark intentional gate): all assertions passed");
+// 6. Suggested preview moments are wired into the per-track picker (#468 pattern).
+const lateVideoTrack = {
+  id: "guest-1",
+  name: "Guest 1 — Marcus Lee",
+  issue: "video-late",
+  proposedRepair: "align-host",
+  resolution: null,
+  previewMoment: "episode-start",
+};
+const lateVideoCard = M.renderTrack(lateVideoTrack, 0, M.evaluate([lateVideoTrack]).results[0]);
+const lateVideoText = allText(lateVideoCard).join(" ");
+assert.ok(
+  lateVideoText.includes("Suggested preview for video starts late: episode start"),
+  "video-late renders the issue-to-moment hint under the picker",
+);
+const lateVideoButtons = (lateVideoCard._children || [])
+  .flatMap((child) => child._children || [])
+  .flatMap((child) => child._children || [])
+  .filter((node) => node.tagName === "button" && node.textContent === "Episode start");
+assert.ok(lateVideoButtons.length, "video-late picker includes the episode start button");
+assert.ok(
+  lateVideoButtons[0].classList.contains("suggested-moment"),
+  "video-late highlights episode start with the suggested-moment class",
+);
+
+const attributionPreviewTrack = {
+  id: "caption-drift",
+  name: "Guest 1 — Marcus Lee",
+  issue: "attribution",
+  proposedRepair: "align-host",
+  resolution: null,
+};
+assert.strictEqual(
+  M.suggestedPreviewMoment(attributionPreviewTrack),
+  "caption-sensitive",
+  "attribution issues suggest caption-sensitive exchange",
+);
+assert.strictEqual(
+  M.issueDefaultPreviewMoment.attribution,
+  "caption-sensitive",
+  "attribution default preview moment is caption-sensitive exchange",
+);
+const attributionPreviewCard = M.renderTrack(
+  { ...attributionPreviewTrack, previewMoment: "caption-sensitive" },
+  0,
+  M.evaluate([{ ...attributionPreviewTrack, previewMoment: "caption-sensitive" }]).results[0],
+);
+const attributionPreviewText = allText(attributionPreviewCard).join(" ");
+assert.ok(
+  attributionPreviewText.includes("Suggested preview for captions show wrong speaker: caption-sensitive exchange"),
+  "attribution renders the caption-sensitive suggested preview hint",
+);
+
+console.log("speaker-sync-repair: all assertions passed");

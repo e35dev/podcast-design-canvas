@@ -411,6 +411,17 @@
         color: var(--accent);
       }
 
+      button.moment-choice.suggested-moment {
+        border-style: dashed;
+        border-color: var(--accent);
+      }
+
+      .moment-hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+      }
+
       @media (max-width: 640px) {
         .compare { grid-template-columns: 1fr; }
       }
@@ -568,7 +579,7 @@
         },
         attribution: {
           label: "Captions show wrong speaker",
-          moment: "Detected drift point",
+          moment: "Caption-sensitive exchange",
           description: (name) => `Captions name the wrong speaker during ${name}'s answer`,
           repairs: ["align-host", "attribution", "intentional", "ignore"],
         },
@@ -610,11 +621,12 @@
       };
 
       const previewMoments = [
-        { id: "episode-start", label: "Episode start" },
-        { id: "first-guest", label: "First guest response" },
-        { id: "midpoint", label: "Midpoint" },
-        { id: "final-exchange", label: "Final exchange" },
-        { id: "drift-point", label: "Detected drift point" },
+        { id: "episode-start", label: "Episode start", reason: "intro alignment and the first host frame do not look delayed" },
+        { id: "first-guest", label: "First guest response", reason: "the handoff between speakers shows whether one track started early or late" },
+        { id: "midpoint", label: "Midpoint", reason: "gradual drift is visible before it compounds through the rest of the conversation" },
+        { id: "final-exchange", label: "Final exchange", reason: "a guest track that ends early or duplicate audio does not surprise the viewer at the close" },
+        { id: "drift-point", label: "Detected drift point", reason: "the creator confirms the repair at the exact moment sync broke down" },
+        { id: "caption-sensitive", label: "Caption-sensitive exchange", reason: "speaker attribution still matches who appears to be speaking after the repair" },
       ];
 
       const issueDefaultPreviewMoment = {
@@ -623,7 +635,7 @@
         drift: "midpoint",
         "ends-early": "final-exchange",
         duplicate: "midpoint",
-        attribution: "drift-point",
+        attribution: "caption-sensitive",
       };
 
       const momentSeverity = {
@@ -632,6 +644,7 @@
         midpoint: 0.64,
         "final-exchange": 0.46,
         "drift-point": 0.88,
+        "caption-sensitive": 0.92,
       };
 
       const syncProfiles = {
@@ -1182,6 +1195,24 @@
         return track.name.split(" — ")[0];
       }
 
+      function suggestedPreviewMoment(track) {
+        return issueDefaultPreviewMoment[track.issue] || null;
+      }
+
+      function renderMomentHint(track) {
+        const suggested = suggestedPreviewMoment(track);
+        if (!suggested) return null;
+
+        const moment = previewMoments.find((entry) => entry.id === suggested);
+        const issue = issues[track.issue];
+        if (!moment || !issue) return null;
+
+        const hint = document.createElement("p");
+        hint.className = "moment-hint";
+        hint.textContent = `Suggested preview for ${issue.label.toLowerCase()}: ${moment.label.toLowerCase()}, so ${moment.reason}.`;
+        return hint;
+      }
+
       function renderPreviewMomentPicker(track, index) {
         const label = document.createElement("label");
         label.textContent = "Preview moment";
@@ -1190,12 +1221,17 @@
         group.setAttribute("role", "group");
         group.setAttribute("aria-label", "Preview moment");
 
+        const suggested = suggestedPreviewMoment(track);
+
         for (const moment of previewMoments) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "secondary moment-choice";
           button.textContent = moment.label;
           button.setAttribute("aria-pressed", track.previewMoment === moment.id ? "true" : "false");
+          if (moment.id === suggested) {
+            button.classList.add("suggested-moment");
+          }
           button.addEventListener("click", () => {
             tracks[index].previewMoment = moment.id;
             render();
@@ -1203,7 +1239,11 @@
           group.appendChild(button);
         }
 
-        label.appendChild(group);
+        label.append(group);
+        const hint = renderMomentHint(track);
+        if (hint) {
+          label.appendChild(hint);
+        }
         return label;
       }
 
@@ -1417,7 +1457,19 @@
       // Exported only for the committed Node test (speaker-sync-repair.test.js). In the
       // page `module` is undefined, so this block is skipped and nothing changes.
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { issues, repairs, repairChoices, evaluate, sampleTracks, renderTrack, renderIssue, renderIssueAction };
+        module.exports = {
+          issues,
+          repairs,
+          repairChoices,
+          evaluate,
+          sampleTracks,
+          previewMoments,
+          issueDefaultPreviewMoment,
+          suggestedPreviewMoment,
+          renderTrack,
+          renderIssue,
+          renderIssueAction,
+        };
       }
     </script>
     <script src="../preview/episode-flow-nav.js" defer></script>
