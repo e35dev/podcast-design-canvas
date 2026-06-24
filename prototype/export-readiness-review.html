@@ -205,6 +205,21 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent, #136f63);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: none;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -330,15 +345,18 @@
         na: { label: "Not for this export", blocks: false },
       };
 
+      // Each readiness area names the screen that owns its fix, so a flagged issue opens
+      // the owning screen — the same connected hand-off used by speaker attribution,
+      // transcript search, and watch-through review.
       const checkList = [
-        { id: "framing", name: "Speaker framing", desc: "Faces stay visible, no bad crops." },
-        { id: "captions", name: "Captions & spelling", desc: "Coverage and proper-noun accuracy." },
-        { id: "audio", name: "Audio cleanup", desc: "Clear speech, balanced levels." },
-        { id: "visuals", name: "Contextual visuals", desc: "B-roll, callouts, and titles approved." },
-        { id: "brand", name: "Brand & sponsor", desc: "Marks placed, disclosures present." },
-        { id: "metadata", name: "Metadata & chapters", desc: "Title, chapters, publish details." },
+        { id: "framing", name: "Speaker framing", desc: "Faces stay visible, no bad crops.", fixScreen: "speaker-framing-safety.html" },
+        { id: "captions", name: "Captions & spelling", desc: "Coverage and proper-noun accuracy.", fixScreen: "audio-caption-quality-review.html" },
+        { id: "audio", name: "Audio cleanup", desc: "Clear speech, balanced levels.", fixScreen: "audio-cleanup-controls.html" },
+        { id: "visuals", name: "Contextual visuals", desc: "B-roll, callouts, and titles approved.", fixScreen: "contextual-broll-moments.html" },
+        { id: "brand", name: "Brand & sponsor", desc: "Marks placed, disclosures present.", fixScreen: "layout-safe-areas.html" },
+        { id: "metadata", name: "Metadata & chapters", desc: "Title, chapters, publish details.", fixScreen: "episode-chapter-markers.html" },
         { id: "music", name: "Music cues", desc: "Cues placed and cleared for use." },
-        { id: "thumbnail", name: "Thumbnail", desc: "Cover frame selected and readable." },
+        { id: "thumbnail", name: "Thumbnail", desc: "Cover frame selected and readable.", fixScreen: "thumbnail-cover-frame.html" },
       ];
 
       const sampleStatus = {
@@ -405,6 +423,11 @@
             issue = { title: `${check.name} needs review`, action: `${check.desc} Worth a look, but it won't block your export.`, tone: "review" };
           } else if (value === "review") {
             issue = { title: `${check.name}: reviewed`, action: "You've reviewed this warning — it won't stop the export.", tone: "info" };
+          }
+          // Still-actionable issues open the screen that owns the fix.
+          if (issue && issue.tone !== "info" && check.fixScreen) {
+            issue.fixScreen = check.fixScreen;
+            issue.fixLabel = check.name;
           }
           return { id: check.id, value, blocks: status.blocks, issue };
         });
@@ -509,6 +532,13 @@
         const span = document.createElement("span");
         span.textContent = issue.action;
         article.append(strong, span);
+        if (issue.fixScreen) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          article.append(openLink);
+        }
         return article;
       }
 
