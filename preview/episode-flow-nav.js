@@ -94,7 +94,12 @@ function renderEpisodeFlowNav() {
   home.href = "../preview/";
   home.textContent = "Episode flow home";
 
+  const guided = document.createElement("a");
+  guided.href = "../preview/episode-flow.html";
+  guided.textContent = "Guided episode flow";
+
   wrap.appendChild(home);
+  wrap.appendChild(guided);
 
   if (previous) {
     const prevLink = document.createElement("a");

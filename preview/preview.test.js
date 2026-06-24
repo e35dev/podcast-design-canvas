@@ -107,6 +107,7 @@ function renderNavFor(fileName) {
 const firstNav = renderNavFor("source-media-health.html");
 assert.ok(firstNav.nodes.some((node) => node.id === "episode-flow-nav-styles"), "flow nav injects styles once");
 assert.ok(firstNav.nodes.some((node) => node.textContent === "Episode flow home"), "flow nav renders home link");
+assert.ok(firstNav.nodes.some((node) => node.textContent === "Guided episode flow"), "flow nav renders guided flow link");
 assert.ok(
   firstNav.nodes.some((node) => node.textContent === "Next: Speaker sync repair"),
   "first flow screen renders next link",
