@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Brand Kit Setup Prototype</title>
+    <style>
+      :root {
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --surface: #f7faf8;
+        --accent: #136f63;
+        --warn: #9b5d00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 720px; margin-bottom: 28px; }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 24px;
+      }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .panel h2 { font-size: 16px; margin-bottom: 14px; }
+      .field-group { display: grid; gap: 14px; }
+      .field { display: grid; gap: 5px; }
+      .field label { font-size: 13px; font-weight: 600; color: var(--ink); }
+      .field select, .field input[type="text"] {
+        font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); padding: 6px 9px; width: 100%; cursor: pointer;
+      }
+      .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .color-swatch {
+        width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line);
+        cursor: pointer; flex-shrink: 0;
+      }
+      .color-field { display: flex; align-items: center; gap: 8px; }
+      .color-field input[type="text"] { flex: 1; }
+      .field-note { font-size: 12px; color: var(--muted); }
+      .preview-wrap { display: grid; gap: 14px; }
+      .episode-frame {
+        aspect-ratio: 16 / 9;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(160deg, #263831, #111d1a);
+      }
+      .frame-speaker {
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        display: flex; align-items: flex-end; justify-content: flex-start;
+        padding: 12px;
+      }
+      .speaker-card {
+        display: flex; align-items: center; gap: 10px;
+      }
+      .speaker-avatar {
+        width: 50px; height: 50px; border-radius: 50%; background: #3d6b62;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 18px; color: #d0ede8; flex-shrink: 0;
+      }
+      .speaker-text .name { font-size: 14px; font-weight: 700; color: #fff; }
+      .speaker-text .role { font-size: 12px; color: rgba(255,255,255,0.65); }
+      .brand-lower-third {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        padding: 8px 12px;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .brand-lower-third .lt-bar {
+        width: 3px; height: 30px; border-radius: 2px; flex-shrink: 0;
+      }
+      .brand-lower-third .lt-name { font-size: 13px; font-weight: 700; color: #fff; }
+      .brand-lower-third .lt-role { font-size: 11px; color: rgba(255,255,255,0.65); }
+      .brand-logo-badge {
+        position: absolute; top: 10px; right: 10px;
+        background: rgba(0,0,0,0.45); border-radius: 5px; padding: 5px 8px;
+        font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .brand-logo-badge.hidden { display: none; }
+      .caption-bar {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 10px;
+        font-size: 12px; font-weight: 600; text-align: center; color: #fff;
+      }
+      .caption-bar.none { display: none; }
+      .caption-bar.subtle { background: rgba(0,0,0,0.45); }
+      .caption-bar.standard { background: rgba(0,0,0,0.72); }
+      .caption-bar.high { background: rgba(0,0,0,0.92); }
+      .frame-status {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 12px; color: var(--muted); padding: 2px 0;
+      }
+      .issues { display: grid; gap: 10px; margin-top: 2px; }
+      .issue {
+        border-left: 3px solid var(--warn); border-radius: 6px; background: #fff;
+        padding: 10px 12px; display: grid; gap: 3px;
+      }
+      .issue.conflict { border-left-color: #9f2626; }
+      .issue strong { font-size: 13px; }
+      .issue span, .issue a { font-size: 12px; color: var(--muted); display: block; }
+      .fix-link { color: var(--accent); text-decoration: underline; cursor: pointer; }
+      .fix-link:hover { color: #0a5040; }
+      .fix-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+      .status-bar {
+        font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 6px;
+        background: var(--surface); border: 1px solid var(--line);
+      }
+      .status-bar.ready { background: #e8f4f1; color: var(--accent); border-color: #b1d5ca; }
+      .status-bar.review { background: #fff8ec; color: var(--warn); border-color: #e8d2a0; }
+      .status-bar.conflict { background: #fef0f0; color: #9f2626; border-color: #e8b8b8; }
+      .template-note {
+        font-size: 12px; color: var(--muted); margin-top: 10px; padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+      button.save-btn {
+        margin-top: 12px; min-height: 34px; border: 1px solid var(--accent); border-radius: 6px;
+        background: var(--accent); color: #fff; font: inherit; font-size: 13px; font-weight: 600;
+        padding: 5px 14px; cursor: pointer; width: 100%;
+      }
+      button.save-btn:hover { background: #0a5040; }
+      button.reset-btn {
+        margin-top: 6px; min-height: 32px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); font: inherit; font-size: 13px;
+        padding: 4px 12px; cursor: pointer; width: 100%;
+      }
+      button.reset-btn:hover { background: var(--surface); }
+      @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="show-brand-kit-setup">
+    <main>
+      <h1>Show brand kit setup</h1>
+      <p class="lede">
+        Set the show's visual identity once — colors, type style, logo placement, and caption emphasis —
+        so every preset, lower-third, and export thumbnail stays on-brand without manual adjustments.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Brand inputs</h2>
+          <div class="field-group">
+            <div class="field">
+              <label for="showName">Show name</label>
+              <input type="text" id="showName" value="The Deep Dive" />
+            </div>
+
+            <div class="color-row">
+              <div class="field">
+                <label for="primaryColor">Primary color</label>
+                <div class="color-field">
+                  <div class="color-swatch" id="primarySwatch"></div>
+                  <input type="text" id="primaryColor" value="#136f63" maxlength="7" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="accentColor">Accent color</label>
+                <div class="color-field">
+                  <div class="color-swatch" id="accentSwatch"></div>
+                  <input type="text" id="accentColor" value="#ffd166" maxlength="7" />
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="typeStyle">Type style</label>
+              <select id="typeStyle">
+                <option value="minimal">Minimal — clean, thin weights</option>
+                <option value="warm">Warm — rounded, approachable</option>
+                <option value="bold">Bold — heavy, high contrast</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="lowerThirdStyle">Lower-third layout</label>
+              <select id="lowerThirdStyle">
+                <option value="bar-left">Accent bar · name left</option>
+                <option value="full-width">Full-width band</option>
+                <option value="minimal">Name only · no background</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="captionEmphasis">Caption emphasis</label>
+              <select id="captionEmphasis">
+                <option value="none">None — captions off in preview</option>
+                <option value="subtle">Subtle — semi-transparent bar</option>
+                <option value="standard" selected>Standard — solid dark bar</option>
+                <option value="high">High — maximum contrast background</option>
+              </select>
+              <span class="field-note">Affects readability for long-form viewing</span>
+            </div>
+
+            <div class="field">
+              <label for="logoPlacement">Logo placement</label>
+              <select id="logoPlacement">
+                <option value="none">No logo</option>
+                <option value="top-right" selected>Top right</option>
+                <option value="top-left">Top left</option>
+              </select>
+              <span class="field-note">Top right may overlap a second speaker's corner frame</span>
+            </div>
+
+            <div class="field">
+              <label for="speakerCount">Speaker count in episode</label>
+              <select id="speakerCount">
+                <option value="1">Solo — 1 speaker</option>
+                <option value="2" selected>Pair — 2 speakers</option>
+                <option value="3">Panel — 3 speakers</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2>Preview</h2>
+          <div class="preview-wrap">
+            <div class="episode-frame" id="episodeFrame">
+              <div class="frame-speaker" id="frameSpeaker">
+                <div class="speaker-card">
+                  <div class="speaker-avatar" id="avatarEl">J</div>
+                  <div class="speaker-text">
+                    <div class="name" id="speakerName">Jordan Ellis</div>
+                    <div class="role" id="speakerRole">Host</div>
+                  </div>
+                </div>
+              </div>
+              <div class="brand-lower-third" id="lowerThirdEl">
+                <div class="lt-bar" id="ltBar"></div>
+                <div>
+                  <div class="lt-name" id="ltName">Jordan Ellis</div>
+                  <div class="lt-role" id="ltRole">Host · The Deep Dive</div>
+                </div>
+              </div>
+              <div class="caption-bar standard" id="captionBar">
+                "…and that is exactly what we wanted to understand."
+              </div>
+              <div class="brand-logo-badge" id="logoBadge">TDD</div>
+            </div>
+
+            <div class="frame-status">
+              <span id="previewLabel">Standard caption · Top-right logo</span>
+              <span id="speakerCountLabel">2-speaker layout</span>
+            </div>
+
+            <div class="issues" id="issues"></div>
+            <div class="status-bar" id="statusBar">Loading…</div>
+
+            <div class="template-note">
+              Saving continues to
+              <a href="show-template-adaptation.html" class="fix-link">show template adaptation</a>
+              where brand inputs are applied across future episodes.
+            </div>
+
+            <button class="save-btn" id="saveBtn">Continue to show template</button>
+            <button class="reset-btn" id="resetBtn">Reset to defaults</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const defaults = {
+        showName: "The Deep Dive",
+        primaryColor: "#136f63",
+        accentColor: "#ffd166",
+        typeStyle: "minimal",
+        lowerThirdStyle: "bar-left",
+        captionEmphasis: "standard",
+        logoPlacement: "top-right",
+        speakerCount: 2,
+      };
+
+      let brand = { ...defaults };
+
+      function isLightColor(hex) {
+        const c = hex.replace("#", "");
+        if (c.length !== 6) return false;
+        const r = parseInt(c.slice(0, 2), 16);
+        const g = parseInt(c.slice(2, 4), 16);
+        const b = parseInt(c.slice(4, 6), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000 > 140;
+      }
+
+      function evaluate(b) {
+        const issues = [];
+
+        if (b.captionEmphasis === "none") {
+          issues.push({
+            title: "Captions are off in preview",
+            action: "Turn caption emphasis to subtle or higher so captions are visible in the episode.",
+            tone: "review",
+          });
+        }
+
+        if (isLightColor(b.primaryColor) && b.captionEmphasis !== "high") {
+          issues.push({
+            title: "Primary color may reduce caption contrast",
+            action:
+              "Open canvas layer controls to adjust the caption layer so text stays readable against light brand colors.",
+            tone: "conflict",
+            fixScreen: "canvas-layer-controls.html",
+            fixLabel: "canvas layer controls",
+          });
+        }
+
+        if (b.logoPlacement === "top-right" && Number(b.speakerCount) >= 2) {
+          issues.push({
+            title: "Top-right logo overlaps second speaker's corner frame",
+            action:
+              "Open speaker framing safety to confirm the logo does not cover any speaker's face at a two-up or panel layout.",
+            tone: "conflict",
+            fixScreen: "speaker-framing-safety.html",
+            fixLabel: "speaker framing safety",
+          });
+        }
+
+        if (b.typeStyle === "bold" && b.captionEmphasis === "high") {
+          issues.push({
+            title: "Bold type with high caption emphasis may feel visually heavy",
+            action: "Try standard caption emphasis with bold type, or switch to the warm type style.",
+            tone: "review",
+          });
+        }
+
+        const hasConflict = issues.some((i) => i.tone === "conflict");
+        const hasReview = issues.some((i) => i.tone === "review");
+        const overall = hasConflict ? "conflict" : hasReview ? "review" : "ready";
+        return { overall, issues };
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue${issue.tone === "conflict" ? " conflict" : ""}`;
+        const title = document.createElement("strong");
+        title.textContent = issue.title;
+        let action;
+        if (issue.fixScreen && issue.fixLabel) {
+          action = document.createElement("a");
+          action.className = "fix-link";
+          action.href = issue.fixScreen;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
+        article.append(title, action);
+        return article;
+      }
+
+      function hexIsValid(hex) {
+        return /^#[0-9a-fA-F]{6}$/.test(hex);
+      }
+
+      function updatePreview() {
+        const primary = hexIsValid(brand.primaryColor) ? brand.primaryColor : defaults.primaryColor;
+        const accent = hexIsValid(brand.accentColor) ? brand.accentColor : defaults.accentColor;
+
+        document.getElementById("primarySwatch").style.background = primary;
+        document.getElementById("accentSwatch").style.background = accent;
+
+        const ltBar = document.getElementById("ltBar");
+        const lowerThird = document.getElementById("lowerThirdEl");
+        const captionBar = document.getElementById("captionBar");
+        const logoBadge = document.getElementById("logoBadge");
+        const ltName = document.getElementById("ltName");
+        const ltRole = document.getElementById("ltRole");
+
+        ltBar.style.background = primary;
+        lowerThird.style.background =
+          brand.lowerThirdStyle === "full-width"
+            ? `linear-gradient(90deg, ${primary}cc, ${primary}88)`
+            : brand.lowerThirdStyle === "minimal"
+            ? "transparent"
+            : "rgba(0,0,0,0.62)";
+        ltBar.style.display = brand.lowerThirdStyle === "bar-left" ? "block" : "none";
+        ltName.textContent = "Jordan Ellis";
+        ltRole.textContent = `Host · ${brand.showName || "Show"}`;
+
+        captionBar.className = `caption-bar ${brand.captionEmphasis}`;
+
+        const showLogo = brand.logoPlacement !== "none";
+        logoBadge.className = `brand-logo-badge${showLogo ? "" : " hidden"}`;
+        logoBadge.style.left = brand.logoPlacement === "top-left" ? "10px" : "auto";
+        logoBadge.style.right = brand.logoPlacement === "top-right" ? "10px" : "auto";
+        logoBadge.style.top = "10px";
+
+        const acronym = (brand.showName || "S")
+          .split(" ")
+          .filter(Boolean)
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 3)
+          .toUpperCase();
+        logoBadge.textContent = acronym;
+        logoBadge.style.background = primary + "cc";
+
+        document.getElementById("previewLabel").textContent = [
+          brand.captionEmphasis !== "none" ? `${brand.captionEmphasis} caption` : "captions off",
+          brand.logoPlacement !== "none" ? `${brand.logoPlacement} logo` : "no logo",
+        ].join(" · ");
+
+        const count = Number(brand.speakerCount);
+        document.getElementById("speakerCountLabel").textContent =
+          count === 1 ? "solo layout" : count === 2 ? "2-speaker layout" : "panel layout";
+      }
+
+      function render() {
+        updatePreview();
+        const result = evaluate(brand);
+        const issuesEl = document.getElementById("issues");
+        issuesEl.replaceChildren(...result.issues.map(renderIssue));
+        const statusEl = document.getElementById("statusBar");
+        statusEl.className = `status-bar ${result.overall}`;
+        statusEl.textContent =
+          result.overall === "ready"
+            ? "Brand kit looks good — ready to save"
+            : result.overall === "conflict"
+            ? `${result.issues.filter((i) => i.tone === "conflict").length} conflict${
+                result.issues.filter((i) => i.tone === "conflict").length === 1 ? "" : "s"
+              } need attention before saving`
+            : `${result.issues.length} item${result.issues.length === 1 ? "" : "s"} to review`;
+      }
+
+      function syncBrand() {
+        brand.showName = document.getElementById("showName").value;
+        brand.primaryColor = document.getElementById("primaryColor").value;
+        brand.accentColor = document.getElementById("accentColor").value;
+        brand.typeStyle = document.getElementById("typeStyle").value;
+        brand.lowerThirdStyle = document.getElementById("lowerThirdStyle").value;
+        brand.captionEmphasis = document.getElementById("captionEmphasis").value;
+        brand.logoPlacement = document.getElementById("logoPlacement").value;
+        brand.speakerCount = Number(document.getElementById("speakerCount").value);
+        render();
+      }
+
+      ["showName", "primaryColor", "accentColor", "typeStyle", "lowerThirdStyle",
+        "captionEmphasis", "logoPlacement", "speakerCount"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", syncBrand);
+        document.getElementById(id).addEventListener("change", syncBrand);
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        brand = { ...defaults };
+        document.getElementById("showName").value = defaults.showName;
+        document.getElementById("primaryColor").value = defaults.primaryColor;
+        document.getElementById("accentColor").value = defaults.accentColor;
+        document.getElementById("typeStyle").value = defaults.typeStyle;
+        document.getElementById("lowerThirdStyle").value = defaults.lowerThirdStyle;
+        document.getElementById("captionEmphasis").value = defaults.captionEmphasis;
+        document.getElementById("logoPlacement").value = defaults.logoPlacement;
+        document.getElementById("speakerCount").value = String(defaults.speakerCount);
+        render();
+      });
+
+      document.getElementById("saveBtn").addEventListener("click", () => {
+        const result = evaluate(brand);
+        if (result.overall === "conflict") {
+          const statusEl = document.getElementById("statusBar");
+          statusEl.textContent = "Resolve conflicts before saving to the show template.";
+          return;
+        }
+        window.location.href = "show-template-adaptation.html";
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, isLightColor };
+      }
+    </script>
+  </body>
+</html>
