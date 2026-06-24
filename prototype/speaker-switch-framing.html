@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .moments {
+        display: grid;
+        gap: 14px;
+      }
+
+      .moment {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      select:disabled {
+        background: #eef2f0;
+        color: #8a948f;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.fixed {
+        color: #2a4c8a;
+        background: #e2ebfb;
+      }
+
+      .badge.accepted {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .frame {
+        position: relative;
+        width: 132px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #244b45, #14302b);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+        padding: 6%;
+        display: grid;
+        gap: 5%;
+      }
+
+      .spk {
+        position: relative;
+        border-radius: 6px;
+        background: rgba(232, 244, 241, 0.16);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+      }
+
+      .spk::before {
+        content: "";
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        width: 38%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #e8f4f1;
+      }
+
+      .spk.active {
+        background: rgba(109, 181, 168, 0.5);
+        box-shadow: inset 0 0 0 2px #6ee0c8;
+      }
+
+      /* featured: active fills, others shrink along the bottom */
+      .frame.featured {
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 2fr 1fr;
+      }
+
+      .frame.featured .spk.active {
+        grid-column: 1 / 4;
+      }
+
+      /* equal: everyone the same size */
+      .frame.equal {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* side-by-side: two up, active highlighted */
+      .frame.side {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* picture-in-picture: active big, one inset */
+      .frame.pip {
+        grid-template-columns: 1fr;
+      }
+
+      .frame.pip .spk:not(.active) {
+        position: absolute;
+        right: 7%;
+        bottom: 7%;
+        width: 30%;
+        height: 34%;
+      }
+
+      /* reaction: active plus a highlighted listener */
+      .frame.reaction {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .frame.reaction .spk.listener {
+        box-shadow: inset 0 0 0 2px #f4d35e;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .moment {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .frame {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Speaker switch framing</h1>
+      <p class="lede">Choose how the episode reframes when the speaker changes &mdash; without cutting every transition by hand. Pick a style that fits the show, preview it on a real moment, and only review the spots that would look off.</p>
+
+      <section class="workspace" aria-label="Speaker switch framing workspace">
+        <div class="panel">
+          <h2>Conversation moments</h2>
+          <div class="moments" id="moments"></div>
+          <div class="actions">
+            <button type="button" id="addMoment">Add a moment</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Framing summary">
+          <h2>Framing summary</h2>
+          <div id="status" class="status ready">Reframing feels natural</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">A style you choose on purpose is kept. We only flag a moment when the reframe would feel static or clash with a visual.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // How the layout reframes when the active speaker changes. "preview" lays out the
+      // sample frame; "active" marks how the talking speaker is featured.
+      const styles = {
+        featured: { label: "Featured speaker", note: "Active speaker fills the frame" },
+        equal: { label: "Equal presence", note: "Everyone stays the same size" },
+        side: { label: "Side-by-side", note: "Two speakers, active highlighted" },
+        pip: { label: "Picture-in-picture", note: "Active large, others inset" },
+        reaction: { label: "Reaction aware", note: "Briefly holds on a listener" },
+      };
+
+      // How quickly the reframe happens.
+      const speeds = {
+        instant: "Instant",
+        smooth: "Smooth",
+        slow: "Slow",
+      };
+
+      // What the system noticed about this moment. "needsFix" marks something that would
+      // look off if left as is.
+      const flags = {
+        clear: { label: "Looks natural" },
+        static: { label: "Long stretch with no reframe", needsFix: true, title: "A long stretch holds one frame and looks static" },
+        "broll-clash": { label: "Switch lands on a b-roll moment", needsFix: true, title: "A reframe collides with a b-roll moment" },
+        "sponsor-clash": { label: "Switch lands on a sponsor read", needsFix: true, title: "A reframe interrupts a sponsor read" },
+      };
+
+      // How to resolve a flagged moment.
+      const fixes = {
+        review: "Decide later",
+        reframe: "Add a reframe here",
+        hold: "Hold the current frame",
+        accept: "Keep it on purpose",
+      };
+
+      const sampleMoments = [
+        { id: "w1", style: "featured", speed: "smooth", flag: "clear", fix: "review" },
+        { id: "w2", style: "equal", speed: "smooth", flag: "static", fix: "review" },
+        { id: "w3", style: "side", speed: "instant", flag: "broll-clash", fix: "review" },
+        { id: "w4", style: "pip", speed: "slow", flag: "clear", fix: "review" },
+      ];
+
+      let moments = structuredClone(sampleMoments);
+
+      const momentsElement = document.querySelector("#moments");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addMoment").addEventListener("click", () => {
+        const next = moments.length + 1;
+        moments.push({ id: `w${next}-${moments.length}`, style: "featured", speed: "smooth", flag: "static", fix: "review" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        moments = structuredClone(sampleMoments);
+        render();
+      });
+
+      // Single source of truth: map each moment's flag + the creator's fix to a review
+      // state and a plain-language issue. The chosen switch style is always a valid
+      // creative choice; only a flagged moment that's left unresolved needs review.
+      function evaluate(list) {
+        const results = list.map((moment) => {
+          const flag = flags[moment.flag] || flags.clear;
+          let state;
+          let issue = null;
+
+          if (!flag.needsFix) {
+            state = "ready";
+          } else if (moment.fix === "accept") {
+            state = "accepted";
+            issue = { title: `${flag.label}: kept on purpose`, action: "Accepted — this framing stays as is.", tone: "info" };
+          } else if (moment.fix !== "review") {
+            state = "fixed";
+            issue = { title: `${flag.label}: ${fixes[moment.fix].toLowerCase()}`, action: "Resolved for the finished episode.", tone: "info" };
+          } else {
+            state = "review";
+            issue = { title: flag.title, action: "Add a reframe, hold the frame, or accept it on purpose.", tone: "review" };
+          }
+
+          return { id: moment.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild. Every control here is a <select>, so there is no text caret to
+      // preserve and a full re-render on change is always safe.
+      function render() {
+        const evaluation = evaluate(moments);
+        momentsElement.replaceChildren(
+          ...moments.map((moment, index) => renderMoment(moment, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Reframing feels natural" : "Moments to review";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every moment reframes naturally. The episode is set." })]),
+        );
+      }
+
+      function badgeClass(state) {
+        if (state === "ready") {
+          return "ready";
+        }
+        if (state === "fixed") {
+          return "fixed";
+        }
+        if (state === "accepted") {
+          return "accepted";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "ready") {
+          return "natural";
+        }
+        return state === "review" ? "needs review" : state;
+      }
+
+      // Build the sample frame for a switch style: three speakers with the active one
+      // featured per the chosen style.
+      function frameMarkup(style) {
+        if (style === "featured") {
+          return `<span class="spk active"></span><span class="spk"></span><span class="spk"></span>`;
+        }
+        if (style === "pip") {
+          return `<span class="spk active"></span><span class="spk"></span>`;
+        }
+        if (style === "reaction") {
+          return `<span class="spk active"></span><span class="spk listener"></span>`;
+        }
+        // equal and side-by-side: two equal speakers, active highlighted on side-by-side.
+        return `<span class="spk ${style === "side" ? "active" : ""}"></span><span class="spk"></span>`;
+      }
+
+      function renderMoment(moment, index, result) {
+        const article = document.createElement("article");
+        article.className = "moment";
+
+        const styleOptions = Object.entries(styles)
+          .map(([value, item]) => `<option value="${value}" ${value === moment.style ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const speedOptions = Object.entries(speeds)
+          .map(([value, label]) => `<option value="${value}" ${value === moment.speed ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const flagOptions = Object.entries(flags)
+          .map(([value, item]) => `<option value="${value}" ${value === moment.flag ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const fixOptions = Object.entries(fixes)
+          .map(([value, label]) => `<option value="${value}" ${value === moment.fix ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const needsFix = (flags[moment.flag] || flags.clear).needsFix;
+
+        // Every value here is a controlled key or its fixed label, and there is no
+        // user-editable free text in this prototype, so the scaffold is safe to build
+        // with innerHTML.
+        article.innerHTML = `
+          <div class="frame ${moment.style}">${frameMarkup(moment.style)}</div>
+          <div class="fields">
+            <div class="head">
+              <strong>${styles[moment.style].note}</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <div class="fields-row">
+              <label>Switch style
+                <select data-field="style" aria-label="Switch style">${styleOptions}</select>
+              </label>
+              <label>Speed
+                <select data-field="speed" aria-label="Reframe speed">${speedOptions}</select>
+              </label>
+            </div>
+            <div class="fields-row">
+              <label>What we found
+                <select data-field="flag" aria-label="What the system found">${flagOptions}</select>
+              </label>
+              <label>What to do
+                <select data-field="fix" aria-label="How to resolve it" ${needsFix ? "" : "disabled"}>${fixOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        article.addEventListener("change", (event) => onChange(event, index));
+        return article;
+      }
+
+      function onChange(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        const moment = moments[index];
+        moment[field] = event.target.value;
+
+        // When a moment is no longer flagged, reset the fix so a stale value can't keep a
+        // moot resolution selected.
+        if (field === "flag" && !(flags[moment.flag] || flags.clear).needsFix) {
+          moment.fix = "review";
+        }
+        render();
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
