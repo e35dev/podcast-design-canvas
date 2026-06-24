@@ -58,6 +58,10 @@ function previewAppHref(file) {
   return `../preview/app.html#${screenIdFromFile(file)}${routeSearchFromFile(file)}`;
 }
 
+function currentPreviewAppHref(step) {
+  return previewAppHref(`${step.file}${pathQuerySuffix()}`);
+}
+
 function pathFromQuery(query) {
   return new URLSearchParams((query || "").replace(/^\?/, "")).get("path") || "";
 }
@@ -235,7 +239,8 @@ function renderStyleNav() {
   wrap.appendChild(guided);
 
   const app = document.createElement("a");
-  app.href = "../preview/app.html";
+  app.href = currentPreviewAppHref(step);
+  setTopTargetWhenEmbedded(app);
   app.textContent = "Preview app";
   wrap.appendChild(app);
 

@@ -15,6 +15,11 @@ new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "style nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "style nav links to the guided episode flow");
 assert.ok(navScript.includes("app.html"), "style nav links to the preview app");
+assert.ok(navScript.includes("currentPreviewAppHref"), "style nav builds preview app href from the active step");
+assert.ok(
+  navScript.includes("setTopTargetWhenEmbedded(app)"),
+  "style nav preview app link uses embedded target handling",
+);
 assert.ok(navScript.includes("contextual-broll-moments.html"), "style nav hands off to the contextual visuals path");
 assert.ok(navScript.includes("speaker-eye-line-coherence.html"), "style nav links back to speaker setup");
 assert.ok(navScript.includes('document.querySelector(".style-nav")'), "style nav guards against double render");
@@ -162,6 +167,13 @@ const embeddedFirstNav = renderNavFor("preset-style-picker.html", "preset-style-
 const embeddedHome = linkWithText(embeddedFirstNav.nodes, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded style nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
+const embeddedPreviewApp = linkWithText(embeddedFirstNav.nodes, "Preview app");
+assert.equal(
+  embeddedPreviewApp.href,
+  "../preview/app.html#preset-style-picker",
+  "embedded style nav opens the current screen in the preview app",
+);
+assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
 const embeddedSetupBack = linkWithText(embeddedFirstNav.nodes, "Previous: Speaker eye-line coherence");
 assert.equal(
   embeddedSetupBack.href,
@@ -209,6 +221,11 @@ assert.equal(
   "embedded style nav routes the contextual visuals handoff through the preview app hash",
 );
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
+assert.equal(
+  linkWithText(embeddedLastNav.nodes, "Preview app").href,
+  "../preview/app.html#canvas-layer-controls",
+  "embedded style nav keeps preview app on the active style step",
+);
 
 // Path context: a creator on the guided episode path keeps ?path=episode on style links.
 const pathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", false, "?path=episode");
@@ -224,6 +241,13 @@ const noPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", fa
 assert.ok(
   !linkWithText(noPathNav.nodes, "Previous: Preset pacing").href.includes("?path="),
   "style nav adds no path suffix when there is no path context",
+);
+
+const embeddedPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", true, "?path=episode");
+assert.equal(
+  linkWithText(embeddedPathNav.nodes, "Preview app").href,
+  "../preview/app.html#layout-safe-areas?path=episode",
+  "embedded style nav keeps episode path context on the preview app link",
 );
 
 const handoffPathNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
