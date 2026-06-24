@@ -78,6 +78,9 @@ class Element {
     if (selector === ".placed-remove") {
       return this.children.find((child) => child.className === "placed-remove") || null;
     }
+    if (selector === ".slot-state") {
+      return this.children.find((child) => child.className.split(/\s+/).includes("slot-state")) || null;
+    }
     const slotMatch = selector.match(/^\.drop-zone\[data-slot="([^"]+)"\]$/);
     if (slotMatch) {
       return zones.find((zone) => zone.dataset.slot === slotMatch[1]) || null;
@@ -179,6 +182,15 @@ const document = {
 
 vm.runInNewContext(script, { document });
 
+function slotState(slot) {
+  return zones.find((zone) => zone.dataset.slot === slot).querySelector(".slot-state");
+}
+
+assert.match(html, /\.slot-state/, "example canvas styles per-slot placement badges");
+assert.equal(slotState("host").textContent, "Needs video", "an empty host slot flags that it needs a video");
+assert.equal(slotState("guest").textContent, "Needs video", "an empty guest slot flags that it needs a video");
+assert.equal(slotState("broll").textContent, "Optional", "the optional b-roll slot is labelled optional");
+
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
 assert.strictEqual(continueLink.href, "");
 assert.match(continueNote.textContent, /before continuing into speaker roles/);
@@ -200,6 +212,8 @@ assert.match(slotStatus.textContent, /different slot/);
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true");
 
 drop("host", "host");
+assert.equal(slotState("host").textContent, "Ready", "a placed host slot reads Ready on the canvas");
+assert.equal(slotState("guest").textContent, "Needs video", "the still-empty guest slot keeps flagging missing");
 drop("guest", "guest");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false");
 assert.strictEqual(continueLink.href, "./app.html#speaker-role-mapping?path=episode");
@@ -266,6 +280,7 @@ assert.ok(hostRemove, "a placed track exposes a per-track remove control");
 assert.strictEqual(hostRemove.attributes["aria-label"], "Remove Host track · Dana Brooks", "the remove control is labelled per track");
 hostRemove.listeners.click({ stopPropagation() {} });
 assert.strictEqual(hostZone.classList.contains("filled"), false, "removing a track clears just that slot");
+assert.equal(slotState("host").textContent, "Needs video", "removing a track returns the slot badge to needing a video");
 assert.strictEqual(hostZone.querySelector(".placed-track"), null, "the placed track and its remove control are gone");
 assert.strictEqual(guestZone.classList.contains("filled"), true, "removing one track leaves the others placed");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "true", "Continue re-gates after a required track is removed");
@@ -274,4 +289,4 @@ assert.strictEqual(chips[0].focused, true, "removing a track returns focus to it
 keydown(chips[0], "Enter");
 assert.strictEqual(continueLink.attributes["aria-disabled"], "false", "re-placing the removed track restores Continue");
 
-console.log("layout-first canvas handoff: continue unlocks after required speaker videos while b-roll stays optional");
+console.log("layout-first canvas handoff: per-slot status, continue unlock, and b-roll readiness verified");
