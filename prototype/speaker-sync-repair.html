@@ -381,6 +381,12 @@
         font-weight: 700;
       }
 
+      .compare-issue-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .preview-moments {
         display: flex;
         flex-wrap: wrap;
@@ -1215,6 +1221,13 @@
           previewNow.className = "compare-preview-now";
           previewNow.textContent = `Previewing: ${momentLabel}`;
           wrap.appendChild(previewNow);
+        }
+        const focusNote = issues[track.issue]?.moment;
+        if (focusNote) {
+          const issueNote = document.createElement("p");
+          issueNote.className = "compare-issue-note";
+          issueNote.textContent = `Focus on: ${focusNote}`;
+          wrap.appendChild(issueNote);
         }
         wrap.appendChild(compare);
         return wrap;
