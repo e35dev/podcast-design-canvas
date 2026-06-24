@@ -154,6 +154,12 @@ function renderEpisodeFlowNav() {
   wrap.appendChild(home);
   wrap.appendChild(guided);
 
+  const app = document.createElement("a");
+  app.href = "../preview/app.html";
+  setTopTargetWhenEmbedded(app);
+  app.textContent = "Preview app";
+  wrap.appendChild(app);
+
   if (previous) {
     const prevLink = document.createElement("a");
     setEpisodeScreenLink(prevLink, index === 0 ? `${EPISODE_PREAMBLE.file}?path=episode` : previous.file);
