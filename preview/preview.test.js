@@ -48,8 +48,12 @@ assert.ok(
   "preview shell links the example canvas to layout safe areas",
 );
 assert.ok(
-  html.includes("Fill all layout slots to continue"),
-  "preview shell keeps the continue handoff gated until layout slots are placed",
+  html.includes("Fill required speaker slots to continue"),
+  "preview shell keeps the continue handoff gated until required speaker slots are placed",
+);
+assert.ok(
+  html.includes("Optional b-roll can be added later"),
+  "preview shell treats b-roll as optional in the layout-first handoff",
 );
 
 for (const step of flowSteps) {

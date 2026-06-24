@@ -483,7 +483,7 @@
               <span class="drag-chip" draggable="true" data-track="broll" tabindex="0">B-roll clip · intro beat</span>
             </div>
             <div class="canvas-toolbar">
-              <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 3 layout slots filled</p>
+              <p class="canvas-slot-status" id="canvas-slot-status" aria-live="polite">0 of 2 required speaker videos ready. Optional b-roll can be added later.</p>
               <button type="button" class="canvas-reset" id="canvas-reset">Reset layout</button>
             </div>
             <div class="canvas-frame" aria-label="Example podcast layout with drag-in speaker and b-roll slots">
@@ -511,12 +511,12 @@
               </div>
             </div>
             <div class="canvas-links" aria-label="Example canvas actions">
-              <a class="primary" id="canvas-continue" aria-disabled="true">Fill all layout slots to continue</a>
+              <a class="primary" id="canvas-continue" aria-disabled="true">Fill required speaker slots to continue</a>
               <a class="secondary" href="./app.html#canvas-layer-controls?path=episode">Open canvas layer controls →</a>
               <a class="secondary" href="./app.html#layout-safe-areas?path=episode">Review layout safe areas →</a>
               <a class="secondary" href="./app.html#speaker-role-mapping?path=episode">Map speaker tracks →</a>
             </div>
-            <p class="summary-note" id="canvas-continue-note">Place the host, guest, and b-roll into the layout before continuing into speaker roles.</p>
+            <p class="summary-note" id="canvas-continue-note">Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.</p>
           </div>
           <div class="canvas-actions" aria-label="Example canvas setup notes">
             <div class="action-card">
@@ -973,43 +973,47 @@
         var continueLink = document.getElementById("canvas-continue");
         var continueNote = document.getElementById("canvas-continue-note");
 
+        function requiredFilledCount() {
+          var required = ["host", "guest"];
+          return required.filter(function (slot) {
+            var zone = document.querySelector('.drop-zone[data-slot="' + slot + '"]');
+            return zone && zone.classList.contains("filled");
+          }).length;
+        }
+
         function updateContinueLink(filled) {
           if (!continueLink) return;
-          if (filled === 3) {
+          if (filled === 2) {
             continueLink.href = "./app.html#speaker-role-mapping?path=episode";
             continueLink.setAttribute("aria-disabled", "false");
             continueLink.textContent = "Continue to speaker roles →";
             if (continueNote) {
-              continueNote.textContent = "Layout slots are filled. Continue into speaker roles with the placed host, guest, and b-roll context.";
+              continueNote.textContent = "Required speaker videos are ready. Continue into speaker roles. Optional b-roll can be added later.";
             }
             return;
           }
 
           continueLink.removeAttribute("href");
           continueLink.setAttribute("aria-disabled", "true");
-          continueLink.textContent = "Fill all layout slots to continue";
+          continueLink.textContent = "Fill required speaker slots to continue";
           if (continueNote) {
-            continueNote.textContent = "Place the host, guest, and b-roll into the layout before continuing into speaker roles.";
+            continueNote.textContent = "Place the host and guest into the layout before continuing into speaker roles. Optional b-roll can be added later.";
           }
-        }
-
-        function filledSlotCount() {
-          return document.querySelectorAll(".drop-zone.filled").length;
         }
 
         function updateSlotStatus(message) {
           if (!slotStatus) return;
-          updateContinueLink(filledSlotCount());
+          updateContinueLink(requiredFilledCount());
           if (message) {
             slotStatus.textContent = message;
             return;
           }
-          var filled = filledSlotCount();
-          if (filled === 3) {
-            slotStatus.textContent = "All layout slots filled — continue to speaker roles or open canvas layer controls to stack layers.";
+          var filled = requiredFilledCount();
+          if (filled === 2) {
+            slotStatus.textContent = "Required speaker videos ready. Optional b-roll can be added later.";
             return;
           }
-          slotStatus.textContent = filled + " of 3 layout slots filled";
+          slotStatus.textContent = filled + " of 2 required speaker videos ready. Optional b-roll can be added later.";
         }
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
@@ -1047,11 +1051,11 @@
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
             });
-            updateSlotStatus("0 of 3 layout slots filled");
+            updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
           });
         }
 
-        updateContinueLink(filledSlotCount());
+        updateContinueLink(requiredFilledCount());
       }());
     </script>
   </body>
