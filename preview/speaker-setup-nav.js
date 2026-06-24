@@ -131,8 +131,8 @@ function renderSpeakerSetupNav() {
     wrap.appendChild(nextLink);
   } else {
     const start = document.createElement("a");
-    start.href = "source-media-health.html";
-    start.textContent = "Continue: Source media health";
+    start.href = "preset-style-picker.html";
+    start.textContent = "Continue: Pick a preset style";
     wrap.appendChild(start);
   }
 
