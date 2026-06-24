@@ -288,6 +288,32 @@
         margin: 14px 0 0;
       }
 
+      .context-request {
+        border: 1px solid #f0d49a;
+        border-left: 4px solid var(--warn);
+        border-radius: 8px;
+        background: #fff8ec;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+      }
+
+      .context-request strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      .context-request span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .link-note {
+        color: var(--warn);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -315,6 +341,7 @@
 
       <section class="workspace" aria-label="Social context intake workspace">
         <div class="panel">
+          <div id="contextRequest"></div>
           <h2>People &amp; links</h2>
           <div class="links" id="links"></div>
           <div class="actions">
@@ -332,6 +359,9 @@
       </section>
     </main>
 
+    <!-- Loaded before the inline script (no defer) so BrollContextScorer is ready when
+         the page reads the incoming weak-context hand-off from the b-roll screen. -->
+    <script src="broll-context-scorer.js"></script>
     <script>
       // Public sources a creator can add, and what each one is mainly used for in the edit.
       const platforms = {
@@ -386,11 +416,53 @@
         { id: "k3", handle: "priya.codes", platform: "instagram", bucket: "", visibility: "screen" },
       ];
 
-      let links = structuredClone(sampleLinks);
+      // A weak-context moment from the contextual b-roll screen can hand off here with
+      // the moment timestamp and reason on the query string (from=broll). When that
+      // happens we pre-populate: seed an unassigned link tagged with the moment so the
+      // creator can paste the social source that grounds it, and surface a banner.
+      function applyContextRequest(list, request) {
+        if (!request || request.from !== "broll" || !request.reason) {
+          return list;
+        }
+        const note = request.at ? `Resolves weak b-roll context at ${request.at}` : "Resolves weak b-roll context";
+        return [
+          { id: "ctx-broll", handle: "", platform: "website", bucket: "", visibility: "screen", note },
+          ...list,
+        ];
+      }
+
+      const contextRequest = BrollContextScorer.parseIntakeQuery(
+        typeof location !== "undefined" ? location.search : "",
+      );
+
+      let links = applyContextRequest(structuredClone(sampleLinks), contextRequest);
 
       const linksElement = document.querySelector("#links");
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
+      const contextRequestElement = document.querySelector("#contextRequest");
+
+      // Render the incoming weak-context request as a banner above the links. Built with
+      // textContent so the reason text (carried from a transcript) can't inject markup.
+      function renderContextRequest() {
+        if (!contextRequestElement) {
+          return;
+        }
+        if (contextRequest.from !== "broll" || !contextRequest.reason) {
+          contextRequestElement.replaceChildren();
+          return;
+        }
+        const banner = document.createElement("div");
+        banner.className = "context-request";
+        const strong = document.createElement("strong");
+        strong.textContent = contextRequest.at
+          ? `Add context for the b-roll moment at ${contextRequest.at}`
+          : "Add context for a b-roll moment";
+        const span = document.createElement("span");
+        span.textContent = `The b-roll review flagged this moment as weak context: ${contextRequest.reason}. Attach the social source that grounds it below.`;
+        banner.append(strong, span);
+        contextRequestElement.replaceChildren(banner);
+      }
 
       document.querySelector("#addLink").addEventListener("click", () => {
         const next = links.length + 1;
@@ -537,6 +609,7 @@
               <strong>${buckets[link.bucket] || "Unassigned"}</strong>
               <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
             </div>
+            <div class="link-note" data-note></div>
             <label>Handle or link<input data-field="handle" aria-label="Handle or link"></label>
             <div class="fields-row">
               <label>Source
@@ -560,6 +633,14 @@
 
         article.querySelector('[data-field="handle"]').value = link.handle;
         article.querySelector("[data-initial]").textContent = initial(link.handle);
+
+        // The seeded weak-context link carries a note explaining which b-roll moment it
+        // resolves. Written via textContent so the transcript-derived reason is safe.
+        const noteEl = article.querySelector("[data-note]");
+        if (noteEl) {
+          noteEl.textContent = link.note || "";
+          noteEl.style.display = link.note ? "" : "none";
+        }
 
         // Text fields update live on input but only refresh badges/summary, so the field
         // keeps focus. Selects re-render fully on change (safe — no caret).
@@ -611,6 +692,12 @@
         return article;
       }
 
+      // Exposed for the logic test; the browser ignores this block.
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, applyContextRequest, sampleLinks };
+      }
+
+      renderContextRequest();
       render();
     </script>
   </body>

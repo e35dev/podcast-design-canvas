@@ -351,6 +351,9 @@
       </section>
     </main>
 
+    <!-- Loaded before the inline script (no defer) so BrollContextScorer is ready
+         when render() runs during initial parse. -->
+    <script src="broll-context-scorer.js"></script>
     <script>
       // The kinds of visual treatment a moment can use.
       const types = {
@@ -387,11 +390,19 @@
         rejected: "Reject",
       };
 
+      // Approved speaker names/handles from social context intake. The scorer uses
+      // these as a reference signal: a moment that names a known speaker is better
+      // grounded than one that does not.
+      const speakerReferences = ["Dana Brooks", "Marcus Lee", "Priya"];
+
+      // Each moment now carries the transcript segment it was suggested from and its
+      // timestamp (at). The scorer reads the transcript to decide how strong the
+      // context is; the timestamp travels to social context intake on a weak hand-off.
       const sampleMoments = [
-        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
-        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
-        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
-        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
+        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved", at: "00:08:24", transcript: "Marcus walked us through the Helio API launch they shipped at re:Invent." },
+        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested", at: "00:14:02", transcript: "Dana Brooks kicks off the Listener Questions segment for this week." },
+        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested", at: "00:21:37", transcript: "yeah so anyway um that thing we were kind of talking about earlier you know" },
+        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved", at: "00:31:50", transcript: "The best interviews feel like eavesdropping on a great conversation." },
       ];
 
       let moments = structuredClone(sampleMoments);
@@ -416,10 +427,18 @@
       // Single source of truth: map each moment's decision + source, plus the restraint
       // rule about back-to-back repeats, into one review state and a creator-facing issue.
       function evaluate(list) {
+        // Back-to-back title cards are caught structurally by the scorer (any two
+        // adjacent title moments), so a repeated title routes to the title-cards
+        // screen regardless of decision.
+        const titleRepeats = BrollContextScorer.detectTitleRepeats(list);
+
         // A visual that repeats the same treatment immediately after another live one
         // breaks the "don't make a long episode visually noisy" rule, so the second
         // one asks for a second look.
         const repeats = list.map((moment, index) => {
+          if (titleRepeats[index]) {
+            return true;
+          }
           if (!isLive(moment.decision) || index === 0) {
             return false;
           }
@@ -428,7 +447,12 @@
         });
 
         const results = list.map((moment, index) => {
-          const source = sources[moment.source] || sources.manual;
+          // Score the transcript context for suggested moments; the score drives the
+          // weak-context review state and the reason label shown to the creator.
+          const scored =
+            moment.decision === "suggested"
+              ? BrollContextScorer.scoreMoment(moment, { references: speakerReferences })
+              : null;
           let state;
           let issue = null;
 
@@ -449,14 +473,18 @@
                 ? { fixScreen: "contextual-title-cards.html", fixLabel: "title cards" }
                 : {}),
             };
-          } else if (moment.decision === "suggested" && source.weak) {
+          } else if (moment.decision === "suggested" && scored.isWeak) {
             state = "review";
+            // The hand-off to social context intake carries the moment timestamp and
+            // the specific weak-context reason, so intake can pre-populate (#757).
+            const payload = BrollContextScorer.buildIntakePayload(moment, scored);
             issue = {
-              title: `Check the context for "${moment.reason}"`,
-              action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
+              title: `Weak context for "${moment.reason}"`,
+              action: `Low-confidence context — ${scored.reason}. Confirm it fits before it appears on screen, or reject it.`,
               tone: "review",
               fixScreen: "social-context-intake.html",
               fixLabel: "social context intake",
+              fixQuery: BrollContextScorer.encodeIntakeQuery(payload),
             };
           } else if (moment.decision === "adjusted") {
             state = "approved";
@@ -471,7 +499,7 @@
             state = "suggested";
             issue = {
               title: `Approve "${moment.reason}"?`,
-              action: "Approve it to include the visual, adjust its treatment, or reject it.",
+              action: `Context looks ${scored.confidence} (score ${scored.score}). Approve it to include the visual, adjust its treatment, or reject it.`,
               tone: "info",
             };
           }
@@ -630,11 +658,18 @@
         if (issue.fixScreen) {
           const openLink = document.createElement("a");
           openLink.className = "fix-link";
-          openLink.href = issue.fixScreen;
+          // A weak-context issue carries the moment timestamp + reason as a query so
+          // the intake screen can pre-populate; other routes are a plain link.
+          openLink.href = issue.fixQuery ? `${issue.fixScreen}?${issue.fixQuery}` : issue.fixScreen;
           openLink.textContent = `Open ${issue.fixLabel} →`;
           article.append(openLink);
         }
         return article;
+      }
+
+      // Exposed for the logic test; the browser ignores this block.
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, sampleMoments, speakerReferences, types, decisions };
       }
 
       render();
