@@ -32,6 +32,7 @@ const styleScreens = [
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
   "canvas-layer-controls.html",
+  "speaker-switch-framing.html",
 ];
 
 for (const file of styleScreens) {
@@ -153,7 +154,13 @@ assert.equal(
   "style nav strips unsupported handoff context from preview app hashes",
 );
 
-const lastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+const canvasLayerNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls");
+assert.ok(
+  canvasLayerNav.nodes.some((node) => node.textContent === "Next: Speaker switch framing"),
+  "canvas layer controls links to speaker switch framing",
+);
+
+const lastNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Contextual b-roll moments"),
   "last visual direction screen hands off to the contextual visuals path",
@@ -213,7 +220,14 @@ assert.equal(
   "embedded style nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
+const embeddedCanvasLayerNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", true);
+assert.equal(
+  linkWithText(embeddedCanvasLayerNav.nodes, "Next: Speaker switch framing").href,
+  "../preview/app.html#speaker-switch-framing",
+  "embedded style nav routes canvas-layer next step through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Contextual b-roll moments");
 assert.equal(
   embeddedHandoff.href,
@@ -223,7 +237,7 @@ assert.equal(
 assert.equal(embeddedHandoff.target, "_top", "embedded style handoff targets the parent app");
 assert.equal(
   linkWithText(embeddedLastNav.nodes, "Preview app").href,
-  "../preview/app.html#canvas-layer-controls",
+  "../preview/app.html#speaker-switch-framing",
   "embedded style nav keeps preview app on the active style step",
 );
 
@@ -250,7 +264,7 @@ assert.equal(
   "embedded style nav keeps episode path context on the preview app link",
 );
 
-const handoffPathNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
+const handoffPathNav = renderNavFor("speaker-switch-framing.html", "speaker-switch-framing", false, "?path=episode");
 assert.equal(
   linkWithText(handoffPathNav.nodes, "Continue: Contextual b-roll moments").href,
   "contextual-broll-moments.html?from=style&path=episode",

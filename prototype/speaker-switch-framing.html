@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --surface: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #9b5d00;
+        --conflict: #9f2626;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #fff; }
+      main { max-width: 1200px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 740px; margin-bottom: 28px; }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+        gap: 24px;
+      }
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; }
+      .panel h2 { font-size: 16px; margin-bottom: 4px; }
+      .panel-lede { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+      .controls-row {
+        display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px;
+      }
+      .field { display: grid; gap: 4px; }
+      .field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .field select {
+        font: inherit; font-size: 13px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); padding: 5px 8px; cursor: pointer;
+      }
+      .moments { display: grid; gap: 10px; }
+      .moment {
+        border: 1px solid var(--line); border-radius: 8px; background: #fff;
+        padding: 12px 14px; display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 10px;
+        align-items: start; cursor: pointer;
+      }
+      .moment.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(19,111,99,0.10); }
+      .moment.conflict { border-left: 3px solid var(--conflict); }
+      .moment.needs-review { border-left: 3px solid var(--warn); }
+      .timecode {
+        font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+        color: var(--muted); padding-top: 2px;
+      }
+      .moment-body { display: grid; gap: 4px; }
+      .moment-speakers { font-size: 13px; font-weight: 700; }
+      .moment-detail { font-size: 12px; color: var(--muted); }
+      .badge {
+        display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
+        padding: 2px 7px; border-radius: 999px; white-space: nowrap; align-self: start;
+      }
+      .badge.ready { background: #e8f4f1; color: var(--accent); }
+      .badge.needs-review { background: #fff8ec; color: var(--warn); }
+      .badge.conflict { background: #fef0f0; color: var(--conflict); }
+      .badge.overridden { background: #eef0ff; color: #3a46a0; }
+      .badge.accepted-original { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+      .preview-area { display: grid; gap: 14px; }
+      .episode-frame {
+        aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; position: relative;
+        background: linear-gradient(160deg, #1a2e2b, #0d1c1a);
+      }
+      .speaker-main {
+        position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .speaker-block {
+        border-radius: 8px; background: #2a4a45; display: flex; align-items: center;
+        justify-content: center; transition: all 0.25s ease;
+      }
+      .speaker-block .initial {
+        font-weight: 800; color: #d0ede8; letter-spacing: 0.02em;
+      }
+      .speaker-block.main { width: 72%; height: 78%; }
+      .speaker-block.main .initial { font-size: 40px; }
+      .speaker-block.small { width: 26%; height: 30%; position: absolute; bottom: 8px; right: 8px; background: #1f3a35; }
+      .speaker-block.small .initial { font-size: 16px; }
+      .speaker-block.equal-left { width: 48%; height: 80%; position: absolute; left: 2%; }
+      .speaker-block.equal-right { width: 48%; height: 80%; position: absolute; right: 2%; }
+      .speaker-block.equal-left .initial, .speaker-block.equal-right .initial { font-size: 28px; }
+      .active-highlight {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--accent);
+      }
+      .switch-label {
+        position: absolute; top: 8px; left: 8px;
+        background: rgba(0,0,0,0.55); border-radius: 4px;
+        padding: 3px 7px; font-size: 11px; color: #fff; font-weight: 600;
+      }
+      .frame-caption {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 10px;
+        background: rgba(0,0,0,0.7); font-size: 11px; color: #fff; text-align: center;
+      }
+      .overlap-banner {
+        position: absolute; top: 0; left: 0; right: 0;
+        background: rgba(159,38,38,0.88); padding: 4px 8px;
+        font-size: 11px; color: #fff; font-weight: 600; display: none;
+      }
+      .overlap-banner.visible { display: block; }
+      .preview-meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+      .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+      .speed-label { font-size: 12px; color: var(--muted); }
+      .speed-btns { display: flex; gap: 4px; }
+      .speed-btn {
+        border: 1px solid var(--line); border-radius: 4px; background: #fff;
+        font: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer; color: var(--muted);
+      }
+      .speed-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .speed-btn:hover:not(.active) { background: var(--surface); }
+      .issues { display: grid; gap: 10px; }
+      .issue {
+        border-left: 3px solid var(--warn); border-radius: 6px; background: #fff;
+        padding: 10px 12px; display: grid; gap: 3px;
+      }
+      .issue.conflict { border-left-color: var(--conflict); }
+      .issue strong { font-size: 13px; }
+      .issue span, .issue a { font-size: 12px; color: var(--muted); display: block; }
+      .fix-link { color: var(--accent); text-decoration: underline; cursor: pointer; }
+      .fix-link:hover { color: var(--accent-ink); }
+      .fix-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+      .status-bar {
+        font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 6px;
+        background: var(--surface); border: 1px solid var(--line);
+      }
+      .status-bar.ready { background: #e8f4f1; color: var(--accent); border-color: #b1d5ca; }
+      .status-bar.needs-review { background: #fff8ec; color: var(--warn); border-color: #e8d2a0; }
+      .status-bar.conflict { background: #fef0f0; color: var(--conflict); border-color: #e8b8b8; }
+      button.reset-btn {
+        margin-top: 10px; min-height: 32px; border: 1px solid var(--line); border-radius: 6px;
+        background: #fff; color: var(--ink); font: inherit; font-size: 13px; padding: 4px 12px;
+        cursor: pointer; width: 100%;
+      }
+      button.reset-btn:hover { background: var(--surface); }
+      @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="speaker-switch-framing">
+    <main>
+      <h1>Speaker switch framing</h1>
+      <p class="lede">
+        Control how the layout reframes when the active speaker changes — so the audience always sees
+        who matters most, at the right size, without manual cuts across an hour-plus episode.
+      </p>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Switch moments</h2>
+          <p class="panel-lede">Each row is a point where the active speaker changes. Click a moment to preview its reframe.</p>
+
+          <div class="controls-row">
+            <div class="field">
+              <label>Default style</label>
+              <select id="defaultStyle">
+                <option value="featured">Featured — active speaker fills the main frame</option>
+                <option value="equal">Equal presence — all speakers the same size</option>
+                <option value="side-by-side">Side-by-side — subtle highlight on active</option>
+                <option value="pip">Picture-in-picture — active large, others inset</option>
+                <option value="reaction">Reaction-aware — hold listener briefly before switching</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="moments" id="moments"></div>
+        </div>
+
+        <aside class="panel">
+          <h2>Preview</h2>
+          <div class="preview-area">
+            <div class="episode-frame" id="episodeFrame">
+              <div class="switch-label" id="switchLabel">Featured</div>
+              <div class="speaker-main" id="speakerMain"></div>
+              <div class="overlap-banner" id="overlapBanner">B-roll moment overlap</div>
+              <div class="frame-caption" id="frameCaption"></div>
+            </div>
+
+            <div class="preview-meta">
+              <span id="previewTimecode">—</span>
+              <span id="previewStyle">—</span>
+            </div>
+
+            <div class="speed-row">
+              <span class="speed-label">Reframe speed</span>
+              <div class="speed-btns">
+                <button class="speed-btn" data-speed="instant">Instant</button>
+                <button class="speed-btn active" data-speed="smooth">Smooth</button>
+                <button class="speed-btn" data-speed="slow">Slow</button>
+              </div>
+            </div>
+
+            <div class="issues" id="issues"></div>
+            <div class="status-bar" id="statusBar">Loading…</div>
+
+            <button class="reset-btn" id="resetBtn">Reset all to preset default</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const STYLES = {
+        featured: "Featured",
+        equal: "Equal presence",
+        "side-by-side": "Side-by-side",
+        pip: "Picture-in-picture",
+        reaction: "Reaction-aware",
+      };
+
+      const sampleMoments = [
+        { id: "m1", timecode: "0:42", from: "Intro", to: "Jordan", overlapType: null, staticGap: 0, overridden: false },
+        { id: "m2", timecode: "4:23", from: "Jordan", to: "Maya", overlapType: null, staticGap: 0, overridden: false },
+        { id: "m3", timecode: "12:07", from: "Maya", to: "Jordan", overlapType: "broll", staticGap: 0, overridden: false },
+        { id: "m4", timecode: "18:55", from: "Jordan", to: "Maya", overlapType: null, staticGap: 0, overridden: false },
+        { id: "m5", timecode: "27:30", from: "Maya", to: "Jordan", overlapType: null, staticGap: 220, overridden: false },
+        { id: "m6", timecode: "34:11", from: "Jordan", to: "Maya", overlapType: "sponsor", staticGap: 0, overridden: false },
+        { id: "m7", timecode: "41:08", from: "Maya", to: "Jordan", overlapType: null, staticGap: 0, overridden: false },
+        { id: "m8", timecode: "52:44", from: "Jordan", to: "Maya", overlapType: null, staticGap: 195, overridden: false },
+      ];
+
+      let moments = sampleMoments.map((m) => ({ ...m }));
+      let selected = moments[0].id;
+      let defaultStyle = "featured";
+
+      function evaluate(list, style) {
+        const results = list.map((m) => {
+          let state = "ready";
+          let issue = null;
+
+          if (m.overlapType === "broll" || m.overlapType === "sponsor") {
+            state = "conflict";
+            issue = {
+              title: `${m.timecode} — switch overlaps a ${m.overlapType === "broll" ? "b-roll" : "sponsor"} moment`,
+              action:
+                "Open long-form episode navigation to review this moment and decide whether the switch or the overlay takes priority.",
+              tone: "conflict",
+              fixScreen: "long-form-navigation.html",
+              fixLabel: "long-form episode navigation",
+            };
+          } else if (m.staticGap > 180) {
+            state = "needs-review";
+            const mins = Math.floor(m.staticGap / 60);
+            issue = {
+              title: `${m.timecode} — ${mins}-minute stretch with no reframe looks static`,
+              action:
+                "Open the preset style picker to choose a switch style that keeps the layout active for long exchanges.",
+              tone: "needs-review",
+              fixScreen: "preset-style-picker.html",
+              fixLabel: "preset style picker",
+            };
+          } else if (m.overridden) {
+            state = "overridden";
+          }
+
+          return { ...m, state, issue, effectiveStyle: m.overridden ? m.overriddenStyle || style : style };
+        });
+
+        const hasConflict = results.some((r) => r.state === "conflict");
+        const hasReview = results.some((r) => r.state === "needs-review");
+        const overall = hasConflict ? "conflict" : hasReview ? "needs-review" : "ready";
+        return { overall, results };
+      }
+
+      function renderFrame(moment, style) {
+        const frame = document.getElementById("speakerMain");
+        const label = document.getElementById("switchLabel");
+        const caption = document.getElementById("frameCaption");
+        const banner = document.getElementById("overlapBanner");
+        const previewMeta = document.getElementById("previewStyle");
+        const previewTimecode = document.getElementById("previewTimecode");
+
+        frame.innerHTML = "";
+        label.textContent = STYLES[style] || style;
+
+        if (style === "equal") {
+          const left = document.createElement("div");
+          left.className = "speaker-block equal-left";
+          const li = document.createElement("div");
+          li.className = "initial";
+          li.textContent = (moment.from || "?")[0];
+          left.appendChild(li);
+          const right = document.createElement("div");
+          right.className = "speaker-block equal-right";
+          const ri = document.createElement("div");
+          ri.className = "initial";
+          ri.textContent = (moment.to || "?")[0];
+          right.appendChild(ri);
+          const hl = document.createElement("div");
+          hl.className = "active-highlight";
+          right.appendChild(hl);
+          frame.appendChild(left);
+          frame.appendChild(right);
+        } else if (style === "pip" || style === "featured") {
+          const main = document.createElement("div");
+          main.className = "speaker-block main";
+          const mi = document.createElement("div");
+          mi.className = "initial";
+          mi.textContent = (moment.to || "?")[0];
+          main.appendChild(mi);
+          frame.appendChild(main);
+          if (style === "pip") {
+            const small = document.createElement("div");
+            small.className = "speaker-block small";
+            const si = document.createElement("div");
+            si.className = "initial";
+            si.textContent = (moment.from || "?")[0];
+            small.appendChild(si);
+            frame.appendChild(small);
+          }
+        } else {
+          const main = document.createElement("div");
+          main.className = "speaker-block main";
+          const mi = document.createElement("div");
+          mi.className = "initial";
+          mi.textContent = (moment.to || "?")[0];
+          main.appendChild(mi);
+          frame.appendChild(main);
+        }
+
+        if (moment.overlapType) {
+          banner.textContent =
+            moment.overlapType === "broll" ? "B-roll moment overlap" : "Sponsor placement overlap";
+          banner.classList.add("visible");
+        } else {
+          banner.classList.remove("visible");
+        }
+
+        caption.textContent = `${moment.from} → ${moment.to}`;
+        previewTimecode.textContent = moment.timecode;
+        previewMeta.textContent = STYLES[style] || style;
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue${issue.tone === "conflict" ? " conflict" : ""}`;
+        const title = document.createElement("strong");
+        title.textContent = issue.title;
+        let action;
+        if (issue.fixScreen && issue.fixLabel) {
+          action = document.createElement("a");
+          action.className = "fix-link";
+          action.href = issue.fixScreen;
+          action.textContent = issue.action;
+        } else {
+          action = document.createElement("span");
+          action.textContent = issue.action;
+        }
+        article.append(title, action);
+        return article;
+      }
+
+      function renderMoment(m, result) {
+        const article = document.createElement("article");
+        article.className = [
+          "moment",
+          m.id === selected ? "selected" : "",
+          result.state === "conflict" ? "conflict" : result.state === "needs-review" ? "needs-review" : "",
+        ].filter(Boolean).join(" ");
+        article.addEventListener("click", () => { selected = m.id; render(); });
+
+        const tc = document.createElement("div");
+        tc.className = "timecode";
+        tc.textContent = m.timecode;
+
+        const body = document.createElement("div");
+        body.className = "moment-body";
+        const speakers = document.createElement("div");
+        speakers.className = "moment-speakers";
+        speakers.textContent = `${m.from} → ${m.to}`;
+        const detail = document.createElement("div");
+        detail.className = "moment-detail";
+        detail.textContent =
+          result.state === "conflict"
+            ? `${m.overlapType === "broll" ? "b-roll" : "sponsor"} overlap`
+            : result.state === "needs-review"
+            ? `${Math.floor(m.staticGap / 60)} min gap before this switch`
+            : m.overridden
+            ? `overridden: ${STYLES[m.overriddenStyle] || m.overriddenStyle}`
+            : STYLES[defaultStyle] || defaultStyle;
+        body.append(speakers, detail);
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${result.state}`;
+        badge.textContent =
+          result.state === "ready" ? "ready" :
+          result.state === "needs-review" ? "review" :
+          result.state === "conflict" ? "conflict" :
+          result.state === "overridden" ? "overridden" : "kept";
+
+        article.append(tc, body, badge);
+        return article;
+      }
+
+      function render() {
+        defaultStyle = document.getElementById("defaultStyle").value;
+        const evaluation = evaluate(moments, defaultStyle);
+
+        document.getElementById("moments").replaceChildren(
+          ...moments.map((m, i) => renderMoment(m, evaluation.results[i])),
+        );
+
+        const current = moments.find((m) => m.id === selected) || moments[0];
+        if (current) {
+          const result = evaluation.results.find((r) => r.id === selected) || evaluation.results[0];
+          renderFrame(current, result.effectiveStyle);
+        }
+
+        const allIssues = evaluation.results.map((r) => r.issue).filter(Boolean);
+        document.getElementById("issues").replaceChildren(...allIssues.map(renderIssue));
+
+        const statusEl = document.getElementById("statusBar");
+        statusEl.className = `status-bar ${evaluation.overall}`;
+        const conflicts = evaluation.results.filter((r) => r.state === "conflict").length;
+        const reviews = evaluation.results.filter((r) => r.state === "needs-review").length;
+        statusEl.textContent =
+          evaluation.overall === "ready"
+            ? "All switch moments match the preset style"
+            : evaluation.overall === "conflict"
+            ? `${conflicts} overlap conflict${conflicts === 1 ? "" : "s"} need attention`
+            : `${reviews} static stretch${reviews === 1 ? "" : "es"} to review`;
+      }
+
+      document.getElementById("defaultStyle").addEventListener("change", render);
+
+      document.querySelectorAll(".speed-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".speed-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        moments = sampleMoments.map((m) => ({ ...m }));
+        selected = moments[0].id;
+        render();
+      });
+
+      render();
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate, STYLES };
+      }
+    </script>
+  </body>
+</html>
