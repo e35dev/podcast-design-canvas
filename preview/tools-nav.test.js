@@ -72,6 +72,7 @@ const reuseFlow = new Set([
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
   "intro-outro-builder.html",
+  "episode-runtime-shaping.html",
 ]);
 
 const speakerSetupFlow = new Set([
