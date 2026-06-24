@@ -808,6 +808,12 @@
         return name.split(" — ")[0];
       }
 
+      function rollupOpenLinkLabel(result) {
+        const bucket = trackBucketLabel(result.name);
+        const issueLabel = issues[result.issue]?.label;
+        return issueLabel ? `Open ${bucket} · ${issueLabel}` : `Open ${bucket}`;
+      }
+
       function renderRollupIssueTags(needsWork) {
         const wrap = document.createElement("div");
         wrap.className = "rollup-issue-tags";
@@ -937,7 +943,7 @@
             const jump = document.createElement("button");
             jump.type = "button";
             jump.className = "secondary";
-            jump.textContent = `Open ${trackBucketLabel(result.name)}`;
+            jump.textContent = rollupOpenLinkLabel(result);
             jump.addEventListener("click", () => focusTrack(result.id));
             links.appendChild(jump);
           }
