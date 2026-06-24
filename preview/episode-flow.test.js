@@ -39,6 +39,16 @@ for (const title of stepTitles) {
 // The flow shares one episode model and ends in an export action (the outcome).
 assert.ok(/const episode = \{/.test(flow), "flow uses one shared episode model");
 assert.ok(flow.includes("Export episode"), "flow ends in an export action");
+assert.ok(flow.includes("Current step"), "stepper exposes the current step in visible text");
+assert.ok(flow.includes("Completed step"), "stepper exposes completed steps in visible text");
+assert.ok(flow.includes("Locked step"), "stepper exposes locked future steps in visible text");
+assert.ok(flow.includes('aria-current", "step"'), "stepper marks the current step with aria-current");
+assert.match(flow, /aria-label="Episode flow status"/, "flow exposes a persistent status region");
+assert.ok(flow.includes("currentStatus"), "flow renders current-step status text");
+assert.ok(flow.includes("readyStatus"), "flow renders ready-count status text");
+assert.ok(flow.includes("nextStatus"), "flow renders next-action status text");
+assert.ok(flow.includes("Continue to"), "flow explains the next step when ready");
+assert.ok(flow.includes("steps ready"), "flow summarizes progress in creator-facing copy");
 
 // Editable caption text is never interpolated into innerHTML (XSS-safe rendering).
 assert.ok(!/innerHTML/.test(flow), "flow builds the DOM without innerHTML");
