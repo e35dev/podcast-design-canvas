@@ -387,6 +387,17 @@
 
     zones.forEach((zone) => {
       const input = zone.querySelector("[data-file-input]");
+      zone.addEventListener("click", (event) => {
+        if (zone.classList.contains("filled") || zone.classList.contains("is-hidden")) {
+          return;
+        }
+        if (event && event.target === input) {
+          return;
+        }
+        if (input && typeof input.click === "function") {
+          input.click();
+        }
+      });
       zone.addEventListener("dragover", (event) => {
         event.preventDefault();
         zone.classList.add("drag-over");

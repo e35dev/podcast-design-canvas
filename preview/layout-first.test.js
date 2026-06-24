@@ -623,4 +623,55 @@ assert.equal(slotState("host").textContent, "Needs video", "solo's single requir
 
 assert.match(html, /\.slot-state/, "layout-first styles the per-slot status badge");
 
-console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
+const clickZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const clickButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const clickById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const clickDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return clickById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return clickButtons;
+    if (selector === ".drop-zone[data-slot]") return clickZones;
+    return [];
+  },
+};
+const clickCtl = createLayoutFirstController(clickDoc, { URL: urlApi });
+const hostInput = clickCtl.zonesBySlot.host.querySelector("[data-file-input]");
+let hostPickerOpened = 0;
+hostInput.click = () => { hostPickerOpened += 1; };
+clickCtl.zonesBySlot.host.listeners.click({ target: clickCtl.zonesBySlot.host });
+assert.equal(hostPickerOpened, 1, "clicking an empty slot opens its file picker");
+clickCtl.zonesBySlot.host.listeners.click({ target: hostInput });
+assert.equal(hostPickerOpened, 1, "clicking the file input itself does not double-open the picker");
+clickCtl.placeVideoFile(clickCtl.zonesBySlot.guest, video("guest.mp4"));
+const guestInput = clickCtl.zonesBySlot.guest.querySelector("[data-file-input]");
+let guestPickerOpened = 0;
+guestInput.click = () => { guestPickerOpened += 1; };
+clickCtl.zonesBySlot.guest.listeners.click({ target: clickCtl.zonesBySlot.guest });
+assert.equal(guestPickerOpened, 0, "a filled slot does not hijack clicks to open the picker");
+let hiddenPickerOpened = 0;
+const hiddenInput = clickCtl.zonesBySlot["guest-b"].querySelector("[data-file-input]");
+hiddenInput.click = () => { hiddenPickerOpened += 1; };
+clickCtl.zonesBySlot["guest-b"].listeners.click({ target: clickCtl.zonesBySlot["guest-b"] });
+assert.equal(hiddenPickerOpened, 0, "a hidden slot does not open a picker");
+assert.match(html, /\.drop-zone:not\(\.filled\) \{ cursor: pointer/, "empty slots show a clickable cursor");
+
+console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, click-to-choose, handoff, and layout-switch preservation verified");

@@ -136,6 +136,7 @@
       }
 
       .drop-zone.is-hidden { display: none; }
+      .drop-zone:not(.filled) { cursor: pointer; }
       .drop-zone.drag-over { border-color: #ffffff; background: rgba(255, 255, 255, 0.18); }
       .drop-zone.filled { border-style: solid; border-color: rgba(255, 255, 255, 0.92); background: rgba(255, 255, 255, 0.16); }
 
@@ -348,17 +349,17 @@
               <div class="speaker-row" id="speaker-row">
                 <div class="drop-zone host" data-slot="host" data-required="true">
                   <span class="slot-label">Host video slot</span>
-                  <span class="slot-note">Drop or choose the host video file.</span>
+                  <span class="slot-note">Click the slot, drop a file, or choose the host video.</span>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="host" aria-label="Choose host video">
                 </div>
                 <div class="drop-zone guest" data-slot="guest" data-required="true" id="guest-slot">
                   <span class="slot-label">Guest video slot</span>
-                  <span class="slot-note">Drop or choose the guest video file.</span>
+                  <span class="slot-note">Click the slot, drop a file, or choose the guest video.</span>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="guest" aria-label="Choose guest video">
                 </div>
                 <div class="drop-zone guest is-hidden" data-slot="guest-b" data-required="true" id="guest-b-slot">
                   <span class="slot-label">Guest 2 video slot</span>
-                  <span class="slot-note">Drop or choose the second guest video file.</span>
+                  <span class="slot-note">Click the slot, drop a file, or choose the second guest video.</span>
                   <input class="slot-file" type="file" accept="video/*" data-file-input="guest-b" aria-label="Choose second guest video">
                 </div>
               </div>
