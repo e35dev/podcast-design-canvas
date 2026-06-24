@@ -71,13 +71,20 @@
 
       .track {
         display: grid;
-        grid-template-columns: 1.1fr 0.8fr 1fr 0.7fr 0.8fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
         align-items: end;
         padding: 14px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #ffffff;
+      }
+
+      .track-meta {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
       }
 
       label {
@@ -158,6 +165,10 @@
         border-left-color: var(--block);
       }
 
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
       .issue strong {
         display: block;
         margin-bottom: 4px;
@@ -165,6 +176,33 @@
 
       .issue span {
         color: var(--muted);
+      }
+
+      .issue-actions {
+        margin-top: 10px;
+      }
+
+      .issue-actions button {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .issue-actions button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+        border-color: #bfcbc7;
+      }
+
+      .continue-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
       }
 
       .actions {
@@ -205,7 +243,7 @@
   <body>
     <main>
       <h1>Episode readiness</h1>
-      <p class="lede">Review synced speaker tracks before choosing a preset. The prototype flags only issues that affect the finished podcast episode.</p>
+      <p class="lede">Review synced speaker tracks before choosing a preset. Each flagged issue opens the surface where that problem is actually fixed &mdash; this screen stays focused on assignment, not diagnostics.</p>
 
       <section class="workspace" aria-label="Episode readiness workspace">
         <div class="panel">
@@ -221,15 +259,33 @@
           <h2>Readiness summary</h2>
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
+          <p class="continue-note" id="continueNote"></p>
+          <button type="button" id="continue" disabled>Continue to preset styling</button>
         </aside>
       </section>
     </main>
 
     <script>
+      const fixSurfaces = {
+        "source-media-health": {
+          label: "Replace or check the file",
+          routed: "Continue in source media health.",
+        },
+        "speaker-sync-repair": {
+          label: "Align the tracks",
+          routed: "Continue in sync repair.",
+        },
+        "social-context-intake": {
+          label: "Add a name or social link",
+          routed: "Continue in social context intake.",
+        },
+      };
+
       const sampleTracks = [
         {
           id: "host",
           name: "Host",
+          speakerName: "Dana Brooks",
           role: "host",
           duration: 3600,
           audioKey: "host-audio",
@@ -239,6 +295,7 @@
         {
           id: "guest-1",
           name: "Guest 1",
+          speakerName: "",
           role: "guest",
           duration: 3480,
           audioKey: "guest-audio",
@@ -254,15 +311,19 @@
       ];
 
       let tracks = structuredClone(sampleTracks);
+      let handedOff = new Set();
 
       const tracksElement = document.querySelector("#tracks");
       const issuesElement = document.querySelector("#issues");
       const statusElement = document.querySelector("#status");
+      const continueButton = document.querySelector("#continue");
+      const continueNoteElement = document.querySelector("#continueNote");
 
       document.querySelector("#addGuest").addEventListener("click", () => {
         tracks.push({
           id: `guest-${tracks.length}`,
           name: `Guest ${tracks.length}`,
+          speakerName: "",
           role: "guest",
           duration: 3000,
           audioKey: `guest-${tracks.length}-audio`,
@@ -274,6 +335,7 @@
 
       document.querySelector("#reset").addEventListener("click", () => {
         tracks = structuredClone(sampleTracks);
+        handedOff = new Set();
         render();
       });
 
@@ -282,9 +344,11 @@
 
         if (!tracks.some((track) => track.role === "host")) {
           issues.push({
+            key: "missing-host",
             severity: "blocker",
             title: "Missing host track",
             action: "Assign one speaker recording to the host bucket before choosing a preset.",
+            fixSurface: "source-media-health",
           });
         }
 
@@ -299,56 +363,98 @@
         for (const matches of fingerprints.values()) {
           if (matches.length > 1) {
             issues.push({
+              key: `duplicate-audio:${matches.map((track) => track.id).sort().join("|")}`,
               severity: "review",
               title: `${matches.map((track) => track.name).join(" and ")} appear to share audio`,
               action: "Confirm these are separate speakers or replace the duplicate recording.",
+              fixSurface: "speaker-sync-repair",
             });
           }
         }
 
-        const longest = Math.max(...tracks.map((track) => Number(track.duration) || 0));
+        const longest = Math.max(...tracks.map((track) => Number(track.duration) || 0), 0);
         for (const track of tracks) {
+          if (!(track.speakerName || "").trim()) {
+            issues.push({
+              key: `missing-name:${track.id}`,
+              severity: "review",
+              title: `${track.name} still needs a speaker name or link`,
+              action: "Add who is speaking so spellings and references stay accurate.",
+              fixSurface: "social-context-intake",
+            });
+          }
+
           if (!track.hasVideo) {
             issues.push({
+              key: `audio-only:${track.id}`,
               severity: "review",
               title: `${track.name} is audio-only`,
-              action: "Continue with an audio-only speaker or replace the file with video.",
+              action: "Replace the file with video or mark this speaker as audio-only.",
+              fixSurface: "source-media-health",
             });
           }
 
           if (track.transcript !== "ready") {
             issues.push({
+              key: `transcript:${track.id}`,
               severity: "review",
               title: `${track.name} transcript is ${track.transcript}`,
-              action: "Start transcript generation or continue knowing captions need review.",
+              action: "Start transcript generation or replace the recording if the audio cannot be captioned.",
+              fixSurface: "source-media-health",
             });
           }
 
           if (longest - Number(track.duration) > 120) {
+            const gapMinutes = Math.round((longest - Number(track.duration)) / 60);
             issues.push({
+              key: `duration:${track.id}`,
               severity: "review",
-              title: `${track.name} is more than two minutes shorter than another speaker`,
-              action: "Replace the shorter file or continue with a visible gap.",
+              title: `${track.name} is about ${gapMinutes} minutes shorter than another speaker`,
+              action: "Replace the shorter file or align the tracks so the episode stays in sync.",
+              fixSurface: "speaker-sync-repair",
             });
           }
         }
 
-        return {
-          status: issues.some((issue) => issue.severity === "blocker") ? "blocked" : issues.length ? "review" : "ready",
-          issues,
-        };
+        const activeKeys = new Set(issues.map((issue) => issue.key));
+        handedOff.forEach((key) => {
+          if (!activeKeys.has(key)) {
+            handedOff.delete(key);
+          }
+        });
+
+        const unresolved = issues.filter((issue) => issue.severity === "blocker" || (issue.severity === "review" && !handedOff.has(issue.key)));
+        const status = issues.some((issue) => issue.severity === "blocker")
+          ? "blocked"
+          : unresolved.length
+            ? "review"
+            : "ready";
+
+        return { status, issues, unresolved: unresolved.length };
       }
 
       function render() {
         tracksElement.replaceChildren(...tracks.map(renderTrack));
         const readiness = evaluateReadiness();
         statusElement.className = `status ${readiness.status}`;
-        statusElement.textContent = readiness.status === "ready" ? "Ready" : readiness.status === "blocked" ? "Blocked" : "Needs review";
+        statusElement.textContent = readiness.status === "ready"
+          ? "Ready for preset styling"
+          : readiness.status === "blocked"
+            ? "Add a host track first"
+            : `${readiness.unresolved} ${readiness.unresolved === 1 ? "issue still open" : "issues still open"}`;
+
         issuesElement.replaceChildren(
           ...(readiness.issues.length
             ? readiness.issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "All speaker tracks are ready for preset selection." })]),
         );
+
+        continueButton.disabled = readiness.status !== "ready";
+        continueNoteElement.textContent = readiness.status === "ready"
+          ? "Required buckets are assigned. Open issues that still affect the finished episode will carry forward to export review."
+          : readiness.status === "blocked"
+            ? "Add a host recording before continuing."
+            : "Open each issue in the surface that owns the fix, or resolve it on this screen.";
       }
 
       function renderTrack(track, index) {
@@ -358,6 +464,11 @@
         const nameInput = document.createElement("input");
         nameInput.dataset.field = "name";
         nameInput.value = track.name;
+
+        const speakerNameInput = document.createElement("input");
+        speakerNameInput.dataset.field = "speakerName";
+        speakerNameInput.value = track.speakerName || "";
+        speakerNameInput.placeholder = "Who is speaking?";
 
         const roleSelect = renderSelect(
           ["host", "co-host", "guest", "panelist", "producer"].map((role) => ({ value: role, label: role })),
@@ -391,9 +502,17 @@
         );
 
         toggles.append(videoLabel, renderField("Transcript", transcriptSelect));
-        row.append(
-          renderField("Name", nameInput),
+
+        const meta = document.createElement("div");
+        meta.className = "track-meta";
+        meta.append(
+          renderField("Bucket", nameInput),
+          renderField("Speaker name", speakerNameInput),
           renderField("Role", roleSelect),
+        );
+
+        row.append(
+          meta,
           renderField("Recording", recordingSelect),
           renderField("Minutes", durationInput),
           toggles,
@@ -452,15 +571,34 @@
 
       function renderIssue(issue) {
         const article = document.createElement("article");
-        article.className = `issue ${issue.severity}`;
+        const routed = handedOff.has(issue.key);
+        article.className = `issue ${routed ? "info" : issue.severity}`;
 
         const title = document.createElement("strong");
         title.textContent = issue.title;
 
         const action = document.createElement("span");
-        action.textContent = issue.action;
+        action.textContent = routed
+          ? fixSurfaces[issue.fixSurface].routed
+          : issue.action;
 
         article.append(title, action);
+
+        if (!routed && issue.fixSurface && fixSurfaces[issue.fixSurface]) {
+          const actions = document.createElement("div");
+          actions.className = "issue-actions";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = issue.severity === "blocker" ? "" : "secondary";
+          button.textContent = fixSurfaces[issue.fixSurface].label;
+          button.addEventListener("click", () => {
+            handedOff.add(issue.key);
+            render();
+          });
+          actions.append(button);
+          article.append(actions);
+        }
+
         return article;
       }
 
