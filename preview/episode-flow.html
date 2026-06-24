@@ -201,10 +201,14 @@
         text-decoration: none;
       }
 
-      .step-screen a:hover,
+      .step-screen a:hover {
+        text-decoration: underline;
+      }
+
       .step-screen a:focus-visible {
         text-decoration: underline;
-        outline: none;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       .row {
