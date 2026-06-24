@@ -77,8 +77,15 @@
     const layoutButtons = toArray(doc.querySelectorAll("[data-layout]"));
     const zones = toArray(doc.querySelectorAll(".drop-zone[data-slot]"));
     const zonesBySlot = {};
+    const slotIndicators = {};
     zones.forEach((zone) => {
       zonesBySlot[zone.dataset.slot] = zone;
+      // A per-slot status badge rendered inside the slot on the canvas, so the creator can see
+      // at the slot itself whether it still needs a video — not only in the side-panel summary.
+      const indicator = doc.createElement("span");
+      indicator.className = "slot-state";
+      zone.appendChild(indicator);
+      slotIndicators[zone.dataset.slot] = indicator;
     });
 
     const sceneLabel = doc.getElementById("layout-scene-label");
@@ -161,7 +168,37 @@
       }
     }
 
+    // Reflect each visible slot's own assignment state on the canvas: a filled slot reads
+    // "Ready", a still-empty required slot reads "Needs video", and the optional b-roll slot
+    // reads "Optional". Hidden slots show nothing. This makes missing required assignments
+    // visible at the slot, completing the side-panel summary rather than replacing it.
+    function updateSlotIndicators() {
+      const required = new Set(currentDefinition().requiredSlots);
+      zones.forEach((zone) => {
+        const indicator = slotIndicators[zone.dataset.slot];
+        if (!indicator) return;
+        indicator.classList.remove("is-ready", "is-missing", "is-optional");
+        if (zone.classList.contains("is-hidden")) {
+          indicator.textContent = "";
+          indicator.hidden = true;
+          return;
+        }
+        indicator.hidden = false;
+        if (zone.classList.contains("filled")) {
+          indicator.textContent = "Ready";
+          indicator.classList.add("is-ready");
+        } else if (required.has(zone.dataset.slot)) {
+          indicator.textContent = "Needs video";
+          indicator.classList.add("is-missing");
+        } else {
+          indicator.textContent = "Optional";
+          indicator.classList.add("is-optional");
+        }
+      });
+    }
+
     function updateSlotStatus(message) {
+      updateSlotIndicators();
       if (!slotStatus) return;
       if (message) {
         slotStatus.textContent = message;
@@ -398,6 +435,7 @@
       filledRequiredSlots,
       duplicateFileNames,
       zonesBySlot,
+      slotIndicators,
       updateSlotStatus,
     };
   }

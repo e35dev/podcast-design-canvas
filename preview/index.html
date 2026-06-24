@@ -1093,12 +1093,20 @@
 
         function removeTrack(zone) {
           if (!zone || !zone.classList.contains("filled")) return;
+          var slot = zone.dataset.slot;
           zone.classList.remove("filled");
           var placed = zone.querySelector(".placed-track");
           if (placed) placed.remove();
           var remove = zone.querySelector(".placed-remove");
           if (remove) remove.remove();
           updateSlotStatus();
+          // The Remove button is removed with the placement, so keyboard focus would otherwise
+          // fall to the page body. Return it to the matching track chip so the creator can
+          // re-place from the palette without losing context (WCAG 2.4.3).
+          var chip = document.querySelector('.drag-chip[data-track="' + slot + '"]');
+          if (chip && typeof chip.focus === "function") {
+            chip.focus();
+          }
         }
 
         document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
@@ -1125,7 +1133,7 @@
               var remove = zone.querySelector(".placed-remove");
               if (remove) remove.remove();
             });
-            updateSlotStatus("0 of 2 required speaker videos ready. Optional b-roll can be added later.");
+            updateSlotStatus();
           });
         }
 

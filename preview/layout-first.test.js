@@ -557,4 +557,70 @@ assert.strictEqual(
 );
 assert.strictEqual(emptyById["layout-error-card"].hidden, true, "placing a valid video clears the empty-file error");
 
-console.log("layout-first landing: required speaker readiness, optional b-roll, handoff, and layout-switch preservation verified");
+// Per-slot status badges (#1131): each visible slot shows its own assignment state on the
+// canvas — required-empty "Needs video", filled "Ready", optional "Optional", hidden none —
+// so a creator sees which required videos are still missing at the slot, not only in the
+// side-panel summary. Fresh controller to isolate state.
+const stateZones = [
+  makeZone("host"),
+  makeZone("guest"),
+  makeZone("guest-b", "drop-zone is-hidden"),
+  makeZone("broll"),
+];
+const stateButtons = [
+  makeLayoutButton("interview", "Using interview"),
+  makeLayoutButton("solo", "Use solo"),
+  makeLayoutButton("panel", "Use panel"),
+];
+const stateById = {
+  "layout-scene-label": new Element("span"),
+  "layout-runtime-label": new Element("span"),
+  "speaker-row": new Element("div", { className: "speaker-row" }),
+  "layout-slot-status": new Element("p"),
+  "layout-reset": new Element("button"),
+  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+  "layout-error-card": new Element("div", { hidden: true }),
+  "layout-error": new Element("p"),
+};
+const stateDoc = {
+  createElement(tagName) { return new Element(tagName); },
+  getElementById(id) { return stateById[id] || null; },
+  querySelectorAll(selector) {
+    if (selector === "[data-layout]") return stateButtons;
+    if (selector === ".drop-zone[data-slot]") return stateZones;
+    return [];
+  },
+};
+const stateCtl = createLayoutFirstController(stateDoc, { URL: urlApi });
+const slotState = (slot) => stateCtl.slotIndicators[slot];
+
+// Interview start: required slots flag missing, optional flags optional, hidden slot is blank.
+assert.equal(slotState("host").textContent, "Needs video", "an empty required host slot flags that it needs a video");
+assert.ok(slotState("host").classList.contains("is-missing"), "the missing host slot carries the missing state class");
+assert.equal(slotState("guest").textContent, "Needs video", "an empty required guest slot flags that it needs a video");
+assert.equal(slotState("broll").textContent, "Optional", "the optional b-roll slot is marked optional, not missing");
+assert.equal(slotState("guest-b").hidden, true, "a hidden slot shows no status badge");
+
+// Placing a video flips that slot to ready without touching the others.
+stateCtl.placeVideoFile(stateCtl.zonesBySlot.host, video("host.mp4"));
+assert.equal(slotState("host").textContent, "Ready", "a filled slot reads Ready");
+assert.ok(slotState("host").classList.contains("is-ready"), "the filled slot carries the ready state class");
+assert.equal(slotState("guest").textContent, "Needs video", "the still-empty required slot keeps flagging missing");
+
+// Removing the video returns the slot to its missing state.
+stateCtl.removeVideo(stateCtl.zonesBySlot.host);
+assert.equal(slotState("host").textContent, "Needs video", "removing a video returns the slot to needing one");
+
+// Switching to panel reveals the second guest slot, which starts as missing.
+stateCtl.applyLayout("panel");
+assert.equal(slotState("guest-b").hidden, false, "the revealed panel slot now shows a status badge");
+assert.equal(slotState("guest-b").textContent, "Needs video", "the newly revealed required slot flags missing");
+
+// Switching to solo hides the guest slots again — their badges go blank.
+stateCtl.applyLayout("solo");
+assert.equal(slotState("guest").hidden, true, "a slot hidden by the solo layout shows no status badge");
+assert.equal(slotState("host").textContent, "Needs video", "solo's single required slot still flags missing when empty");
+
+assert.match(html, /\.slot-state/, "layout-first styles the per-slot status badge");
+
+console.log("layout-first landing: required speaker readiness, optional b-roll, per-slot status, handoff, and layout-switch preservation verified");
