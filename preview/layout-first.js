@@ -663,6 +663,13 @@
       // Each action is announced to screen readers, since keyboard actions otherwise gave no
       // feedback beyond the recomputed readiness line.
       wrap.addEventListener("keydown", (event) => {
+        // Only act when the placed-video container itself holds focus. The handler is bound to
+        // the wrap, so a keydown bubbling up from a focused child — the video's own controls
+        // (arrow keys scrub/seek) or the Remove button — would otherwise also move or remove the
+        // video, hijacking those controls' keys.
+        if (event.target !== wrap) {
+          return;
+        }
         if (event.key === "Delete" || event.key === "Backspace") {
           event.preventDefault();
           const removedName = slotName(zone);

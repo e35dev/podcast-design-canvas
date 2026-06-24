@@ -1169,26 +1169,39 @@ assert.equal(canvasCtl.zonesBySlot.host.classList.contains("filled"), true, "a c
 
 // Keyboard move/swap (WCAG 2.1.1): a placed video is focusable and the arrow keys move or swap
 // it between slots, mirroring drag — so reordering isn't pointer-only even though the draggable
-// affordance announces itself to screen readers.
+// affordance announces itself to screen readers. The keydown only acts when the wrap itself is
+// focused (event.target === wrap), so it doesn't hijack keys bubbling from the video controls.
+function fireKey(el, key, target) {
+  el.listeners.keydown({ key, preventDefault() {}, target: target === undefined ? el : target });
+}
+function placedVideoIn(slot) {
+  return controller.zonesBySlot[slot].querySelector(".placed-video");
+}
 controller.resetVideos();
 controller.applyLayout("interview");
 controller.placeVideoFile(controller.zonesBySlot.host, { name: "k-host.mp4", type: "video/mp4", size: 5, lastModified: 5 });
-const placedHostVideo = controller.zonesBySlot.host.querySelector(".placed-video");
+const placedHostVideo = placedVideoIn("host");
 assert.equal(placedHostVideo.attributes.tabindex, "0", "a placed video is focusable for keyboard move");
 assert.ok((placedHostVideo.attributes["aria-keyshortcuts"] || "").includes("ArrowRight"), "the placed video advertises arrow-key move shortcuts");
 // ArrowRight moves it into the next (empty) slot.
-placedHostVideo.listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+fireKey(placedHostVideo, "ArrowRight");
 assert.equal(controller.zonesBySlot.guest.dataset.fileName, "k-host.mp4", "arrow key moves the placed video into the next slot");
 assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "the source slot is emptied after a keyboard move");
 // Placing a video in the now-empty host and pressing ArrowRight swaps with the filled guest.
 controller.placeVideoFile(controller.zonesBySlot.host, { name: "k-guest.mp4", type: "video/mp4", size: 6, lastModified: 6 });
-controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+fireKey(placedVideoIn("host"), "ArrowRight");
 assert.equal(controller.zonesBySlot.guest.dataset.fileName, "k-guest.mp4", "arrow key swaps the video into a filled neighbour");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, "k-host.mp4", "and swaps the neighbour back to the source slot");
 // A non-arrow key is a no-op, so Tab still moves focus instead of the video.
 const beforeKey = controller.zonesBySlot.host.dataset.fileName;
-controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "Tab", preventDefault() {} });
+fireKey(placedVideoIn("host"), "Tab");
 assert.equal(controller.zonesBySlot.host.dataset.fileName, beforeKey, "a non-arrow key does not move the placed video");
+// A keydown bubbling up from a focused child (the video controls or Remove button) must NOT
+// move the video — otherwise arrow keys to scrub the video would also fling it to another slot.
+const hostBeforeBubble = controller.zonesBySlot.host.dataset.fileName;
+fireKey(placedVideoIn("host"), "ArrowRight", { tagName: "video" });
+assert.equal(controller.zonesBySlot.host.dataset.fileName, hostBeforeBubble, "an arrow key from a focused child (video controls) does not move the video");
+assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), true, "the neighbour is unchanged when a child element had focus");
 
 // Keyboard actions are announced to screen readers via the polite live region, and Delete
 // removes the focused video (the same as the Remove button).
@@ -1196,14 +1209,16 @@ const actionStatus = elementsById["layout-action-status"];
 controller.resetVideos();
 controller.applyLayout("interview");
 controller.placeVideoFile(controller.zonesBySlot.host, { name: "ann-host.mp4", type: "video/mp4", size: 7, lastModified: 7 });
-controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+fireKey(placedVideoIn("host"), "ArrowRight");
 assert.match(actionStatus.textContent, /Moved the video to the Guest slot/, "a keyboard move is announced to screen readers");
 // Guest now holds the video; place one in host and swap to check the swap announcement.
 controller.placeVideoFile(controller.zonesBySlot.host, { name: "ann-host2.mp4", type: "video/mp4", size: 8, lastModified: 8 });
-controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+fireKey(placedVideoIn("host"), "ArrowRight");
 assert.match(actionStatus.textContent, /Swapped the Host and Guest videos/, "a keyboard swap is announced to screen readers");
-// Delete removes the focused video and announces it.
-controller.zonesBySlot.host.querySelector(".placed-video").listeners.keydown({ key: "Delete", preventDefault() {} });
+// Delete removes the focused video and announces it. A Delete bubbling from a child does not.
+fireKey(placedVideoIn("host"), "Delete", { tagName: "button" });
+assert.equal(controller.zonesBySlot.host.classList.contains("filled"), true, "Delete from a focused child does not remove the video");
+fireKey(placedVideoIn("host"), "Delete");
 assert.equal(controller.zonesBySlot.host.classList.contains("filled"), false, "Delete removes the focused placed video");
 assert.match(actionStatus.textContent, /Removed the Host video/, "a keyboard removal is announced to screen readers");
 
