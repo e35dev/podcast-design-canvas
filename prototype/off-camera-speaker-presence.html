@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Off-Camera Speaker Presence Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .people {
+        display: grid;
+        gap: 14px;
+      }
+
+      .person {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input[type="text"],
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      .badge.shown {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.hidden {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .tile {
+        position: relative;
+        width: 132px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #34564f, #16302b);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      /* on-camera speaker always present on one side */
+      .tile .oncam {
+        position: absolute;
+        left: 6%;
+        top: 18%;
+        bottom: 18%;
+        width: 40%;
+        border-radius: 6px;
+        background: rgba(232, 244, 241, 0.18);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+      }
+
+      .tile .oncam::before {
+        content: "";
+        position: absolute;
+        top: 22%;
+        left: 50%;
+        width: 40%;
+        aspect-ratio: 1;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: #eef6f3;
+      }
+
+      /* the off-camera presence sits on the other side */
+      .pres {
+        position: absolute;
+        right: 6%;
+        top: 18%;
+        bottom: 18%;
+        width: 40%;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 18px;
+        overflow: hidden;
+      }
+
+      .pres.card {
+        background: rgba(20, 60, 54, 0.85);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+        font-size: 11px;
+        text-align: center;
+        padding: 4px;
+      }
+
+      .pres.photo {
+        background: radial-gradient(circle at 50% 38%, #f0d9b8 0 30%, #6b8f86 31%);
+      }
+
+      .pres.monogram {
+        background: #f4d35e;
+        color: #16211f;
+      }
+
+      .pres.waveform {
+        background: rgba(16, 36, 32, 0.7);
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10%;
+      }
+
+      .pres.waveform i {
+        flex: 1;
+        background: #6ee0c8;
+        border-radius: 1px;
+      }
+
+      .pres.hidden {
+        display: none;
+      }
+
+      .tile.hidden .oncam {
+        left: 30%;
+        width: 40%;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--accent);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        margin-top: 16px;
+      }
+
+      button.secondary {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--accent);
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .person {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .tile {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Off-camera speaker presence</h1>
+      <p class="lede">Some people join without usable video &mdash; a call-in guest, a producer, a voiceover. Give them an intentional on-screen presence instead of a blank frame. Pick how each appears when they speak, and the preview shows it next to the on-camera speaker.</p>
+
+      <section class="workspace" aria-label="Off-camera presence workspace">
+        <div class="panel">
+          <h2>Audio-only participants</h2>
+          <div class="people" id="people"></div>
+          <div class="actions">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Presence summary">
+          <h2>Presence summary</h2>
+          <div id="status" class="status">Everyone has a presence</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">An audio-only speaker is never a broken video or a frozen black box &mdash; and never a full-screen takeover. The on-camera speakers stay visible while they talk.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Who joins audio-only and why. Fixed sample context, not editable.
+      const roles = {
+        "call-in": "Call-in guest",
+        producer: "Producer",
+        narrator: "Narrator / voiceover",
+      };
+
+      // How an off-camera speaker appears when they talk. "preview" styles the tile.
+      const styles = {
+        card: { label: "Name card", preview: "card" },
+        photo: { label: "Photo from social", preview: "photo" },
+        monogram: { label: "Show monogram", preview: "monogram" },
+        waveform: { label: "Audio waveform", preview: "waveform" },
+        hidden: { label: "Fully hidden", preview: "hidden" },
+      };
+
+      const samplePeople = [
+        { id: "p1", name: "Sam Rivera", role: "call-in", style: "card" },
+        { id: "p2", name: "Priya Anand", role: "call-in", style: "photo" },
+        { id: "p3", name: "Off-camera producer", role: "producer", style: "waveform" },
+      ];
+
+      let people = structuredClone(samplePeople);
+
+      const peopleElement = document.querySelector("#people");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        people = structuredClone(samplePeople);
+        render();
+      });
+
+      function render() {
+        peopleElement.replaceChildren(...people.map((person, index) => renderPerson(person, index)));
+        updateSummary();
+      }
+
+      function updateSummary() {
+        const hidden = people.filter((person) => person.style === "hidden").length;
+        statusElement.textContent = hidden === 0
+          ? "Everyone has an on-screen presence"
+          : `${hidden} participant${hidden === 1 ? "" : "s"} fully hidden`;
+
+        issuesElement.replaceChildren(...people.map((person) => {
+          const article = document.createElement("article");
+          article.className = "issue";
+          const strong = document.createElement("strong");
+          const span = document.createElement("span");
+          if (person.style === "hidden") {
+            strong.textContent = `${person.name || "This speaker"}: hidden`;
+            span.textContent = "They won't appear on screen — make sure another speaker or b-roll fills the frame while they talk.";
+          } else {
+            strong.textContent = `${person.name || "This speaker"}: ${styles[person.style].label.toLowerCase()}`;
+            span.textContent = "Appears beside the on-camera speaker when they talk.";
+          }
+          article.append(strong, span);
+          return article;
+        }));
+      }
+
+      function tileMarkup(style) {
+        const pres = styles[style].preview;
+        const presInner = pres === "waveform"
+          ? "<i style='height:30%'></i><i style='height:60%'></i><i style='height:45%'></i><i style='height:70%'></i><i style='height:40%'></i>"
+          : "";
+        // Only controlled class names and a data hook reach innerHTML; the name card text
+        // is written via textContent afterwards.
+        return `<span class="oncam"></span><span class="pres ${pres}" data-pres>${presInner}</span>`;
+      }
+
+      function renderPerson(person, index) {
+        const article = document.createElement("article");
+        article.className = "person";
+
+        const roleOptions = Object.entries(roles)
+          .map(([value, label]) => `<option value="${value}" ${value === person.role ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const styleOptions = Object.entries(styles)
+          .map(([value, item]) => `<option value="${value}" ${value === person.style ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+
+        // The scaffold holds only controlled keys/labels and the preview class; the
+        // editable name is written via .value and textContent below.
+        article.innerHTML = `
+          <div class="tile ${person.style === "hidden" ? "hidden" : ""}">${tileMarkup(person.style)}</div>
+          <div class="fields">
+            <div class="head">
+              <strong>Audio-only speaker</strong>
+              <span class="badge ${person.style === "hidden" ? "hidden" : "shown"}">${person.style === "hidden" ? "hidden" : "on screen"}</span>
+            </div>
+            <label>Name<input data-field="name" type="text" aria-label="Speaker name"></label>
+            <div class="fields-row">
+              <label>Why audio-only
+                <select data-field="role" aria-label="Why this speaker is audio-only">${roleOptions}</select>
+              </label>
+              <label>How they appear
+                <select data-field="style" aria-label="On-screen presence">${styleOptions}</select>
+              </label>
+            </div>
+          </div>
+        `;
+
+        const nameInput = article.querySelector('[data-field="name"]');
+        nameInput.value = person.name;
+        // If the presence is a name card, mirror the name into the tile via textContent.
+        const presEl = article.querySelector("[data-pres]");
+        if (person.style === "card") {
+          presEl.textContent = person.name || "Speaker";
+        } else if (person.style === "monogram") {
+          presEl.textContent = (person.name.trim()[0] || "?").toUpperCase();
+        }
+
+        nameInput.addEventListener("input", (event) => {
+          person.name = event.target.value;
+          if (person.style === "card") {
+            presEl.textContent = person.name || "Speaker";
+          } else if (person.style === "monogram") {
+            presEl.textContent = (person.name.trim()[0] || "?").toUpperCase();
+          }
+          updateSummary();
+        });
+        article.addEventListener("change", (event) => {
+          const field = event.target.dataset.field;
+          if (!field) {
+            return;
+          }
+          person[field] = event.target.value;
+          render();
+        });
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
