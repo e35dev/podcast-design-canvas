@@ -50,6 +50,27 @@
         max-width: 760px;
       }
 
+      .routed-note {
+        margin: 16px 0 0;
+        padding: 12px 14px;
+        border: 1px solid #bfe3d7;
+        border-left: 4px solid var(--accent, #136f63);
+        border-radius: 8px;
+        background: #eef9f4;
+        color: #075246;
+        font-size: 14px;
+        max-width: 760px;
+      }
+
+      .routed-note[hidden] {
+        display: none;
+      }
+
+      .routed-note strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+
       .workspace {
         display: grid;
         grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
@@ -312,6 +333,8 @@
     <main>
       <h1>Social context intake</h1>
       <p class="lede">Add the people in this episode and their public links so the edit gets their names, spellings, and references right. Every link attaches to a speaker, you can see what it's used for, and you can keep anything off screen.</p>
+
+      <div class="routed-note" id="routedNote" role="status" hidden></div>
 
       <section class="workspace" aria-label="Social context intake workspace">
         <div class="panel">
@@ -611,6 +634,38 @@
         return article;
       }
 
+      // Pre-populate from a weak-context b-roll hand-off (#757): when this screen is opened
+      // with ?moment=&reason= (carried by the route from the B-roll review surface), show
+      // why we're here so the creator knows which moment to ground.
+      function showRoutedContext() {
+        let params;
+        try {
+          params = new URLSearchParams(window.location.search);
+        } catch (error) {
+          return;
+        }
+        const moment = params.get("moment");
+        const reason = params.get("reason");
+        if (!moment && !reason) {
+          return;
+        }
+        const note = document.querySelector("#routedNote");
+        if (!note) {
+          return;
+        }
+        const heading = document.createElement("strong");
+        heading.textContent = moment
+          ? `Grounding a weak-context moment at ${moment}`
+          : "Grounding a weak-context moment";
+        const detail = document.createElement("span");
+        detail.textContent = reason
+          ? `The B-roll review flagged this moment for ${reason}. Add the people and links that ground it below.`
+          : "The B-roll review routed this moment here. Add the people and links that ground it below.";
+        note.replaceChildren(heading, detail);
+        note.hidden = false;
+      }
+
+      showRoutedContext();
       render();
     </script>
   </body>

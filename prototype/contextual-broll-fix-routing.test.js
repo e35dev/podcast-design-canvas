@@ -12,7 +12,14 @@ const dir = __dirname;
 const html = fs.readFileSync(path.join(dir, "contextual-broll-moments.html"), "utf8");
 
 assert.ok(html.includes('openLink = document.createElement("a")'), "B-roll issues render an open-fix-screen link");
-assert.ok(html.includes("openLink.href = issue.fixScreen"), "open link routes to the owning fix screen");
+assert.ok(html.includes("issue.fixScreen") && html.includes("issue.fixQuery"), "open link routes to the owning fix screen, with an optional payload");
+
+// #757: weak-context classification is driven by the scoring engine, not a static stub,
+// and the social-context route carries the moment timestamp + reason as a payload.
+assert.ok(html.includes("BrollContextScorer.scoreMoment"), "weak context comes from the scoring engine");
+assert.ok(html.includes("broll-context-scorer.js"), "the scoring engine is loaded");
+assert.ok(/moment=\$\{encodeURIComponent/.test(html), "weak route carries the moment timestamp");
+assert.ok(/reason=\$\{encodeURIComponent/.test(html), "weak route carries the weak-context reason");
 
 const fixScreens = [...html.matchAll(/fixScreen:\s*"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
 assert.ok(fixScreens.length >= 2, "B-roll issues declare fix screens");

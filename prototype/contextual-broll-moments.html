@@ -326,6 +326,7 @@
       }
     </style>
       <script src="../preview/visuals-nav.js" defer></script>
+      <script src="broll-context-scorer.js"></script>
   </head>
   <body data-visuals-step="contextual-broll-moments">
     <main>
@@ -388,10 +389,10 @@
       };
 
       const sampleMoments = [
-        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
-        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
-        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
-        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
+        { id: "m1", at: "02:10", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
+        { id: "m2", at: "06:45", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
+        { id: "m3", at: "11:20", reason: "They reference something off-screen", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
+        { id: "m4", at: "18:05", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
       ];
 
       let moments = structuredClone(sampleMoments);
@@ -429,6 +430,11 @@
 
         const results = list.map((moment, index) => {
           const source = sources[moment.source] || sources.manual;
+          // Score this moment's context strength with the engine (#757). Falls back to
+          // the source stub if the engine isn't present (e.g. opened without the script).
+          const context = typeof BrollContextScorer !== "undefined"
+            ? BrollContextScorer.scoreMoment(moment)
+            : { weak: !!source.weak, reason: source.weak ? "low-confidence context" : null };
           let state;
           let issue = null;
 
@@ -449,14 +455,19 @@
                 ? { fixScreen: "contextual-title-cards.html", fixLabel: "title cards" }
                 : {}),
             };
-          } else if (moment.decision === "suggested" && source.weak) {
+          } else if (moment.decision === "suggested" && context.weak) {
+            // Weak-context classification now comes from the scoring engine, not a static
+            // source stub. The route to social context intake carries the moment timestamp
+            // and the reason so intake can pre-populate why this moment needs grounding.
             state = "review";
+            const payload = `moment=${encodeURIComponent(moment.at || moment.id)}&reason=${encodeURIComponent(context.reason || "weak context")}`;
             issue = {
-              title: `Check the context for "${moment.reason}"`,
-              action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
+              title: `Weak context for "${moment.reason}"`,
+              action: `This moment scored low on context (${context.reason}). Add grounding in social context intake before it appears on screen, or reject it.`,
               tone: "review",
               fixScreen: "social-context-intake.html",
               fixLabel: "social context intake",
+              fixQuery: payload,
             };
           } else if (moment.decision === "adjusted") {
             state = "approved";
@@ -630,7 +641,7 @@
         if (issue.fixScreen) {
           const openLink = document.createElement("a");
           openLink.className = "fix-link";
-          openLink.href = issue.fixScreen;
+          openLink.href = issue.fixQuery ? `${issue.fixScreen}?${issue.fixQuery}` : issue.fixScreen;
           openLink.textContent = `Open ${issue.fixLabel} →`;
           article.append(openLink);
         }

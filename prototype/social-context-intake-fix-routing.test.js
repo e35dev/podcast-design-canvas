@@ -25,4 +25,11 @@ assert.ok(
   "unassigned speaker bucket routes to speaker role mapping",
 );
 
-console.log(`social context intake: ${fixScreens.length} issue paths open their owning fix screen`);
+// #757: when routed from a weak-context B-roll moment (?moment=&reason=), the screen
+// pre-populates a note explaining which moment to ground.
+assert.ok(html.includes("URLSearchParams"), "intake reads the routed payload from the URL");
+assert.ok(html.includes('params.get("moment")') && html.includes('params.get("reason")'), "intake reads the moment and reason");
+assert.ok(html.includes('id="routedNote"'), "intake shows a routed-context note");
+assert.ok(html.includes("function showRoutedContext"), "intake pre-populates from the routed payload");
+
+console.log(`social context intake: ${fixScreens.length} issue paths open their owning fix screen; pre-populates from B-roll routing`);
