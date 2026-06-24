@@ -15,6 +15,7 @@ const navScript = fs.readFileSync(path.join(__dirname, "tools-nav.js"), "utf8");
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "tools nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "tools nav links to the guided episode flow");
+assert.ok(navScript.includes("app.html"), "tools nav links to the preview app");
 assert.ok(!/innerHTML/.test(navScript), "tools nav builds the DOM without innerHTML");
 
 // Every secondary screen is assigned a workflow stage in the nav's stage map, so a

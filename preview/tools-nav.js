@@ -98,6 +98,11 @@ function renderToolsNav() {
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
+  const app = document.createElement("a");
+  app.href = "../preview/app.html";
+  app.textContent = "Preview app";
+  wrap.appendChild(app);
+
   const role = document.createElement("span");
   role.className = "role";
   role.textContent = `Tools · ${currentToolStage()}`;
