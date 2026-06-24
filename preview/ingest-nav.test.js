@@ -115,9 +115,14 @@ function renderNavFor(fileName, ingestStep, search = "") {
 
 const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
-assert.ok(
-  !firstNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Previous:")),
-  "first ingest screen does not render a previous link",
+const exportBackLink = firstNav.nodes.find(
+  (node) => node.tagName === "a" && node.textContent === "Previous: Export readiness",
+);
+assert.ok(exportBackLink, "first ingest screen renders export readiness as its previous step");
+assert.equal(
+  exportBackLink.href,
+  "export-readiness-review.html",
+  "first ingest screen previous link returns to export readiness",
 );
 assert.ok(
   firstNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
@@ -128,6 +133,10 @@ const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mappin
 assert.ok(
   middleNav.nodes.some((node) => node.textContent === "Previous: Episode readiness"),
   "middle ingest screen renders previous link",
+);
+assert.ok(
+  !middleNav.nodes.some((node) => node.tagName === "a" && node.textContent === "Previous: Export readiness"),
+  "middle ingest screen does not reuse the export readiness back link",
 );
 assert.ok(
   middleNav.nodes.some((node) => node.textContent === "Next: Social links"),
