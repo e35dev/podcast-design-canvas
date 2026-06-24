@@ -109,6 +109,20 @@
       .issue { border-left: 4px solid var(--warn); border-radius: 6px; }
       .issue.ready { border-left-color: var(--accent); }
       .issue.route { border-left-color: var(--info); }
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
 
       @media (max-width: 920px) {
         .workspace, .row { grid-template-columns: 1fr; }
@@ -350,11 +364,25 @@
       }
 
       function roleIssue() {
-        if (!state.started) return "Start a draft before importing new recordings.";
-        if (!state.mediaImported) return "Import the new episode's recordings into the empty speaker buckets.";
-        if (state.hostTrack === "Choose recording" || state.guestTrack === "Choose recording") return "Choose one recording for each role.";
-        if (state.hostTrack === state.guestTrack) return "Host and Guest cannot use the same recording.";
-        if (!state.rolesConfirmed) return "Confirm the new speaker roles before styling.";
+        if (!state.started) {
+          return { detail: "Start a draft before importing new recordings." };
+        }
+        if (!state.mediaImported) {
+          return { detail: "Import the new episode's recordings into the empty speaker buckets." };
+        }
+        if (state.hostTrack === "Choose recording" || state.guestTrack === "Choose recording") {
+          return { detail: "Choose one recording for each role." };
+        }
+        if (state.hostTrack === state.guestTrack) {
+          return { detail: "Host and Guest cannot use the same recording." };
+        }
+        if (!state.rolesConfirmed) {
+          return {
+            detail: "Confirm the new speaker roles before styling.",
+            fixScreen: "speaker-role-mapping.html?path=ingest",
+            fixLabel: "speaker role mapping",
+          };
+        }
         return null;
       }
 
@@ -417,27 +445,56 @@
         const issues = [];
         const role = roleIssue();
         if (!state.started) {
-          issues.push(["route", "Start from a recent episode", "The previous episode provides reusable structure only after the creator starts a new draft."]);
+          issues.push({
+            tone: "route",
+            title: "Start from a recent episode",
+            detail: "The previous episode provides reusable structure only after the creator starts a new draft.",
+          });
         } else {
-          issues.push(["ready", "Previous episode stays finished", "Editing this draft does not change the exported episode it started from."]);
+          issues.push({
+            tone: "ready",
+            title: "Previous episode stays finished",
+            detail: "Editing this draft does not change the exported episode it started from.",
+          });
         }
         if (role) {
-          issues.push(["route", "Ingest still needs confirmation", role]);
+          issues.push({
+            tone: "route",
+            title: "Ingest still needs confirmation",
+            detail: role.detail,
+            fixScreen: role.fixScreen,
+            fixLabel: role.fixLabel,
+          });
         } else {
-          issues.push(["ready", "Ready for preset styling", "New recordings are mapped to the carried-forward speaker buckets."]);
+          issues.push({
+            tone: "ready",
+            title: "Ready for preset styling",
+            detail: "New recordings are mapped to the carried-forward speaker buckets.",
+          });
         }
         if (state.templateSaved) {
-          issues.push(["ready", "Future episodes updated", "Only reusable refinements move back to the show template. This draft remains separate."]);
+          issues.push({
+            tone: "ready",
+            title: "Future episodes updated",
+            detail: "Only reusable refinements move back to the show template. This draft remains separate.",
+          });
         }
 
-        issuesElement.replaceChildren(
-          ...issues.map(([tone, title, detail]) => {
-            const item = document.createElement("article");
-            item.className = `issue ${tone}`;
-            item.append(createText("strong", title), createText("span", detail));
-            return item;
-          }),
-        );
+        issuesElement.replaceChildren(...issues.map(renderIssue));
+      }
+
+      function renderIssue(issue) {
+        const item = document.createElement("article");
+        item.className = `issue ${issue.tone}`;
+        item.append(createText("strong", issue.title), createText("span", issue.detail));
+        if (issue.fixScreen && issue.fixLabel) {
+          const openLink = document.createElement("a");
+          openLink.className = "fix-link";
+          openLink.href = issue.fixScreen;
+          openLink.textContent = `Open ${issue.fixLabel} →`;
+          item.append(openLink);
+        }
+        return item;
       }
 
       function renderDraftList() {
