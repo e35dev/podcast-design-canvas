@@ -509,10 +509,13 @@
                     }
                     : row.check === "unreadable"
                     ? {
-                      // "Too small to read" is a readability problem owned by the
-                      // accessibility & readability checks screen.
                       fixScreen: "accessibility-readability-checks.html",
                       fixLabel: "accessibility & readability checks",
+                    }
+                    : row.check === "overlap"
+                    ? {
+                      fixScreen: "canvas-layer-controls.html",
+                      fixLabel: "canvas layer controls",
                     }
                     : {}),
             };
