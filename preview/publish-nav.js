@@ -20,6 +20,11 @@ const PUBLISH_FLOW = [
   { id: "publish-checklist", file: "publish-checklist.html", label: "Publish checklist" },
 ];
 
+const PREVIEW_APP_PUBLISH_TARGETS = new Set([
+  "export-readiness-review",
+  ...PUBLISH_FLOW.map((step) => step.id),
+]);
+
 function currentPublishIndex() {
   const fromBody = document.body.dataset.publishStep;
   if (fromBody) {
@@ -36,6 +41,44 @@ function currentPublishIndex() {
 function previousPublishStep(index) {
   const step = PUBLISH_FLOW[index];
   return step.previous || (index > 0 ? PUBLISH_FLOW[index - 1] : null);
+}
+
+function screenIdFromFile(file) {
+  const clean = (file || "").split("#")[0].split("?")[0];
+  const name = clean.split("/").pop() || "";
+  return name.replace(/\.html$/, "");
+}
+
+function isPreviewAppPublishTarget(file) {
+  return PREVIEW_APP_PUBLISH_TARGETS.has(screenIdFromFile(file));
+}
+
+function isEmbeddedInPreviewApp() {
+  try {
+    return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function previewAppHref(file) {
+  return `../preview/app.html#${screenIdFromFile(file)}`;
+}
+
+function setTopTargetWhenEmbedded(link) {
+  if (isEmbeddedInPreviewApp()) {
+    link.target = "_top";
+  }
+}
+
+function setPublishScreenLink(link, file) {
+  if (isEmbeddedInPreviewApp() && isPreviewAppPublishTarget(file)) {
+    link.href = previewAppHref(file);
+    link.target = "_top";
+    return;
+  }
+
+  link.href = file;
 }
 
 function renderPublishNav() {
@@ -116,29 +159,32 @@ function renderPublishNav() {
 
   const home = document.createElement("a");
   home.href = "../preview/";
+  setTopTargetWhenEmbedded(home);
   home.textContent = "← Preview shell";
   wrap.appendChild(home);
 
   const guided = document.createElement("a");
   guided.href = "../preview/episode-flow.html";
+  setTopTargetWhenEmbedded(guided);
   guided.textContent = "Guided episode flow";
   wrap.appendChild(guided);
 
   if (previous) {
     const prevLink = document.createElement("a");
-    prevLink.href = previous.file;
+    setPublishScreenLink(prevLink, previous.file);
     prevLink.textContent = `Previous: ${previous.label}`;
     wrap.appendChild(prevLink);
   }
 
   if (next) {
     const nextLink = document.createElement("a");
-    nextLink.href = next.file;
+    setPublishScreenLink(nextLink, next.file);
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
     const finish = document.createElement("a");
     finish.href = "../preview/";
+    setTopTargetWhenEmbedded(finish);
     finish.textContent = "Finish: back to the preview shell";
     wrap.appendChild(finish);
   }
