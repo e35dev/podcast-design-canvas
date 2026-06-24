@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Layout Canvas Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      /* The stage is the example podcast scene. Slots are positioned drop zones. */
+      .stage {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border-radius: 10px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #16403a, #2b4a6b 60%, #5a4f73);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .stage-grid {
+        position: absolute;
+        inset: 5% 5% 22% 5%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3%;
+      }
+
+      .slot {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 2px dashed rgba(255, 255, 255, 0.55);
+        border-radius: 8px;
+        background: rgba(16, 24, 22, 0.28);
+        color: #f3f8f6;
+        text-align: center;
+        padding: 8px;
+        cursor: default;
+      }
+
+      .slot.captions {
+        position: absolute;
+        inset: auto 5% 9% 5%;
+        height: 13%;
+        flex-direction: row;
+      }
+
+      .slot.insert {
+        position: absolute;
+        right: 6%;
+        top: 8%;
+        width: 26%;
+        height: 30%;
+      }
+
+      .slot.drop-target {
+        border-color: #ffd66b;
+        background: rgba(255, 214, 107, 0.22);
+      }
+
+      .slot[role="button"] { cursor: pointer; }
+
+      .slot.placeable {
+        border-color: #ffd66b;
+        border-style: solid;
+        background: rgba(255, 214, 107, 0.18);
+      }
+
+      .slot:focus-visible {
+        outline: 2px solid #ffd66b;
+        outline-offset: 2px;
+      }
+
+      .slot.filled {
+        border-style: solid;
+        border-color: rgba(255, 255, 255, 0.8);
+        background: linear-gradient(160deg, #8bc8bd, #1b5f56);
+      }
+
+      .slot.filled.captions {
+        background: rgba(16, 24, 22, 0.82);
+      }
+
+      .slot-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .slot-hint {
+        font-size: 11px;
+        color: rgba(243, 248, 246, 0.85);
+        font-weight: 600;
+      }
+
+      .slot-filled-name {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .slot-filled-note {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .slot-clear {
+        margin-top: 4px;
+        min-height: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+        background: rgba(16, 24, 22, 0.35);
+        color: #ffffff;
+        font: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 10px;
+        cursor: pointer;
+      }
+
+      .slot-clear:focus-visible {
+        outline: 2px solid #ffd66b;
+        outline-offset: 2px;
+      }
+
+      .palette {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .chip {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+        border: 1px solid #b9c8c3;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        text-align: left;
+        padding: 8px 12px;
+        cursor: grab;
+      }
+
+      .chip[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .chip:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .chip-name { font-weight: 800; font-size: 13px; }
+      .chip-note { color: var(--muted); font-size: 12px; }
+      .chip-kind {
+        align-self: flex-start;
+        margin-top: 2px;
+        border-radius: 999px;
+        background: #eef2f0;
+        color: #44524e;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 1px 7px;
+      }
+
+      .palette-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.building { color: #7a4400; background: #fff1d6; }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.ready { border-left-color: var(--accent); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); font-size: 13px; }
+
+      @media (max-width: 880px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/style-nav.js" defer></script>
+  </head>
+  <body data-style-step="episode-layout-canvas">
+    <main>
+      <h1>Episode layout canvas</h1>
+      <p class="lede">This is your podcast scene. Drag each speaker track and visual into the spot where it belongs — host on one side, guest on the other, captions across the bottom — and see how the finished episode layout will look.</p>
+
+      <section class="workspace" aria-label="Episode layout canvas">
+        <div class="panel">
+          <h2>Scene layout</h2>
+          <div class="stage" id="stage" aria-label="Podcast scene with drop zones"></div>
+
+          <h2 style="margin-top:18px;">Drag in your tracks and visuals</h2>
+          <div class="palette" id="palette" aria-label="Draggable episode pieces"></div>
+          <p class="palette-note">Drag a piece onto a matching spot, or select a piece and then a spot. Speaker tracks go in the host and guest frames; captions and visuals have their own zones.</p>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Layout summary">
+          <h2>Layout summary</h2>
+          <div id="status" class="status building">Building the layout</div>
+          <div id="issues" class="issues"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // The example podcast scene. Each slot is a drop zone that accepts certain kinds of
+      // pieces, so a speaker track can only land in a speaker frame and captions only in
+      // the caption band — the creator can never build an impossible layout.
+      const SLOTS = [
+        { id: "host", label: "Host", accepts: ["speaker"], hint: "Drag the host here", className: "host" },
+        { id: "guest", label: "Guest", accepts: ["speaker"], hint: "Drag a guest here", className: "guest" },
+        { id: "captions", label: "Captions", accepts: ["captions"], hint: "Drag captions here", className: "captions" },
+        { id: "insert", label: "B-roll / title", accepts: ["broll", "title"], hint: "Drag a clip or title", className: "insert" },
+      ];
+
+      // The pieces a creator drags in. "kind" decides which slots will accept the piece.
+      const SOURCES = [
+        { id: "host-track", label: "Host track", kind: "speaker", note: "Dana Brooks" },
+        { id: "guest-1-track", label: "Guest 1 track", kind: "speaker", note: "Marcus Lee" },
+        { id: "guest-2-track", label: "Guest 2 track", kind: "speaker", note: "Priya Shah" },
+        { id: "captions-piece", label: "Captions", kind: "captions", note: "Reviewed transcript" },
+        { id: "broll-piece", label: "B-roll clip", kind: "broll", note: "Product demo shot" },
+        { id: "title-piece", label: "Title card", kind: "title", note: "Episode title" },
+      ];
+
+      const slotById = (id) => SLOTS.find((slot) => slot.id === id) || null;
+      const sourceById = (id) => SOURCES.find((source) => source.id === id) || null;
+
+      // Whether a slot will accept a given piece (by kind). Single source of truth used by
+      // both the drop handler and the test, so the UI can never accept an invalid drop.
+      function canAccept(slot, source) {
+        if (!slot || !source) {
+          return false;
+        }
+        return slot.accepts.includes(source.kind);
+      }
+
+      // Place a piece in a slot, returning a NEW layout. A piece lives in at most one slot,
+      // so placing it elsewhere moves it; an occupied slot is replaced. Invalid drops leave
+      // the layout unchanged and report why.
+      function placeItem(layout, slotId, sourceId) {
+        const slot = slotById(slotId);
+        const source = sourceById(sourceId);
+        if (!canAccept(slot, source)) {
+          return { layout, ok: false, reason: "wrong-slot" };
+        }
+        const next = { ...layout };
+        for (const key of Object.keys(next)) {
+          if (next[key] === sourceId) {
+            delete next[key];
+          }
+        }
+        next[slotId] = sourceId;
+        return { layout: next, ok: true, reason: "placed" };
+      }
+
+      // Empty a slot, returning a NEW layout. The freed piece returns to the palette.
+      function clearSlot(layout, slotId) {
+        if (!(slotId in layout)) {
+          return layout;
+        }
+        const next = { ...layout };
+        delete next[slotId];
+        return next;
+      }
+
+      // Single readiness rule: the scene is watchable once the host frame and a guest frame
+      // both hold a speaker. Captions and the insert are encouraged but optional.
+      function evaluateLayout(layout) {
+        const issues = [];
+        const hostFilled = Boolean(layout.host);
+        const guestFilled = Boolean(layout.guest);
+
+        if (!hostFilled) {
+          issues.push({ tone: "build", title: "The host frame is empty", detail: "Drag the host track into the host frame." });
+        }
+        if (!guestFilled) {
+          issues.push({ tone: "build", title: "The guest frame is empty", detail: "Drag a guest track into the guest frame." });
+        }
+        if (!layout.captions) {
+          issues.push({ tone: "build", title: "No captions placed yet", detail: "Drop captions into the caption band so the episode stays readable." });
+        }
+
+        const ready = hostFilled && guestFilled;
+        if (ready && !issues.length) {
+          issues.push({ tone: "ready", title: "Layout ready to preview", detail: "Host and guest are framed and captions are placed. Save this as a reusable show layout." });
+        } else if (ready) {
+          issues.push({ tone: "ready", title: "Speakers are framed", detail: "Host and guest are in place — add captions and a visual to finish the look." });
+        }
+
+        return { ready, placed: Object.keys(layout).length, issues };
+      }
+
+      // A judgeable starting scene: host and captions already placed, guest frame waiting
+      // so the drag affordance is obvious on load.
+      function initialLayout() {
+        return { host: "host-track", captions: "captions-piece" };
+      }
+
+      if (typeof document !== "undefined" && document.querySelector) {
+        const stageElement = document.querySelector("#stage");
+        const paletteElement = document.querySelector("#palette");
+        const statusElement = document.querySelector("#status");
+        const issuesElement = document.querySelector("#issues");
+
+        let layout = initialLayout();
+        let selectedSource = null;
+        // The piece being dragged. dataTransfer.getData() is unreadable during dragover
+        // (browsers only expose it on drop), so we track the id here to validate the slot
+        // and call preventDefault — which is what allows the drop to happen at all.
+        let draggingSourceId = null;
+
+        function placedSourceIds() {
+          return new Set(Object.values(layout));
+        }
+
+        function place(slotId, sourceId) {
+          const result = placeItem(layout, slotId, sourceId);
+          if (result.ok) {
+            layout = result.layout;
+            selectedSource = null;
+            render();
+          }
+        }
+
+        function renderSlot(slot) {
+          const node = document.createElement("div");
+          const filledId = layout[slot.id];
+          node.className = `slot ${slot.className}${filledId ? " filled" : ""}`;
+
+          // Dragging always works; the drop handler validates the piece against the slot,
+          // and dragover only opts in (preventDefault) for a compatible piece.
+          node.addEventListener("dragover", (event) => {
+            if (canAccept(slot, sourceById(draggingSourceId))) {
+              event.preventDefault();
+              if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "move";
+              }
+              node.classList.add("drop-target");
+            }
+          });
+          node.addEventListener("dragleave", () => node.classList.remove("drop-target"));
+          node.addEventListener("drop", (event) => {
+            event.preventDefault();
+            node.classList.remove("drop-target");
+            const id = (event.dataTransfer && event.dataTransfer.getData("text/plain")) || draggingSourceId;
+            draggingSourceId = null;
+            place(slot.id, id);
+          });
+
+          if (filledId) {
+            const source = sourceById(filledId);
+            // A filled slot is a labelled region containing its own Remove button, so it
+            // is not itself a button (that would nest interactive controls).
+            node.setAttribute("role", "group");
+            node.setAttribute("aria-label", `${slot.label} frame: ${source ? source.label : ""}`);
+            node.append(
+              createText("span", source ? source.label : "", "slot-filled-name"),
+              createText("span", source ? source.note : "", "slot-filled-note"),
+            );
+            const clear = document.createElement("button");
+            clear.type = "button";
+            clear.className = "slot-clear";
+            clear.textContent = "Remove";
+            clear.addEventListener("click", (event) => {
+              event.stopPropagation();
+              layout = clearSlot(layout, slot.id);
+              render();
+            });
+            node.append(clear);
+            return node;
+          }
+
+          // Empty slot. It only becomes an activatable "Place here" button when the
+          // selected piece can actually land here, so activating a slot is never a no-op.
+          const selected = selectedSource ? sourceById(selectedSource) : null;
+          const placeable = canAccept(slot, selected);
+          if (placeable) {
+            node.classList.add("placeable");
+            node.setAttribute("role", "button");
+            node.setAttribute("tabindex", "0");
+            node.setAttribute("aria-label", `Place ${selected.label} in the ${slot.label} frame`);
+            const placeHere = () => place(slot.id, selectedSource);
+            node.addEventListener("click", placeHere);
+            node.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                placeHere();
+              }
+            });
+          } else {
+            node.setAttribute("role", "group");
+            node.setAttribute("aria-label", `${slot.label} frame, empty. Drag a piece here.`);
+          }
+          node.append(
+            createText("span", slot.label, "slot-label"),
+            createText("span", placeable ? `Place ${selected.label} here` : slot.hint, "slot-hint"),
+          );
+          return node;
+        }
+
+        function renderStage() {
+          const grid = document.createElement("div");
+          grid.className = "stage-grid";
+          grid.append(renderSlot(slotById("host")), renderSlot(slotById("guest")));
+          const children = [grid, renderSlot(slotById("captions")), renderSlot(slotById("insert"))];
+          stageElement.replaceChildren(...children);
+        }
+
+        function renderPalette() {
+          const placed = placedSourceIds();
+          const chips = SOURCES.map((source) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            const isPlaced = placed.has(source.id);
+            const isSelected = selectedSource === source.id;
+            chip.className = "chip";
+            chip.draggable = !isPlaced;
+            chip.setAttribute("aria-disabled", String(isPlaced));
+            chip.setAttribute("aria-pressed", String(isSelected));
+            chip.append(
+              createText("span", source.label, "chip-name"),
+              createText("span", isPlaced ? "Placed in the scene" : source.note, "chip-note"),
+              createText("span", source.kind, "chip-kind"),
+            );
+            chip.addEventListener("dragstart", (event) => {
+              if (isPlaced) {
+                event.preventDefault();
+                return;
+              }
+              draggingSourceId = source.id;
+              if (event.dataTransfer) {
+                event.dataTransfer.setData("text/plain", source.id);
+                event.dataTransfer.effectAllowed = "move";
+              }
+            });
+            chip.addEventListener("dragend", () => {
+              draggingSourceId = null;
+            });
+            chip.addEventListener("click", () => {
+              if (isPlaced) {
+                return;
+              }
+              selectedSource = isSelected ? null : source.id;
+              render();
+            });
+            return chip;
+          });
+          paletteElement.replaceChildren(...chips);
+        }
+
+        function renderSummary() {
+          const evaluation = evaluateLayout(layout);
+          statusElement.className = `status ${evaluation.ready ? "ready" : "building"}`;
+          statusElement.textContent = evaluation.ready ? "Layout ready to preview" : "Building the layout";
+          issuesElement.replaceChildren(
+            ...evaluation.issues.map((issue) => {
+              const card = document.createElement("div");
+              card.className = `issue ${issue.tone === "ready" ? "ready" : ""}`;
+              card.append(createText("strong", issue.title), createText("span", issue.detail));
+              return card;
+            }),
+          );
+        }
+
+        function render() {
+          renderStage();
+          renderPalette();
+          renderSummary();
+        }
+
+        function createText(tag, text, className) {
+          const node = document.createElement(tag);
+          node.textContent = text;
+          if (className) {
+            node.className = className;
+          }
+          return node;
+        }
+
+        render();
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { SLOTS, SOURCES, canAccept, placeItem, clearSlot, evaluateLayout, initialLayout };
+      }
+    </script>
+  </body>
+</html>

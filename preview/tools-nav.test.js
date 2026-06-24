@@ -52,6 +52,7 @@ const publishFlow = new Set([
 ]);
 
 const styleFlow = new Set([
+  "episode-layout-canvas.html",
   "preset-style-picker.html",
   "preset-comparison-preview.html",
   "preset-pacing-controls.html",
