@@ -41,6 +41,14 @@
       }
       button.active { border-color: var(--accent); background: #def3ed; color: var(--accent); }
 
+      a.handoff-link {
+        display: inline-flex; align-items: center; min-height: 38px;
+        border: 1px solid var(--accent); border-radius: 6px; background: #def3ed;
+        color: var(--accent); font-weight: 700; padding: 7px 11px; text-decoration: none;
+      }
+      a.handoff-link:hover { text-decoration: underline; }
+      a.handoff-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
       .results { display: grid; gap: 14px; }
       .result {
         display: grid; gap: 12px; border: 1px solid var(--line); border-radius: 8px;
@@ -190,6 +198,15 @@
         caption: "Caption quality review",
         clip: "Clip candidate review",
         none: "Episode preview",
+      };
+
+      // The real fix screen each search result hands off to, so "Open <review>"
+      // actually navigates to that screen instead of only marking the result handed.
+      const ownerScreens = {
+        glossary: "transcript-glossary.html",
+        attribution: "speaker-attribution-review.html",
+        chapter: "episode-chapter-markers.html",
+        caption: "audio-caption-quality-review.html",
       };
 
       const sampleResults = [
@@ -411,7 +428,7 @@
 
         const detail = createText(
           "div",
-          `Preview jump starts at ${result.leadIn}. Owning surface: ${ownerLabels[result.owner]}.`,
+          `Preview jump starts at ${result.leadIn}. Fix in ${ownerLabels[result.owner]}.`,
           "detail",
         );
 
@@ -426,11 +443,23 @@
         actions.append(jumpButton);
 
         if (result.owner !== "none") {
-          const handOffButton = document.createElement("button");
-          handOffButton.type = "button";
-          handOffButton.textContent = `Open ${ownerLabels[result.owner]}`;
-          handOffButton.addEventListener("click", () => setStatus(result.id, "handed"));
-          actions.append(handOffButton);
+          const fixScreen = ownerScreens[result.owner];
+          if (fixScreen) {
+            // A real link to the fix screen — the hand-off opens the screen that
+            // owns the fix, and still records the result as handed off on the way out.
+            const handOffLink = document.createElement("a");
+            handOffLink.className = "handoff-link";
+            handOffLink.href = fixScreen;
+            handOffLink.textContent = `Open ${ownerLabels[result.owner]}`;
+            handOffLink.addEventListener("click", () => setStatus(result.id, "handed"));
+            actions.append(handOffLink);
+          } else {
+            const handOffButton = document.createElement("button");
+            handOffButton.type = "button";
+            handOffButton.textContent = `Open ${ownerLabels[result.owner]}`;
+            handOffButton.addEventListener("click", () => setStatus(result.id, "handed"));
+            actions.append(handOffButton);
+          }
         }
 
         const pinButton = document.createElement("button");
