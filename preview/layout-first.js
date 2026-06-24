@@ -534,9 +534,16 @@
       const total = requiredSlots().length;
       const filled = filledRequiredSlots().length;
       const brollZone = zonesBySlot["broll"];
+      // The optional b-roll note has three states, not two: a rejected file (is-invalid, not
+      // filled) must not read the same as an untouched empty slot. Without this the summary said
+      // "Optional b-roll can be added later." right after the canvas flagged the file as invalid —
+      // a contradiction a screen-reader user hears as ready/optional over the rejection alert
+      // (#1293). B-roll stays optional, so this never gates Continue.
       const brollNote = brollZone && brollZone.classList.contains("filled")
         ? "Optional b-roll is in place."
-        : "Optional b-roll can be added later.";
+        : brollZone && brollZone.classList.contains("is-invalid")
+          ? "That optional b-roll file wasn't accepted — pick an MP4, MOV, or WebM video, or leave b-roll empty."
+          : "Optional b-roll can be added later.";
       if (duplicates.length > 0) {
         slotStatus.textContent =
           "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";

@@ -301,6 +301,41 @@ assert.match(
   "readiness copy invites b-roll again after the optional slot is cleared",
 );
 
+// A rejected file on the optional b-roll slot must not leave the summary saying b-roll "can be
+// added later" — that contradicts the canvas rejection a screen-reader user just heard (#1293).
+// Required videos stay ready and Continue stays enabled (b-roll is optional and never gates it).
+controller.placeVideoFile(controller.zonesBySlot.broll, { name: "poster.png", type: "image/png" });
+assert.equal(controller.zonesBySlot.broll.classList.contains("is-invalid"), true, "a non-video b-roll file is flagged invalid");
+assert.equal(controller.zonesBySlot.broll.classList.contains("filled"), false, "a rejected b-roll file does not fill the optional slot");
+assert.doesNotMatch(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll can be added later/,
+  "readiness copy no longer pretends an empty optional slot after a b-roll file was rejected",
+);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /b-roll file wasn't accepted/,
+  "readiness copy acknowledges the rejected optional b-roll file",
+);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Required speaker videos ready/,
+  "a rejected optional b-roll does not disturb the required-video readiness copy",
+);
+assert.equal(
+  elementsById["layout-continue"].attributes["aria-disabled"],
+  "false",
+  "a rejected optional b-roll keeps Continue enabled — b-roll never gates",
+);
+// Restore the clean empty-b-roll state for the layout-switch tests that follow.
+controller.placeVideoFile(controller.zonesBySlot.broll, video("broll.mp4"));
+controller.removeVideo(controller.zonesBySlot.broll);
+assert.match(
+  elementsById["layout-slot-status"].textContent,
+  /Optional b-roll can be added later\./,
+  "readiness copy invites b-roll again after the rejected file is replaced and cleared",
+);
+
 controller.applyLayout("panel");
 assert.equal(
   controller.zonesBySlot.host.classList.contains("filled"),
