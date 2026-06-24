@@ -159,6 +159,24 @@
         background: #dff5ef;
       }
 
+      .rollup-moment-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .rollup-moment-tags .rollup-moment-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #3f4d66;
+        background: #e8edf5;
+      }
+
       .track.jump-highlight {
         box-shadow: 0 0 0 2px #136f63;
       }
@@ -806,6 +824,28 @@
         return wrap;
       }
 
+      function rollupPreviewMoment(result) {
+        const momentId = result.previewMoment || issueDefaultPreviewMoment[result.issue] || "episode-start";
+        return previewMoments.find((entry) => entry.id === momentId);
+      }
+
+      function renderRollupMomentTags(needsWork) {
+        const wrap = document.createElement("div");
+        wrap.className = "rollup-moment-tags";
+        wrap.setAttribute("aria-label", "Preview moments for tracks needing review");
+
+        for (const result of needsWork) {
+          const moment = rollupPreviewMoment(result);
+          if (!moment) continue;
+          const tag = document.createElement("span");
+          tag.className = "rollup-moment-tag";
+          tag.textContent = `${trackBucketLabel(result.name)} — ${moment.label}`;
+          wrap.appendChild(tag);
+        }
+
+        return wrap;
+      }
+
       function renderRollup(evaluation, reviewCount) {
         const rollup = buildRollup(evaluation);
         rollupElement.className = `track-rollup ${rollup.statusClass === "all-clear" ? "all-clear" : ""}`;
@@ -827,6 +867,10 @@
           const repairTags = renderRollupRepairTags(rollup.needsWork);
           if (repairTags.childElementCount) {
             rollupElement.appendChild(repairTags);
+          }
+          const momentTags = renderRollupMomentTags(rollup.needsWork);
+          if (momentTags.childElementCount) {
+            rollupElement.appendChild(momentTags);
           }
         }
 
