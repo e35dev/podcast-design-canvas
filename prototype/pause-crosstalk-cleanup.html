@@ -488,6 +488,11 @@
             badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
             badge.textContent = badgeLabel(evaluation.results[index].state);
           }
+          // Keep the waveform timestamp tag in sync while typing (textContent, not HTML).
+          const tag = card.querySelector("[data-tag]");
+          if (tag && moments[index]) {
+            tag.textContent = moments[index].at;
+          }
         });
         updateSummary(evaluation);
       }
@@ -548,7 +553,7 @@
         article.innerHTML = `
           <div class="wave ${kind.preview}">
             ${waveBars(kind)}
-            <span class="tag">${moment.at}</span>
+            <span class="tag" data-tag></span>
           </div>
           <div class="fields">
             <div class="head">
@@ -568,6 +573,9 @@
         `;
 
         article.querySelector('[data-field="at"]').value = moment.at;
+        // The waveform tag shows the editable timestamp, so set it via textContent —
+        // never interpolate a user-editable value into the innerHTML scaffold above.
+        article.querySelector("[data-tag]").textContent = moment.at;
 
         // Text fields update live on input but only refresh badges/summary, so the
         // field keeps focus. Selects re-render fully on change (safe — no caret).
