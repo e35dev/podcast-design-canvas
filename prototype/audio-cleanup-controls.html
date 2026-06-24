@@ -223,6 +223,17 @@
         color: var(--accent);
       }
 
+      button.suggested-moment {
+        border-style: dashed;
+        border-color: var(--accent);
+      }
+
+      .moment-hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin: -8px 0 16px;
+      }
+
       button.primary {
         border-color: #0f5d53;
         background: var(--accent);
@@ -263,6 +274,7 @@
 
           <h2>Preview moment</h2>
           <div class="moments" id="moments" role="group" aria-label="Preview moment"></div>
+          <p class="moment-hint" id="moment-hint" aria-live="polite"></p>
 
           <h2>Compare on this moment</h2>
           <div class="compare" id="compare" aria-live="polite"></div>
@@ -282,12 +294,12 @@
 
     <script>
       const choices = [
-        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices", effect: "Room hum softens; voices stay present" },
-        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level", effect: "Host and guest levels move closer together" },
-        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise", effect: "Soft guest lines rise without lifting the room floor" },
-        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural", effect: "Hollow tail softens while speech stays natural" },
-        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis", effect: "Sudden laughs stay energetic but less harsh" },
-        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy", effect: "Speech edges sharpen for clearer captions" },
+        { id: "noise", label: "Reduce background noise", hint: "Softens room hum without dulling voices", effect: "Room hum softens; voices stay present", bestMoment: "noisy-room" },
+        { id: "balance", label: "Balance loudness between speakers", hint: "Keeps host and guest at a natural level", effect: "Host and guest levels move closer together", bestMoment: "exchange" },
+        { id: "quiet", label: "Enhance a quiet speaker", hint: "Lifts a soft guest without raising room noise", effect: "Soft guest lines rise without lifting the room floor", bestMoment: "quiet-guest" },
+        { id: "echo", label: "Reduce echo or room sound", hint: "Tames hollow rooms while keeping tone natural", effect: "Hollow tail softens while speech stays natural", bestMoment: "noisy-room" },
+        { id: "peaks", label: "Smooth harsh or sudden peaks", hint: "Protects listeners on laughs and emphasis", effect: "Sudden laughs stay energetic but less harsh", bestMoment: "peak" },
+        { id: "clarity", label: "Improve overall speech clarity", hint: "Helps captions stay trustworthy", effect: "Speech edges sharpen for clearer captions", bestMoment: "caption-line" },
       ];
 
       const previewMoments = [
@@ -322,6 +334,7 @@
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
+      const momentHintElement = document.querySelector("#moment-hint");
 
       document.querySelector("#apply").addEventListener("click", () => {
         applied = true;
@@ -337,6 +350,7 @@
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
         renderCompare();
         speakersElement.replaceChildren(...speakers.map(renderSpeaker));
+        renderMomentHint();
 
         const hasSuggested = speakers.some((speaker) => speaker.state === "suggested");
         statusElement.textContent = applied || !hasSuggested ? "Sounds ready" : "Cleanup suggested";
@@ -345,6 +359,25 @@
           : hasSuggested
             ? "Compare original and cleaned audio on a real moment, then apply cleanup across the episode."
             : "Tracks are already clean enough for the final episode.";
+      }
+
+      function suggestedMoments() {
+        return new Set(choices.filter((choice) => enabled.has(choice.id)).map((choice) => choice.bestMoment));
+      }
+
+      function renderMomentHint() {
+        const active = choices.filter((choice) => enabled.has(choice.id));
+        if (!active.length) {
+          momentHintElement.textContent = "";
+          return;
+        }
+
+        const labels = active.map((choice) => {
+          const moment = previewMoments.find((entry) => entry.id === choice.bestMoment);
+          return `${choice.label.toLowerCase()} on ${moment.label.toLowerCase()}`;
+        });
+
+        momentHintElement.textContent = `Suggested previews highlighted for ${labels.join("; ")}.`;
       }
 
       function applyChoice(bars, choiceId, momentId) {
@@ -463,8 +496,12 @@
         input.type = "checkbox";
         input.checked = enabled.has(choice.id);
         input.addEventListener("change", () => {
-          if (input.checked) enabled.add(choice.id);
-          else enabled.delete(choice.id);
+          if (input.checked) {
+            enabled.add(choice.id);
+            preview = choice.bestMoment;
+          } else {
+            enabled.delete(choice.id);
+          }
           applied = false;
           render();
         });
@@ -478,6 +515,9 @@
         button.type = "button";
         button.textContent = moment.label;
         button.setAttribute("aria-pressed", moment.id === preview ? "true" : "false");
+        if (suggestedMoments().has(moment.id)) {
+          button.classList.add("suggested-moment");
+        }
         button.addEventListener("click", () => {
           preview = moment.id;
           render();
