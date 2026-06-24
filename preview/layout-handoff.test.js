@@ -177,4 +177,18 @@ assert.equal(
 );
 assert.equal(handoff.placementList(null), "", "placement list is empty without handoff state");
 
+const SIG = "name:rec.mp4|size:10|mtime:5";
+const duplicateInterview = handoff.stateFromSlots("interview", [
+  { slot: "host", name: "rec.mp4", sig: SIG },
+  { slot: "guest", name: "rec.mp4", sig: SIG },
+]);
+const sigQuery = handoff.queryForState(duplicateInterview);
+assert.ok(sigQuery.includes("slotSigs="), "handoff URLs carry placed recording identities");
+const queryOnlySigs = handoff.load(null, `?path=episode&layout=interview&slots=host,guest&${sigQuery}`);
+const sigTracks = handoff.tracksFromState(queryOnlySigs, []);
+assert.ok(
+  sigTracks.length === 2 && sigTracks.every((track) => track.sig === SIG),
+  "slotSigs restore recording identity into role-mapping tracks without storage",
+);
+
 console.log("layout handoff: state, URL, storage, and role-track mapping verified");

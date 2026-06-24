@@ -60,6 +60,29 @@
     return normalizeSlots(String(value || "").split(",").filter(Boolean));
   }
 
+  function slotSigsFromQuery(value) {
+    const sigBySlot = Object.create(null);
+    String(value || "").split(",").filter(Boolean).forEach((pair) => {
+      const colon = pair.indexOf(":");
+      if (colon === -1) {
+        return;
+      }
+      const slot = decodeURIComponent(pair.slice(0, colon));
+      const sig = decodeURIComponent(pair.slice(colon + 1));
+      if (validSlots.has(slot) && sig) {
+        sigBySlot[slot] = sig;
+      }
+    });
+    return sigBySlot;
+  }
+
+  function slotSigsForQuery(state) {
+    return (state.slots || [])
+      .filter((slot) => (slot.sig || "").trim())
+      .map((slot) => `${encodeURIComponent(slot.slot)}:${encodeURIComponent(slot.sig)}`)
+      .join(",");
+  }
+
   function requiredSlotsFor(layout) {
     const normalized = normalizeLayout(layout);
     return normalized ? Object.keys(layouts[normalized].roles) : [];
@@ -143,6 +166,12 @@
     if (state.optionalBroll) {
       params.set("broll", "placed");
     }
+    const slotSigs = slotSigsForQuery(state);
+    if (slotSigs) {
+      // Carry each placed recording's identity in the URL so role mapping can detect the same
+      // source in multiple speaker slots even when session storage is unavailable.
+      params.set("slotSigs", slotSigs);
+    }
     return params.toString();
   }
 
@@ -212,7 +241,14 @@
 
   function load(storage, rawSearch) {
     const params = new URLSearchParams(String(rawSearch || "").replace(/^\?/, ""));
-    const queryState = stateFromSlots(params.get("layout"), slotsFromQuery(params.get("slots")).map((slot) => ({ slot })));
+    const sigBySlot = slotSigsFromQuery(params.get("slotSigs"));
+    const queryState = stateFromSlots(
+      params.get("layout"),
+      slotsFromQuery(params.get("slots")).map((slot) => ({
+        slot,
+        sig: sigBySlot[slot] || "",
+      })),
+    );
     if (!queryState) {
       return null;
     }
