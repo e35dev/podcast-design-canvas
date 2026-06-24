@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Social Context Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .links {
+        display: grid;
+        gap: 14px;
+      }
+
+      .link {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .head strong {
+        font-size: 15px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.linked {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.offscreen {
+        color: #5e6b67;
+        background: #eceeed;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .avatar {
+        position: relative;
+        width: 72px;
+        aspect-ratio: 1;
+        flex: none;
+        align-self: start;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 22px;
+      }
+
+      .avatar.unassigned {
+        background: repeating-linear-gradient(135deg, #c9d2cf, #c9d2cf 8px, #dde3e1 8px, #dde3e1 16px);
+        color: #5e6b67;
+      }
+
+      .uses {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .use {
+        border-radius: 999px;
+        background: #eef4f2;
+        color: #2f4a44;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 9px;
+      }
+
+      .use.off {
+        background: #f0f0f0;
+        color: #8a948f;
+        text-decoration: line-through;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue.info {
+        border-left-color: var(--accent);
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .link {
+          grid-template-columns: 1fr;
+        }
+
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+
+        .avatar {
+          width: 56px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Social context intake</h1>
+      <p class="lede">Add the people in this episode and their public links so the edit gets their names, spellings, and references right. Every link attaches to a speaker, you can see what it's used for, and you can keep anything off screen.</p>
+
+      <section class="workspace" aria-label="Social context intake workspace">
+        <div class="panel">
+          <h2>People &amp; links</h2>
+          <div class="links" id="links"></div>
+          <div class="actions">
+            <button type="button" id="addLink">Add a link</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Social context summary">
+          <h2>Context summary</h2>
+          <div id="status" class="status ready">Context ready</div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Links improve captions, names, and b-roll through the panels that own them. This screen just manages the inputs &mdash; nothing is published from here.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // Public sources a creator can add, and what each one is mainly used for in the edit.
+      const platforms = {
+        website: { label: "Personal / show site", uses: ["names", "references"] },
+        x: { label: "X", uses: ["handles", "spellings"] },
+        linkedin: { label: "LinkedIn", uses: ["titles", "company"] },
+        instagram: { label: "Instagram", uses: ["handles", "b-roll"] },
+        youtube: { label: "YouTube", uses: ["handles", "b-roll"] },
+        tiktok: { label: "TikTok", uses: ["handles", "b-roll"] },
+        podcast: { label: "Podcast profile", uses: ["names", "references"] },
+        company: { label: "Company / project page", uses: ["company", "references"] },
+      };
+
+      // Speaker buckets a link can attach to. "" means it has not been assigned yet.
+      const buckets = {
+        "": "Unassigned",
+        host: "Host",
+        "guest-1": "Guest 1",
+        "guest-2": "Guest 2",
+        "co-host": "Co-host",
+      };
+
+      // Whether the link's derived context may appear on screen, or stays input-only.
+      const visibility = {
+        screen: "Use on screen",
+        off: "Keep off screen",
+      };
+
+      // Plain-language label for each derived use.
+      const useLabels = {
+        names: "names",
+        handles: "handles",
+        spellings: "spellings",
+        titles: "titles",
+        company: "company",
+        references: "references",
+        "b-roll": "b-roll",
+      };
+
+      const sampleLinks = [
+        { id: "k1", handle: "@danabrooks", platform: "x", bucket: "host", visibility: "screen" },
+        { id: "k2", handle: "marcus-lee", platform: "linkedin", bucket: "guest-1", visibility: "screen" },
+        { id: "k3", handle: "priya.codes", platform: "instagram", bucket: "", visibility: "screen" },
+      ];
+
+      let links = structuredClone(sampleLinks);
+
+      const linksElement = document.querySelector("#links");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+
+      document.querySelector("#addLink").addEventListener("click", () => {
+        const next = links.length + 1;
+        links.push({ id: `k${next}-${links.length}`, handle: "", platform: "website", bucket: "", visibility: "screen" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        links = structuredClone(sampleLinks);
+        render();
+      });
+
+      // Single source of truth: map each link's speaker bucket + visibility to a state and
+      // a plain-language issue. A link that is not attached to a speaker is the one thing
+      // that needs the creator before it can help the edit.
+      function evaluate(list) {
+        const results = list.map((link) => {
+          let state;
+          let issue = null;
+
+          if (!buckets[link.bucket] || link.bucket === "") {
+            state = "review";
+            issue = {
+              title: `Assign ${link.handle || "this link"} to a speaker`,
+              action: "Attach it to a speaker bucket so its context isn't applied across the wrong people.",
+              tone: "review",
+            };
+          } else if (link.visibility === "off") {
+            state = "offscreen";
+            issue = {
+              title: `${link.handle || "This link"}: kept off screen`,
+              action: "Used to improve spellings and references, but it won't appear on screen.",
+              tone: "info",
+            };
+          } else {
+            state = "linked";
+          }
+
+          return { id: link.id, state, issue };
+        });
+
+        const hasReview = results.some((result) => result.state === "review");
+        const overall = hasReview ? "review" : "ready";
+        return { overall, results };
+      }
+
+      // Full rebuild: used on load, add, reset, and select changes (selects don't hold
+      // a caret, so replacing them is safe).
+      function render() {
+        const evaluation = evaluate(links);
+        linksElement.replaceChildren(
+          ...links.map((link, index) => renderLink(link, index, evaluation.results[index])),
+        );
+        updateSummary(evaluation);
+      }
+
+      function updateSummary(evaluation) {
+        statusElement.className = `status ${evaluation.overall}`;
+        statusElement.textContent = evaluation.overall === "ready" ? "Context ready" : "Assign links to speakers";
+
+        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        issuesElement.replaceChildren(
+          ...(issues.length
+            ? issues.map(renderIssue)
+            : [Object.assign(document.createElement("p"), { textContent: "Every link is attached to a speaker. The edit can use this context." })]),
+        );
+      }
+
+      // Light update: used while typing a handle. Refreshes each card's badge and the
+      // summary in place, without replacing the input the creator is typing in.
+      function refreshStates() {
+        const evaluation = evaluate(links);
+        Array.from(linksElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${badgeClass(evaluation.results[index].state)}`;
+            badge.textContent = badgeLabel(evaluation.results[index].state);
+          }
+        });
+        updateSummary(evaluation);
+      }
+
+      function badgeClass(state) {
+        if (state === "linked") {
+          return "linked";
+        }
+        if (state === "offscreen") {
+          return "offscreen";
+        }
+        return "review";
+      }
+
+      function badgeLabel(state) {
+        if (state === "offscreen") {
+          return "off screen";
+        }
+        if (state === "review") {
+          return "needs a speaker";
+        }
+        return state;
+      }
+
+      function initial(handle) {
+        const text = (handle || "").replace(/^@/, "").trim();
+        return text ? text[0].toUpperCase() : "?";
+      }
+
+      function renderLink(link, index, result) {
+        const platform = platforms[link.platform] || platforms.website;
+        const article = document.createElement("article");
+        article.className = "link";
+
+        const platformOptions = Object.entries(platforms)
+          .map(([value, item]) => `<option value="${value}" ${value === link.platform ? "selected" : ""}>${item.label}</option>`)
+          .join("");
+        const bucketOptions = Object.entries(buckets)
+          .map(([value, label]) => `<option value="${value}" ${value === link.bucket ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const visibilityOptions = Object.entries(visibility)
+          .map(([value, label]) => `<option value="${value}" ${value === link.visibility ? "selected" : ""}>${label}</option>`)
+          .join("");
+        const off = link.visibility === "off";
+        const useChips = platform.uses
+          .map((use) => `<span class="use ${off ? "off" : ""}">${useLabels[use] || use}</span>`)
+          .join("");
+
+        // The scaffold holds only controlled values (platform/bucket/visibility keys and
+        // their fixed labels, fixed states, fixed use chips). The editable handle is
+        // written via .value and textContent below, and the avatar shows only its first
+        // letter via textContent, so a typed handle can never inject markup.
+        article.innerHTML = `
+          <div class="avatar ${link.bucket ? "" : "unassigned"}" data-initial></div>
+          <div class="fields">
+            <div class="head">
+              <strong>${buckets[link.bucket] || "Unassigned"}</strong>
+              <span class="badge ${badgeClass(result.state)}">${badgeLabel(result.state)}</span>
+            </div>
+            <label>Handle or link<input data-field="handle" aria-label="Handle or link"></label>
+            <div class="fields-row">
+              <label>Source
+                <select data-field="platform" aria-label="Link source">${platformOptions}</select>
+              </label>
+              <label>Speaker
+                <select data-field="bucket" aria-label="Speaker bucket">${bucketOptions}</select>
+              </label>
+            </div>
+            <label>On screen
+              <select data-field="visibility" aria-label="On-screen visibility">${visibilityOptions}</select>
+            </label>
+            <div class="uses" aria-label="Used for">${useChips}</div>
+          </div>
+        `;
+
+        article.querySelector('[data-field="handle"]').value = link.handle;
+        article.querySelector("[data-initial]").textContent = initial(link.handle);
+
+        // Text fields update live on input but only refresh badges/summary, so the field
+        // keeps focus. Selects re-render fully on change (safe — no caret).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        // Selects also emit "input" in some browsers; handle them only on change (full
+        // rebuild) so a text field's input never triggers a rebuild that drops its caret.
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        links[index][field] = event.target.value;
+
+        if (full) {
+          render();
+        } else {
+          const card = linksElement.children[index];
+          if (card) {
+            // Keep the avatar initial in sync via textContent, never innerHTML.
+            card.querySelector("[data-initial]").textContent = initial(links[index].handle);
+          }
+          refreshStates();
+        }
+      }
+
+      function renderIssue(issue) {
+        const article = document.createElement("article");
+        article.className = `issue ${issue.tone}`;
+        // issue.title embeds the editable handle, so build it with textContent.
+        const strong = document.createElement("strong");
+        strong.textContent = issue.title;
+        const span = document.createElement("span");
+        span.textContent = issue.action;
+        article.append(strong, span);
+        return article;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
