@@ -172,6 +172,10 @@ hiddenInput.click = () => { hiddenOpened += 1; };
 ctl.zonesBySlot["guest-b"].listeners.click({ target: ctl.zonesBySlot["guest-b"] });
 assert.equal(hiddenOpened, 0, "a hidden slot does not open a picker");
 
-assert.match(html, /\.drop-zone:not\(\.filled\) \{ cursor: pointer/, "empty slots show a clickable cursor");
+assert.match(html, /\.drop-zone \{ cursor: pointer/, "slots show a clickable cursor for place and replace");
+assert.ok(
+  /\.placed-video video\s*\{[\s\S]*?cursor: default/.test(html),
+  "the video preview keeps a default cursor so controls stay distinct from replace chrome",
+);
 
 console.log("layout-first click-to-place: slots open their picker; filled chrome replaces; input/hidden/controls are handled");

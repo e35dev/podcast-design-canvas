@@ -4,8 +4,12 @@
 // drop a new video onto a filled slot or click the slot chrome to pick a replacement without
 // removing the current file first. Run: `node preview/layout-first-replace-slot.test.js`
 
+const fs = require("fs");
+const path = require("path");
 const assert = require("assert");
 const { createLayoutFirstController } = require("./layout-first.js");
+
+const html = fs.readFileSync(path.join(__dirname, "layout-first.html"), "utf8");
 
 class ClassList {
   constructor(initial = "") {
@@ -184,5 +188,11 @@ controller.placeVideoFile(controller.zonesBySlot.guest, video("guest.mp4"));
 controller.placeVideoFile(hostZone, video("guest.mp4"));
 assert.equal(controller.zonesBySlot.guest.classList.contains("filled"), false,
   "replacing host with the guest recording clears the duplicate from guest");
+
+assert.doesNotMatch(
+  html,
+  /\.drop-zone:not\(\.filled\) \{ cursor: pointer/,
+  "filled slots are not excluded from the slot pointer affordance",
+);
 
 console.log("layout-first replace-slot: filled slots accept drops and chrome clicks to pick a replacement video");
