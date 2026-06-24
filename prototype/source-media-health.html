@@ -566,6 +566,15 @@
           action: "Let us smooth the motion to match, replace the file, or continue with a warning.",
           steps: ["keep", "warn", "audio-only", "replace"],
         },
+        timing: {
+          label: "Starts late or runs long",
+          preview: "ok",
+          chip: "Timing off",
+          natural: "review suggested",
+          title: (name) => `${name}'s recording starts late or runs past the episode`,
+          action: "Trim it to fit the episode, replace the file, or continue with a warning.",
+          steps: ["keep", "trim", "warn", "replace"],
+        },
         portrait: {
           label: "Recorded sideways (portrait)",
           preview: "portrait",
@@ -600,6 +609,7 @@
         keep: "Decide later",
         warn: "Continue with a warning",
         "audio-only": "Show audio-only",
+        trim: "Trim to fit the episode",
         replace: "Replace with a clean file",
       };
 
@@ -608,6 +618,7 @@
         { id: "guest-1", role: "Guest 1", name: "Guest 1 — Marcus Lee", condition: "dark", disposition: "keep" },
         { id: "guest-2", role: "Guest 2", name: "Guest 2 — Priya Shah", condition: "incomplete", disposition: "keep" },
         { id: "guest-3", role: "Guest 3", name: "Guest 3 — Alex Kim", condition: "quiet", disposition: "keep" },
+        { id: "guest-4", role: "Guest 4", name: "Guest 4 — Sam Rivera", condition: "timing", disposition: "keep" },
       ];
 
       let speakers = structuredClone(sampleSpeakers);
@@ -702,6 +713,13 @@
             issue = {
               title: `${speaker.name} will appear as audio-only`,
               action: "Their video stays hidden — make sure another speaker or b-roll fills the frame here.",
+              tone: "info",
+            };
+          } else if (disposition === "trim") {
+            state = "ready";
+            issue = {
+              title: `${speaker.name}: trimmed to fit the episode`,
+              action: "Lined up with the episode timeline — ready for preset selection.",
               tone: "info",
             };
           } else if (disposition === "warn") {
@@ -969,6 +987,11 @@
         span.textContent = issue.action;
         article.append(strong, span);
         return article;
+      }
+
+      // Expose the pure scoring helpers for the Node smoke test (no-op in the browser).
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { conditions, dispositions, evaluate, summarizeBatch, batchCategory };
       }
 
       render();
