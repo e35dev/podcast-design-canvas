@@ -272,6 +272,26 @@
         margin: 14px 0 0;
       }
 
+      .intake-notice {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #fff8ee;
+        padding: 12px 14px;
+        margin-bottom: 20px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .intake-notice strong {
+        font-size: 14px;
+        color: var(--warn);
+      }
+
+      .intake-notice span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       @media (max-width: 840px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -317,6 +337,24 @@
     </main>
 
     <script>
+      // When arriving from B-roll review, show which moment triggered the route.
+      (function () {
+        const params = new URLSearchParams(location.search);
+        const incomingReason = params.get("reason");
+        const incomingTs = params.get("ts");
+        if (!incomingReason) return;
+        const notice = document.createElement("div");
+        notice.className = "intake-notice";
+        const title = document.createElement("strong");
+        title.textContent = "Arrived from B-roll review";
+        const detail = document.createElement("span");
+        const tsLabel = incomingTs ? ` at ${incomingTs}` : "";
+        detail.textContent = `The moment “${incomingReason}”${tsLabel} flagged weak context. Adding social links here helps the edit confirm whether it fits on screen.`;
+        notice.append(title, detail);
+        const workspace = document.querySelector(".workspace");
+        if (workspace) workspace.before(notice);
+      })();
+
       // Public sources a creator can add, and what each one is mainly used for in the edit.
       const platforms = {
         website: { label: "Personal / show site", uses: ["names", "references"] },

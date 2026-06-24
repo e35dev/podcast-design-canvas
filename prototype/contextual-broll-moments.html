@@ -326,6 +326,7 @@
       }
     </style>
       <script src="../preview/visuals-nav.js" defer></script>
+    <script src="broll-context-scorer.js"></script>
   </head>
   <body data-visuals-step="contextual-broll-moments">
     <main>
@@ -388,10 +389,46 @@
       };
 
       const sampleMoments = [
-        { id: "m1", reason: "Guest mentions the product launch", type: "product", strength: "standard", source: "transcript", decision: "approved" },
-        { id: "m2", reason: "Host introduces a new segment", type: "title", strength: "standard", source: "transcript", decision: "suggested" },
-        { id: "m3", reason: "Guest names their company", type: "web", strength: "prominent", source: "reference", decision: "suggested" },
-        { id: "m4", reason: "Quotable line from the host", type: "quote", strength: "subtle", source: "manual", decision: "approved" },
+        {
+          id: "m1",
+          ts: "00:12:34",
+          reason: "Guest mentions the product launch",
+          transcript: "Sarah Chen just said our conversion rate jumped 34% after we shipped version 2.0. Acme Analytics showed 10,000 active users in the first week.",
+          type: "product",
+          strength: "standard",
+          source: "transcript",
+          decision: "approved",
+        },
+        {
+          id: "m2",
+          ts: "00:28:17",
+          reason: "Host introduces a new segment",
+          transcript: "Okay so let's get into the next part of our conversation here.",
+          type: "title",
+          strength: "standard",
+          source: "transcript",
+          decision: "suggested",
+        },
+        {
+          id: "m3",
+          ts: "00:41:05",
+          reason: "Guest names their company",
+          transcript: "Yeah so at our company we have been working on this for a while now.",
+          type: "web",
+          strength: "prominent",
+          source: "reference",
+          decision: "suggested",
+        },
+        {
+          id: "m4",
+          ts: "00:55:22",
+          reason: "Quotable line from the host",
+          transcript: "I always say the best time to start was yesterday, the second best time is right now.",
+          type: "quote",
+          strength: "subtle",
+          source: "manual",
+          decision: "approved",
+        },
       ];
 
       let moments = structuredClone(sampleMoments);
@@ -429,6 +466,8 @@
 
         const results = list.map((moment, index) => {
           const source = sources[moment.source] || sources.manual;
+          const scored = scoreMomentContext(moment.transcript || moment.reason);
+          const isWeakContext = source.weak || (moment.source === "transcript" && scored.strength === "weak");
           let state;
           let issue = null;
 
@@ -449,14 +488,17 @@
                 ? { fixScreen: "contextual-title-cards.html", fixLabel: "title cards" }
                 : {}),
             };
-          } else if (moment.decision === "suggested" && source.weak) {
+          } else if (moment.decision === "suggested" && isWeakContext) {
             state = "review";
             issue = {
               title: `Check the context for "${moment.reason}"`,
-              action: "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it.",
+              action: source.weak
+                ? "This came from low-confidence context. Confirm it fits before it appears on screen, or reject it."
+                : "The transcript context is too thin to confirm this moment. Add social context or reject it.",
               tone: "review",
               fixScreen: "social-context-intake.html",
               fixLabel: "social context intake",
+              fixPayload: { reason: moment.reason, ts: moment.ts || "" },
             };
           } else if (moment.decision === "adjusted") {
             state = "approved";
@@ -630,7 +672,13 @@
         if (issue.fixScreen) {
           const openLink = document.createElement("a");
           openLink.className = "fix-link";
-          openLink.href = issue.fixScreen;
+          const fixUrl = new URL(issue.fixScreen, location.href);
+          if (issue.fixPayload) {
+            for (const [k, v] of Object.entries(issue.fixPayload)) {
+              fixUrl.searchParams.set(k, v);
+            }
+          }
+          openLink.href = fixUrl.toString();
           openLink.textContent = `Open ${issue.fixLabel} →`;
           article.append(openLink);
         }
