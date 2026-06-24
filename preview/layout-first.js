@@ -120,6 +120,9 @@
     // Videos set aside when their slot leaves the current layout, keyed by slot, so
     // switching back to a compatible layout restores the placement instead of discarding it.
     const setAside = Object.create(null);
+    // Rejection state for slots that leave the layout while still invalid, so switching
+    // back does not downgrade them to an untouched "Needs video" empty slot.
+    const invalidAside = Object.create(null);
 
     function currentDefinition() {
       return layouts[currentLayout] || layouts.interview;
@@ -373,6 +376,7 @@
       zones.forEach(clearZone);
       // Reset starts the layout over, so nothing stays set aside for a later switch.
       Object.keys(setAside).forEach((slot) => delete setAside[slot]);
+      Object.keys(invalidAside).forEach((slot) => delete invalidAside[slot]);
     }
 
     function clearMatchingSource(zone, file) {
@@ -418,6 +422,7 @@
         zone.classList.remove("is-invalid");
         zone.dataset.invalidMessage = "";
       }
+      delete invalidAside[zone.dataset.slot];
       clearMatchingSource(zone, file);
       clearZone(zone);
       zone.classList.add("filled");
@@ -499,6 +504,11 @@
         const isVisible = visible.has(zone.dataset.slot);
         zone.classList.toggle("is-hidden", !isVisible);
         if (!isVisible) {
+          // Remember a rejection on a slot that is leaving the layout so it can be
+          // restored instead of looking like an untouched empty slot.
+          if (zone.classList.contains("is-invalid") && zone.dataset.invalidMessage) {
+            invalidAside[zone.dataset.slot] = zone.dataset.invalidMessage;
+          }
           // Set the placed video aside (don't destroy it) when its slot leaves the layout,
           // so switching back to a compatible layout restores the creator's work.
           if (zone.classList.contains("filled") && zone.placedFile) {
@@ -517,6 +527,17 @@
           delete setAside[slot];
           placeVideoFile(zone, file);
         }
+      });
+
+      // Restore rejection state after set-aside videos so a filled restore wins.
+      zones.forEach((zone) => {
+        const slot = zone.dataset.slot;
+        if (!visible.has(slot) || zone.classList.contains("filled")) return;
+        const message = invalidAside[slot];
+        if (!message) return;
+        zone.classList.add("is-invalid");
+        zone.dataset.invalidMessage = message;
+        delete invalidAside[slot];
       });
 
       layoutButtons.forEach((button) => {

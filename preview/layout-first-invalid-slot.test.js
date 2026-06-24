@@ -103,46 +103,50 @@ function makeZone(slot, className = "drop-zone") {
   return zone;
 }
 
-const zones = [
-  makeZone("host"),
-  makeZone("guest"),
-  makeZone("guest-b", "drop-zone is-hidden"),
-  makeZone("broll"),
-];
-const layoutButtons = [
-  makeLayoutButton("interview", "Using interview"),
-  makeLayoutButton("solo", "Use solo"),
-  makeLayoutButton("panel", "Use panel"),
-];
-const elementsById = {
-  "layout-scene-label": new Element("span"),
-  "layout-runtime-label": new Element("span"),
-  "speaker-row": new Element("div", { className: "speaker-row" }),
-  "layout-slot-status": new Element("p"),
-  "layout-reset": new Element("button"),
-  "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
-  "layout-error-card": new Element("div", { hidden: true }),
-  "layout-error": new Element("p"),
-};
-const documentStub = {
-  createElement(tagName) { return new Element(tagName); },
-  getElementById(id) { return elementsById[id] || null; },
-  querySelectorAll(selector) {
-    if (selector === "[data-layout]") return layoutButtons;
-    if (selector === ".drop-zone[data-slot]") return zones;
-    return [];
-  },
-};
-const urlApi = {
-  createObjectURL(file) { return `blob:${file.name}`; },
-  revokeObjectURL() {},
-};
+function buildController() {
+  const zones = [
+    makeZone("host"),
+    makeZone("guest"),
+    makeZone("guest-b", "drop-zone is-hidden"),
+    makeZone("broll"),
+  ];
+  const layoutButtons = [
+    makeLayoutButton("interview", "Using interview"),
+    makeLayoutButton("solo", "Use solo"),
+    makeLayoutButton("panel", "Use panel"),
+  ];
+  const elementsById = {
+    "layout-scene-label": new Element("span"),
+    "layout-runtime-label": new Element("span"),
+    "speaker-row": new Element("div", { className: "speaker-row" }),
+    "layout-slot-status": new Element("p"),
+    "layout-reset": new Element("button"),
+    "layout-continue": new Element("a", { className: "continue-btn is-disabled" }),
+    "layout-error-card": new Element("div", { hidden: true }),
+    "layout-error": new Element("p"),
+  };
+  const documentStub = {
+    createElement(tagName) { return new Element(tagName); },
+    getElementById(id) { return elementsById[id] || null; },
+    querySelectorAll(selector) {
+      if (selector === "[data-layout]") return layoutButtons;
+      if (selector === ".drop-zone[data-slot]") return zones;
+      return [];
+    },
+  };
+  const urlApi = {
+    createObjectURL(file) { return `blob:${file.name}`; },
+    revokeObjectURL() {},
+  };
+  const controller = createLayoutFirstController(documentStub, { URL: urlApi });
+  return { controller, elementsById };
+}
+
+const { controller: ctl, elementsById } = buildController();
 
 function video(name) { return { name, type: "video/mp4", size: 2048 }; }
 function notVideo(name) { return { name, type: "image/png", size: 2048 }; }
 function emptyVideo(name) { return { name, type: "video/mp4", size: 0 }; }
-
-const ctl = createLayoutFirstController(documentStub, { URL: urlApi });
 const host = ctl.zonesBySlot.host;
 const errorText = elementsById["layout-error"];
 const errorCard = elementsById["layout-error-card"];
@@ -203,12 +207,35 @@ assert.ok(host.classList.contains("is-invalid"), "layout switch keeps invalid st
 assert.match(errorText.textContent, /Host/, "layout switch keeps the invalid-slot error visible");
 assert.ok(errorCard.hidden === false, "the error card stays open after layout switch");
 
+// Hiding a slot that rejected a file must not forget the rejection when the layout returns.
+const aside = buildController();
+const asideCtl = aside.controller;
+const asideGuest = asideCtl.zonesBySlot.guest;
+const asideErrorText = aside.elementsById["layout-error"];
+const asideSlotStatus = aside.elementsById["layout-slot-status"];
+asideCtl.placeVideoFile(asideGuest, notVideo("guest.png"));
+assert.ok(asideGuest.classList.contains("is-invalid"), "guest rejects before its slot is hidden");
+asideCtl.applyLayout("solo");
+assert.ok(!asideGuest.classList.contains("is-invalid"), "guest invalid state is cleared while hidden");
+asideCtl.applyLayout("interview");
+assert.ok(asideGuest.classList.contains("is-invalid"), "switching back restores invalid state on the rejected slot");
+assert.equal(
+  asideCtl.slotIndicators.guest.textContent,
+  "Invalid file",
+  "restored rejection keeps Invalid file badge, not Needs video",
+);
+assert.match(asideErrorText.textContent, /Guest/, "switching back restores the invalid-slot error");
+assert.doesNotMatch(
+  asideSlotStatus.textContent,
+  /Still need the Guest/,
+  "restored rejection is not listed in Still need",
+);
+
 // Removing/clearing the slot clears the flag (reset path goes through clearZone).
-ctl.applyLayout("interview");
-ctl.placeVideoFile(guest, notVideo("guest.png"));
-assert.ok(guest.classList.contains("is-invalid"), "guest re-flagged before reset");
-ctl.resetVideos();
-assert.ok(!guest.classList.contains("is-invalid"), "resetting the canvas clears the invalid flag");
+asideCtl.placeVideoFile(asideGuest, notVideo("guest-again.png"));
+assert.ok(asideGuest.classList.contains("is-invalid"), "guest re-flagged before reset");
+asideCtl.resetVideos();
+assert.ok(!asideGuest.classList.contains("is-invalid"), "resetting the canvas clears the invalid flag");
 
 assert.match(html, /\.drop-zone\.is-invalid \{/, "an invalid-slot style is defined");
 
