@@ -242,6 +242,22 @@
         color: var(--muted);
       }
 
+      .issue .fix-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .issue .fix-link:hover,
+      .issue .fix-link:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -537,6 +553,8 @@
               tone: "review",
               title: label + " starts mid-sentence",
               action: "Nudge its start to a clean line so the chapter does not open mid-thought.",
+              fixScreen: "transcript-search-navigation.html",
+              fixLabel: "transcript search",
             };
           }
           return null;
@@ -668,10 +686,20 @@
         }
 
         function renderIssue(issue) {
-          return el("article", { className: "issue " + issue.tone }, [
+          var children = [
             el("strong", { text: issue.title }),
             el("span", { text: issue.action }),
-          ]);
+          ];
+          if (issue.fixScreen && issue.fixLabel) {
+            children.push(
+              el("a", {
+                className: "fix-link",
+                text: "Open " + issue.fixLabel + " →",
+                attrs: { href: issue.fixScreen },
+              })
+            );
+          }
+          return el("article", { className: "issue " + issue.tone }, children);
         }
 
         function render() {
