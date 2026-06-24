@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sponsor Placement Review Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--ink); background: #ffffff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 32px; line-height: 1.1; margin-bottom: 8px; }
+      .lede { color: var(--muted); max-width: 760px; }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px; }
+      .elements { display: grid; gap: 14px; }
+
+      .element {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fields { display: grid; gap: 10px; align-content: start; }
+      .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+
+      input, select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .head strong { font-size: 15px; }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .badge.approved { color: #075246; background: #dff5ef; }
+      .badge.placed { color: #1f4f7a; background: #e0eefb; }
+      .badge.review { color: #7a4400; background: #fff1d6; }
+      .badge.conflict { color: #8b1e1e; background: #ffe0e0; }
+
+      .status { display: inline-flex; align-items: center; min-height: 32px; border-radius: 999px; padding: 0 12px; font-weight: 800; }
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.review { color: #7a4400; background: #fff1d6; }
+      .status.blocked { color: #8b1e1e; background: #ffe0e0; }
+
+      .preview {
+        position: relative;
+        width: 132px;
+        aspect-ratio: 16 / 9;
+        flex: none;
+        align-self: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #6db5a8, #1d554d);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+
+      .preview .face { position: absolute; top: 16%; left: 50%; width: 32%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: #e8f4f1; }
+      .preview .lower-third { position: absolute; left: 8%; right: 30%; bottom: 10%; height: 16%; border-radius: 4px; background: rgba(232, 244, 241, 0.85); }
+
+      .mark {
+        position: absolute;
+        border-radius: 4px;
+        background: rgba(255, 214, 120, 0.95);
+        color: #4a3500;
+        font-size: 10px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2px;
+      }
+
+      .mark.subtle { opacity: 0.65; }
+      .mark.prominent { transform: scale(1.18); }
+      .mark.corner { right: 6%; bottom: 10%; width: 30%; height: 22%; }
+      .mark.title { left: 12%; right: 12%; top: 12%; height: 22%; }
+      .mark.slate { inset: 14% 12%; }
+      .mark.host-read { left: 6%; bottom: 8%; width: 36%; height: 20%; }
+      .mark.end-card { inset: 18%; }
+      .mark.metadata { display: none; }
+      .preview.covers-face .mark { top: 16%; bottom: auto; left: 50%; transform: translateX(-50%); width: 34%; height: 34%; }
+
+      .issues { display: grid; gap: 10px; margin-top: 14px; }
+      .issue { border-left: 4px solid var(--warn); border-radius: 6px; background: #ffffff; padding: 12px; }
+      .issue.blocker { border-left-color: var(--block); }
+      .issue.info { border-left-color: var(--accent); }
+      .issue strong { display: block; margin-bottom: 4px; }
+      .issue span { color: var(--muted); }
+
+      .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+      .count { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 700; background: #ffffff; }
+      .count b { color: var(--accent); }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+      button {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.secondary { background: #ffffff; color: var(--accent); }
+      button.tiny { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .summary-note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .element { grid-template-columns: 1fr; }
+        .fields-row { grid-template-columns: 1fr; }
+        .preview { width: 100%; }
+      }
+    </style>
+  </head>
+  <body data-visuals-step="sponsor-placement-review">
+    <main>
+      <h1>Sponsor placement review</h1>
+      <p class="lede">Place sponsor marks and disclosures so they read clearly without crowding speakers, captions, or show branding. We flag only what a viewer would notice in the finished episode &mdash; episodes without sponsors are never blocked.</p>
+
+      <section class="workspace" aria-label="Sponsor placement workspace">
+        <div class="panel">
+          <h2>Sponsor elements</h2>
+          <div class="elements" id="elements"></div>
+          <div class="actions">
+            <button type="button" id="addElement">Add a sponsor element</button>
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+        <aside class="panel" aria-live="polite" aria-label="Sponsor review summary">
+          <h2>Sponsor review summary</h2>
+          <div id="status" class="status ready">No sponsor conflicts</div>
+          <div class="counts" id="counts"></div>
+          <div id="issues" class="issues"></div>
+          <p class="summary-note">Approved placements ship with their disclosure. Unresolved conflicts stay in export readiness until you fix or accept them &mdash; we never clear unrelated caption or metadata warnings.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      // Build a DOM node without innerHTML so creator-entered text is never parsed
+      // as markup. props sets attributes; class/text/value are handled explicitly.
+      function el(tag, props, children) {
+        const node = document.createElement(tag);
+        const settings = props || {};
+        Object.keys(settings).forEach(function (key) {
+          const value = settings[key];
+          if (key === "class") {
+            node.className = value;
+          } else if (key === "text") {
+            node.textContent = value;
+          } else if (key === "value") {
+            node.value = value;
+          } else {
+            node.setAttribute(key, value);
+          }
+        });
+        (children || []).forEach(function (child) { node.appendChild(child); });
+        return node;
+      }
+
+      const placements = {
+        corner: { label: "Lower-corner mark", cls: "corner" },
+        title: { label: "Title card mention", cls: "title" },
+        slate: { label: "Chapter intro slate", cls: "slate" },
+        "host-read": { label: "Host-read support", cls: "host-read" },
+        "end-card": { label: "End-card acknowledgement", cls: "end-card" },
+        metadata: { label: "Description reminder", cls: "metadata" },
+      };
+
+      const strengths = { subtle: "Subtle", standard: "Standard", prominent: "Prominent" };
+
+      const conflicts = {
+        none: { label: "No conflict" },
+        "covers-face": {
+          label: "Covers a speaker face",
+          title: function (name) { return name + " covers the active speaker face"; },
+          fix: "Move the mark to a corner or reduce its strength so the speaker stays visible.",
+        },
+        "lower-third": {
+          label: "Crowds the lower-third",
+          title: function (name) { return name + " crowds the lower-third"; },
+          fix: "Shift the mark or the lower-third so the two do not overlap.",
+        },
+        sensitive: {
+          label: "Lands on a sensitive moment",
+          title: function (name) { return name + " appears during an unrelated sensitive moment"; },
+          fix: "Move the placement out of the sensitive moment, or skip it for this episode.",
+        },
+        readability: {
+          label: "Hard to read",
+          title: function (name) { return name + " does not meet readability or contrast requirements"; },
+          fix: "Swap the sponsor asset for a higher-contrast version, or increase its size.",
+        },
+      };
+
+      const sampleElements = [
+        { id: "s-acme", name: "Acme Tools lower-corner", placement: "corner", strength: "standard", disclosure: "Paid partnership with Acme Tools", conflict: "none", approved: true },
+        { id: "s-brightco", name: "BrightCo host-read", placement: "host-read", strength: "prominent", disclosure: "", conflict: "covers-face", approved: false },
+      ];
+
+      let elements = structuredClone(sampleElements);
+
+      const elementsElement = document.querySelector("#elements");
+      const statusElement = document.querySelector("#status");
+      const issuesElement = document.querySelector("#issues");
+      const countsElement = document.querySelector("#counts");
+
+      document.querySelector("#addElement").addEventListener("click", function () {
+        const next = elements.length + 1;
+        elements.push({ id: "s-" + next, name: "Sponsor " + next, placement: "corner", strength: "standard", disclosure: "", conflict: "none", approved: false });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", function () {
+        elements = structuredClone(sampleElements);
+        render();
+      });
+
+      // Map placement, disclosure, conflict, and approval to one of the spec's
+      // review states. Disclosure is required before approval; a flagged conflict
+      // blocks export until it is resolved.
+      function evaluate(list) {
+        const results = list.map(function (element) {
+          const hasConflict = element.conflict !== "none";
+          const needsDisclosure = element.disclosure.trim() === "";
+          let state;
+          if (hasConflict) {
+            state = "conflict flagged";
+          } else if (needsDisclosure) {
+            state = "needs review";
+          } else if (element.approved) {
+            state = "approved for export";
+          } else {
+            state = "placed";
+          }
+          return { id: element.id, state: state, hasConflict: hasConflict, needsDisclosure: needsDisclosure };
+        });
+        const blocked = results.some(function (result) { return result.state === "conflict flagged"; });
+        const review = results.some(function (result) { return result.state === "needs review" || result.state === "placed"; });
+        const overall = blocked ? "blocked" : review ? "review" : "ready";
+        return { overall: overall, results: results };
+      }
+
+      function statusText(overall) {
+        if (elements.length === 0) return "No sponsor elements to block";
+        if (overall === "ready") return "Ready for export";
+        if (overall === "blocked") return "Conflicts block export";
+        return "Review suggested";
+      }
+
+      function render() {
+        const evaluation = evaluate(elements);
+        elementsElement.replaceChildren.apply(
+          elementsElement,
+          elements.map(function (element, index) {
+            return renderElement(element, index, evaluation.results[index]);
+          })
+        );
+
+        statusElement.className = "status " + evaluation.overall;
+        statusElement.textContent = statusText(evaluation.overall);
+
+        const tally = {};
+        evaluation.results.forEach(function (result) {
+          tally[result.state] = (tally[result.state] || 0) + 1;
+        });
+        countsElement.replaceChildren.apply(
+          countsElement,
+          Object.keys(tally).map(function (label) {
+            const strong = el("b", { text: String(tally[label]) }, []);
+            const span = el("span", { class: "count" }, [strong]);
+            span.appendChild(document.createTextNode(" " + label));
+            return span;
+          })
+        );
+
+        const issues = [];
+        evaluation.results.forEach(function (result, index) {
+          const issue = buildIssue(elements[index], result);
+          if (issue) { issues.push(issue); }
+        });
+        if (issues.length === 0) {
+          issuesElement.replaceChildren(el("p", { text: "Every sponsor element is approved with its disclosure. Ready for export." }, []));
+        } else {
+          issuesElement.replaceChildren.apply(issuesElement, issues.map(renderIssue));
+        }
+      }
+
+      function buildIssue(element, result) {
+        if (result.state === "approved for export") {
+          return null;
+        }
+        if (result.hasConflict) {
+          const conflict = conflicts[element.conflict];
+          return { title: conflict.title(element.name), action: conflict.fix, tone: "blocker" };
+        }
+        if (result.needsDisclosure) {
+          return { title: element.name + " is missing its disclosure", action: "Add the required disclosure text before this sponsor element can be approved.", tone: "review" };
+        }
+        return { title: element.name + " is placed", action: "Preview it on the sponsored moment, then approve it for export.", tone: "info" };
+      }
+
+      function badgeClass(state) {
+        if (state === "conflict flagged") return "conflict";
+        if (state === "needs review") return "review";
+        if (state === "approved for export") return "approved";
+        return "placed";
+      }
+
+      function option(value, label, selected) {
+        const node = el("option", { value: value, text: label }, []);
+        if (selected) { node.setAttribute("selected", "selected"); }
+        return node;
+      }
+
+      function selectField(field, ariaLabel, options) {
+        return el("select", { "data-field": field, "aria-label": ariaLabel }, options);
+      }
+
+      function labelled(text, control) {
+        const label = el("label", { text: text }, []);
+        label.appendChild(control);
+        return label;
+      }
+
+      function renderElement(element, index, result) {
+        const placement = placements[element.placement];
+
+        const mark = el("div", { class: "mark " + placement.cls + " " + element.strength, "data-mark": "" }, []);
+        mark.textContent = element.placement === "metadata" ? "" : "AD";
+        const preview = el("div", { class: element.conflict === "covers-face" ? "preview covers-face" : "preview" }, [
+          el("div", { class: "face" }, []),
+          el("div", { class: "lower-third" }, []),
+          mark,
+        ]);
+
+        const badge = el("span", { class: "badge " + badgeClass(result.state), text: result.state }, []);
+        const name = el("strong", { "data-name": "", text: element.name }, []);
+        const head = el("div", { class: "head" }, [name, badge]);
+
+        const nameInput = el("input", { "data-field": "name", "aria-label": "Sponsor element name", value: element.name }, []);
+        const disclosureInput = el("input", { "data-field": "disclosure", "aria-label": "Required disclosure text", value: element.disclosure }, []);
+
+        const placementSelect = selectField("placement", "Placement type", Object.keys(placements).map(function (value) {
+          return option(value, placements[value].label, value === element.placement);
+        }));
+        const strengthSelect = selectField("strength", "Visual strength", Object.keys(strengths).map(function (value) {
+          return option(value, strengths[value], value === element.strength);
+        }));
+        const conflictSelect = selectField("conflict", "Detected conflict", Object.keys(conflicts).map(function (value) {
+          return option(value, conflicts[value].label, value === element.conflict);
+        }));
+
+        const fieldsRow = el("div", { class: "fields-row" }, [
+          labelled("Placement", placementSelect),
+          labelled("Visual strength", strengthSelect),
+        ]);
+
+        const approveBtn = el("button", { type: "button", class: "tiny", "data-act": "approve", text: "Approve for export" }, []);
+        if (result.hasConflict || result.needsDisclosure || element.approved) { approveBtn.disabled = true; }
+        const resolveBtn = el("button", { type: "button", class: "tiny secondary", "data-act": "resolve", text: "Resolve conflict" }, []);
+        if (!result.hasConflict) { resolveBtn.disabled = true; }
+        const softenBtn = el("button", { type: "button", class: "tiny secondary", "data-act": "soften", text: "Reduce strength" }, []);
+        if (element.strength === "subtle") { softenBtn.disabled = true; }
+        const removeBtn = el("button", { type: "button", class: "tiny secondary", "data-act": "remove", text: "Remove" }, []);
+        const rowActions = el("div", { class: "row-actions" }, [approveBtn, resolveBtn, softenBtn, removeBtn]);
+
+        const fields = el("div", { class: "fields" }, [
+          head,
+          labelled("Sponsor element name", nameInput),
+          labelled("Required disclosure", disclosureInput),
+          fieldsRow,
+          labelled("Detected conflict", conflictSelect),
+          rowActions,
+        ]);
+
+        const article = el("article", { class: "element" }, [preview, fields]);
+        article.addEventListener("input", function (event) { updateElement(event, index); });
+        article.addEventListener("change", function (event) { updateElement(event, index); });
+        rowActions.querySelectorAll("[data-act]").forEach(function (node) {
+          node.addEventListener("click", function () { actOnElement(node.getAttribute("data-act"), index); });
+        });
+        return article;
+      }
+
+      function updateElement(event, index) {
+        const field = event.target.getAttribute("data-field");
+        if (!field) return;
+        const element = elements[index];
+        element[field] = event.target.value;
+        if (field === "placement" || field === "strength") {
+          element.approved = false;
+        }
+        render();
+      }
+
+      function actOnElement(action, index) {
+        const element = elements[index];
+        if (action === "approve") {
+          element.approved = true;
+        } else if (action === "resolve") {
+          element.conflict = "none";
+          element.approved = false;
+        } else if (action === "soften") {
+          element.strength = element.strength === "prominent" ? "standard" : "subtle";
+          element.approved = false;
+        } else if (action === "remove") {
+          elements.splice(index, 1);
+        }
+        render();
+      }
+
+      function renderIssue(issue) {
+        const strong = el("strong", { text: issue.title }, []);
+        const span = el("span", { text: issue.action }, []);
+        return el("article", { class: "issue " + issue.tone }, [strong, span]);
+      }
+
+      if (typeof module !== "undefined" && module.exports) {
+        module.exports = { evaluate: evaluate, buildIssue: buildIssue, badgeClass: badgeClass };
+      }
+
+      render();
+    </script>
+    <script src="../preview/visuals-nav.js" defer></script>
+  </body>
+</html>

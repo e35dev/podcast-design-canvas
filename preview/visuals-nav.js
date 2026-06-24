@@ -9,6 +9,7 @@ const VISUALS_FLOW = [
   { id: "contextual-broll-moments", file: "contextual-broll-moments.html", label: "Contextual b-roll moments" },
   { id: "contextual-title-cards", file: "contextual-title-cards.html", label: "Contextual title cards" },
   { id: "sensitive-moment-review", file: "sensitive-moment-review.html", label: "Sensitive moment review" },
+  { id: "sponsor-placement-review", file: "sponsor-placement-review.html", label: "Sponsor placement review" },
 ];
 
 function currentVisualsIndex() {

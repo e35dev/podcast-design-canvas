@@ -58,6 +58,7 @@ const visualsFlow = new Set([
   "contextual-broll-moments.html",
   "contextual-title-cards.html",
   "sensitive-moment-review.html",
+  "sponsor-placement-review.html",
 ]);
 
 const reuseFlow = new Set([

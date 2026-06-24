@@ -23,6 +23,7 @@ const visualsScreens = [
   "contextual-broll-moments.html",
   "contextual-title-cards.html",
   "sensitive-moment-review.html",
+  "sponsor-placement-review.html",
 ];
 
 // The nav declares its path in order, and every screen in it exists.
