@@ -267,4 +267,23 @@ assert.equal(
   "standalone cleanup nav keeps cleanup entry context between cleanup screens",
 );
 
+const publishPathNav = renderNavFor("transcript-glossary.html", "transcript-glossary", false, "?path=publish&from=cleanup");
+assert.equal(
+  linkWithText(publishPathNav, "Previous: Pause & cross-talk cleanup").href,
+  "pause-crosstalk-cleanup.html?from=cleanup&path=publish",
+  "cleanup nav keeps cleanup context and publish path on previous links",
+);
+assert.equal(
+  linkWithText(publishPathNav, "Next: Transcript search").href,
+  "transcript-search-navigation.html?from=cleanup&path=publish",
+  "cleanup nav keeps cleanup context and publish path on next links",
+);
+
+const publishPathHandoff = renderNavFor("on-screen-correction-note.html", "on-screen-correction-note", false, "?path=publish");
+assert.equal(
+  linkWithText(publishPathHandoff, "Continue: Contextual b-roll moments").href,
+  "contextual-broll-moments.html?from=cleanup&path=publish",
+  "cleanup nav merges publish path context onto the contextual visuals handoff",
+);
+
 console.log("cleanup nav: audio & caption cleanup screens connected into one path");
