@@ -130,6 +130,62 @@
         margin-bottom: 16px;
       }
 
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .preview-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .preview-card strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .preview-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      .wave {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 52px;
+        padding: 8px;
+        border-radius: 6px;
+        background: #eef2f0;
+      }
+
+      .wave i {
+        flex: 1;
+        min-width: 4px;
+        border-radius: 2px;
+        background: #8aa59c;
+      }
+
+      .wave.cleaned i {
+        background: #2a8476;
+      }
+
+      .wave.cleaned i.soft {
+        background: #6db5a8;
+      }
+
+      @media (max-width: 640px) {
+        .compare { grid-template-columns: 1fr; }
+      }
+
       button {
         min-height: 38px;
         border: 1px solid #b9c8c3;
@@ -189,6 +245,9 @@
           <h2>Preview moment</h2>
           <div class="moments" id="moments" role="group" aria-label="Preview moment"></div>
 
+          <h2>Compare on this moment</h2>
+          <div class="compare" id="compare" aria-live="polite"></div>
+
           <h2>Speaker balance</h2>
           <div class="speakers" id="speakers"></div>
         </div>
@@ -213,12 +272,37 @@
       ];
 
       const previewMoments = [
-        { id: "quiet-guest", label: "Quiet guest answer" },
-        { id: "exchange", label: "Host and guest exchange" },
-        { id: "noisy-room", label: "Noisy room stretch" },
-        { id: "peak", label: "Laugh or peak moment" },
-        { id: "caption-line", label: "Caption-sensitive line" },
+        { id: "quiet-guest", label: "Quiet guest answer", note: "Lift the guest without pulling room noise forward." },
+        { id: "exchange", label: "Host and guest exchange", note: "Keep both speakers natural as the conversation moves." },
+        { id: "noisy-room", label: "Noisy room stretch", note: "Reduce distraction without making the room feel artificial." },
+        { id: "peak", label: "Laugh or peak moment", note: "Protect listeners on sudden emphasis." },
+        { id: "caption-line", label: "Caption-sensitive line", note: "Keep speech clear enough for trusted captions." },
       ];
+
+      // Simple bar shapes for original vs cleaned preview. Heights shift when cleanup
+      // choices are toggled — a visual compare, not a real audio player.
+      const momentProfiles = {
+        "quiet-guest": {
+          original: [18, 22, 26, 24, 20, 28, 32, 30, 24, 22],
+          cleaned: [28, 34, 42, 38, 32, 46, 52, 48, 40, 36],
+        },
+        exchange: {
+          original: [34, 52, 38, 56, 42, 48, 36, 54, 40, 50],
+          cleaned: [36, 46, 40, 48, 42, 46, 38, 48, 42, 46],
+        },
+        "noisy-room": {
+          original: [48, 52, 46, 50, 54, 49, 53, 47, 51, 55],
+          cleaned: [32, 36, 30, 34, 38, 33, 37, 31, 35, 39],
+        },
+        peak: {
+          original: [30, 34, 78, 82, 36, 32, 74, 80, 34, 30],
+          cleaned: [30, 34, 58, 62, 36, 32, 56, 60, 34, 30],
+        },
+        "caption-line": {
+          original: [26, 32, 38, 42, 36, 40, 34, 38, 32, 28],
+          cleaned: [34, 40, 48, 52, 44, 50, 42, 48, 40, 36],
+        },
+      };
 
       const sampleSpeakers = [
         { name: "Host — Dana Brooks", state: "not needed" },
@@ -232,6 +316,7 @@
 
       const controlsElement = document.querySelector("#controls");
       const momentsElement = document.querySelector("#moments");
+      const compareElement = document.querySelector("#compare");
       const speakersElement = document.querySelector("#speakers");
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
@@ -248,6 +333,7 @@
       function render() {
         controlsElement.replaceChildren(...choices.map(renderChoice));
         momentsElement.replaceChildren(...previewMoments.map(renderMoment));
+        renderCompare();
         speakersElement.replaceChildren(...speakers.map(renderSpeaker));
 
         const hasSuggested = speakers.some((speaker) => speaker.state === "suggested");
@@ -255,8 +341,59 @@
         summaryElement.textContent = applied
           ? `Applied ${enabled.size} cleanup choice${enabled.size === 1 ? "" : "s"} after previewing "${previewMoments.find((moment) => moment.id === preview).label.toLowerCase()}".`
           : hasSuggested
-            ? "Preview the guest track on a real moment, then apply cleanup across the episode or per speaker."
+            ? "Compare original and cleaned audio on a real moment, then apply cleanup across the episode."
             : "Tracks are already clean enough for the final episode.";
+      }
+
+      function cleanupStrength() {
+        if (!enabled.size) {
+          return 0;
+        }
+        return Math.min(1, enabled.size / 3);
+      }
+
+      function blendBars(original, cleaned, strength) {
+        return original.map((value, index) => {
+          const target = cleaned[index] ?? value;
+          return Math.round(value + (target - value) * strength);
+        });
+      }
+
+      function waveMarkup(heights, cleaned) {
+        return heights
+          .map((height) => `<i class="${cleaned ? "soft" : ""}" style="height:${height}%"></i>`)
+          .join("");
+      }
+
+      function renderCompare() {
+        const moment = previewMoments.find((entry) => entry.id === preview);
+        const profile = momentProfiles[preview];
+        const strength = cleanupStrength();
+        const cleanedHeights = blendBars(profile.original, profile.cleaned, strength);
+
+        compareElement.replaceChildren(
+          renderPreviewCard("Original", profile.original, false, "What listeners hear now."),
+          renderPreviewCard(
+            strength ? "With cleanup" : "With cleanup",
+            strength ? cleanedHeights : profile.original,
+            true,
+            strength ? moment.note : "Turn on a cleanup choice to preview the difference.",
+          ),
+        );
+      }
+
+      function renderPreviewCard(title, heights, cleaned, note) {
+        const card = document.createElement("article");
+        card.className = "preview-card";
+        const heading = document.createElement("strong");
+        heading.textContent = title;
+        const wave = document.createElement("div");
+        wave.className = `wave ${cleaned ? "cleaned" : ""}`;
+        wave.innerHTML = waveMarkup(heights, cleaned);
+        const copy = document.createElement("span");
+        copy.textContent = note;
+        card.append(heading, wave, copy);
+        return card;
       }
 
       function renderChoice(choice) {
