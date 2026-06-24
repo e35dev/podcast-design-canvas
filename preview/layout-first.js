@@ -51,8 +51,24 @@
     return Array.prototype.slice.call(list || []);
   }
 
+  const VIDEO_EXTENSIONS = [".mp4", ".m4v", ".mov", ".webm", ".ogv", ".ogg", ".mkv", ".mpg", ".mpeg"];
+
+  function hasVideoExtension(name) {
+    const lower = String(name || "").toLowerCase();
+    return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext));
+  }
+
+  // A file counts as a video when its MIME type is a video/* type. Drag-and-drop bypasses the
+  // input's `accept="video/*"` filter, and some browsers/OSes report an empty type for a valid
+  // recording — so when the type is missing we fall back to a known video file extension rather
+  // than reject a real .mp4/.mov/.webm. A non-empty, non-video type (e.g. image/png) is still
+  // rejected, so this never loosens the guard for files the browser positively identifies.
   function isVideoFile(file) {
-    return Boolean(file && typeof file.type === "string" && file.type.indexOf("video/") === 0);
+    if (!file) return false;
+    const type = typeof file.type === "string" ? file.type : "";
+    if (type.indexOf("video/") === 0) return true;
+    if (type === "") return hasVideoExtension(file.name);
+    return false;
   }
 
   // A stable identity for a dropped recording. Display name alone is not enough — separate
