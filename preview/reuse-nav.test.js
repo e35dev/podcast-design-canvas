@@ -25,6 +25,7 @@ const reuseScreens = [
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
   "intro-outro-builder.html",
+  "episode-runtime-shaping.html",
 ];
 
 const reuseFlowMatch = navScript.match(/const REUSE_FLOW = \[([\s\S]*?)\];/);
@@ -138,7 +139,7 @@ assert.equal(
   "chapter markers advances to intro and outro builder",
 );
 
-const lastNav = renderNavFor("intro-outro-builder.html", "intro-outro-builder");
+const lastNav = renderNavFor("episode-runtime-shaping.html", "episode-runtime-shaping");
 const publishHandoff = linkWithText(lastNav, "Continue: Episode watch-through");
 assert.equal(
   publishHandoff.href,
@@ -184,7 +185,7 @@ assert.equal(
   "embedded reuse nav routes the intro and outro step through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("intro-outro-builder.html", "intro-outro-builder", true);
+const embeddedLastNav = renderNavFor("episode-runtime-shaping.html", "episode-runtime-shaping", true);
 const embeddedHandoff = linkWithText(embeddedLastNav, "Continue: Episode watch-through");
 assert.equal(
   embeddedHandoff.href,
