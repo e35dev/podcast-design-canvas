@@ -40,6 +40,9 @@ const ingestFlow = new Set([
 
 const publishFlow = new Set([
   "episode-watch-through-preview.html",
+  "destination-crop-preview.html",
+  "thumbnail-cover-frame.html",
+  "show-notes-assembly.html",
   "export-package-handoff.html",
   "publish-checklist.html",
 ]);

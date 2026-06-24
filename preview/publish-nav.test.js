@@ -14,11 +14,14 @@ const navScript = fs.readFileSync(path.join(__dirname, "publish-nav.js"), "utf8"
 new vm.Script(navScript);
 assert.ok(navScript.includes('home.href = "../preview/"'), "publish nav links back to the preview shell");
 assert.ok(navScript.includes("episode-flow.html"), "publish nav links to the guided episode flow");
-assert.ok(navScript.includes("show-notes-assembly.html"), "publish nav hands off to show notes assembly");
+assert.ok(navScript.includes("show-notes-assembly.html"), "publish nav includes show notes assembly");
 assert.ok(!/innerHTML/.test(navScript), "publish nav builds the DOM without innerHTML");
 
 const publishScreens = [
   "episode-watch-through-preview.html",
+  "destination-crop-preview.html",
+  "thumbnail-cover-frame.html",
+  "show-notes-assembly.html",
   "export-package-handoff.html",
   "publish-checklist.html",
 ];

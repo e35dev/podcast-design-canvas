@@ -7,6 +7,9 @@
 
 const PUBLISH_FLOW = [
   { id: "episode-watch-through-preview", file: "episode-watch-through-preview.html", label: "Watch-through preview" },
+  { id: "destination-crop-preview", file: "destination-crop-preview.html", label: "Destination crop preview" },
+  { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
+  { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
   { id: "export-package-handoff", file: "export-package-handoff.html", label: "Export package handoff" },
   { id: "publish-checklist", file: "publish-checklist.html", label: "Publish checklist" },
 ];
@@ -115,10 +118,10 @@ function renderPublishNav() {
     nextLink.textContent = `Next: ${next.label}`;
     wrap.appendChild(nextLink);
   } else {
-    const start = document.createElement("a");
-    start.href = "show-notes-assembly.html";
-    start.textContent = "Continue: Show notes assembly";
-    wrap.appendChild(start);
+    const finish = document.createElement("a");
+    finish.href = "../preview/";
+    finish.textContent = "Finish: back to the preview shell";
+    wrap.appendChild(finish);
   }
 
   const stepLabel = document.createElement("span");

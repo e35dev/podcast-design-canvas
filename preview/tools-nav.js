@@ -16,13 +16,6 @@ const TOOL_STAGE = {
   "accessibility-readability-checks.html": "Clean up audio & captions",
   "line-pickup-insert.html": "Clean up audio & captions",
   "on-screen-correction-note.html": "Clean up audio & captions",
-  
-  
-  
-  
-  "destination-crop-preview.html": "Review & publish",
-  "thumbnail-cover-frame.html": "Review & publish",
-  "show-notes-assembly.html": "Review & publish",
 };
 
 function currentToolStage() {
