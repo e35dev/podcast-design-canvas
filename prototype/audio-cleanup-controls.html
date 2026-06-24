@@ -367,6 +367,13 @@
         margin: -8px 0 16px;
       }
 
+      .preview-now {
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+        margin: -6px 0 10px;
+      }
+
       button.primary {
         border-color: #0f5d53;
         background: var(--accent);
@@ -425,6 +432,7 @@
 
           <h2>Preview moment</h2>
           <div class="moments" id="moments" role="group" aria-label="Preview moment"></div>
+          <p class="preview-now" id="preview-now" aria-live="polite"></p>
           <p class="moment-hint" id="moment-hint" aria-live="polite"></p>
 
           <h2>Compare on this moment</h2>
@@ -490,6 +498,7 @@
       const statusElement = document.querySelector("#status");
       const summaryElement = document.querySelector("#summary");
       const momentHintElement = document.querySelector("#moment-hint");
+      const previewNowElement = document.querySelector("#preview-now");
 
       document.querySelector("#apply").addEventListener("click", () => {
         applied = true;
@@ -521,6 +530,7 @@
           }),
         );
         renderRollup(reviewCount);
+        renderPreviewNow();
         renderMomentHint();
 
         statusElement.textContent = speakers.some((speaker) => speaker.state === "suggested")
@@ -768,6 +778,11 @@
 
       function suggestedMoments() {
         return new Set(choices.filter((choice) => enabled.has(choice.id)).map((choice) => choice.bestMoment));
+      }
+
+      function renderPreviewNow() {
+        const moment = previewMoments.find((entry) => entry.id === preview);
+        previewNowElement.textContent = moment?.label ? `Previewing: ${moment.label}` : "";
       }
 
       function renderMomentHint() {
