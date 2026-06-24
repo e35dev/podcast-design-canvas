@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Metadata Publishing Prototype</title>
+    <style>
+      :root {
+        --ink: #17211d;
+        --muted: #60706a;
+        --line: #d7e1dd;
+        --surface: #f8fbfa;
+        --surface-strong: #eef5f1;
+        --ready: #0f6a57;
+        --review: #9b5d00;
+        --blocked: #9f2626;
+        --low: #805a00;
+        --chip: #e6efeb;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1260px;
+        margin: 0 auto;
+        padding: 32px 20px 52px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 34px;
+        line-height: 1.08;
+      }
+
+      h2 {
+        margin-bottom: 12px;
+        font-size: 21px;
+      }
+
+      h3 {
+        margin-bottom: 10px;
+        font-size: 17px;
+      }
+
+      .lede,
+      .helper,
+      .context-note,
+      .detail,
+      .field-note,
+      .chapter-note,
+      .summary-copy,
+      .warning-copy {
+        color: var(--muted);
+      }
+
+      .lede {
+        max-width: 760px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) 340px;
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        padding: 18px;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .chip-row,
+      .destination-row,
+      .button-row,
+      .toggle-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        background: var(--chip);
+        color: var(--ink);
+        padding: 0 11px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .context-grid,
+      .field-grid,
+      .sidebar-stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .context-grid,
+      .field-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .context-card,
+      .field-card,
+      .chapter-card,
+      .summary-card,
+      .warning-card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 14px;
+      }
+
+      .context-card strong,
+      .field-title,
+      .chapter-time {
+        display: block;
+      }
+
+      .context-card strong,
+      .field-title {
+        margin-bottom: 6px;
+      }
+
+      .field-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge.complete {
+        background: #dcf4ed;
+        color: var(--ready);
+      }
+
+      .badge.review {
+        background: #fff1d7;
+        color: var(--review);
+      }
+
+      .badge.missing {
+        background: #ffe0e0;
+        color: var(--blocked);
+      }
+
+      .badge.low {
+        background: #f7ebcb;
+        color: var(--low);
+      }
+
+      .badge.idle {
+        background: #edf1ef;
+        color: #4e5c57;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid #bcc9c5;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 10px 11px;
+      }
+
+      textarea {
+        min-height: 112px;
+        resize: vertical;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #b9c8c3;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        border-color: var(--ready);
+        background: #e0f3ee;
+        color: var(--ready);
+      }
+
+      button.secondary {
+        background: var(--surface-strong);
+      }
+
+      .tone-note {
+        margin-top: 10px;
+        border-left: 4px solid #8ca099;
+        padding-left: 10px;
+      }
+
+      .chapter-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .chapter-card {
+        display: grid;
+        gap: 10px;
+      }
+
+      .chapter-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .chapter-time {
+        margin-bottom: 4px;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .chapter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .summary-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        min-height: 36px;
+        border-radius: 999px;
+        padding: 0 14px;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .status-pill.ready {
+        background: #dcf4ed;
+        color: var(--ready);
+      }
+
+      .status-pill.review {
+        background: #fff1d7;
+        color: var(--review);
+      }
+
+      .status-pill.blocked {
+        background: #ffe0e0;
+        color: var(--blocked);
+      }
+
+      .status-pill.low {
+        background: #f7ebcb;
+        color: var(--low);
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .warning-list,
+      .package-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .warning-card {
+        display: grid;
+        gap: 8px;
+      }
+
+      .warning-card.review {
+        border-left: 4px solid var(--review);
+      }
+
+      .warning-card.blocked {
+        border-left: 4px solid var(--blocked);
+      }
+
+      .warning-card.low {
+        border-left: 4px solid var(--low);
+      }
+
+      .small {
+        font-size: 13px;
+      }
+
+      .helper {
+        margin-bottom: 14px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .context-grid,
+        .field-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Episode metadata publishing</h1>
+      <p class="lede">Prepare the title, description, chapters, guest links, sponsor disclosure, and destination-specific details alongside the finished episode. The metadata stays attached to the actual episode package instead of turning into a separate CMS.</p>
+
+      <section class="layout">
+        <div class="stack">
+          <section class="panel" id="contextPanel">
+            <div class="panel-header">
+              <div>
+                <h2>Episode context already in workspace</h2>
+                <p class="helper">This publish view starts from review work the creator already did in the episode: social links, glossary corrections, chapter suggestions, sponsor context, and the selected thumbnail frame.</p>
+              </div>
+              <span class="chip">Signal Path · Episode 42</span>
+            </div>
+
+            <div class="chip-row" aria-label="Context used for metadata">
+              <span class="chip">Guest links imported from social context</span>
+              <span class="chip">3 chapter suggestions from segment review</span>
+              <span class="chip">2 glossary terms ready to apply</span>
+              <span class="chip">Thumbnail frame selected</span>
+            </div>
+
+            <div class="context-grid" style="margin-top: 14px;">
+              <div class="context-card">
+                <strong>Guest context</strong>
+                <p class="context-note">Anika Gupta is matched to the guest speaker bucket with a public profile link and a spelling note for Riverside AI.</p>
+              </div>
+              <div class="context-card">
+                <strong>Chapter context</strong>
+                <p class="context-note">Segment review suggested a cold open, launch-week breakdown, and Q&amp;A ending. The creator can rename, merge, or soften titles here before export.</p>
+              </div>
+              <div class="context-card">
+                <strong>Thumbnail context</strong>
+                <p class="context-note">The publish-ready frame uses the approved guest shot from 24:12 with the show brand kit already applied.</p>
+              </div>
+              <div class="context-card">
+                <strong>Sponsor context</strong>
+                <p class="context-note">The episode includes a short sponsor read, so disclosure copy may be required depending on the selected destination.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" id="destinationPanel">
+            <div class="panel-header">
+              <div>
+                <h2>Publish destination</h2>
+                <p class="helper">Destination choice changes which metadata fields matter and what a viewer or reviewer will actually see.</p>
+              </div>
+            </div>
+
+            <div class="destination-row" id="destinationButtons" aria-label="Destination choices"></div>
+
+            <div class="summary-card" style="margin-top: 14px;">
+              <strong>Visible in this package</strong>
+              <p id="destinationSummary" class="summary-copy"></p>
+              <ul id="destinationPackage" class="package-list"></ul>
+              <div class="button-row">
+                <button type="button" class="secondary" id="copyReviewButton">Copy current metadata to review copy</button>
+                <button type="button" class="secondary" id="resetDefaultsButton">Reset from episode defaults</button>
+              </div>
+              <p id="destinationActionNote" class="small summary-copy"></p>
+            </div>
+          </section>
+
+          <section class="panel" id="metadataFields">
+            <div class="panel-header">
+              <div>
+                <h2>Metadata fields</h2>
+                <p class="helper">Use plain creator-facing fields and show the publishing consequence of anything still missing or uncertain.</p>
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <article class="field-card" id="titleCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Episode title</strong>
+                    <p class="field-note">Use the final viewer-facing title, not a working note.</p>
+                  </div>
+                  <span class="badge low" id="titleBadge">Low confidence</span>
+                </div>
+                <label for="titleInput">Title</label>
+                <input id="titleInput" type="text" value="Working title: How Riverside A.I. rebuilt live podcast production">
+                <div class="button-row" style="margin-top: 10px;">
+                  <button type="button" id="finalTitleButton">Use final title</button>
+                  <button type="button" class="secondary" id="applyGlossaryButton">Apply glossary spelling</button>
+                </div>
+                <p class="tone-note small" id="titleConsequence">A publisher will still see a working title if this ships as-is.</p>
+              </article>
+
+              <article class="field-card" id="shortDescriptionCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Short description</strong>
+                    <p class="field-note">Keep the quick summary tied to the actual episode outcome.</p>
+                  </div>
+                  <span class="badge complete" id="shortDescriptionBadge">Complete</span>
+                </div>
+                <label for="shortDescriptionInput">One-sentence summary</label>
+                <textarea id="shortDescriptionInput">Host Maya Chen and guest Anika Gupta break down the live launch mistakes that nearly derailed Riverside AI's new remote podcast studio.</textarea>
+                <p class="tone-note small" id="shortDescriptionConsequence">This summary is ready for destinations that show a short episode blurb.</p>
+              </article>
+
+              <article class="field-card" id="fullDescriptionCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Full description</strong>
+                    <p class="field-note">Long-form destinations can carry guest context, chapter notes, and sponsor disclosure here.</p>
+                  </div>
+                  <span class="badge complete" id="fullDescriptionBadge">Complete</span>
+                </div>
+                <label for="fullDescriptionInput">Description</label>
+                <textarea id="fullDescriptionInput">Maya Chen talks with Anika Gupta about the launch-week mistakes that forced Riverside AI to rebuild its remote podcast production workflow. They cover guest setup, live switching, and the approval habits that kept the show calm under pressure.</textarea>
+                <p class="tone-note small" id="fullDescriptionConsequence">The description is long enough for the current destination.</p>
+              </article>
+
+              <article class="field-card" id="guestLinksCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Guest links</strong>
+                    <p class="field-note">Guest names and links should stay attached to the episode, not copied from a generic contact list.</p>
+                  </div>
+                  <span class="badge low" id="guestLinksBadge">Low confidence</span>
+                </div>
+                <label for="guestLinkInput">Anika Gupta profile</label>
+                <input id="guestLinkInput" type="text" value="https://riverside.fm/team/anika-gupta">
+                <div class="button-row" style="margin-top: 10px;">
+                  <button type="button" id="confirmGuestLinkButton">Confirm guest link</button>
+                  <button type="button" class="secondary" id="markGuestLinkReviewButton">Mark for review</button>
+                </div>
+                <p class="tone-note small" id="guestLinksConsequence">Guest link still needs a creator confirmation before it ships in publish metadata.</p>
+              </article>
+
+              <article class="field-card" id="sponsorCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Sponsor disclosure</strong>
+                    <p class="field-note">Only require sponsor copy when this destination will ship sponsor context to the viewer or listener.</p>
+                  </div>
+                  <span class="badge missing" id="sponsorBadge">Missing</span>
+                </div>
+                <div class="toggle-row" style="margin-bottom: 10px;">
+                  <button type="button" id="sponsorPresentButton" aria-pressed="true">Sponsor visuals included</button>
+                </div>
+                <label for="sponsorInput">Disclosure text</label>
+                <textarea id="sponsorInput"></textarea>
+                <div class="button-row" style="margin-top: 10px;">
+                  <button type="button" id="insertSponsorDisclosureButton">Add disclosure</button>
+                  <button type="button" class="secondary" id="clearSponsorDisclosureButton">Clear disclosure</button>
+                </div>
+                <p class="tone-note small" id="sponsorConsequence">This destination would ship sponsor context without the disclosure line.</p>
+              </article>
+
+              <article class="field-card" id="thumbnailCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Thumbnail or cover frame</strong>
+                    <p class="field-note">Use the frame already approved in the episode review instead of opening a separate design tool.</p>
+                  </div>
+                  <span class="badge complete" id="thumbnailBadge">Complete</span>
+                </div>
+                <label for="thumbnailInput">Selected frame</label>
+                <input id="thumbnailInput" type="text" value="24:12 - Anika smiles during the launch story" readonly>
+                <div class="button-row" style="margin-top: 10px;">
+                  <button type="button" id="toggleThumbnailButton">Remove frame</button>
+                  <button type="button" class="secondary" id="restoreThumbnailButton">Use approved frame</button>
+                </div>
+                <p class="tone-note small" id="thumbnailConsequence">The selected frame is ready for destinations that require a thumbnail.</p>
+              </article>
+
+              <article class="field-card" id="episodeCard">
+                <div class="field-head">
+                  <div>
+                    <strong class="field-title">Show and episode number</strong>
+                    <p class="field-note">This episode format uses an episode number in publish metadata.</p>
+                  </div>
+                  <span class="badge complete" id="episodeBadge">Complete</span>
+                </div>
+                <label for="episodeNumberInput">Episode label</label>
+                <input id="episodeNumberInput" type="text" value="Signal Path · Episode 42">
+                <p class="tone-note small" id="episodeConsequence">The show name and episode number are already publish-ready.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel" id="chapterPanel">
+            <div class="panel-header">
+              <div>
+                <h2>Chapter review</h2>
+                <p class="helper">Chapter titles should stay useful for long-form playback and only ship when they help the selected destination.</p>
+              </div>
+            </div>
+
+            <div class="chapter-list">
+              <article class="chapter-card" data-chapter-id="c1">
+                <div class="chapter-top">
+                  <div>
+                    <span class="chapter-time">00:00</span>
+                    <strong>Cold open</strong>
+                  </div>
+                  <span class="badge complete" id="chapterBadge-c1">Ready</span>
+                </div>
+                <label for="chapterTitle-c1">Chapter title</label>
+                <input id="chapterTitle-c1" type="text" value="Why the launch week nearly broke the team">
+                <label for="chapterIssue-c1">Review state</label>
+                <select id="chapterIssue-c1">
+                  <option value="ready" selected>Ready</option>
+                  <option value="needs-title">Needs a title</option>
+                  <option value="mid-sentence">Starts mid-sentence</option>
+                  <option value="too-short">Too short to keep</option>
+                  <option value="overlaps">Overlaps the next chapter</option>
+                </select>
+                <div class="chapter-actions">
+                  <button type="button" class="secondary jump-button" data-target="00:00">Jump with lead-in</button>
+                </div>
+                <p class="chapter-note small" id="chapterNote-c1">This chapter is ready to flow into publish metadata.</p>
+              </article>
+
+              <article class="chapter-card" data-chapter-id="c2">
+                <div class="chapter-top">
+                  <div>
+                    <span class="chapter-time">18:40</span>
+                    <strong>Launch breakdown</strong>
+                  </div>
+                  <span class="badge review" id="chapterBadge-c2">Needs review</span>
+                </div>
+                <label for="chapterTitle-c2">Chapter title</label>
+                <input id="chapterTitle-c2" type="text" value="Spoiler: why the last launch failed">
+                <label for="chapterIssue-c2">Review state</label>
+                <select id="chapterIssue-c2">
+                  <option value="ready" selected>Ready</option>
+                  <option value="needs-title">Needs a title</option>
+                  <option value="mid-sentence">Starts mid-sentence</option>
+                  <option value="too-short">Too short to keep</option>
+                  <option value="overlaps">Overlaps the next chapter</option>
+                </select>
+                <div class="chapter-actions">
+                  <button type="button" id="removeSpoilerButton">Remove spoiler wording</button>
+                  <button type="button" class="secondary jump-button" data-target="18:40">Jump with lead-in</button>
+                </div>
+                <p class="chapter-note small" id="chapterNote-c2">This title still reads like it gives away the ending.</p>
+              </article>
+
+              <article class="chapter-card" data-chapter-id="c3">
+                <div class="chapter-top">
+                  <div>
+                    <span class="chapter-time">41:02</span>
+                    <strong>Q&amp;A wrap-up</strong>
+                  </div>
+                  <span class="badge review" id="chapterBadge-c3">Needs review</span>
+                </div>
+                <label for="chapterTitle-c3">Chapter title</label>
+                <input id="chapterTitle-c3" type="text" value="Q&amp;A">
+                <label for="chapterIssue-c3">Review state</label>
+                <select id="chapterIssue-c3">
+                  <option value="ready">Ready</option>
+                  <option value="needs-title">Needs a title</option>
+                  <option value="mid-sentence">Starts mid-sentence</option>
+                  <option value="too-short" selected>Too short to keep</option>
+                  <option value="overlaps">Overlaps the next chapter</option>
+                </select>
+                <div class="chapter-actions">
+                  <button type="button" id="mergeChapterButton">Merge into previous chapter</button>
+                  <button type="button" class="secondary jump-button" data-target="41:02">Jump with lead-in</button>
+                </div>
+                <p class="chapter-note small" id="chapterNote-c3">This chapter is too short to keep on its own for long-form playback.</p>
+              </article>
+            </div>
+
+            <p class="small summary-copy" id="chapterJumpNote" style="margin-top: 14px;"></p>
+          </section>
+        </div>
+
+        <aside class="sidebar-stack">
+          <section class="panel">
+            <h2>Package status</h2>
+            <div class="summary-card" aria-live="polite">
+              <div id="overallStatus" class="status-pill blocked">Blocked for YouTube full episode</div>
+              <p id="overallSummary" class="summary-copy">Metadata still has missing or unreviewed details that would be visible to the selected destination.</p>
+              <div>
+                <strong>Next best action</strong>
+                <p id="nextAction" class="summary-copy"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Metadata warnings</h2>
+            <p class="helper">Warnings describe the publish consequence and jump back to the field or chapter that needs attention.</p>
+            <div id="warningList" class="warning-list" aria-live="polite"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Creator controls in this flow</h2>
+            <ul class="summary-copy">
+              <li>Edit title or description</li>
+              <li>Apply glossary spelling</li>
+              <li>Confirm guest link</li>
+              <li>Rename or merge chapter</li>
+              <li>Add sponsor disclosure</li>
+              <li>Choose thumbnail frame</li>
+              <li>Copy metadata to another destination</li>
+              <li>Reset to episode defaults</li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const destinationRules = {
+        youtube: {
+          label: "YouTube full episode",
+          packageSummary: "Viewers will see the title, long description, guest links, chapters, sponsor disclosure, and the selected thumbnail frame.",
+          visiblePackage: [
+            "Title and episode number",
+            "Short and full description",
+            "Guest names and links",
+            "Chapter markers",
+            "Sponsor disclosure when the episode includes sponsor context",
+            "Thumbnail frame",
+          ],
+        },
+        review: {
+          label: "Private client review",
+          packageSummary: "Review recipients need the episode title, a compact summary, and any sponsor context that explains what they are seeing. Thumbnail and guest links can stay out of the package.",
+          visiblePackage: [
+            "Title and episode number",
+            "Short description",
+            "Sponsor disclosure when relevant to the review copy",
+            "Review copy note",
+          ],
+        },
+        archive: {
+          label: "Archive master",
+          packageSummary: "Archive exports keep the episode identified and searchable, but they do not need every public publishing field.",
+          visiblePackage: [
+            "Title and episode number",
+            "Internal archive note",
+            "Optional sponsor disclosure copy",
+          ],
+        },
+        audio: {
+          label: "Audio-only podcast backup",
+          packageSummary: "Audio listeners still need the episode title, description, guest context, sponsor disclosure, and clean chapter titles when the feed supports them.",
+          visiblePackage: [
+            "Title and episode number",
+            "Short and full description",
+            "Guest names and links",
+            "Chapter markers",
+            "Sponsor disclosure when present",
+          ],
+        },
+      };
+
+      const stateLabels = {
+        complete: "Complete",
+        review: "Needs review",
+        missing: "Missing",
+        low: "Low confidence",
+        idle: "Not needed",
+      };
+
+      const chapterIssueDetails = {
+        ready: {
+          badge: "complete",
+          label: "Ready",
+          note: "This chapter is ready to flow into publish metadata.",
+        },
+        "needs-title": {
+          badge: "review",
+          label: "Needs a title",
+          note: "This chapter still needs a plain-language title before it should ship.",
+        },
+        "mid-sentence": {
+          badge: "review",
+          label: "Starts mid-sentence",
+          note: "This chapter starts too abruptly for a long-form table of contents.",
+        },
+        "too-short": {
+          badge: "review",
+          label: "Too short to keep",
+          note: "This chapter is too short to keep on its own for long-form playback.",
+        },
+        overlaps: {
+          badge: "review",
+          label: "Overlaps the next chapter",
+          note: "This chapter overlaps the next chapter and should be cleaned up before export.",
+        },
+      };
+
+      const state = {
+        selectedDestination: "youtube",
+        guestLinkConfirmed: false,
+        sponsorPresent: true,
+        thumbnailSelected: true,
+      };
+
+      const elements = {
+        destinationButtons: document.querySelector("#destinationButtons"),
+        destinationSummary: document.querySelector("#destinationSummary"),
+        destinationPackage: document.querySelector("#destinationPackage"),
+        destinationActionNote: document.querySelector("#destinationActionNote"),
+        copyReviewButton: document.querySelector("#copyReviewButton"),
+        resetDefaultsButton: document.querySelector("#resetDefaultsButton"),
+        overallStatus: document.querySelector("#overallStatus"),
+        overallSummary: document.querySelector("#overallSummary"),
+        nextAction: document.querySelector("#nextAction"),
+        warningList: document.querySelector("#warningList"),
+        titleInput: document.querySelector("#titleInput"),
+        shortDescriptionInput: document.querySelector("#shortDescriptionInput"),
+        fullDescriptionInput: document.querySelector("#fullDescriptionInput"),
+        guestLinkInput: document.querySelector("#guestLinkInput"),
+        sponsorInput: document.querySelector("#sponsorInput"),
+        episodeNumberInput: document.querySelector("#episodeNumberInput"),
+        sponsorPresentButton: document.querySelector("#sponsorPresentButton"),
+        titleBadge: document.querySelector("#titleBadge"),
+        shortDescriptionBadge: document.querySelector("#shortDescriptionBadge"),
+        fullDescriptionBadge: document.querySelector("#fullDescriptionBadge"),
+        guestLinksBadge: document.querySelector("#guestLinksBadge"),
+        sponsorBadge: document.querySelector("#sponsorBadge"),
+        thumbnailBadge: document.querySelector("#thumbnailBadge"),
+        episodeBadge: document.querySelector("#episodeBadge"),
+        titleConsequence: document.querySelector("#titleConsequence"),
+        shortDescriptionConsequence: document.querySelector("#shortDescriptionConsequence"),
+        fullDescriptionConsequence: document.querySelector("#fullDescriptionConsequence"),
+        guestLinksConsequence: document.querySelector("#guestLinksConsequence"),
+        sponsorConsequence: document.querySelector("#sponsorConsequence"),
+        thumbnailConsequence: document.querySelector("#thumbnailConsequence"),
+        episodeConsequence: document.querySelector("#episodeConsequence"),
+        finalTitleButton: document.querySelector("#finalTitleButton"),
+        applyGlossaryButton: document.querySelector("#applyGlossaryButton"),
+        confirmGuestLinkButton: document.querySelector("#confirmGuestLinkButton"),
+        markGuestLinkReviewButton: document.querySelector("#markGuestLinkReviewButton"),
+        insertSponsorDisclosureButton: document.querySelector("#insertSponsorDisclosureButton"),
+        clearSponsorDisclosureButton: document.querySelector("#clearSponsorDisclosureButton"),
+        toggleThumbnailButton: document.querySelector("#toggleThumbnailButton"),
+        restoreThumbnailButton: document.querySelector("#restoreThumbnailButton"),
+        removeSpoilerButton: document.querySelector("#removeSpoilerButton"),
+        mergeChapterButton: document.querySelector("#mergeChapterButton"),
+        chapterJumpNote: document.querySelector("#chapterJumpNote"),
+      };
+
+      const chapters = [
+        {
+          id: "c1",
+          time: "00:00",
+          titleInput: document.querySelector("#chapterTitle-c1"),
+          issueSelect: document.querySelector("#chapterIssue-c1"),
+          badge: document.querySelector("#chapterBadge-c1"),
+          note: document.querySelector("#chapterNote-c1"),
+          card: document.querySelector('[data-chapter-id="c1"]'),
+        },
+        {
+          id: "c2",
+          time: "18:40",
+          titleInput: document.querySelector("#chapterTitle-c2"),
+          issueSelect: document.querySelector("#chapterIssue-c2"),
+          badge: document.querySelector("#chapterBadge-c2"),
+          note: document.querySelector("#chapterNote-c2"),
+          card: document.querySelector('[data-chapter-id="c2"]'),
+        },
+        {
+          id: "c3",
+          time: "41:02",
+          titleInput: document.querySelector("#chapterTitle-c3"),
+          issueSelect: document.querySelector("#chapterIssue-c3"),
+          badge: document.querySelector("#chapterBadge-c3"),
+          note: document.querySelector("#chapterNote-c3"),
+          card: document.querySelector('[data-chapter-id="c3"]'),
+        },
+      ];
+
+      function requiredByDestination(fieldId) {
+        const destination = state.selectedDestination;
+
+        if (fieldId === "title" || fieldId === "episode") {
+          return true;
+        }
+
+        if (fieldId === "shortDescription") {
+          return destination === "youtube" || destination === "review" || destination === "audio";
+        }
+
+        if (fieldId === "fullDescription") {
+          return destination === "youtube" || destination === "audio";
+        }
+
+        if (fieldId === "guestLinks") {
+          return destination === "youtube" || destination === "audio";
+        }
+
+        if (fieldId === "chapters") {
+          return destination === "youtube" || destination === "audio";
+        }
+
+        if (fieldId === "sponsorDisclosure") {
+          if (!state.sponsorPresent) {
+            return false;
+          }
+          return destination === "youtube" || destination === "review" || destination === "audio";
+        }
+
+        if (fieldId === "thumbnail") {
+          return destination === "youtube";
+        }
+
+        return false;
+      }
+
+      function setBadge(element, statusKey) {
+        element.textContent = stateLabels[statusKey];
+        element.className = "badge " + statusKey;
+      }
+
+      function setStatusPill(element, statusKey, text) {
+        element.textContent = text;
+        element.className = "status-pill " + statusKey;
+      }
+
+      function evaluateTitle() {
+        const title = elements.titleInput.value.trim();
+
+        if (!requiredByDestination("title")) {
+          return {
+            status: "idle",
+            consequence: "This destination does not need a public episode title.",
+          };
+        }
+
+        if (!title) {
+          return {
+            status: "missing",
+            consequence: destinationRules[state.selectedDestination].label + " would ship without an episode title.",
+          };
+        }
+
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes("working title") || lowerTitle.includes("tbd")) {
+          return {
+            status: "low",
+            consequence: "A publisher will still see a working title if this ships as-is.",
+          };
+        }
+
+        if (title.includes("A.I.")) {
+          return {
+            status: "low",
+            consequence: "The title still uses an unapproved spelling that should be corrected before publish.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "The title is ready for the selected destination.",
+        };
+      }
+
+      function evaluateShortDescription() {
+        const text = elements.shortDescriptionInput.value.trim();
+
+        if (!requiredByDestination("shortDescription")) {
+          return {
+            status: "idle",
+            consequence: "This destination does not need a short episode blurb.",
+          };
+        }
+
+        if (!text) {
+          return {
+            status: "missing",
+            consequence: "The selected destination would ship without a quick episode summary.",
+          };
+        }
+
+        if (text.length < 90) {
+          return {
+            status: "review",
+            consequence: "The summary is present but still feels thin for the selected destination.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "This summary is ready for destinations that show a short episode blurb.",
+        };
+      }
+
+      function evaluateFullDescription() {
+        const text = elements.fullDescriptionInput.value.trim();
+
+        if (!requiredByDestination("fullDescription")) {
+          return {
+            status: "idle",
+            consequence: "This destination does not need the long publish description.",
+          };
+        }
+
+        if (!text) {
+          return {
+            status: "missing",
+            consequence: "The selected destination would publish without a long description.",
+          };
+        }
+
+        if (text.length < 180) {
+          return {
+            status: "review",
+            consequence: "The long description is present but still feels too short for a publish-ready episode package.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "The description is long enough for the current destination.",
+        };
+      }
+
+      function evaluateGuestLinks() {
+        if (!requiredByDestination("guestLinks")) {
+          return {
+            status: "idle",
+            consequence: "Guest links are not needed in this destination package.",
+          };
+        }
+
+        const link = elements.guestLinkInput.value.trim();
+        if (!link) {
+          return {
+            status: "missing",
+            consequence: "The guest profile link is missing for a destination that shows guest context.",
+          };
+        }
+
+        if (!state.guestLinkConfirmed) {
+          return {
+            status: "low",
+            consequence: "Guest link still needs a creator confirmation before it ships in publish metadata.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "The guest link is confirmed for the selected destination.",
+        };
+      }
+
+      function evaluateSponsorDisclosure() {
+        if (!requiredByDestination("sponsorDisclosure")) {
+          return {
+            status: "idle",
+            consequence: state.sponsorPresent
+              ? "This destination does not need sponsor disclosure copy in the package."
+              : "This episode has no sponsor visuals, so disclosure copy is not needed.",
+          };
+        }
+
+        const text = elements.sponsorInput.value.trim();
+        if (!text) {
+          return {
+            status: "missing",
+            consequence: "This destination would ship sponsor context without the disclosure line.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "Sponsor disclosure is ready for the selected destination.",
+        };
+      }
+
+      function evaluateThumbnail() {
+        if (!requiredByDestination("thumbnail")) {
+          return {
+            status: "idle",
+            consequence: "This destination does not require a thumbnail or cover frame.",
+          };
+        }
+
+        if (!state.thumbnailSelected) {
+          return {
+            status: "missing",
+            consequence: "The selected destination still needs a thumbnail frame before export.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "The selected frame is ready for destinations that require a thumbnail.",
+        };
+      }
+
+      function evaluateEpisodeLabel() {
+        const text = elements.episodeNumberInput.value.trim();
+
+        if (!text) {
+          return {
+            status: "missing",
+            consequence: "The selected destination would lose the show or episode label.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "The show name and episode number are already publish-ready.",
+        };
+      }
+
+      function evaluateChapterField() {
+        if (!requiredByDestination("chapters")) {
+          return {
+            status: "idle",
+            consequence: "This destination does not need visible chapter metadata.",
+          };
+        }
+
+        const visibleChapters = chapters.filter((chapter) => !chapter.card.classList.contains("hidden"));
+        if (!visibleChapters.length) {
+          return {
+            status: "missing",
+            consequence: "The selected destination would publish without any chapter markers.",
+          };
+        }
+
+        let hasReviewState = false;
+
+        for (const chapter of visibleChapters) {
+          const title = chapter.titleInput.value.trim();
+          const issue = chapter.issueSelect.value;
+          const lowerTitle = title.toLowerCase();
+
+          if (!title) {
+            return {
+              status: "missing",
+              consequence: "A chapter still needs a title before it should ship in episode metadata.",
+            };
+          }
+
+          if (issue !== "ready") {
+            hasReviewState = true;
+          }
+
+          if (lowerTitle.startsWith("spoiler:")) {
+            hasReviewState = true;
+          }
+        }
+
+        if (hasReviewState) {
+          return {
+            status: "review",
+            consequence: "At least one chapter still needs cleanup before it should ship to listeners or viewers.",
+          };
+        }
+
+        return {
+          status: "complete",
+          consequence: "Confirmed chapters are ready to flow into publish metadata.",
+        };
+      }
+
+      function fieldWarnings() {
+        const warnings = [];
+        const titleResult = evaluateTitle();
+        const shortDescriptionResult = evaluateShortDescription();
+        const fullDescriptionResult = evaluateFullDescription();
+        const guestLinksResult = evaluateGuestLinks();
+        const sponsorResult = evaluateSponsorDisclosure();
+        const thumbnailResult = evaluateThumbnail();
+        const episodeResult = evaluateEpisodeLabel();
+        const chaptersResult = evaluateChapterField();
+
+        if (titleResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Episode title is missing for " + destinationRules[state.selectedDestination].label + ".",
+            anchor: "titleCard",
+          });
+        } else if (titleResult.status === "low") {
+          warnings.push({
+            severity: "low",
+            text: "Title still looks like a working draft or uses an unapproved spelling.",
+            anchor: "titleCard",
+          });
+        }
+
+        if (shortDescriptionResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Short description is missing for the selected destination.",
+            anchor: "shortDescriptionCard",
+          });
+        } else if (shortDescriptionResult.status === "review") {
+          warnings.push({
+            severity: "review",
+            text: "Short description is present but still too thin for the selected destination.",
+            anchor: "shortDescriptionCard",
+          });
+        }
+
+        if (fullDescriptionResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Full description is missing for a destination that shows long metadata.",
+            anchor: "fullDescriptionCard",
+          });
+        } else if (fullDescriptionResult.status === "review") {
+          warnings.push({
+            severity: "review",
+            text: "Full description still needs more useful publish context.",
+            anchor: "fullDescriptionCard",
+          });
+        }
+
+        if (guestLinksResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Guest link is missing for a destination that shows guest context.",
+            anchor: "guestLinksCard",
+          });
+        } else if (guestLinksResult.status === "low") {
+          warnings.push({
+            severity: "low",
+            text: "Guest link still points to an unconfirmed profile.",
+            anchor: "guestLinksCard",
+          });
+        }
+
+        if (sponsorResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Sponsor disclosure is missing even though this destination would ship sponsor context.",
+            anchor: "sponsorCard",
+          });
+        }
+
+        if (thumbnailResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Thumbnail frame is missing for YouTube export.",
+            anchor: "thumbnailCard",
+          });
+        }
+
+        if (episodeResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "Show name or episode number is missing.",
+            anchor: "episodeCard",
+          });
+        }
+
+        if (chaptersResult.status === "missing") {
+          warnings.push({
+            severity: "blocked",
+            text: "At least one chapter is missing a title or the destination would ship without chapters.",
+            anchor: "chapterPanel",
+          });
+        } else if (chaptersResult.status === "review") {
+          warnings.push({
+            severity: "review",
+            text: "Chapter titles still need cleanup before they should ship in metadata.",
+            anchor: "chapterPanel",
+          });
+        }
+
+        return warnings;
+      }
+
+      function updateDestinationButtons() {
+        elements.destinationButtons.replaceChildren();
+
+        Object.entries(destinationRules).forEach(([key, rule]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = rule.label;
+          button.setAttribute("aria-pressed", String(state.selectedDestination === key));
+          button.addEventListener("click", () => {
+            state.selectedDestination = key;
+            elements.destinationActionNote.textContent = "";
+            render();
+          });
+          elements.destinationButtons.appendChild(button);
+        });
+      }
+
+      function updateDestinationSummary() {
+        const rule = destinationRules[state.selectedDestination];
+        elements.destinationSummary.textContent = rule.packageSummary;
+        elements.destinationPackage.replaceChildren();
+
+        rule.visiblePackage.forEach((line) => {
+          const item = document.createElement("li");
+          item.textContent = line;
+          item.className = "warning-copy";
+          elements.destinationPackage.appendChild(item);
+        });
+      }
+
+      function updateFieldSection() {
+        const titleResult = evaluateTitle();
+        const shortDescriptionResult = evaluateShortDescription();
+        const fullDescriptionResult = evaluateFullDescription();
+        const guestLinksResult = evaluateGuestLinks();
+        const sponsorResult = evaluateSponsorDisclosure();
+        const thumbnailResult = evaluateThumbnail();
+        const episodeResult = evaluateEpisodeLabel();
+        const chaptersResult = evaluateChapterField();
+
+        setBadge(elements.titleBadge, titleResult.status);
+        setBadge(elements.shortDescriptionBadge, shortDescriptionResult.status);
+        setBadge(elements.fullDescriptionBadge, fullDescriptionResult.status);
+        setBadge(elements.guestLinksBadge, guestLinksResult.status);
+        setBadge(elements.sponsorBadge, sponsorResult.status);
+        setBadge(elements.thumbnailBadge, thumbnailResult.status);
+        setBadge(elements.episodeBadge, episodeResult.status);
+
+        elements.titleConsequence.textContent = titleResult.consequence;
+        elements.shortDescriptionConsequence.textContent = shortDescriptionResult.consequence;
+        elements.fullDescriptionConsequence.textContent = fullDescriptionResult.consequence;
+        elements.guestLinksConsequence.textContent = guestLinksResult.consequence;
+        elements.sponsorConsequence.textContent = sponsorResult.consequence;
+        elements.thumbnailConsequence.textContent = thumbnailResult.consequence;
+        elements.episodeConsequence.textContent = episodeResult.consequence;
+
+        document.querySelector("#chapterPanel .helper").textContent = chaptersResult.consequence;
+      }
+
+      function updateChapters() {
+        for (const chapter of chapters) {
+          if (chapter.card.classList.contains("hidden")) {
+            continue;
+          }
+
+          const title = chapter.titleInput.value.trim();
+          const issue = chapter.issueSelect.value;
+          const issueDetail = chapterIssueDetails[issue];
+          let badgeKey = issueDetail.badge;
+          let badgeText = issueDetail.label;
+          let noteText = issueDetail.note;
+
+          if (!title) {
+            badgeKey = "missing";
+            badgeText = "Missing";
+            noteText = "This chapter needs a title before it should ship in metadata.";
+          } else if (title.toLowerCase().startsWith("spoiler:")) {
+            badgeKey = "review";
+            badgeText = "Needs review";
+            noteText = "This title still reads like it gives away the ending.";
+          }
+
+          chapter.badge.textContent = badgeText;
+          chapter.badge.className = "badge " + badgeKey;
+          chapter.note.textContent = noteText;
+        }
+      }
+
+      function updateSummary() {
+        const warnings = fieldWarnings();
+        const hasBlocked = warnings.some((warning) => warning.severity === "blocked");
+        const hasReview = warnings.some((warning) => warning.severity === "review");
+        const hasLow = warnings.some((warning) => warning.severity === "low");
+        const destinationLabel = destinationRules[state.selectedDestination].label;
+
+        if (hasBlocked) {
+          setStatusPill(elements.overallStatus, "blocked", "Blocked for " + destinationLabel);
+          elements.overallSummary.textContent = "Metadata still has missing details that would be visible to the selected destination.";
+        } else if (hasReview) {
+          setStatusPill(elements.overallStatus, "review", "Needs review for " + destinationLabel);
+          elements.overallSummary.textContent = "Nothing critical is missing, but the selected destination would still ship metadata that feels unfinished.";
+        } else if (hasLow) {
+          setStatusPill(elements.overallStatus, "low", "Low-confidence publish details");
+          elements.overallSummary.textContent = "The package is close, but at least one visible publish detail still needs a creator confirmation.";
+        } else {
+          setStatusPill(elements.overallStatus, "ready", "Ready for " + destinationLabel);
+          elements.overallSummary.textContent = "The visible metadata package matches the selected destination and can move forward with export or publish.";
+        }
+
+        if (warnings.length) {
+          elements.nextAction.textContent = warnings[0].text;
+        } else {
+          elements.nextAction.textContent = "Copy the package into the final export or publish it to the selected destination.";
+        }
+
+        elements.warningList.replaceChildren();
+
+        if (!warnings.length) {
+          const card = document.createElement("div");
+          card.className = "warning-card";
+          const title = document.createElement("strong");
+          title.textContent = "No metadata warnings";
+          const copy = document.createElement("p");
+          copy.className = "warning-copy small";
+          copy.textContent = "Every visible metadata field needed for this destination is complete or intentionally not needed.";
+          card.appendChild(title);
+          card.appendChild(copy);
+          elements.warningList.appendChild(card);
+          return;
+        }
+
+        warnings.forEach((warning) => {
+          const card = document.createElement("div");
+          card.className = "warning-card " + warning.severity;
+
+          const title = document.createElement("strong");
+          title.textContent = warning.text;
+
+          const copy = document.createElement("p");
+          copy.className = "warning-copy small";
+          copy.textContent = "Open the related field and fix the viewer-facing consequence before export.";
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "secondary";
+          button.textContent = "Open related field";
+          button.addEventListener("click", () => {
+            document.getElementById(warning.anchor).scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+
+          card.appendChild(title);
+          card.appendChild(copy);
+          card.appendChild(button);
+          elements.warningList.appendChild(card);
+        });
+      }
+
+      function render() {
+        updateDestinationButtons();
+        updateDestinationSummary();
+        updateFieldSection();
+        updateChapters();
+        updateSummary();
+        elements.sponsorPresentButton.setAttribute("aria-pressed", String(state.sponsorPresent));
+        elements.sponsorPresentButton.textContent = state.sponsorPresent ? "Sponsor visuals included" : "No sponsor visuals in episode";
+        elements.toggleThumbnailButton.textContent = state.thumbnailSelected ? "Remove frame" : "Frame removed";
+      }
+
+      elements.finalTitleButton.addEventListener("click", () => {
+        elements.titleInput.value = "How Riverside AI rebuilt live podcast production";
+        render();
+      });
+
+      elements.applyGlossaryButton.addEventListener("click", () => {
+        elements.titleInput.value = elements.titleInput.value.replaceAll("A.I.", "AI");
+        elements.fullDescriptionInput.value = elements.fullDescriptionInput.value.replaceAll("A.I.", "AI");
+        render();
+      });
+
+      elements.confirmGuestLinkButton.addEventListener("click", () => {
+        state.guestLinkConfirmed = true;
+        render();
+      });
+
+      elements.markGuestLinkReviewButton.addEventListener("click", () => {
+        state.guestLinkConfirmed = false;
+        render();
+      });
+
+      elements.insertSponsorDisclosureButton.addEventListener("click", () => {
+        elements.sponsorInput.value = "Sponsor note: This episode includes a short sponsored segment from Riverside AI discussing its live production launch.";
+        render();
+      });
+
+      elements.clearSponsorDisclosureButton.addEventListener("click", () => {
+        elements.sponsorInput.value = "";
+        render();
+      });
+
+      elements.sponsorPresentButton.addEventListener("click", () => {
+        state.sponsorPresent = !state.sponsorPresent;
+        render();
+      });
+
+      elements.toggleThumbnailButton.addEventListener("click", () => {
+        state.thumbnailSelected = false;
+        render();
+      });
+
+      elements.restoreThumbnailButton.addEventListener("click", () => {
+        state.thumbnailSelected = true;
+        render();
+      });
+
+      elements.removeSpoilerButton.addEventListener("click", () => {
+        const chapter = chapters.find((item) => item.id === "c2");
+        chapter.titleInput.value = "Why the last launch stalled";
+        render();
+      });
+
+      elements.mergeChapterButton.addEventListener("click", () => {
+        const chapter = chapters.find((item) => item.id === "c3");
+        chapter.card.classList.add("hidden");
+        elements.chapterJumpNote.textContent = "Merged the short Q&A wrap-up into the previous chapter so the exported chapter list stays calm.";
+        render();
+      });
+
+      elements.copyReviewButton.addEventListener("click", () => {
+        elements.destinationActionNote.textContent = "Copied the current title, descriptions, and guest context into " + destinationRules.review.label + " defaults without changing the current destination.";
+      });
+
+      elements.resetDefaultsButton.addEventListener("click", () => {
+        state.selectedDestination = "youtube";
+        state.guestLinkConfirmed = false;
+        state.sponsorPresent = true;
+        state.thumbnailSelected = true;
+        elements.titleInput.value = "Working title: How Riverside A.I. rebuilt live podcast production";
+        elements.shortDescriptionInput.value = "Host Maya Chen and guest Anika Gupta break down the live launch mistakes that nearly derailed Riverside AI's new remote podcast studio.";
+        elements.fullDescriptionInput.value = "Maya Chen talks with Anika Gupta about the launch-week mistakes that forced Riverside AI to rebuild its remote podcast production workflow. They cover guest setup, live switching, and the approval habits that kept the show calm under pressure.";
+        elements.guestLinkInput.value = "https://riverside.fm/team/anika-gupta";
+        elements.sponsorInput.value = "";
+        elements.episodeNumberInput.value = "Signal Path · Episode 42";
+        chapters[0].titleInput.value = "Why the launch week nearly broke the team";
+        chapters[0].issueSelect.value = "ready";
+        chapters[1].titleInput.value = "Spoiler: why the last launch failed";
+        chapters[1].issueSelect.value = "ready";
+        chapters[2].titleInput.value = "Q&A";
+        chapters[2].issueSelect.value = "too-short";
+        chapters[2].card.classList.remove("hidden");
+        elements.chapterJumpNote.textContent = "";
+        elements.destinationActionNote.textContent = "";
+        render();
+      });
+
+      [elements.titleInput, elements.shortDescriptionInput, elements.fullDescriptionInput, elements.guestLinkInput, elements.sponsorInput, elements.episodeNumberInput].forEach((field) => {
+        field.addEventListener("input", () => {
+          render();
+        });
+      });
+
+      chapters.forEach((chapter) => {
+        chapter.titleInput.addEventListener("input", () => {
+          render();
+        });
+        chapter.issueSelect.addEventListener("change", () => {
+          render();
+        });
+      });
+
+      document.querySelectorAll(".jump-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          elements.chapterJumpNote.textContent = "Jumped to " + button.dataset.target + " with a short lead-in while keeping the current review context.";
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>
