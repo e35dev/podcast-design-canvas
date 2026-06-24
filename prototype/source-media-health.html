@@ -396,6 +396,24 @@
         background: #ffe0e0;
       }
 
+      .batch-outcome-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .batch-outcome-tags .batch-outcome-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #075246;
+        background: #dff5ef;
+      }
+
       .batch-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -481,6 +499,7 @@
               <p id="batchDetail" class="batch-detail"></p>
             </div>
             <div class="batch-condition-tags" id="batchConditionTags" hidden></div>
+            <div class="batch-outcome-tags" id="batchOutcomeTags" hidden></div>
             <div class="batch-toolbar" id="batchToolbar"></div>
             <div class="batch-links" id="batchLinks"></div>
           </div>
@@ -508,6 +527,7 @@
           label: "Video looks soft",
           preview: "soft",
           chip: "Soft video",
+          outcome: "Swap sharper file or continue",
           natural: "review suggested",
           title: (name) => `${name}'s video will look soft at full size`,
           action: "Swap in a sharper recording, or continue — it still reads fine across a full episode.",
@@ -517,6 +537,7 @@
           label: "Frame is too dark",
           preview: "dark",
           chip: "Too dark",
+          outcome: "Open visual match or replace",
           natural: "review suggested",
           title: (name) => `${name}'s camera is too dark to see clearly`,
           action: "Open visual match to lift the lighting, replace the file, or continue with a warning.",
@@ -526,6 +547,7 @@
           label: "Frame is out of focus",
           preview: "blur",
           chip: "Out of focus",
+          outcome: "Replace, audio-only, or continue",
           natural: "review suggested",
           title: (name) => `${name}'s camera is out of focus`,
           action: "Replace the recording, show this speaker audio-only, or continue with a warning.",
@@ -535,6 +557,7 @@
           label: "Audio is very quiet",
           preview: "ok",
           chip: "Hard to hear",
+          outcome: "Balance in audio cleanup",
           natural: "review suggested",
           title: (name) => `${name} is hard to hear`,
           action: "Balance this speaker's volume in audio cleanup, or continue with a warning.",
@@ -544,6 +567,7 @@
           label: "No sound on this track",
           preview: "ok",
           chip: "No sound",
+          outcome: "Re-upload with audio",
           natural: "needs replacement",
           title: (name) => `${name}'s recording has no sound`,
           action: "Re-upload this speaker with their audio — they can't be heard right now.",
@@ -553,6 +577,7 @@
           label: "Motion won't match the episode",
           preview: "ok",
           chip: "Motion off",
+          outcome: "Smooth motion or replace",
           natural: "review suggested",
           title: (name) => `${name}'s video motion won't match the rest of the episode`,
           action: "Let us smooth the motion to match, replace the file, or continue with a warning.",
@@ -562,6 +587,7 @@
           label: "Recorded sideways (portrait)",
           preview: "portrait",
           chip: "Sideways",
+          outcome: "Stack layout or replace",
           natural: "review suggested",
           title: (name) => `${name} was recorded sideways and won't fill a widescreen layout`,
           action: "Fit it with a stacked layout, replace with a landscape recording, or continue with a warning.",
@@ -571,6 +597,7 @@
           label: "File looks incomplete",
           preview: "missing",
           chip: "No file",
+          outcome: "Re-upload before styling",
           natural: "unavailable",
           title: (name) => `${name}'s file looks incomplete and won't open`,
           action: "Re-upload this speaker's recording before styling — this part can't be used yet.",
@@ -580,6 +607,7 @@
           label: "Audio can't be captioned",
           preview: "ok",
           chip: "Captions at risk",
+          outcome: "Improve audio for captions",
           natural: "review suggested",
           title: (name) => `Captions may be inaccurate for ${name}`,
           action: "Improve this speaker's audio for cleaner captions, or continue and review their captions by hand.",
@@ -614,6 +642,7 @@
       const batchToolbarElement = document.querySelector("#batchToolbar");
       const batchLinksElement = document.querySelector("#batchLinks");
       const batchConditionTagsElement = document.querySelector("#batchConditionTags");
+      const batchOutcomeTagsElement = document.querySelector("#batchOutcomeTags");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -715,6 +744,7 @@
             issue,
             conditionKey: speaker.condition,
             chip: condition.chip || null,
+            outcome: condition.outcome || null,
           };
         });
 
@@ -749,6 +779,29 @@
           );
         } else {
           batchConditionTagsElement.removeAttribute("aria-label");
+        }
+      }
+
+      function renderBatchOutcomeTags(flagged) {
+        batchOutcomeTagsElement.replaceChildren();
+        batchOutcomeTagsElement.hidden = true;
+
+        for (const result of flagged) {
+          if (!result.outcome) continue;
+          const tag = document.createElement("span");
+          tag.className = "batch-outcome-tag";
+          tag.textContent = `${bucketLabel(result.name)} — ${result.outcome}`;
+          batchOutcomeTagsElement.appendChild(tag);
+        }
+
+        if (batchOutcomeTagsElement.childElementCount) {
+          batchOutcomeTagsElement.hidden = false;
+          batchOutcomeTagsElement.setAttribute(
+            "aria-label",
+            "Suggested next steps for tracks needing work",
+          );
+        } else {
+          batchOutcomeTagsElement.removeAttribute("aria-label");
         }
       }
 
@@ -788,6 +841,7 @@
 
         const flagged = results.filter((result) => batchCategory(result.state) !== "clear");
         renderBatchConditionTags(flagged);
+        renderBatchOutcomeTags(flagged);
         batchLinksElement.replaceChildren(
           ...(flagged.length
             ? flagged.map((result) => {
