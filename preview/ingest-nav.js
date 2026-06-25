@@ -6,6 +6,7 @@
 //   <script src="../preview/ingest-nav.js" defer></script>
 
 const INGEST_FLOW = [
+  { id: "episode-setup-intake", file: "episode-setup-intake.html", label: "Episode setup" },
   { id: "episode-readiness", file: "episode-readiness.html", label: "Episode readiness" },
   { id: "speaker-role-mapping", file: "speaker-role-mapping.html", label: "Speaker roles" },
   { id: "social-context-intake", file: "social-context-intake.html", label: "Social links" },
