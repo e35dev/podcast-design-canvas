@@ -122,4 +122,44 @@ if (typeof M.layoutSignature === "function") {
   );
 }
 
-console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker) verified");
+// Locking a layer's stated purpose is "so it cannot move by accident" (see the lede /
+// summary-note copy). That must hold both when the locked layer's own controls are used and
+// when an unlocked neighbour's move would swap positions with it.
+assert.ok(typeof M.canMoveLayer === "function", "prototype exports canMoveLayer()");
+assert.ok(typeof M.reorderLayers === "function", "prototype exports reorderLayers()");
+
+const lockedStack = [
+  { id: "captions", type: "captions", visible: true, locked: false },
+  { id: "brand", type: "brand", visible: true, locked: false },
+  { id: "background", type: "background", visible: true, locked: true },
+];
+
+assert.strictEqual(M.canMoveLayer(lockedStack, 2, -1), false, "the locked layer itself cannot move up");
+assert.strictEqual(M.canMoveLayer(lockedStack, 1, 1), false, "an unlocked neighbour cannot displace the locked layer by moving down");
+assert.strictEqual(M.canMoveLayer(lockedStack, 0, 1), true, "two unlocked layers may still swap with each other");
+
+assert.strictEqual(
+  M.reorderLayers(lockedStack, 2, -1),
+  lockedStack,
+  "moving a locked layer is refused and returns the same list reference",
+);
+assert.strictEqual(
+  M.reorderLayers(lockedStack, 1, 1),
+  lockedStack,
+  "moving an unlocked layer into a locked neighbour is refused",
+);
+
+const reordered = M.reorderLayers(lockedStack, 0, 1);
+assert.notStrictEqual(reordered, lockedStack, "an allowed reorder returns a new list");
+assert.deepStrictEqual(
+  reordered.map((layer) => layer.id),
+  ["brand", "captions", "background"],
+  "an allowed reorder swaps the requested neighbour",
+);
+assert.deepStrictEqual(
+  lockedStack.map((layer) => layer.id),
+  ["captions", "brand", "background"],
+  "reorderLayers does not mutate its input list",
+);
+
+console.log("canvas layer controls: stack guardrails (cover, lock, hidden speaker, locked reorder) verified");

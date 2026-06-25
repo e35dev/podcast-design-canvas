@@ -353,6 +353,29 @@
         return "";
       }
 
+      // Locking a layer's stated purpose is "so it cannot move by accident" (see the summary
+      // note above the list). That promise covers two paths: the locked layer's own up/down
+      // controls, and an unlocked neighbour's move that would swap positions with it. A single
+      // up/down step only ever swaps with the adjacent layer, so checking that one neighbour is
+      // enough to decide whether a move is allowed.
+      function canMoveLayer(list, index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= list.length) { return false; }
+        const layer = list[index];
+        const neighbor = list[target];
+        if (!layer || !neighbor) { return false; }
+        return !layer.locked && !neighbor.locked;
+      }
+
+      function reorderLayers(list, index, delta) {
+        if (!canMoveLayer(list, index, delta)) { return list; }
+        const target = index + delta;
+        const copy = list.slice();
+        const item = copy.splice(index, 1)[0];
+        copy.splice(target, 0, item);
+        return copy;
+      }
+
       function renderLayer(layer, index) {
         const type = LAYER_TYPES[layer.type];
 
@@ -368,10 +391,10 @@
         const main = el("div", { class: "layer-main" }, [nameRow, meta]);
 
         const up = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " up", text: "▲" }, []);
-        if (index === 0) { up.disabled = true; }
+        if (!canMoveLayer(layers, index, -1)) { up.disabled = true; }
         up.addEventListener("click", function () { move(index, -1); });
         const down = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " down", text: "▼" }, []);
-        if (index === layers.length - 1) { down.disabled = true; }
+        if (!canMoveLayer(layers, index, 1)) { down.disabled = true; }
         down.addEventListener("click", function () { move(index, 1); });
 
         const vis = el("button", { type: "button", class: "tiny secondary", text: layer.visible ? "Hide" : "Show" }, []);
@@ -403,17 +426,20 @@
       }
 
       function move(index, delta) {
-        const target = index + delta;
-        if (target < 0 || target >= layers.length) { return; }
-        const copy = layers.slice();
-        const item = copy.splice(index, 1)[0];
-        copy.splice(target, 0, item);
-        layers = copy;
+        const next = reorderLayers(layers, index, delta);
+        if (next === layers) { return; }
+        layers = next;
         render();
       }
 
       if (typeof module !== "undefined" && module.exports) {
-        module.exports = { evaluate: evaluate, LAYER_TYPES: LAYER_TYPES, layoutSignature: layoutSignature };
+        module.exports = {
+          evaluate: evaluate,
+          LAYER_TYPES: LAYER_TYPES,
+          layoutSignature: layoutSignature,
+          canMoveLayer: canMoveLayer,
+          reorderLayers: reorderLayers,
+        };
       }
 
       render();
