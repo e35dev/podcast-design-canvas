@@ -250,6 +250,31 @@ assert.equal(
   "invalid layout-first slot handoff is stripped by the preview app",
 );
 
+// The guided episode setup intake is the first node of the ingest path: it has no previous
+// step, steps forward into episode readiness, and readiness now steps back to it.
+const setupIntakeIngest = runApp("#episode-setup-intake?path=ingest");
+assert.equal(
+  setupIntakeIngest.nodes.frame.src,
+  "../prototype/episode-setup-intake.html?path=ingest",
+  "the setup intake carries ingest path context in the preview app",
+);
+assert.equal(
+  setupIntakeIngest.nodes.prevStep.attributes["aria-disabled"],
+  "true",
+  "the setup intake is the first ingest step with no previous",
+);
+assert.equal(
+  setupIntakeIngest.nodes.nextStep.href,
+  "#episode-readiness?path=ingest",
+  "the setup intake steps forward into episode readiness",
+);
+setupIntakeIngest.reroute("#episode-readiness?path=ingest");
+assert.equal(
+  setupIntakeIngest.nodes.prevStep.href,
+  "#episode-setup-intake?path=ingest",
+  "episode readiness steps back to the guided setup intake",
+);
+
 episodeRoles.reroute("#source-media-health?path=episode");
 assert.equal(
   episodeRoles.nodes.frame.src,

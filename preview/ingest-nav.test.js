@@ -25,6 +25,7 @@ assert.ok(navSource.includes('document.querySelector(".ingest-nav")'), "ingest n
 assert.ok(!/innerHTML/.test(navSource), "ingest nav builds the DOM without innerHTML");
 
 const ingestScreens = [
+  "episode-setup-intake.html",
   "episode-readiness.html",
   "speaker-role-mapping.html",
   "social-context-intake.html",
@@ -293,7 +294,7 @@ assert.equal(
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links target the parent app");
 
-const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
+const firstNav = renderNavFor("episode-setup-intake.html", "episode-setup-intake");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
 assert.ok(
   !firstNav.nodes.some((node) => node.textContent === "Place videos in layout"),
@@ -304,8 +305,22 @@ assert.ok(
   "first ingest screen does not render a previous link",
 );
 assert.ok(
-  firstNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
+  firstNav.nodes.some((node) => node.textContent === "Next: Episode readiness"),
   "first ingest screen renders next link",
+);
+const firstStep = firstNav.nodes.find((node) =>
+  node.textContent === "Setup step 1 of 4 · Episode setup",
+);
+assert.ok(firstStep, "first ingest screen renders the four-step setup label");
+
+const readinessNav = renderNavFor("episode-readiness.html", "episode-readiness", "?path=ingest");
+assert.ok(
+  readinessNav.nodes.some((node) => node.textContent === "Previous: Episode setup"),
+  "episode readiness now steps back to the guided setup intake",
+);
+assert.ok(
+  readinessNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
+  "episode readiness links forward to speaker roles",
 );
 
 const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest");
@@ -324,7 +339,7 @@ assert.ok(
   "ingest path at speaker roles links forward to social context",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Setup step 2 of 3 · Speaker roles",
+  node.textContent === "Setup step 3 of 4 · Speaker roles",
 );
 assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
@@ -363,21 +378,21 @@ assert.ok(
   "last ingest screen does not render a next link",
 );
 
-const embeddedFirstNav = renderNavFor("episode-readiness.html", "episode-readiness", "", true);
+const embeddedFirstNav = renderNavFor("episode-setup-intake.html", "episode-setup-intake", "", true);
 const embeddedHome = linkWithText(embeddedFirstNav.nodes, "← Preview shell");
 assert.equal(embeddedHome.href, "../preview/", "embedded ingest nav keeps the shell-home href");
 assert.equal(embeddedHome.target, "_top", "embedded shell-home link targets the parent app");
 const embeddedPreviewApp = linkWithText(embeddedFirstNav.nodes, "Preview app");
 assert.equal(
   embeddedPreviewApp.href,
-  "../preview/app.html#episode-readiness",
+  "../preview/app.html#episode-setup-intake",
   "embedded ingest nav opens the current screen in the preview app",
 );
 assert.equal(embeddedPreviewApp.target, "_top", "embedded preview app link targets the parent app");
-const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Speaker roles");
+const embeddedNext = linkWithText(embeddedFirstNav.nodes, "Next: Episode readiness");
 assert.equal(
   embeddedNext.href,
-  "../preview/app.html#speaker-role-mapping",
+  "../preview/app.html#episode-readiness",
   "embedded ingest nav routes next setup steps through the preview app hash",
 );
 assert.equal(embeddedNext.target, "_top", "embedded ingest next link targets the parent app");
