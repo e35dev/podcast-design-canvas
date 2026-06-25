@@ -307,6 +307,7 @@
       }
     </style>
     <script src="../preview/style-nav.js" defer></script>
+    <script src="../preview/preset-style-handoff.js" defer></script>
   </head>
   <body data-style-step="preset-style-picker">
     <main>
@@ -370,6 +371,30 @@
       const directionElement = document.querySelector("#direction");
       const appliedElement = document.querySelector("#applied");
       const applyButton = document.querySelector("#apply");
+
+      // A guarded sessionStorage accessor for the static preview, where storage may be absent.
+      function presetHandoffStorage() {
+        try {
+          return window.sessionStorage || null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      // Persist the applied direction so the rest of the visual-direction flow can carry it, and
+      // clear it whenever the direction changes before it is re-applied, so storage only ever
+      // holds a direction the creator has actually applied to the episode.
+      function saveAppliedDirection() {
+        const api = window.PodcastPresetStyleHandoff;
+        if (!api) {
+          return;
+        }
+        if (applied) {
+          api.save(presetHandoffStorage(), state);
+        } else {
+          api.clear(presetHandoffStorage());
+        }
+      }
 
       applyButton.addEventListener("click", () => {
         applied = true;
@@ -480,15 +505,20 @@
         );
       }
 
+      // renderApplied runs on every preset pick, control change, apply, and reset, so syncing the
+      // carried direction here clears a stale direction the moment the creator edits it and stores
+      // the new one when they apply — storage only ever holds a direction actually applied.
       function renderApplied() {
         applyButton.textContent = applied ? "Re-apply with changes" : "Apply to this episode";
         if (!applied) {
           appliedElement.hidden = true;
           appliedElement.textContent = "";
+          saveAppliedDirection();
           return;
         }
         appliedElement.hidden = false;
         appliedElement.textContent = `Applied "${presets[state.preset].label}" to the whole episode.`;
+        saveAppliedDirection();
       }
 
       render();

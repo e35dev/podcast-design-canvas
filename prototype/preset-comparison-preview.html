@@ -88,6 +88,30 @@
         display: none;
       }
 
+      .preset-handoff {
+        display: grid;
+        gap: 4px;
+        margin: 16px 0 0;
+        border: 1px solid #bfe3d7;
+        border-radius: 8px;
+        background: #eef9f4;
+        padding: 12px 14px;
+      }
+
+      .preset-handoff[hidden] {
+        display: none;
+      }
+
+      .preset-handoff strong {
+        color: #075246;
+      }
+
+      .preset-handoff p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -327,11 +351,14 @@
       }
     </style>
     <script src="../preview/style-nav.js" defer></script>
+    <script src="../preview/preset-style-handoff.js"></script>
   </head>
   <body data-style-step="preset-comparison-preview">
     <main>
       <h1>Preset comparison preview</h1>
       <p class="lede">Preview several polished directions against the same sample moment and pick the one that fits your show. Each preset is a distinct look &mdash; colour, layout, and pacing &mdash; so you can compare side by side, choose a direction, and apply it without a blank canvas. (Previews use sample speakers to show each direction's feel.)</p>
+
+      <aside id="preset-handoff" class="preset-handoff" hidden aria-label="Direction carried from the preset picker"></aside>
 
       <div class="toolbar">
         <label>Preview moment
@@ -488,7 +515,43 @@
         appliedElement.textContent = `Applied "${presets[chosen].label}" to the episode.`;
       }
 
+      // Surface the direction carried from the preset style picker (the previous step), so the
+      // creator can compare options against the one they already applied instead of starting blind.
+      const presetHandoffApi = window.PodcastPresetStyleHandoff;
+      const presetHandoffElement = document.querySelector("#preset-handoff");
+
+      function presetHandoffStorage() {
+        try {
+          return window.sessionStorage || null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function renderPresetHandoff() {
+        if (!presetHandoffApi || !presetHandoffElement) {
+          return;
+        }
+        const carried = presetHandoffApi.load(presetHandoffStorage(), window.location.search);
+        const lines = presetHandoffApi.summaryLines(carried);
+        if (!lines.length) {
+          return;
+        }
+        const heading = document.createElement("strong");
+        heading.textContent = "Carried from the preset picker";
+        presetHandoffElement.replaceChildren(
+          heading,
+          ...lines.map((line) => {
+            const p = document.createElement("p");
+            p.textContent = line;
+            return p;
+          }),
+        );
+        presetHandoffElement.hidden = false;
+      }
+
       render();
+      renderPresetHandoff();
     </script>
   </body>
 </html>
