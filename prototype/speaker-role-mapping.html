@@ -586,12 +586,7 @@
         return { overall, results, issues };
       }
 
-      function render() {
-        const evaluation = evaluate(tracks);
-        tracksElement.replaceChildren(
-          ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
-        );
-
+      function renderSummary(evaluation) {
         statusElement.className = `status ${evaluation.overall}`;
         statusElement.textContent = evaluation.overall === "ready"
           ? "Roles confirmed"
@@ -606,6 +601,18 @@
             : [Object.assign(document.createElement("p"), { textContent: "Every track has a confirmed role. Ready for preset selection." })]),
         );
         renderLayoutHandoff();
+      }
+
+      function renderTracks(evaluation) {
+        tracksElement.replaceChildren(
+          ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
+        );
+      }
+
+      function render() {
+        const evaluation = evaluate(tracks);
+        renderSummary(evaluation);
+        renderTracks(evaluation);
       }
 
       function renderLayoutHandoff() {
@@ -708,6 +715,14 @@
           track.signal = "manual";
           track.decision = "suggested";
         }
+
+        // Editing the speaker name only changes creator-facing summary copy, so refresh
+        // the status/issues in place and keep the focused input alive.
+        if (field === "name") {
+          renderSummary(evaluate(tracks));
+          return;
+        }
+
         render();
       }
 
