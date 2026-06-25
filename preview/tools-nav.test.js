@@ -58,6 +58,7 @@ const styleFlow = new Set([
   "preset-pacing-controls.html",
   "layout-safe-areas.html",
   "speaker-framing-safety.html",
+  "speaker-switch-framing.html",
   "canvas-layer-controls.html",
 ]);
 

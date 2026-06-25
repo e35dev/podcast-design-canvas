@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Switch Framing Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        --ok: #1a7a3a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .panel + .panel { margin-top: 18px; }
+
+      .panel h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+
+      /* Style picker cards */
+      .styles {
+        display: grid;
+        gap: 10px;
+      }
+
+      .style-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        color: var(--ink);
+      }
+
+      .style-card:hover { border-color: var(--accent); }
+
+      .style-card:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .style-card[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #ecf5f3;
+      }
+
+      .style-card .name {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .style-card .desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .style-card .badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: var(--panel);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .style-card[aria-pressed="true"] .badge {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      /* Preview canvas */
+      .preview-canvas {
+        position: relative;
+        background: #1a1a2e;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 16 / 9;
+      }
+
+      .speaker-frame {
+        position: absolute;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        color: #ffffff;
+        transition: all var(--reframe-speed, 0.4s) ease;
+      }
+
+      .speaker-frame.host { background: #136f63; }
+      .speaker-frame.guest1 { background: #2d6a9f; }
+      .speaker-frame.guest2 { background: #8b5e3c; }
+
+      .speaker-frame .label {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+      }
+
+      .speaker-frame.active::after {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border: 3px solid #f0c040;
+        border-radius: 9px;
+        pointer-events: none;
+      }
+
+      /* Speed control */
+      .speed-control {
+        display: grid;
+        gap: 6px;
+        margin-top: 14px;
+      }
+
+      .speed-control label {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .speed-options {
+        display: flex;
+        gap: 6px;
+      }
+
+      .speed-options button {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .speed-options button:hover { background: var(--panel); }
+
+      .speed-options button[aria-pressed="true"] {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+      }
+
+      .speed-options button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Moment timeline */
+      .moments {
+        display: grid;
+        gap: 10px;
+      }
+
+      .moment-card {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .moment-card .header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .moment-card .time {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .moment-card .context {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .moment-card .status {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+
+      .status.ready { background: #ecfdf5; color: var(--ok); }
+      .status.needs-review { background: #fefbec; color: var(--warn); }
+      .status.conflict { background: #fef2f2; color: var(--block); }
+      .status.overridden { background: #ecf5f3; color: var(--accent-ink); }
+
+      .moment-card .actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      button:hover { background: var(--panel); }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .summary {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .fix-link {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent-ink);
+        text-decoration: none;
+        margin-top: 4px;
+      }
+
+      .fix-link:hover { text-decoration: underline; }
+
+      @media (max-width: 860px) {
+        .workspace { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body data-style-step="speaker-switch-framing">
+    <main>
+      <h1>Speaker switch framing</h1>
+      <p class="lede">Control how the episode reframes between speakers. Choose a default style from the preset, then override individual moments.</p>
+
+      <div class="workspace">
+        <div class="left">
+          <div class="panel">
+            <h2>Switch style</h2>
+            <div id="styles" class="styles" role="group" aria-label="Speaker switch styles"></div>
+            <div class="speed-control">
+              <label id="speed-label">Reframe speed</label>
+              <div id="speed-options" class="speed-options" role="group" aria-labelledby="speed-label"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Episode moments</h2>
+            <div id="moments" class="moments"></div>
+            <div id="summary" class="summary"></div>
+          </div>
+        </div>
+
+        <aside class="right">
+          <div class="panel">
+            <h2>Preview</h2>
+            <div id="preview" class="preview-canvas" aria-label="Speaker framing preview"></div>
+            <p id="preview-desc" style="font-size: 12px; color: var(--muted); margin-top: 8px;"></p>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      var SWITCH_STYLES = [
+        { id: "featured", name: "Featured speaker", desc: "Active speaker fills the main frame, others shrink.", badge: "Recommended" },
+        { id: "equal", name: "Equal presence", desc: "All speakers stay the same size regardless of who talks." },
+        { id: "side-by-side", name: "Side by side", desc: "Two speakers share the frame with a subtle highlight on the active one." },
+        { id: "pip", name: "Picture in picture", desc: "Active speaker large, others in a small inset." },
+        { id: "reaction", name: "Reaction aware", desc: "Briefly hold on a listener\u2019s visible reaction before switching." },
+      ];
+
+      var SPEEDS = [
+        { id: "instant", label: "Instant" },
+        { id: "smooth", label: "Smooth" },
+        { id: "slow", label: "Slow" },
+      ];
+
+      // Realistic multi-speaker moments from an episode with Host (Sarah Chen),
+      // Guest 1 (Marcus Rivera), and Guest 2 (Lena Okafor).
+      var MOMENTS = [
+        { id: "m1", time: "02:14", speakers: ["Host", "Guest 1"], activeSpeaker: "Guest 1", context: "Marcus introduces the topic of creator burnout", status: "ready" },
+        { id: "m2", time: "08:47", speakers: ["Host", "Guest 1", "Guest 2"], activeSpeaker: "Host", context: "Sarah asks Lena about community-driven content", status: "needs-review" },
+        { id: "m3", time: "14:32", speakers: ["Guest 1", "Guest 2"], activeSpeaker: "Guest 2", context: "Lena responds to Marcus on audience retention", status: "ready" },
+        { id: "m4", time: "22:05", speakers: ["Host", "Guest 1"], activeSpeaker: "Host", context: "Sarah wraps the first segment \u2014 b-roll transition follows", status: "conflict" },
+        { id: "m5", time: "34:18", speakers: ["Host", "Guest 2"], activeSpeaker: "Guest 2", context: "Lena shares a case study on newsletter growth", status: "ready" },
+        { id: "m6", time: "41:50", speakers: ["Host"], activeSpeaker: "Host", context: "Solo outro \u2014 Sarah closes the episode alone", status: "ready" },
+      ];
+
+      var chosenStyle = "featured";
+      var chosenSpeed = "smooth";
+      var overrides = {};
+
+      var stylesEl = document.getElementById("styles");
+      var speedOptionsEl = document.getElementById("speed-options");
+      var momentsEl = document.getElementById("moments");
+      var summaryEl = document.getElementById("summary");
+      var previewEl = document.getElementById("preview");
+      var previewDescEl = document.getElementById("preview-desc");
+      var previewedMoment = MOMENTS[1];
+
+      // Frame layout positions per style for a 3-speaker moment.
+      var LAYOUTS = {
+        featured: [
+          { x: 5, y: 5, w: 60, h: 90 },
+          { x: 67, y: 5, w: 30, h: 43 },
+          { x: 67, y: 52, w: 30, h: 43 },
+        ],
+        equal: [
+          { x: 3, y: 10, w: 30, h: 80 },
+          { x: 35, y: 10, w: 30, h: 80 },
+          { x: 67, y: 10, w: 30, h: 80 },
+        ],
+        "side-by-side": [
+          { x: 3, y: 10, w: 30, h: 80 },
+          { x: 35, y: 10, w: 30, h: 80 },
+          { x: 67, y: 10, w: 30, h: 80 },
+        ],
+        pip: [
+          { x: 3, y: 3, w: 70, h: 94 },
+          { x: 74, y: 62, w: 24, h: 35 },
+          { x: 74, y: 3, w: 24, h: 35 },
+        ],
+        reaction: [
+          { x: 5, y: 5, w: 55, h: 90 },
+          { x: 62, y: 5, w: 35, h: 43 },
+          { x: 62, y: 52, w: 35, h: 43 },
+        ],
+      };
+
+      function render() {
+        renderStyles();
+        renderSpeeds();
+        renderMoments();
+        renderSummary();
+        renderPreview();
+      }
+
+      function renderStyles() {
+        stylesEl.replaceChildren();
+        SWITCH_STYLES.forEach(function (style) {
+          var btn = document.createElement("button");
+          btn.className = "style-card";
+          btn.setAttribute("role", "button");
+          btn.setAttribute("aria-pressed", chosenStyle === style.id ? "true" : "false");
+
+          var info = document.createElement("div");
+          var name = document.createElement("div");
+          name.className = "name";
+          name.textContent = style.name;
+          var desc = document.createElement("div");
+          desc.className = "desc";
+          desc.textContent = style.desc;
+          info.append(name, desc);
+          btn.appendChild(info);
+
+          if (style.badge || chosenStyle === style.id) {
+            var badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = chosenStyle === style.id ? "Active" : style.badge;
+            btn.appendChild(badge);
+          }
+
+          btn.addEventListener("click", function () {
+            chosenStyle = style.id;
+            render();
+          });
+          stylesEl.appendChild(btn);
+        });
+      }
+
+      function renderSpeeds() {
+        speedOptionsEl.replaceChildren();
+        SPEEDS.forEach(function (speed) {
+          var btn = document.createElement("button");
+          btn.textContent = speed.label;
+          btn.setAttribute("aria-pressed", chosenSpeed === speed.id ? "true" : "false");
+          btn.addEventListener("click", function () {
+            chosenSpeed = speed.id;
+            render();
+          });
+          speedOptionsEl.appendChild(btn);
+        });
+      }
+
+      function effectiveStyle(moment) {
+        return overrides[moment.id] || chosenStyle;
+      }
+
+      function statusLabel(status) {
+        switch (status) {
+          case "ready": return "Ready";
+          case "needs-review": return "Needs review";
+          case "conflict": return "Conflict";
+          case "overridden": return "Overridden";
+          default: return status;
+        }
+      }
+
+      function renderMoments() {
+        momentsEl.replaceChildren();
+        MOMENTS.forEach(function (moment) {
+          var card = document.createElement("div");
+          card.className = "moment-card";
+
+          var header = document.createElement("div");
+          header.className = "header";
+
+          var left = document.createElement("div");
+          var time = document.createElement("div");
+          time.className = "time";
+          time.textContent = moment.time + " \u2014 " + moment.activeSpeaker + " speaking";
+          var context = document.createElement("div");
+          context.className = "context";
+          context.textContent = moment.context;
+          left.append(time, context);
+
+          // An override changes the switch style but does not resolve a b-roll
+          // conflict — the conflict stays visible until fixed at the owning surface.
+          var currentStatus = moment.status === "conflict" ? "conflict" : (overrides[moment.id] ? "overridden" : moment.status);
+          var statusBadge = document.createElement("span");
+          statusBadge.className = "status " + currentStatus;
+          statusBadge.textContent = statusLabel(currentStatus);
+
+          header.append(left, statusBadge);
+          card.appendChild(header);
+
+          var styleName = SWITCH_STYLES.find(function (s) { return s.id === effectiveStyle(moment); });
+          var styleNote = document.createElement("div");
+          styleNote.className = "context";
+          styleNote.style.marginTop = "4px";
+          styleNote.textContent = "Style: " + (styleName ? styleName.name : effectiveStyle(moment)) + " \u00b7 Speed: " + chosenSpeed;
+          card.appendChild(styleNote);
+
+          var actions = document.createElement("div");
+          actions.className = "actions";
+
+          var previewBtn = document.createElement("button");
+          previewBtn.textContent = "Preview this moment";
+          previewBtn.addEventListener("click", function () {
+            previewedMoment = moment;
+            renderPreview();
+          });
+          actions.appendChild(previewBtn);
+
+          var overrideSelect = document.createElement("select");
+          overrideSelect.setAttribute("aria-label", "Switch style for " + moment.time);
+          var defaultOpt = document.createElement("option");
+          defaultOpt.value = "";
+          defaultOpt.textContent = "Preset default";
+          defaultOpt.selected = !overrides[moment.id];
+          overrideSelect.appendChild(defaultOpt);
+          SWITCH_STYLES.forEach(function (s) {
+            var opt = document.createElement("option");
+            opt.value = s.id;
+            opt.textContent = s.name;
+            opt.selected = overrides[moment.id] === s.id;
+            overrideSelect.appendChild(opt);
+          });
+          overrideSelect.addEventListener("change", function () {
+            if (overrideSelect.value) {
+              overrides[moment.id] = overrideSelect.value;
+            } else {
+              delete overrides[moment.id];
+            }
+            render();
+          });
+          actions.appendChild(overrideSelect);
+
+          if (moment.status === "conflict") {
+            var fixLink = document.createElement("a");
+            fixLink.className = "fix-link";
+            fixLink.href = "contextual-broll-moments.html";
+            fixLink.textContent = "Open b-roll moments \u2192";
+            actions.appendChild(fixLink);
+          }
+
+          if (moment.speakers.length === 1) {
+            var pinBtn = document.createElement("button");
+            pinBtn.textContent = "Pin as featured";
+            pinBtn.disabled = true;
+            pinBtn.title = "Solo speaker is already featured";
+            actions.appendChild(pinBtn);
+          }
+
+          card.appendChild(actions);
+          momentsEl.appendChild(card);
+        });
+      }
+
+      function renderSummary() {
+        var overrideCount = Object.keys(overrides).length;
+        var reviewCount = MOMENTS.filter(function (m) { return m.status === "needs-review" && !overrides[m.id]; }).length;
+        var conflictCount = MOMENTS.filter(function (m) { return m.status === "conflict"; }).length;
+        var parts = [];
+        parts.push(MOMENTS.length + " speaker switches across this episode");
+        if (overrideCount > 0) parts.push(overrideCount + " moment" + (overrideCount === 1 ? "" : "s") + " overridden from the preset default");
+        if (reviewCount > 0) parts.push(reviewCount + " stretch" + (reviewCount === 1 ? "" : "es") + " may look static \u2014 worth a review");
+        if (conflictCount > 0) parts.push(conflictCount + " switch" + (conflictCount === 1 ? "" : "es") + " overlap" + (conflictCount === 1 ? "s" : "") + " with a b-roll moment");
+        summaryEl.textContent = parts.join(". ") + ".";
+      }
+
+      var speakerData = [
+        { name: "Sarah Chen", role: "Host", cls: "host" },
+        { name: "Marcus Rivera", role: "Guest 1", cls: "guest1" },
+        { name: "Lena Okafor", role: "Guest 2", cls: "guest2" },
+      ];
+      var speakerFrames = [];
+
+      // Build the three speaker frame elements once. Subsequent renders update
+      // positions via CSS so the transition property produces a visible reframe
+      // whose speed matches the creator's chosen setting.
+      function initPreview() {
+        speakerData.forEach(function (speaker) {
+          var frame = document.createElement("div");
+          frame.className = "speaker-frame " + speaker.cls;
+          var label = document.createElement("span");
+          label.className = "label";
+          label.textContent = speaker.name;
+          frame.appendChild(label);
+          previewEl.appendChild(frame);
+          speakerFrames.push(frame);
+        });
+      }
+
+      function renderPreview() {
+        var speedDurations = { instant: "0s", smooth: "0.4s", slow: "0.9s" };
+        previewEl.style.setProperty("--reframe-speed", speedDurations[chosenSpeed] || "0.4s");
+        var style = effectiveStyle(previewedMoment);
+        var layout = LAYOUTS[style] || LAYOUTS.featured;
+        var activeSpeakers = previewedMoment.speakers;
+
+        speakerFrames.forEach(function (frame, i) {
+          var speaker = speakerData[i];
+          var visible = activeSpeakers.includes(speaker.role) || activeSpeakers.length >= 3;
+          frame.style.display = visible ? "" : "none";
+          frame.classList.toggle("active", speaker.role === previewedMoment.activeSpeaker);
+          if (visible) {
+            var pos = layout[i] || layout[0];
+            frame.style.left = pos.x + "%";
+            frame.style.top = pos.y + "%";
+            frame.style.width = pos.w + "%";
+            frame.style.height = pos.h + "%";
+          }
+        });
+
+        var styleName = SWITCH_STYLES.find(function (s) { return s.id === style; });
+        previewDescEl.textContent = "Previewing " + previewedMoment.time + " \u2014 " + (styleName ? styleName.name : style) + " style, " + chosenSpeed + " transition.";
+      }
+
+      initPreview();
+      render();
+
+      if (typeof module !== "undefined") {
+        module.exports = { SWITCH_STYLES: SWITCH_STYLES, SPEEDS: SPEEDS, MOMENTS: MOMENTS, LAYOUTS: LAYOUTS };
+      }
+    </script>
+    <script src="../preview/style-nav.js" defer></script>
+  </body>
+</html>
