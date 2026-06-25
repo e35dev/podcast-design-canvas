@@ -442,10 +442,13 @@
           fingerprints.set(track.audioKey, [...(fingerprints.get(track.audioKey) || []), track]);
         }
 
-        for (const matches of fingerprints.values()) {
+        for (const [audioKey, matches] of fingerprints.entries()) {
           if (matches.length > 1) {
             issues.push({
-              key: `duplicate-audio:${matches.map((track) => track.id).sort().join("|")}`,
+              // Key on the shared recording, not the member-track list, so acknowledging the
+              // duplicate survives the group changing (a third sharing track is added, or one
+              // leaves). The displayed title still re-renders to name the current members.
+              key: `duplicate-audio:${audioKey}`,
               severity: "review",
               title: `${matches.map((track) => track.name).join(" and ")} appear to share audio`,
               action: "Confirm these are separate speakers or replace the duplicate recording.",
