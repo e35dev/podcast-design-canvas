@@ -301,6 +301,7 @@
       .slot-state.is-ready { background: #d6f3ea; color: #075246; }
       .slot-state.is-optional { background: rgba(246, 251, 249, 0.92); color: #5e6b67; }
       .slot-state.is-duplicate { background: #fbe0df; color: #9a2b1d; }
+      .slot-state.is-invalid { background: #fbe0df; color: #9a2b1d; }
 
       .track-palette {
         display: flex;
@@ -1295,6 +1296,8 @@
           var brollZone = document.querySelector(slotSelector("broll"));
           return brollZone && brollZone.classList.contains("filled")
             ? "Optional b-roll is in place."
+            : brollZone && brollZone.classList.contains("is-invalid")
+              ? "That b-roll file was not a video; pick an MP4, MOV, or WebM, or leave it empty."
             : "Optional b-roll can be added later.";
         }
 
@@ -1312,6 +1315,32 @@
           });
         }
 
+        function displaySlotName(zone) {
+          var slot = zone && zone.dataset && zone.dataset.slot;
+          if (slot === "broll") return "B-roll";
+          return slotLabels[slot] || "selected";
+        }
+
+        function flagInvalidSlot(zone, message) {
+          if (!zone || zone.classList.contains("filled")) {
+            if (zone && zone.classList && zone.classList.contains("filled")) {
+              updateSlotStatus("Kept the current " + displaySlotName(zone) + " video. Pick an MP4, MOV, or WebM to replace it.");
+            } else {
+              updateSlotStatus(message);
+            }
+            return;
+          }
+          zone.classList.add("is-invalid");
+          zone.dataset.invalidMessage = message;
+          updateSlotStatus(message);
+        }
+
+        function clearInvalidSlot(zone) {
+          if (!zone || !zone.classList) return;
+          zone.classList.remove("is-invalid");
+          zone.dataset.invalidMessage = "";
+        }
+
         function updateSlotIndicators() {
           var visible = new Set(currentDefinition().visibleSlots);
           // Computed once per pass: the side panel already names this problem in prose, but a
@@ -1326,7 +1355,7 @@
               indicator.className = "slot-state";
               zone.appendChild(indicator);
             }
-            indicator.classList.remove("is-ready", "is-missing", "is-optional", "is-duplicate");
+            indicator.classList.remove("is-ready", "is-missing", "is-optional", "is-duplicate", "is-invalid");
             var slot = zone.dataset.slot;
             var required = requiredSlots().indexOf(slot) !== -1;
             indicator.hidden = !visible.has(slot);
@@ -1339,6 +1368,9 @@
             } else if (zone.classList.contains("filled")) {
               indicator.textContent = "Ready";
               indicator.classList.add("is-ready");
+            } else if (zone.classList.contains("is-invalid")) {
+              indicator.textContent = "Invalid file";
+              indicator.classList.add("is-invalid");
             } else if (required) {
               indicator.textContent = "Needs video";
               indicator.classList.add("is-missing");
@@ -1409,6 +1441,32 @@
               "The same video is in more than one speaker slot. Give each speaker a separate recording before you continue.";
             return;
           }
+          var invalid = requiredSlots()
+            .filter(function (slot) {
+              var zone = document.querySelector(slotSelector(slot));
+              return zone && zone.classList.contains("is-invalid");
+            })
+            .map(function (slot) {
+              return slotLabels[slot] || slot;
+            });
+          if (invalid.length > 0) {
+            var invalidNoun = invalid.length === 1 ? "slot has" : "slots have";
+            var invalidMissing = requiredSlots()
+              .filter(function (slot) {
+                var zone = document.querySelector(slotSelector(slot));
+                return !zone || (!zone.classList.contains("filled") && !zone.classList.contains("is-invalid"));
+              })
+              .map(function (slot) {
+                return slotLabels[slot] || slot;
+              });
+            var invalidText = "The " + formatList(invalid) + " " + invalidNoun + " an invalid file. Pick an MP4, MOV, or WebM.";
+            if (invalidMissing.length > 0) {
+              var missingNoun = invalidMissing.length === 1 ? "video" : "videos";
+              invalidText += " Still need the " + formatList(invalidMissing) + " " + missingNoun + ".";
+            }
+            slotStatus.textContent = invalidText + " " + optionalBrollCopy();
+            return;
+          }
           var filled = requiredFilledCount();
           var total = requiredSlots().length;
           if (filled === total) {
@@ -1460,13 +1518,14 @@
         function placeVideoFile(zone, file) {
           if (!zone) return;
           if (!isVideoFile(file)) {
-            updateSlotStatus("Add an MP4, MOV, or WebM video file to that slot.");
+            flagInvalidSlot(zone, "The " + displaySlotName(zone) + " slot accepts only MP4, MOV, or WebM video.");
             return;
           }
           if (isEmptyExport(file)) {
-            updateSlotStatus("That video file is empty. Re-export it and place the finished file.");
+            flagInvalidSlot(zone, "The " + displaySlotName(zone) + " video file is empty. Re-export it and place the finished file.");
             return;
           }
+          clearInvalidSlot(zone);
           revokeZoneUrl(zone);
           var staleTrack = zone.querySelector(".placed-track");
           if (staleTrack) staleTrack.remove();
@@ -1510,6 +1569,7 @@
             zone.dataset.fileName = "";
             zone.dataset.fileSig = "";
           }
+          clearInvalidSlot(zone);
           zone.classList.add("filled");
           var placed = zone.querySelector(".placed-track");
           if (!placed) {
@@ -1668,6 +1728,7 @@
           resetButton.addEventListener("click", function () {
             document.querySelectorAll(".drop-zone.filled").forEach(function (zone) {
               zone.classList.remove("filled");
+              clearInvalidSlot(zone);
               var placed = zone.querySelector(".placed-track");
               if (placed) placed.remove();
               var placedVideo = zone.querySelector(".placed-video");
@@ -1677,6 +1738,9 @@
               zone.dataset.fileSig = "";
               var remove = zone.querySelector(".placed-remove");
               if (remove) remove.remove();
+            });
+            document.querySelectorAll(".drop-zone[data-slot]").forEach(function (zone) {
+              clearInvalidSlot(zone);
             });
             clearSelectedTrack();
             updateSlotStatus();
