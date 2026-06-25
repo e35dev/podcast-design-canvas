@@ -84,7 +84,7 @@
         gap: 4px;
       }
 
-      .preset[aria-pressed="true"] {
+      .preset[aria-checked="true"] {
         border-color: var(--accent);
         box-shadow: inset 0 0 0 1px var(--accent);
         background: #f1f9f6;
@@ -316,7 +316,7 @@
       <section class="workspace" aria-label="Preset style picker workspace">
         <div class="panel">
           <h2>Choose a preset</h2>
-          <div class="presets" id="presets" role="group" aria-label="Preset styles"></div>
+          <div class="presets" id="presets" role="radiogroup" aria-label="Preset styles"></div>
 
           <div class="controls" id="controls"></div>
 
@@ -405,12 +405,21 @@
       }
 
       function renderPresets() {
+        // The picker is single-select, so it is a radio group: each option is a role="radio"
+        // with aria-checked, a roving tabindex makes it one tab stop, and the arrow keys move
+        // between presets and apply the one focus lands on (Home/End jump to first/last).
+        const keys = Object.keys(presets);
         presetsElement.replaceChildren(
-          ...Object.entries(presets).map(([key, preset]) => {
+          ...keys.map((key, index) => {
+            const preset = presets[key];
+            const active = key === state.preset;
             const button = document.createElement("button");
             button.type = "button";
             button.className = "preset";
-            button.setAttribute("aria-pressed", String(key === state.preset));
+            button.setAttribute("role", "radio");
+            button.setAttribute("aria-checked", String(active));
+            button.setAttribute("tabindex", active ? "0" : "-1");
+            button.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight ArrowUp ArrowDown Home End");
             // Preset label/note are controlled strings; textContent keeps rendering safe.
             const name = document.createElement("b");
             name.textContent = preset.label;
@@ -418,6 +427,20 @@
             note.textContent = preset.note;
             button.append(name, note);
             button.addEventListener("click", () => choosePreset(key));
+            button.addEventListener("keydown", (event) => {
+              let nextIndex = null;
+              if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (index + 1) % keys.length;
+              else if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = (index - 1 + keys.length) % keys.length;
+              else if (event.key === "Home") nextIndex = 0;
+              else if (event.key === "End") nextIndex = keys.length - 1;
+              if (nextIndex === null) return;
+              if (typeof event.preventDefault === "function") event.preventDefault();
+              choosePreset(keys[nextIndex]);
+              // choosePreset re-rendered the list; focus the now-active option so the creator
+              // can keep stepping through presets with the arrow keys.
+              const refreshed = presetsElement.children[nextIndex];
+              if (refreshed && typeof refreshed.focus === "function") refreshed.focus();
+            });
             return button;
           }),
         );
