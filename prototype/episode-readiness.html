@@ -69,6 +69,38 @@
         gap: 12px;
       }
 
+      .setup-intake {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .setup-intake h2,
+      .setup-intake p {
+        margin-bottom: 0;
+      }
+
+      .setup-mode {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .source-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .source-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
       .track {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -279,6 +311,10 @@
           grid-template-columns: 1fr;
         }
 
+        .source-controls {
+          grid-template-columns: 1fr;
+        }
+
         .track {
           grid-template-columns: 1fr;
         }
@@ -294,6 +330,28 @@
 
       <section class="workspace" aria-label="Episode readiness workspace">
         <div class="panel">
+          <section class="setup-intake" aria-labelledby="setup-title">
+            <div>
+              <h2 id="setup-title">Start episode setup</h2>
+              <p class="source-note" id="setupStatus">Choose how the episode recording is coming in.</p>
+            </div>
+            <div class="setup-mode" role="group" aria-label="Source type">
+              <button type="button" id="recordingMode" data-source-mode="recording-link">Recording link</button>
+              <button type="button" class="secondary" id="fileMode" data-source-mode="speaker-files">Speaker files</button>
+            </div>
+            <div class="source-controls" id="recordingControls">
+              <label>Riverside recording link
+                <input id="recordingLink" type="url" placeholder="https://riverside.fm/studio/show/episode">
+              </label>
+              <button type="button" id="loadRecording">Add recording tracks</button>
+            </div>
+            <div class="source-controls" id="fileControls" hidden>
+              <label>Synced speaker files
+                <input id="speakerFiles" type="file" multiple accept="audio/*,video/*">
+              </label>
+              <button type="button" id="loadFiles">Use selected files</button>
+            </div>
+          </section>
           <h2>Speaker tracks</h2>
           <div class="tracks" id="tracks"></div>
           <div class="actions">
@@ -308,13 +366,28 @@
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
           <p class="continue-note" id="continueNote"></p>
-          <a class="continue-link" id="continue" aria-disabled="true">Continue to preset styling</a>
+          <a class="continue-link" id="continue" aria-disabled="true">Continue to speaker role mapping</a>
         </aside>
       </section>
     </main>
 
     <script>
       const nextSetupSurface = "speaker-role-mapping.html";
+      const sampleRecordingLink = "https://riverside.fm/studio/product-roundtable";
+      const sourceLabels = {
+        "recording-link": "Recording link",
+        "speaker-files": "Speaker files",
+      };
+
+      const setupRoleOptions = [
+        { value: "host", label: "Host" },
+        { value: "guest", label: "Guest 1" },
+        { value: "guest-2", label: "Guest 2" },
+        { value: "co-host", label: "Co-host" },
+        { value: "panelist", label: "Panelist" },
+        { value: "producer", label: "Producer" },
+      ];
+      const setupRoleLabels = Object.fromEntries(setupRoleOptions.map((role) => [role.value, role.label]));
 
       const fixSurfaces = {
         "speaker-role-mapping": {
@@ -341,6 +414,9 @@
           name: "Host",
           speakerName: "Dana Brooks",
           role: "host",
+          sourceName: "Host studio recording",
+          sourceType: "recording-link",
+          socialLink: "https://www.linkedin.com/in/danabrooks",
           duration: 3600,
           audioKey: "host-audio",
           hasVideo: true,
@@ -349,8 +425,11 @@
         {
           id: "guest-1",
           name: "Guest 1",
-          speakerName: "",
+          speakerName: "Marcus Lee",
           role: "guest",
+          sourceName: "Guest remote recording",
+          sourceType: "recording-link",
+          socialLink: "https://x.com/marcuslee",
           duration: 3480,
           audioKey: "guest-audio",
           hasVideo: true,
@@ -364,7 +443,8 @@
         { key: "producer-audio", label: "Producer backup recording" },
       ];
 
-      let tracks = structuredClone(sampleTracks);
+      let setupState = emptySetupState();
+      let tracks = [];
       let handedOff = new Set();
 
       const tracksElement = document.querySelector("#tracks");
@@ -372,6 +452,13 @@
       const statusElement = document.querySelector("#status");
       const continueLink = document.querySelector("#continue");
       const continueNoteElement = document.querySelector("#continueNote");
+      const setupStatusElement = document.querySelector("#setupStatus");
+      const recordingModeButton = document.querySelector("#recordingMode");
+      const fileModeButton = document.querySelector("#fileMode");
+      const recordingControls = document.querySelector("#recordingControls");
+      const fileControls = document.querySelector("#fileControls");
+      const recordingLinkInput = document.querySelector("#recordingLink");
+      const speakerFilesInput = document.querySelector("#speakerFiles");
 
       // Surface the videos the creator placed in layout-first, carried here through the same
       // handoff role mapping reads, so the placement context follows into readiness review.
@@ -402,36 +489,299 @@
       }
 
       document.querySelector("#addGuest").addEventListener("click", () => {
-        tracks.push({
-          id: `guest-${tracks.length}`,
-          name: `Guest ${tracks.length}`,
+        const nextIndex = tracks.length;
+        if (!sourceLabels[setupState.sourceType]) {
+          setupState.sourceType = "speaker-files";
+        }
+        tracks.push(trackFromSource({
+          id: `manual-${nextIndex + 1}`,
+          bucket: bucketForIndex(nextIndex),
+          sourceName: `Added speaker ${nextIndex + 1}`,
           speakerName: "",
-          role: "guest",
-          duration: 3000,
-          audioKey: `guest-${tracks.length}-audio`,
-          hasVideo: false,
-          transcript: "not-started",
-        });
+          sourceType: setupState.sourceType,
+          audioKey: `manual-${nextIndex + 1}-audio`,
+        }));
         render();
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
+        setupState = {
+          sourceType: "recording-link",
+          recordingLink: sampleRecordingLink,
+          fileNames: [],
+        };
         tracks = structuredClone(sampleTracks);
         handedOff = new Set();
         render();
       });
 
-      function evaluateReadiness() {
+      recordingModeButton.addEventListener("click", () => updateSourceMode("recording-link"));
+      fileModeButton.addEventListener("click", () => updateSourceMode("speaker-files"));
+      document.querySelector("#loadRecording").addEventListener("click", applyRecordingLink);
+      document.querySelector("#loadFiles").addEventListener("click", applySpeakerFiles);
+      recordingLinkInput.addEventListener("input", () => {
+        setupState.recordingLink = recordingLinkInput.value.trim();
+        renderSourceControls();
+        renderSetupSummary(evaluateReadiness());
+      });
+      recordingLinkInput.addEventListener("change", applyRecordingLink);
+      speakerFilesInput.addEventListener("change", applySpeakerFiles);
+
+      function emptySetupState() {
+        return { sourceType: "recording-link", recordingLink: "", fileNames: [] };
+      }
+
+      function updateSourceMode(sourceType) {
+        if (!sourceLabels[sourceType]) {
+          return;
+        }
+        setupState = {
+          sourceType,
+          recordingLink: sourceType === "recording-link" ? setupState.recordingLink : "",
+          fileNames: sourceType === "speaker-files" ? setupState.fileNames : [],
+        };
+        tracks = [];
+        handedOff = new Set();
+        render();
+      }
+
+      function applyRecordingLink() {
+        const recordingLink = recordingLinkInput.value.trim();
+        setupState = { sourceType: "recording-link", recordingLink, fileNames: [] };
+        tracks = recordingLink ? createTracksFromRecordingLink(recordingLink) : [];
+        handedOff = new Set();
+        render();
+      }
+
+      function applySpeakerFiles() {
+        const files = Array.from(speakerFilesInput.files || []);
+        setupState = {
+          sourceType: "speaker-files",
+          recordingLink: "",
+          fileNames: files.map((file) => file.name),
+        };
+        tracks = createTracksFromFiles(files);
+        handedOff = new Set();
+        render();
+      }
+
+      function createTracksFromRecordingLink(recordingLink) {
+        const recordingName = sourceNameFromRecordingLink(recordingLink);
+        return [
+          trackFromSource({
+            id: "recording-host",
+            bucket: "host",
+            sourceName: `${recordingName} host track`,
+            sourceType: "recording-link",
+            audioKey: `${recordingLink}#host`,
+          }),
+          trackFromSource({
+            id: "recording-guest-1",
+            bucket: "guest",
+            sourceName: `${recordingName} guest track`,
+            sourceType: "recording-link",
+            audioKey: `${recordingLink}#guest-1`,
+          }),
+        ];
+      }
+
+      function createTracksFromFiles(files) {
+        return Array.from(files).map((file, index) => trackFromSource({
+          id: `file-${index + 1}`,
+          bucket: bucketForIndex(index),
+          sourceName: file.name || `Speaker file ${index + 1}`,
+          speakerName: speakerNameFromFile(file.name || ""),
+          sourceType: "speaker-files",
+          audioKey: fileFingerprint(file, index),
+        }));
+      }
+
+      function trackFromSource({ id, bucket, sourceName, speakerName = "", sourceType, audioKey }) {
+        return {
+          id,
+          name: setupRoleLabels[bucket] || "Speaker",
+          speakerName,
+          role: bucket,
+          sourceName,
+          sourceType,
+          socialLink: "",
+          duration: 3600,
+          audioKey,
+          hasVideo: true,
+          transcript: "ready",
+        };
+      }
+
+      function sourceNameFromRecordingLink(recordingLink) {
+        try {
+          const url = new URL(recordingLink);
+          const parts = url.pathname.split("/").filter(Boolean);
+          return parts.length ? titleFromSlug(parts[parts.length - 1]) : url.hostname;
+        } catch (error) {
+          return "Recording link";
+        }
+      }
+
+      function speakerNameFromFile(fileName) {
+        const base = fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+        if (!base) {
+          return "";
+        }
+        const cleaned = base.replace(/\b(host|guest|camera|cam|track|synced|video|audio)\b/gi, "").replace(/\s+/g, " ").trim();
+        return cleaned ? titleFromSlug(cleaned) : titleFromSlug(base);
+      }
+
+      function titleFromSlug(value) {
+        return value
+          .replace(/[_-]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      }
+
+      function fileFingerprint(file, index) {
+        const name = file.name || `speaker-${index + 1}`;
+        const size = Number(file.size) || 0;
+        const modified = Number(file.lastModified) || index;
+        return `file:${name}|size:${size}|mtime:${modified}`;
+      }
+
+      function bucketForIndex(index) {
+        if (index === 0) return "host";
+        if (index === 1) return "guest";
+        if (index === 2) return "guest-2";
+        return "panelist";
+      }
+
+      function requiredBucketsFor(list) {
+        if (list.length === 0) return [];
+        if (list.length === 1) return ["host"];
+        if (list.length === 2) return ["host", "guest"];
+        return ["host", "guest", "guest-2"];
+      }
+
+      function setupPathFromSearch(search) {
+        try {
+          return new URLSearchParams(search).get("path") || "episode";
+        } catch (error) {
+          return "episode";
+        }
+      }
+
+      function evaluateSetup(list = tracks, state = setupState) {
         const issues = [];
+        const sourceType = state.sourceType;
+
+        if (!sourceLabels[sourceType]) {
+          issues.push({
+            key: "missing-source-type",
+            severity: "blocker",
+            title: "Choose how the episode recording is coming in",
+            action: "Pick a recording link or separate speaker files before continuing.",
+          });
+        }
+
+        if (sourceType === "recording-link" && !(state.recordingLink || "").trim()) {
+          issues.push({
+            key: "missing-recording-link",
+            severity: "blocker",
+            title: "Add the recording link",
+            action: "Paste the Riverside-style link so the setup can create speaker tracks.",
+          });
+        }
+
+        if (sourceType === "speaker-files" && list.length === 0) {
+          issues.push({
+            key: "missing-speaker-files",
+            severity: "blocker",
+            title: "Add synced speaker files",
+            action: "Choose each speaker's file so every source appears as a track.",
+          });
+        }
+
+        if (list.length === 0) {
+          issues.push({
+            key: "missing-tracks",
+            severity: "blocker",
+            title: "No speaker tracks yet",
+            action: "Add a recording link or speaker files to start the episode setup.",
+          });
+        }
+
+        const roleCounts = {};
+        for (const track of list) {
+          if (track.role) {
+            roleCounts[track.role] = (roleCounts[track.role] || 0) + 1;
+          }
+        }
+
+        for (const bucket of requiredBucketsFor(list)) {
+          if (!list.some((track) => track.role === bucket)) {
+            issues.push({
+              key: bucket === "host" ? "missing-host" : `missing-${bucket}`,
+              severity: "blocker",
+              title: `${setupRoleLabels[bucket]} bucket is empty`,
+              action: `Assign one source to ${setupRoleLabels[bucket]} before continuing.`,
+            });
+          }
+          if (roleCounts[bucket] > 1) {
+            issues.push({
+              key: `duplicate-${bucket}`,
+              severity: "blocker",
+              title: `More than one source is assigned to ${setupRoleLabels[bucket]}`,
+              action: "Give each required speaker bucket one clear source.",
+            });
+          }
+        }
+
+        for (const track of list) {
+          if (!(track.sourceName || "").trim()) {
+            issues.push({
+              key: `missing-source:${track.id}`,
+              severity: "blocker",
+              title: `${track.name || "This speaker"} needs a source label`,
+              action: "Name the recording or file so it is clear what source this track came from.",
+            });
+          }
+
+          if (!track.role || !setupRoleLabels[track.role]) {
+            issues.push({
+              key: `missing-role:${track.id}`,
+              severity: "blocker",
+              title: `${track.sourceName || track.name || "This source"} needs a speaker bucket`,
+              action: "Assign the source to Host, Guest 1, Guest 2, or another visible speaker role.",
+            });
+          }
+
+          if (!(track.speakerName || "").trim()) {
+            issues.push({
+              key: `missing-name:${track.id}`,
+              severity: "blocker",
+              title: `${track.name || "This speaker"} needs a speaker name`,
+              action: "Add who is speaking so names, captions, and references carry into the next step.",
+            });
+          }
+        }
+
+        return { complete: issues.length === 0, issues };
+      }
+
+      function evaluateReadiness() {
+        const setup = evaluateSetup();
+        const issues = [];
+        issues.push(...setup.issues);
+        const setupIssueKeys = new Set(setup.issues.map((issue) => issue.key));
 
         if (!tracks.some((track) => track.role === "host")) {
-          issues.push({
-            key: "missing-host",
-            severity: "blocker",
-            title: "Missing host track",
-            action: "Open speaker role mapping to assign one recording to the host bucket before choosing a preset.",
-            fixSurface: "speaker-role-mapping",
-          });
+          if (!setupIssueKeys.has("missing-host")) {
+            issues.push({
+              key: "missing-host",
+              severity: "blocker",
+              title: "Missing host track",
+              action: "Open speaker role mapping to assign one recording to the host bucket before choosing a preset.",
+              fixSurface: "speaker-role-mapping",
+            });
+          }
         }
 
         const fingerprints = new Map();
@@ -456,7 +806,7 @@
 
         const longest = Math.max(...tracks.map((track) => Number(track.duration) || 0), 0);
         for (const track of tracks) {
-          if (!(track.speakerName || "").trim()) {
+          if (!(track.speakerName || "").trim() && !setupIssueKeys.has(`missing-name:${track.id}`)) {
             issues.push({
               key: `missing-name:${track.id}`,
               severity: "review",
@@ -516,19 +866,55 @@
       }
 
       function render() {
-        tracksElement.replaceChildren(...tracks.map(renderTrack));
+        renderSourceControls();
+        renderSetupTracks();
         const readiness = evaluateReadiness();
+        renderSetupSummary(readiness);
+      }
+
+      function renderSourceControls() {
+        const recordingMode = setupState.sourceType === "recording-link";
+        recordingModeButton.className = recordingMode ? "" : "secondary";
+        fileModeButton.className = recordingMode ? "secondary" : "";
+        recordingModeButton.setAttribute("aria-pressed", String(recordingMode));
+        fileModeButton.setAttribute("aria-pressed", String(!recordingMode));
+        recordingControls.hidden = !recordingMode;
+        fileControls.hidden = recordingMode;
+        recordingLinkInput.value = setupState.recordingLink || "";
+
+        const setup = evaluateSetup();
+        if (setup.complete) {
+          setupStatusElement.textContent = `${tracks.length} ${tracks.length === 1 ? "track is" : "tracks are"} ready from ${sourceLabels[setupState.sourceType]}.`;
+        } else {
+          setupStatusElement.textContent = setup.issues[0]
+            ? setup.issues[0].action
+            : "Choose how the episode recording is coming in.";
+        }
+      }
+
+      function renderSetupTracks() {
+        if (tracks.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "source-note";
+          empty.textContent = "Add a recording link or synced speaker files to create the first setup tracks.";
+          tracksElement.replaceChildren(empty);
+          return;
+        }
+        tracksElement.replaceChildren(...tracks.map(renderTrack));
+      }
+
+      function renderSetupSummary(readiness) {
         statusElement.className = `status ${readiness.status}`;
         statusElement.textContent = readiness.status === "ready"
-          ? "Ready for preset styling"
+          ? "Setup complete"
           : readiness.status === "blocked"
-            ? "Add a host track first"
+            ? "Complete episode setup"
             : `${readiness.unresolved} ${readiness.unresolved === 1 ? "issue still open" : "issues still open"}`;
 
         issuesElement.replaceChildren(
           ...(readiness.issues.length
             ? readiness.issues.map(renderIssue)
-            : [Object.assign(document.createElement("p"), { textContent: "All speaker tracks are ready for preset selection." })]),
+            : [Object.assign(document.createElement("p"), { textContent: "Recording source, speaker buckets, names, and optional links are ready for the next step." })]),
         );
 
         updateContinueLink(readiness);
@@ -539,16 +925,41 @@
         continueLink.setAttribute("aria-disabled", String(!ready));
 
         if (ready) {
-          continueLink.href = nextSetupSurface;
+          continueLink.href = nextSetupHref();
         } else {
           continueLink.removeAttribute("href");
         }
 
         continueNoteElement.textContent = ready
-          ? "Required buckets are assigned. Open issues that still affect the finished episode will carry forward to export review."
+          ? "Source type, speaker buckets, names, and optional social links will carry into speaker role mapping."
           : readiness.status === "blocked"
-            ? "Add a host recording before continuing."
+            ? "Complete the required setup fields before continuing."
             : "Open the suggested fix for each issue, or resolve it on this screen.";
+      }
+
+      function setupHandoffPayload(list = tracks, state = setupState) {
+        return {
+          sourceType: state.sourceType,
+          sourceLabel: sourceLabels[state.sourceType] || "Episode source",
+          recordingLink: state.sourceType === "recording-link" ? state.recordingLink || "" : "",
+          tracks: list.map((track) => ({
+            id: track.id,
+            bucket: track.name,
+            role: track.role,
+            roleLabel: setupRoleLabels[track.role] || track.role || "Unassigned",
+            speakerName: track.speakerName || "",
+            sourceName: track.sourceName || track.name || "",
+            socialLink: track.socialLink || "",
+            audioKey: track.audioKey || "",
+          })),
+        };
+      }
+
+      function nextSetupHref(list = tracks, state = setupState) {
+        const params = new URLSearchParams();
+        params.set("path", setupPathFromSearch(window.location.search));
+        params.set("setup", JSON.stringify(setupHandoffPayload(list, state)));
+        return `${nextSetupSurface}?${params.toString()}`;
       }
 
       function renderTrack(track, index) {
@@ -565,10 +976,21 @@
         speakerNameInput.placeholder = "Who is speaking?";
 
         const roleSelect = renderSelect(
-          ["host", "co-host", "guest", "panelist", "producer"].map((role) => ({ value: role, label: role })),
+          setupRoleOptions,
           track.role,
           "role",
         );
+
+        const sourceNameInput = document.createElement("input");
+        sourceNameInput.dataset.field = "sourceName";
+        sourceNameInput.value = track.sourceName || "";
+        sourceNameInput.placeholder = "File or recording label";
+
+        const socialLinkInput = document.createElement("input");
+        socialLinkInput.type = "url";
+        socialLinkInput.dataset.field = "socialLink";
+        socialLinkInput.value = track.socialLink || "";
+        socialLinkInput.placeholder = "Optional public link";
 
         const recordingSelect = renderSelect(getRecordingOptions(track), track.audioKey, "audioKey");
 
@@ -603,6 +1025,8 @@
           renderField("Bucket", nameInput),
           renderField("Speaker name", speakerNameInput),
           renderField("Role", roleSelect),
+          renderField("Source", sourceNameInput),
+          renderField("Social link", socialLinkInput),
         );
 
         row.append(
@@ -612,8 +1036,8 @@
           toggles,
         );
 
-        row.addEventListener("input", (event) => updateTrack(event, index));
-        row.addEventListener("change", (event) => updateTrack(event, index));
+        row.addEventListener("input", (event) => updateSetupTrack(event, index));
+        row.addEventListener("change", (event) => updateSetupTrack(event, index));
         return row;
       }
 
@@ -649,7 +1073,7 @@
         return select;
       }
 
-      function updateTrack(event, index) {
+      function updateSetupTrack(event, index) {
         const field = event.target.dataset.field;
         if (!field) {
           return;

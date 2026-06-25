@@ -365,6 +365,7 @@
           <h2>Role summary</h2>
           <div id="status" class="status ready">Roles confirmed</div>
           <div id="layout-handoff" class="layout-handoff" hidden></div>
+          <div id="setup-handoff" class="layout-handoff" hidden></div>
           <div id="issues" class="issues"></div>
           <p class="summary-note">A track is never locked into a role you have not seen. Confirm a suggestion in one step, or change it from the short list of podcast roles.</p>
         </aside>
@@ -420,9 +421,8 @@
       const layoutHandoff = layoutHandoffApi
         ? layoutHandoffApi.load(layoutHandoffStorage(), window.location.search)
         : null;
-      const initialTracks = layoutHandoffApi
-        ? layoutHandoffApi.tracksFromState(layoutHandoff, sampleTracks)
-        : structuredClone(sampleTracks);
+      const setupHandoff = readSetupHandoff(window.location.search);
+      const initialTracks = initialRoleTracks(layoutHandoff, setupHandoff);
 
       let tracks = structuredClone(initialTracks);
 
@@ -430,6 +430,7 @@
       const statusElement = document.querySelector("#status");
       const issuesElement = document.querySelector("#issues");
       const layoutHandoffElement = document.querySelector("#layout-handoff");
+      const setupHandoffElement = document.querySelector("#setup-handoff");
 
       document.querySelector("#addTrack").addEventListener("click", () => {
         const next = tracks.length + 1;
@@ -441,6 +442,52 @@
         tracks = structuredClone(initialTracks);
         render();
       });
+
+      function readSetupHandoff(search) {
+        try {
+          const encoded = new URLSearchParams(search).get("setup");
+          if (!encoded) {
+            return null;
+          }
+          const parsed = JSON.parse(encoded);
+          if (!parsed || !Array.isArray(parsed.tracks) || parsed.tracks.length === 0) {
+            return null;
+          }
+          return parsed;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function initialRoleTracks(layoutState, setupState) {
+        if (setupState) {
+          return setupTracksFromHandoff(setupState);
+        }
+        return layoutHandoffApi
+          ? layoutHandoffApi.tracksFromState(layoutState, sampleTracks)
+          : structuredClone(sampleTracks);
+      }
+
+      function setupTracksFromHandoff(setupState) {
+        return setupState.tracks.map((track, index) => ({
+          id: `setup-${track.id || index + 1}`,
+          name: track.speakerName || track.roleLabel || track.sourceName || `Speaker ${index + 1}`,
+          role: roleFromSetupBucket(track.role),
+          signal: track.speakerName ? "speaker-name" : "file-name",
+          decision: "suggested",
+          sig: track.audioKey || track.sourceName || "",
+          setupBucket: track.roleLabel || track.role || "",
+          sourceName: track.sourceName || "",
+          socialLink: track.socialLink || "",
+        }));
+      }
+
+      function roleFromSetupBucket(bucket) {
+        if (bucket === "guest-2") {
+          return "guest";
+        }
+        return roles[bucket] ? bucket : "";
+      }
 
       // Single source of truth: turn each track's role + signal + decision (plus any
       // cross-track conflict) into one of the spec's review states and a creator-facing issue.
@@ -601,6 +648,7 @@
             : [Object.assign(document.createElement("p"), { textContent: "Every track has a confirmed role. Ready for preset selection." })]),
         );
         renderLayoutHandoff();
+        renderSetupCarryForward();
       }
 
       function renderTracks(evaluation) {
@@ -626,6 +674,42 @@
         copy.textContent = `Placed videos ready for role mapping: ${slotNames}.`;
         layoutHandoffElement.replaceChildren(heading, copy);
         layoutHandoffElement.hidden = false;
+      }
+
+      function renderSetupCarryForward() {
+        if (!setupHandoffElement || !setupHandoff) {
+          return;
+        }
+        const heading = document.createElement("strong");
+        heading.textContent = `From episode setup: ${setupHandoff.sourceLabel || "Episode source"}`;
+
+        const source = document.createElement("p");
+        source.textContent = setupSourceSummary(setupHandoff);
+
+        const speakers = document.createElement("p");
+        speakers.textContent = setupSpeakerSummary(setupHandoff.tracks);
+
+        setupHandoffElement.replaceChildren(heading, source, speakers);
+        setupHandoffElement.hidden = false;
+      }
+
+      function setupSourceSummary(setupState) {
+        if (setupState.sourceType === "recording-link" && setupState.recordingLink) {
+          return `Recording link carried forward: ${setupState.recordingLink}.`;
+        }
+        const count = setupState.tracks.length;
+        return `${count} ${count === 1 ? "speaker file" : "speaker files"} carried forward into role mapping.`;
+      }
+
+      function setupSpeakerSummary(setupTracks) {
+        return setupTracks
+          .map((track) => {
+            const name = track.speakerName || track.sourceName || "Unnamed speaker";
+            const role = track.roleLabel || track.role || "Unassigned";
+            const link = track.socialLink ? ` (${track.socialLink})` : "";
+            return `${role}: ${name}${link}`;
+          })
+          .join("; ");
       }
 
       // Map a review state to the badge style. "suggested" and "review" stay distinct

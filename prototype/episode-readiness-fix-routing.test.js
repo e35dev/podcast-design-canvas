@@ -99,8 +99,12 @@ assert.ok(
   "episode readiness updates the primary continue link from readiness state",
 );
 assert.ok(
-  source.includes("continueLink.href = nextSetupSurface"),
-  "ready continue action links to the next setup screen",
+  source.includes("function nextSetupHref("),
+  "episode readiness builds a next-step setup handoff URL",
+);
+assert.ok(
+  source.includes("continueLink.href = nextSetupHref()"),
+  "ready continue action links to the next setup screen with setup state",
 );
 assert.ok(
   source.includes('continueLink.removeAttribute("href")'),

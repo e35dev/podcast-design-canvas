@@ -28,8 +28,12 @@ assert.ok(
   "speaker role mapping guards session storage access for static preview contexts",
 );
 assert.ok(
-  html.includes("layoutHandoffApi.tracksFromState(layoutHandoff, sampleTracks)"),
-  "speaker role mapping seeds its tracks from the selected layout when available",
+  html.includes("function initialRoleTracks(layoutState, setupState)"),
+  "speaker role mapping chooses initial tracks from handoff state",
+);
+assert.ok(
+  html.includes("layoutHandoffApi.tracksFromState(layoutState, sampleTracks)"),
+  "speaker role mapping still seeds tracks from the selected layout when available",
 );
 assert.ok(
   html.includes("tracks = structuredClone(initialTracks);"),
