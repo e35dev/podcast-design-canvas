@@ -370,7 +370,23 @@
           { sourceName: "riverside.fm/guest", name: "Marcus Lee", role: "guest-1", social: "" },
         ],
       };
-      const seed = (typeof window !== "undefined" && window.__SETUP_SEED__) || DEFAULT_SETUP;
+      function seedFromState(state) {
+        return {
+          sourceType: state.sourceType,
+          speakers: state.speakers.map((speaker, index) => ({
+            sourceName: speaker.roleLabel ? `${speaker.roleLabel} recording` : `Track ${index + 1}`,
+            name: speaker.name,
+            role: speaker.role,
+            social: speaker.social,
+          })),
+        };
+      }
+      // Restore an in-progress setup the creator already started this session (or arrived with
+      // through a carried link) so navigating away and back never loses their work; otherwise
+      // start from the seeded sample.
+      const restoredSetup = handoffApi ? handoffApi.load(handoffStorage(), window.location.search) : null;
+      const seed = (typeof window !== "undefined" && window.__SETUP_SEED__)
+        || (restoredSetup ? seedFromState(restoredSetup) : DEFAULT_SETUP);
 
       let sourceType = SOURCE_TYPES[seed.sourceType] ? seed.sourceType : "link";
       let nextId = 0;
