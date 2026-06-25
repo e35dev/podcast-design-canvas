@@ -65,14 +65,36 @@ const storage = {
 };
 handoff.save(storage, interview);
 assert.equal(
-  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest&broll=placed").slots[0].name,
+  handoff.load(storage, `?path=episode&${handoff.queryForState(interview)}`).slots[0].name,
   "host-cam.mp4",
-  "matching stored handoff restores the placed file names for the current layout-start URL",
+  "matching stored handoff restores the placed file names when the URL explicitly carries placements",
 );
 assert.equal(
-  handoff.load(storage, "?path=episode&layout=interview&slots=host,guest&broll=placed").optionalBroll.name,
+  handoff.load(storage, `?path=episode&${handoff.queryForState(interview)}`).optionalBroll.name,
   "intro-card.mp4",
-  "stored optional b-roll is restored when the URL carries broll=placed",
+  "stored optional b-roll is restored when the URL explicitly carries placements",
+);
+const previewShellSlotOnly = handoff.load(storage, "?path=episode&layout=interview&slots=host,guest");
+assert.equal(
+  previewShellSlotOnly.slots[0].name,
+  "Host video",
+  "a slot-only preview-shell handoff does not revive stale stored layout-first file names",
+);
+assert.equal(
+  previewShellSlotOnly.optionalBroll,
+  undefined,
+  "a slot-only preview-shell handoff does not revive stale optional b-roll state",
+);
+const previewShellSlotOnlyBroll = handoff.load(storage, "?path=episode&layout=interview&slots=host,guest&broll=placed");
+assert.equal(
+  previewShellSlotOnlyBroll.slots[0].name,
+  "Host video",
+  "a slot-only query with broll=placed still does not revive stale stored speaker file names",
+);
+assert.deepEqual(
+  previewShellSlotOnlyBroll.optionalBroll,
+  { slot: "broll", label: "Optional b-roll", name: "", sig: "" },
+  "a slot-only query keeps only the explicit b-roll flag, not stale stored b-roll metadata",
 );
 const queryOnlyBroll = handoff.load(null, `?path=episode&${handoff.queryForState(interview)}`);
 assert.deepEqual(
@@ -126,8 +148,8 @@ const reorderedPlacement = handoff.stateFromZones("interview", [
 handoff.save(storage, reorderedPlacement);
 assert.equal(
   handoff.load(storage, "?path=episode&layout=interview&slots=host,guest").slots.find((slot) => slot.slot === "host").name,
-  "host-cam.mp4",
-  "stored placement is restored even when the URL lists the same slots in a different order",
+  "Host video",
+  "slot-only preview-shell handoffs stay generic even when an older stored run used the same slots",
 );
 handoff.clear(storage);
 

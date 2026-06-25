@@ -313,6 +313,13 @@
       queryHasBroll,
       optionalBrollFromQueryEntries(queryPlacements),
     );
+    // A slot-only query is the preview-shell/example-canvas handoff today: it names the chosen
+    // layout + required slots, but it does NOT prove any carried file identities. Reusing stored
+    // layout-first state here leaks stale file names from an older layout-first run into a fresh
+    // preview-shell journey. Only a query that explicitly carries placements may revive storage.
+    if (queryPlacements.length === 0) {
+      return queryStateWithBroll;
+    }
     if (!storage) {
       return queryStateWithBroll;
     }
