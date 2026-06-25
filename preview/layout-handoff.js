@@ -346,6 +346,34 @@
     }
   }
 
+  const SPEAKER_ROLE_LABELS = {
+    host: "Host",
+    guest: "Guest 1",
+    "guest-b": "Guest 2",
+  };
+
+  function speakersFromState(state, fallbackSpeakers) {
+    if (!state) {
+      return clone(fallbackSpeakers || []);
+    }
+    const duplicateNames = duplicateCarriedTrackNames(state.slots);
+    return state.slots.map((slot) => {
+      const roleLabel = SPEAKER_ROLE_LABELS[slot.slot] || slot.label;
+      const recording = carriedTrackName(slot);
+      const name = duplicateNames[recording] > 1
+        ? `${roleLabel}: ${recording}`
+        : `${roleLabel} — ${recording}`;
+      return {
+        id: slot.slot,
+        role: roleLabel,
+        name,
+        condition: "good",
+        disposition: "keep",
+        sig: slot.sig || "",
+      };
+    });
+  }
+
   function tracksFromState(state, fallbackTracks) {
     if (!state) {
       return clone(fallbackTracks || []);
@@ -429,6 +457,7 @@
     queryForState,
     requiredSlotsFor,
     save,
+    speakersFromState,
     stateFromSlots,
     stateFromZones,
     tracksFromState,

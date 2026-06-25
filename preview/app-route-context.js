@@ -93,6 +93,7 @@ function createPreviewAppRouting(order) {
   const layoutHandoffScreens = new Set([
     "episode-readiness",
     "speaker-role-mapping",
+    "source-media-health",
   ]);
   const layoutHandoff = typeof globalThis !== "undefined" && globalThis.PodcastLayoutHandoff
     ? globalThis.PodcastLayoutHandoff
@@ -158,9 +159,9 @@ function createPreviewAppRouting(order) {
     if (path === "publish" && pathedPublishScreens.has(screen)) {
       out.set("path", "publish");
     }
-    // The layout-first handoff also flags placed slots and optional b-roll. Carry it only across
-    // the role-mapping <-> episode-readiness round trip; dropping it makes role mapping fall back
-    // to generic names, while carrying it later would leak placement-only params into other steps.
+    // The layout-first handoff also flags placed slots and optional b-roll. Carry it across the
+    // role-mapping <-> episode-readiness round trip and the episode-flow placement return to
+    // source media health; dropping it makes those screens fall back to generic sample data.
     for (const [key, value] of layoutHandoffEntries(screen, params)) {
       out.set(key, value);
     }
@@ -216,10 +217,10 @@ function createPreviewAppRouting(order) {
         return { screen: "episode-readiness", search };
       }
       if (screen === "speaker-role-mapping" && offset > 0) {
-        return { screen: "source-media-health", search: "?path=episode" };
+        return { screen: "source-media-health", search };
       }
       if (screen === "source-media-health" && offset < 0) {
-        return { screen: "speaker-role-mapping", search: "?path=episode" };
+        return { screen: "speaker-role-mapping", search };
       }
       if (screen === "source-media-health" && offset > 0) {
         return { screen: "speaker-sync-repair", search };

@@ -87,4 +87,13 @@ assert.ok(
   "motion mismatch routed copy names the visual match screen",
 );
 
+assert.ok(
+  source.includes("layoutHandoffApi.speakersFromState"),
+  "source media health seeds speaker rows from the layout-first placement handoff",
+);
+assert.ok(
+  source.includes("groupKey: `sig:${speaker.sig}`"),
+  "duplicate carried recordings aggregate into one creator-facing issue",
+);
+
 console.log("source media health: routed issues link to their fix screens");

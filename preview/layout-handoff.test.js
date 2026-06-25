@@ -250,4 +250,31 @@ assert.equal(
 );
 assert.equal(handoff.placementList(null), "", "placement list is empty without handoff state");
 
+const handoffSpeakers = handoff.speakersFromState(interview, []);
+assert.deepEqual(
+  handoffSpeakers.map((speaker) => [speaker.id, speaker.role, speaker.sig]),
+  [
+    ["host", "Host", ""],
+    ["guest", "Guest 1", ""],
+  ],
+  "source media health can seed speaker rows from the selected layout slots",
+);
+assert.deepEqual(
+  handoff.speakersFromState(null, [{ id: "sample", role: "Host", name: "Sample" }]).map((speaker) => speaker.id),
+  ["sample"],
+  "speakersFromState falls back to the screen sample when no handoff is present",
+);
+const dupSpeakerRows = handoff.speakersFromState(
+  handoff.stateFromSlots("interview", [
+    { slot: "host", name: "rec.mp4", sig: "name:rec.mp4|size:1|mtime:1" },
+    { slot: "guest", name: "rec.mp4", sig: "name:rec.mp4|size:2|mtime:2" },
+  ]),
+  [],
+);
+assert.deepEqual(
+  dupSpeakerRows.map((speaker) => speaker.name),
+  ["Host: rec.mp4", "Guest 1: rec.mp4"],
+  "duplicate carried file names are prefixed with the slot label for source media health rows",
+);
+
 console.log("layout handoff: state, URL, storage, and role-track mapping verified");
