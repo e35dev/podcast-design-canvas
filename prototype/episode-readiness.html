@@ -515,9 +515,7 @@
         return { status, issues, unresolved: unresolved.length };
       }
 
-      function render() {
-        tracksElement.replaceChildren(...tracks.map(renderTrack));
-        const readiness = evaluateReadiness();
+      function renderSummary(readiness) {
         statusElement.className = `status ${readiness.status}`;
         statusElement.textContent = readiness.status === "ready"
           ? "Ready for preset styling"
@@ -532,6 +530,16 @@
         );
 
         updateContinueLink(readiness);
+      }
+
+      function renderTracks() {
+        tracksElement.replaceChildren(...tracks.map(renderTrack));
+      }
+
+      function render() {
+        const readiness = evaluateReadiness();
+        renderTracks();
+        renderSummary(readiness);
       }
 
       function updateContinueLink(readiness) {
@@ -660,6 +668,13 @@
           : field === "duration"
             ? Number(event.target.value) * 60
             : event.target.value;
+
+        // Recording changes can alter the select's "Current speaker recording" option.
+        // Other edits only change readiness copy, so keep the focused row alive.
+        if (field !== "audioKey") {
+          renderSummary(evaluateReadiness());
+          return;
+        }
         render();
       }
 
