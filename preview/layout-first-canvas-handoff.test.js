@@ -403,4 +403,41 @@ assert.equal(panelButton.getAttribute("aria-checked"), "true", "End applies the 
 pressKey(panelButton, "Home");
 assert.equal(interviewButton.getAttribute("aria-checked"), "true", "Home applies the first layout (interview)");
 
+// Multi-file placement: dropping several recordings at once fills the slot they land on and
+// spills the rest into the next empty visible slots, like the layout-first start.
+function vid(name, overrides) {
+  return Object.assign({ name: name, type: "video/mp4", size: 2048, lastModified: 1 }, overrides || {});
+}
+function dropFiles(slot, files) {
+  const zone = zones.find((entry) => entry.dataset.slot === slot);
+  zone.listeners.drop({ preventDefault() {}, dataTransfer: { files: files, getData() { return ""; } } });
+}
+function filled(slot) {
+  return zones.find((zone) => zone.dataset.slot === slot).classList.contains("filled");
+}
+
+resetButton.click();
+dropFiles("host", [vid("host.mp4", { lastModified: 1 }), vid("guest.mp4", { lastModified: 2 })]);
+assert.equal(filled("host"), true, "a multi-file drop fills the slot it landed on");
+assert.equal(filled("guest"), true, "the extra recording spills into the next empty slot");
+
+// A non-video in the batch is skipped (the videos still place) and the creator is told.
+resetButton.click();
+dropFiles("host", [vid("host.mp4", { lastModified: 1 }), { name: "poster.txt", type: "text/plain", size: 10 }, vid("guest.mp4", { lastModified: 2 })]);
+assert.equal(filled("host"), true, "the first video fills the target slot even with a non-video in the batch");
+assert.equal(filled("guest"), true, "the other video still spills past the skipped non-video");
+assert.match(slotStatus.textContent, /wasn't a video, so it was skipped/, "the skipped non-video is reported");
+
+// Overflow: more videos than open slots (host, guest, broll = 3 in interview) reports the surplus.
+resetButton.click();
+dropFiles("host", [vid("a.mp4", { lastModified: 1 }), vid("b.mp4", { lastModified: 2 }), vid("c.mp4", { lastModified: 3 }), vid("d.mp4", { lastModified: 4 })]);
+assert.match(slotStatus.textContent, /1 extra video wasn't placed/, "an overflowing multi-file drop reports the surplus");
+assert.equal(filled("broll"), true, "the drop fills every available slot before overflowing");
+
+// De-duplicate: the same recording twice fills only the slot it landed on.
+resetButton.click();
+dropFiles("host", [vid("dupe.mp4", { size: 5, lastModified: 9 }), vid("dupe.mp4", { size: 5, lastModified: 9 })]);
+assert.equal(filled("host"), true, "a duplicate batch keeps the recording in the slot it landed on");
+assert.equal(filled("guest"), false, "a duplicate of the same recording does not spill into another slot");
+
 console.log("layout-first canvas handoff: keyboard, click, and drag placement all unlock continue correctly");

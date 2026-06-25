@@ -16,9 +16,9 @@ const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 const script = html.match(/<script>\s*\(function \(\) \{([\s\S]*?)\}\(\)\);\s*<\/script>/)[1];
 
 // The slots also expose a real video file input wired into placement.
-assert.match(html, /class="slot-file" type="file" accept="video\/\*" data-file-input="host"/, "host slot accepts a real video file");
-assert.match(html, /class="slot-file" type="file" accept="video\/\*" data-file-input="guest"/, "guest slot accepts a real video file");
-assert.match(html, /class="slot-file" type="file" accept="video\/\*" data-file-input="broll"/, "b-roll slot accepts a real video file");
+assert.match(html, /class="slot-file" type="file" accept="video\/\*" multiple data-file-input="host"/, "host slot accepts a real video file");
+assert.match(html, /class="slot-file" type="file" accept="video\/\*" multiple data-file-input="guest"/, "guest slot accepts a real video file");
+assert.match(html, /class="slot-file" type="file" accept="video\/\*" multiple data-file-input="broll"/, "b-roll slot accepts a real video file");
 
 let nodeId = 0;
 
