@@ -83,8 +83,21 @@
       .track-meta {
         grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 10px;
+      }
+
+      .setup-summary {
+        margin-bottom: 12px;
+        padding: 12px 14px;
+        border: 1px solid #bfd8d1;
+        border-radius: 8px;
+        background: #eef9f5;
+      }
+
+      .setup-summary strong {
+        display: block;
+        margin-bottom: 4px;
       }
 
       label {
@@ -286,6 +299,7 @@
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
       <script src="../preview/layout-handoff.js"></script>
+      <script src="../preview/episode-setup-state.js"></script>
   </head>
   <body data-ingest-step="episode-readiness">
     <main>
@@ -304,6 +318,7 @@
 
         <aside class="panel" aria-live="polite">
           <h2>Readiness summary</h2>
+          <div id="episode-setup" class="setup-summary" hidden></div>
           <div id="layout-handoff" class="layout-handoff" hidden></div>
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
@@ -345,6 +360,8 @@
           audioKey: "host-audio",
           hasVideo: true,
           transcript: "ready",
+          socialLink: "https://x.com/danabrooks",
+          sourceLabel: "Dana_Brooks_Host.mov",
         },
         {
           id: "guest-1",
@@ -355,6 +372,8 @@
           audioKey: "guest-audio",
           hasVideo: true,
           transcript: "ready",
+          socialLink: "",
+          sourceLabel: "Guest_remote_recording.mov",
         },
       ];
 
@@ -364,7 +383,29 @@
         { key: "producer-audio", label: "Producer backup recording" },
       ];
 
-      let tracks = structuredClone(sampleTracks);
+      const episodeSetupApi = window.PodcastEpisodeSetupState;
+      function cloneValue(value) {
+        if (typeof structuredClone === "function") {
+          return structuredClone(value);
+        }
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function episodeSetupStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+      const episodeSetup = episodeSetupApi
+        ? episodeSetupApi.load(episodeSetupStorage())
+        : null;
+      const seededTracks = episodeSetupApi
+        ? episodeSetupApi.readinessTracksFromState(episodeSetup, sampleTracks)
+        : cloneValue(sampleTracks);
+
+      let tracks = cloneValue(seededTracks);
       let handedOff = new Set();
 
       const tracksElement = document.querySelector("#tracks");
@@ -372,6 +413,7 @@
       const statusElement = document.querySelector("#status");
       const continueLink = document.querySelector("#continue");
       const continueNoteElement = document.querySelector("#continueNote");
+      const episodeSetupElement = document.querySelector("#episode-setup");
 
       // Surface the videos the creator placed in layout-first, carried here through the same
       // handoff role mapping reads, so the placement context follows into readiness review.
@@ -416,10 +458,23 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        tracks = structuredClone(sampleTracks);
+        tracks = cloneValue(seededTracks);
         handedOff = new Set();
         render();
       });
+
+      function renderEpisodeSetupSummary() {
+        if (!episodeSetupApi || !episodeSetupElement || !episodeSetup || !episodeSetup.sourceLoaded) {
+          return;
+        }
+        const summary = episodeSetupApi.summary(episodeSetup);
+        const heading = document.createElement("strong");
+        heading.textContent = `From episode setup: ${summary.sourceLabel}`;
+        const copy = document.createElement("p");
+        copy.textContent = `${summary.trackCount} speaker tracks carried into readiness. ${summary.socialCount ? `${summary.socialCount} speaker ${summary.socialCount === 1 ? "link is" : "links are"} attached.` : "No social links were attached yet."}`;
+        episodeSetupElement.replaceChildren(heading, copy);
+        episodeSetupElement.hidden = false;
+      }
 
       function evaluateReadiness() {
         const issues = [];
@@ -603,6 +658,7 @@
           renderField("Bucket", nameInput),
           renderField("Speaker name", speakerNameInput),
           renderField("Role", roleSelect),
+          renderField("Social link", renderTextInput(track.socialLink || "", "socialLink", "Optional public link")),
         );
 
         row.append(
@@ -647,6 +703,15 @@
         }
 
         return select;
+      }
+
+      function renderTextInput(value, field, placeholder) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.dataset.field = field;
+        input.value = value;
+        input.placeholder = placeholder || "";
+        return input;
       }
 
       function updateTrack(event, index) {
@@ -707,6 +772,7 @@
 
       render();
       renderLayoutHandoff();
+      renderEpisodeSetupSummary();
     </script>
   </body>
 </html>

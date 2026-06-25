@@ -116,6 +116,11 @@
         outline-offset: 2px;
       }
 
+      nav.rail a[aria-disabled="true"] {
+        color: #96a59f;
+        pointer-events: none;
+      }
+
       nav.rail a[aria-current="page"] {
         background: #136f63;
         color: #ffffff;
@@ -222,7 +227,7 @@
   <body>
     <header class="bar">
       <h1>Podcast Design Canvas</h1>
-      <span class="sub">One preview — every screen loads here, in order.</span>
+      <span class="sub">Start the episode here, then move through every review surface in one preview.</span>
       <span class="progress" id="progress"></span>
       <a class="catalog" href="./layout-first.html">Layout-first start</a>
       <a class="catalog" href="./index.html">Shell home</a>
@@ -247,24 +252,18 @@
     </div>
 
     <script src="./layout-handoff.js"></script>
+    <script src="./episode-setup-state.js"></script>
     <script src="./app-route-context.js"></script>
     <script>
-      // The product opens layout-first: a creator picks a podcast layout and drags videos
-      // into position before anything else. Opening the app without a specific screen starts
-      // at that layout picker, which then continues back into this workspace (the layout-first
-      // Continue handoff targets app.html#speaker-role-mapping?path=episode). replace() keeps
-      // the redirect out of history so Back from the picker doesn't bounce here again. Any
-      // explicit #screen hash (deep links, the rail, prev/next) skips this and loads normally.
-      if (!window.location.hash) {
-        window.location.replace("layout-first.html");
-      }
-
       // The product's screens, grouped by where they fall in the episode workflow. Every
       // screen loads INSIDE this shell via the iframe, so the whole product is reachable
       // and navigable from one URL (preview/app.html#<screen>).
       const STAGES = [
+        ["Start the episode", [
+          "episode-setup-intake",
+        ]],
         ["Bring in the recording", [
-          "source-media-health", "episode-readiness", "speaker-role-mapping",
+          "episode-readiness", "source-media-health", "speaker-role-mapping",
           "speaker-attribution-review", "speaker-visual-match", "speaker-eye-line-coherence",
           "guest-profile-reuse", "social-context-intake", "off-camera-speaker-presence",
         ]],
@@ -322,6 +321,20 @@
       // Shared session state: which screens the creator has already opened in this shell,
       // so the rail shows progress through the product (✓) across navigations.
       const STORAGE_KEY = "pdc-preview-visited";
+      const EPISODE_SETUP_SCREEN = "episode-setup-intake";
+      const episodeSetupApi = window.PodcastEpisodeSetupState;
+      let currentScreen = "";
+      let currentSearch = "";
+      function episodeSetupStorage() {
+        try {
+          return sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+      let episodeSetupComplete = episodeSetupApi
+        ? episodeSetupApi.isComplete(episodeSetupApi.load(episodeSetupStorage()))
+        : false;
 
       function loadVisited() {
         try {
@@ -401,13 +414,27 @@
 
       function route() {
         const { screen, search } = currentRoute();
+        currentScreen = screen;
+        currentSearch = search;
         // Only ever load a known screen file — never an arbitrary hash value.
-        frame.src = `../prototype/${screen}.html${search}`;
+        const nextSrc = `../prototype/${screen}.html${search}`;
+        const routeCache = frame.dataset || (frame.dataset = {});
+        if (routeCache.routeSrc !== nextSrc) {
+          frame.src = nextSrc;
+          routeCache.routeSrc = nextSrc;
+        }
         const label = titleCase(screen);
         crumbLabel.textContent = label;
         frame.title = `${label} screen`;
-        openDirect.href = `../prototype/${screen}.html${search}`;
+        openDirect.href = nextSrc;
         for (const [name, link] of Object.entries(linkFor)) {
+          const gated = !episodeSetupComplete && name !== firstScreen;
+          link.href = gated ? `#${firstScreen}` : `#${name}`;
+          if (gated) {
+            link.setAttribute("aria-disabled", "true");
+          } else {
+            link.removeAttribute("aria-disabled");
+          }
           if (name === screen) {
             link.setAttribute("aria-current", "page");
           } else {
@@ -419,7 +446,7 @@
         const index = ORDER.indexOf(screen);
         stepCount.textContent = `Screen ${index + 1} of ${ORDER.length}`;
         setStep(prevStep, stepTarget(screen, index, -1, search));
-        setStep(nextStep, stepTarget(screen, index, 1, search));
+        setStep(nextStep, gatedStepTarget(screen, index, 1, search));
 
         // Record progress through the product and reflect it in the rail.
         markVisited(screen);
@@ -437,6 +464,21 @@
           button.removeAttribute("title");
         }
       }
+
+      function gatedStepTarget(screen, index, offset, search) {
+        if (!episodeSetupComplete && screen === EPISODE_SETUP_SCREEN && offset > 0) {
+          return {};
+        }
+        return stepTarget(screen, index, offset, search);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "pdc-episode-setup-state") {
+          return;
+        }
+        episodeSetupComplete = Boolean(event.data.complete);
+        route();
+      });
 
       window.addEventListener("hashchange", route);
       route();

@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Setup Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        max-width: 760px;
+        color: var(--muted);
+      }
+
+      .source-panel {
+        margin-top: 24px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: linear-gradient(180deg, #f8fbfa, #eef5f2);
+      }
+
+      .source-switcher {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .source-option {
+        text-align: left;
+        min-height: 120px;
+        padding: 16px;
+        border: 1px solid #bfcbc7;
+        border-radius: 10px;
+        background: #ffffff;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .source-option[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        background: #eef9f5;
+      }
+
+      .source-option strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+
+      .source-option span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .source-fields {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+        margin-top: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .source-note {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .tracks {
+        display: grid;
+        gap: 14px;
+      }
+
+      .track {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+      }
+
+      .track-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+
+      .track-head strong {
+        font-size: 15px;
+      }
+
+      .track-head span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .track-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 0 11px;
+        background: #edf3f1;
+        color: #30433e;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .file-pill.empty {
+        background: #f4ece2;
+        color: #8a570d;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .summary-copy {
+        margin: 14px 0 0;
+        color: var(--muted);
+      }
+
+      .summary-metadata {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .summary-row {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 10px 12px;
+      }
+
+      .summary-row span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .summary-row strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 13px;
+      }
+
+      .issues {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .issue {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .issue strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .issue span {
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button,
+      .continue-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+        border-color: #bfcbc7;
+      }
+
+      button:disabled,
+      .continue-link[aria-disabled="true"] {
+        background: #cfe0db;
+        border-color: #cfe0db;
+        color: #6f817b;
+        cursor: not-allowed;
+      }
+
+      .continue-link[aria-disabled="true"] {
+        pointer-events: none;
+      }
+
+      .next-note {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 760px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .source-switcher,
+        .track-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .source-fields {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script src="../preview/episode-setup-state.js"></script>
+    <script src="../preview/ingest-nav.js" defer></script>
+  </head>
+  <body data-ingest-step="episode-setup-intake">
+    <main>
+      <h1>Start a new episode</h1>
+      <p class="lede">Choose the source path that matches this recording, confirm each speaker track, and attach any public social links you want the episode to use for names, spellings, and lower-thirds before the next review step.</p>
+
+      <section class="source-panel" aria-label="Source path">
+        <h2>Choose how this episode starts</h2>
+        <p class="source-note">Both paths build the same speaker-track setup. Pick the source that feels closest to what you already have.</p>
+        <div class="source-switcher">
+          <button type="button" class="source-option" id="source-link" aria-pressed="true">
+            <strong>Riverside recording link</strong>
+            <span>Bring in the synced host and guest tracks, draft transcript, and file names from one recording link.</span>
+          </button>
+          <button type="button" class="source-option" id="source-upload" aria-pressed="false">
+            <strong>Separate synced uploads</strong>
+            <span>Start from individual host and guest files when the team exported separate speaker recordings.</span>
+          </button>
+        </div>
+        <div class="source-fields">
+          <label id="source-input-label">
+            <span id="source-input-title">Recording link</span>
+            <input id="source-input" type="text" placeholder="https://riverside.fm/studio/..." autocomplete="off">
+          </label>
+          <button type="button" id="loadSource">Import tracks</button>
+        </div>
+        <p class="source-note" id="sourceHint"></p>
+      </section>
+
+      <section class="workspace">
+        <div class="panel">
+          <h2>Speaker tracks</h2>
+          <p class="source-note">Each source becomes a track here. Keep the bucket assignment clear now so captions, lower-thirds, and layout decisions start from the right people.</p>
+          <div class="tracks" id="tracks"></div>
+          <div class="actions">
+            <button type="button" class="secondary" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Setup summary</h2>
+          <div id="status" class="status review">Finish the setup</div>
+          <p class="summary-copy" id="summaryCopy"></p>
+          <div class="summary-metadata" id="summaryMeta"></div>
+          <div class="issues" id="issues"></div>
+          <p class="next-note" id="nextNote"></p>
+          <a class="continue-link" id="continue" aria-disabled="true">Continue to episode readiness</a>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const setupApi = window.PodcastEpisodeSetupState;
+
+      function setupStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function blankTracks() {
+        return setupApi.REQUIRED_BUCKETS.map((bucket, index) => ({
+          id: `${bucket}-track`,
+          requiredBucket: bucket,
+          bucket: "",
+          sourceLabel: "",
+          speakerName: "",
+          socialLink: "",
+          durationMinutes: index === 0 ? 61 : index === 1 ? 59 : 57,
+        }));
+      }
+
+      let state = setupApi ? setupApi.load(setupStorage()) : null;
+      if (state && !Array.isArray(state.tracks)) {
+        state.tracks = blankTracks();
+      }
+
+      const sourceLinkButton = document.querySelector("#source-link");
+      const sourceUploadButton = document.querySelector("#source-upload");
+      const sourceInputTitle = document.querySelector("#source-input-title");
+      const sourceInput = document.querySelector("#source-input");
+      const sourceHint = document.querySelector("#sourceHint");
+      const loadSourceButton = document.querySelector("#loadSource");
+      const tracksElement = document.querySelector("#tracks");
+      const statusElement = document.querySelector("#status");
+      const summaryCopyElement = document.querySelector("#summaryCopy");
+      const summaryMetaElement = document.querySelector("#summaryMeta");
+      const issuesElement = document.querySelector("#issues");
+      const nextNoteElement = document.querySelector("#nextNote");
+      const continueLink = document.querySelector("#continue");
+
+      function isEmbeddedInPreviewApp() {
+        try {
+          return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function continueHref() {
+        return isEmbeddedInPreviewApp()
+          ? "../preview/app.html#episode-readiness"
+          : "episode-readiness.html";
+      }
+
+      function syncParentSetupState() {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.postMessage({
+              type: "pdc-episode-setup-state",
+              complete: setupApi.isComplete(state),
+            }, "*");
+          }
+        } catch (error) {
+          // Ignore cross-window access failures in static contexts.
+        }
+      }
+
+      function persistState() {
+        if (!setupApi) {
+          return;
+        }
+        setupApi.save(setupStorage(), state);
+        syncParentSetupState();
+      }
+
+      function switchSourceType(sourceType) {
+        const summary = setupApi.summary(state);
+        state = setupApi.normalize({
+          sourceType,
+          recordingLink: sourceType === "recording-link" ? state.recordingLink : "",
+          sourceLoaded: false,
+          tracks: blankTracks().map((track, index) => ({
+            ...track,
+            speakerName: summary.names[index] || "",
+          })),
+        });
+        render();
+      }
+
+      function loadSourceTracks() {
+        if (state.sourceType === "recording-link" && !state.recordingLink.trim()) {
+          render();
+          return;
+        }
+        state = setupApi.applySourceSample(state, state.sourceType);
+        render();
+      }
+
+      function updateTrack(event, index) {
+        const field = event.target.dataset.field;
+        if (!field) {
+          return;
+        }
+        state.tracks[index][field] = event.target.value;
+        renderSetupState();
+      }
+
+      function renderTrack(track, index) {
+        const article = document.createElement("article");
+        article.className = "track";
+
+        const head = document.createElement("div");
+        head.className = "track-head";
+
+        const title = document.createElement("strong");
+        title.textContent = setupApi.bucketLabel(track.requiredBucket);
+
+        const filePill = document.createElement("span");
+        filePill.className = `file-pill${track.sourceLabel ? "" : " empty"}`;
+        filePill.textContent = track.sourceLabel || "Waiting for source file";
+
+        head.append(title, filePill);
+
+        const helper = document.createElement("span");
+        helper.textContent = track.sourceLabel
+          ? `Imported as ${track.sourceLabel}`
+          : "This track appears after the chosen source is loaded.";
+        head.appendChild(helper);
+
+        const grid = document.createElement("div");
+        grid.className = "track-grid";
+
+        const bucketSelect = document.createElement("select");
+        bucketSelect.dataset.field = "bucket";
+        const unassignedOption = document.createElement("option");
+        unassignedOption.value = "";
+        unassignedOption.textContent = "Choose speaker bucket";
+        bucketSelect.appendChild(unassignedOption);
+        Object.entries(setupApi.BUCKETS).forEach(([value, label]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          option.selected = value === track.bucket;
+          bucketSelect.appendChild(option);
+        });
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.dataset.field = "speakerName";
+        nameInput.value = track.speakerName;
+        nameInput.placeholder = "Speaker name";
+
+        const socialInput = document.createElement("input");
+        socialInput.type = "text";
+        socialInput.dataset.field = "socialLink";
+        socialInput.value = track.socialLink;
+        socialInput.placeholder = "Optional public link";
+
+        grid.append(
+          renderField("Speaker bucket", bucketSelect),
+          renderField("Speaker name", nameInput),
+          renderField("Social link (optional)", socialInput),
+        );
+
+        article.append(head, grid);
+        article.addEventListener("input", (event) => updateTrack(event, index));
+        article.addEventListener("change", (event) => updateTrack(event, index));
+        return article;
+      }
+
+      function renderField(labelText, control) {
+        const label = document.createElement("label");
+        label.append(document.createTextNode(labelText), control);
+        return label;
+      }
+
+      function renderSummaryMeta(summary) {
+        summaryMetaElement.replaceChildren(
+          summaryRow("Source path", summary.sourceLabel),
+          summaryRow("Speaker tracks", `${summary.trackCount} ready to carry forward`),
+          summaryRow(
+            "Social links",
+            summary.socialCount
+              ? `${summary.socialCount} speaker ${summary.socialCount === 1 ? "link" : "links"} attached`
+              : "No social links added yet",
+          ),
+        );
+      }
+
+      function summaryRow(labelText, valueText) {
+        const row = document.createElement("div");
+        row.className = "summary-row";
+        const label = document.createElement("span");
+        label.textContent = labelText;
+        const value = document.createElement("strong");
+        value.textContent = valueText;
+        row.append(label, value);
+        return row;
+      }
+
+      function renderIssues(list) {
+        issuesElement.replaceChildren(
+          ...(list.length
+            ? list.map((issue) => {
+                const item = document.createElement("article");
+                item.className = "issue";
+                const title = document.createElement("strong");
+                title.textContent = issue.title;
+                const action = document.createElement("span");
+                action.textContent = issue.action;
+                item.append(title, action);
+                return item;
+              })
+            : [Object.assign(document.createElement("p"), { textContent: "Every required speaker track is assigned and ready for episode review." })]),
+        );
+      }
+
+      function renderSetupState() {
+        persistState();
+
+        const summary = setupApi.summary(state);
+        const openIssues = setupApi.issues(state);
+        const complete = setupApi.isComplete(state);
+
+        statusElement.className = `status ${complete ? "ready" : "review"}`;
+        statusElement.textContent = complete ? "Ready for episode review" : "Finish the setup";
+
+        summaryCopyElement.textContent = complete
+          ? `This ${summary.sourceLabel.toLowerCase()} will carry ${summary.names.join(", ")} into the next review step.`
+          : `Finish the missing source, speaker bucket, or speaker name before continuing from ${summary.sourceLabel.toLowerCase()}.`;
+
+        renderSummaryMeta(summary);
+        renderIssues(openIssues);
+
+        continueLink.setAttribute("aria-disabled", String(!complete));
+        if (complete) {
+          continueLink.href = continueHref();
+          if (isEmbeddedInPreviewApp()) {
+            continueLink.target = "_top";
+          } else {
+            continueLink.removeAttribute("target");
+          }
+        } else {
+          continueLink.removeAttribute("href");
+          continueLink.removeAttribute("target");
+        }
+
+        nextNoteElement.textContent = complete
+          ? "Episode readiness is the next screen. It will keep the chosen source path, speaker names, bucket assignments, and any social links you added here."
+          : "The next step stays locked until every required Host and Guest track is imported, named, and assigned.";
+
+        persistState();
+      }
+
+      function render() {
+        sourceLinkButton.setAttribute("aria-pressed", String(state.sourceType === "recording-link"));
+        sourceUploadButton.setAttribute("aria-pressed", String(state.sourceType === "multi-file"));
+
+        sourceInputTitle.textContent = state.sourceType === "recording-link" ? "Recording link" : "Upload set";
+        sourceInput.placeholder = state.sourceType === "recording-link"
+          ? "https://riverside.fm/studio/..."
+          : "Uploaded speaker files";
+        sourceInput.value = state.sourceType === "recording-link" ? state.recordingLink : "Host, Guest 1, and Guest 2 files";
+        sourceInput.readOnly = state.sourceType !== "recording-link";
+        loadSourceButton.textContent = state.sourceType === "recording-link" ? "Import tracks" : "Add uploaded files";
+        sourceHint.textContent = state.sourceType === "recording-link"
+          ? "One Riverside recording link should build the synced Host, Guest 1, and Guest 2 tracks together."
+          : "Separate uploads still resolve into one setup with the same speaker buckets and optional social links.";
+
+        tracksElement.replaceChildren(...state.tracks.map(renderTrack));
+        renderSetupState();
+      }
+
+      sourceLinkButton.addEventListener("click", () => switchSourceType("recording-link"));
+      sourceUploadButton.addEventListener("click", () => switchSourceType("multi-file"));
+      sourceInput.addEventListener("input", (event) => {
+        if (state.sourceType === "recording-link") {
+          state.recordingLink = event.target.value;
+          render();
+        }
+      });
+      loadSourceButton.addEventListener("click", loadSourceTracks);
+      document.querySelector("#reset").addEventListener("click", () => {
+        if (setupApi) {
+          setupApi.clear(setupStorage());
+        }
+        state = setupApi.createDefaultState();
+        state.tracks = blankTracks();
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

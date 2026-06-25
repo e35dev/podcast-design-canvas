@@ -25,6 +25,7 @@ assert.ok(navSource.includes('document.querySelector(".ingest-nav")'), "ingest n
 assert.ok(!/innerHTML/.test(navSource), "ingest nav builds the DOM without innerHTML");
 
 const ingestScreens = [
+  "episode-setup-intake.html",
   "episode-readiness.html",
   "speaker-role-mapping.html",
   "social-context-intake.html",
@@ -293,7 +294,7 @@ assert.equal(
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links target the parent app");
 
-const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
+const firstNav = renderNavFor("episode-setup-intake.html", "episode-setup-intake");
 assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
 assert.ok(
   !firstNav.nodes.some((node) => node.textContent === "Place videos in layout"),
@@ -304,7 +305,7 @@ assert.ok(
   "first ingest screen does not render a previous link",
 );
 assert.ok(
-  firstNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
+  firstNav.nodes.some((node) => node.textContent === "Next: Episode readiness"),
   "first ingest screen renders next link",
 );
 
@@ -324,7 +325,7 @@ assert.ok(
   "ingest path at speaker roles links forward to social context",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Setup step 2 of 3 · Speaker roles",
+  node.textContent === "Setup step 3 of 4 · Speaker roles",
 );
 assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");

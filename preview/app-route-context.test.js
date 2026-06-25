@@ -523,7 +523,7 @@ assert.equal(
 styleEntry.reroute("#missing-screen?from=style");
 assert.equal(
   styleEntry.nodes.frame.src,
-  "../prototype/source-media-health.html",
+  "../prototype/episode-setup-intake.html",
   "unknown route hashes fall back to the first known screen without route context",
 );
 

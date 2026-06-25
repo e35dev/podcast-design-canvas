@@ -17,17 +17,20 @@ const app = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
 assert.match(app, /<iframe id="screen"/, "app hosts screens in an iframe");
 assert.ok(app.includes('window.addEventListener("hashchange"'), "app routes on URL hash changes");
 assert.ok(app.includes("KNOWN.has(screenHash)"), "app only loads a known screen from the hash (no arbitrary URL)");
-assert.ok(app.includes('frame.src = `../prototype/${screen}.html${search}`'), "the frame loads the routed screen through the shell");
+assert.ok(app.includes('const nextSrc = `../prototype/${screen}.html${search}`'), "the shell builds the routed prototype src");
+assert.ok(app.includes("routeCache.routeSrc !== nextSrc"), "the shell avoids reloading the iframe when the route has not changed");
 assert.ok(app.includes("function currentRoute"), "app normalizes route hashes before loading the frame");
 assert.ok(app.includes("function routeSearchFor"), "app whitelists supported route query context");
 assert.match(app, /aria-current", "page"/, "the active screen is marked in the nav");
 assert.ok(!/innerHTML/.test(app), "app builds the nav without innerHTML");
 
-// Layout-first start (#1026): opening the app without a specific screen sends the creator
-// to the layout picker, so the first thing they see is layout selection and drag-and-drop
-// video placement — not a workflow screen. Explicit #screen hashes still load normally.
-assert.ok(app.includes("if (!window.location.hash)"), "app starts layout-first when no screen is requested");
-assert.ok(app.includes('window.location.replace("layout-first.html")'), "the layout-first start opens the layout picker");
+// Setup-first start (#1326): the preview app opens on the guided episode setup intake and
+// keeps later screens gated until the setup is complete.
+assert.ok(app.includes("episode-setup-intake"), "app includes the guided episode setup intake screen");
+assert.ok(app.includes('const EPISODE_SETUP_SCREEN = "episode-setup-intake"'), "app names the setup gate screen");
+assert.ok(app.includes("window.PodcastEpisodeSetupState"), "app reads the shared episode setup state helper");
+assert.ok(app.includes('event.data.type !== "pdc-episode-setup-state"'), "app listens for episode setup state updates from the intake screen");
+assert.ok(app.includes('link.setAttribute("aria-disabled", "true")'), "app visibly disables later rail links while setup is incomplete");
 
 // The script parses.
 new vm.Script(app.match(/<script>([\s\S]*?)<\/script>/)[1]);
