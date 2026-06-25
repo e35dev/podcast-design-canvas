@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Setup Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      fieldset {
+        margin: 24px 0 0;
+        padding: 0;
+        border: 0;
+      }
+
+      legend {
+        padding: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .sources {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .source {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: start;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+
+      .source input {
+        margin-top: 3px;
+      }
+
+      .source strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .source span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .source.selected {
+        border-color: var(--accent);
+        background: #eef6f3;
+      }
+
+      .source:focus-within {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .add-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+        margin-top: 16px;
+      }
+
+      .add-row label {
+        flex: 1 1 280px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.85fr);
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .tracks {
+        display: grid;
+        gap: 14px;
+      }
+
+      .track {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .track-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .track-source {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-ink);
+        background: #eef6f3;
+        border-radius: 999px;
+        padding: 3px 10px;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .summary-line {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 12px;
+      }
+
+      .speakers {
+        display: grid;
+        gap: 6px;
+        margin: 0 0 14px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .speakers li {
+        font-size: 13px;
+      }
+
+      .speakers .role {
+        font-weight: 700;
+        color: var(--accent-ink);
+      }
+
+      .issues {
+        display: grid;
+        gap: 8px;
+        margin: 0 0 14px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .issues li {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .ready-note {
+        color: #075246;
+        background: #dff5ef;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 13px;
+        margin: 0 0 14px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      button,
+      .continue-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        color: var(--accent);
+        border-color: #bfcbc7;
+      }
+
+      .track-head button.remove {
+        min-height: 32px;
+        padding: 4px 10px;
+        font-size: 13px;
+        background: #ffffff;
+        color: var(--block);
+        border-color: #e3b7b7;
+      }
+
+      .continue-link[aria-disabled="true"] {
+        opacity: 0.55;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      @media (max-width: 840px) {
+        .workspace { grid-template-columns: 1fr; }
+        .sources { grid-template-columns: 1fr; }
+        .fields { grid-template-columns: 1fr; }
+      }
+    </style>
+      <script src="../preview/ingest-nav.js" defer></script>
+      <script src="../preview/episode-setup-handoff.js"></script>
+  </head>
+  <body data-ingest-step="episode-setup-intake">
+    <main>
+      <h1>Start a new episode</h1>
+      <p class="lede">Begin a new episode by bringing in the recording — a recording link or separate synced speaker files — then give each speaker a role, a name, and any public links. This is carried straight into readiness so the rest of the workflow starts with the context you set here.</p>
+
+      <fieldset>
+        <legend>How are you bringing in this episode?</legend>
+        <div class="sources" id="sources" role="radiogroup" aria-label="Episode source path">
+          <label class="source" for="source-link">
+            <input type="radio" name="source-type" id="source-link" value="link">
+            <span>
+              <strong>Add a recording link</strong>
+              <span>Paste a Riverside-style link; each added link becomes a speaker track.</span>
+            </span>
+          </label>
+          <label class="source" for="source-upload">
+            <input type="radio" name="source-type" id="source-upload" value="upload">
+            <span>
+              <strong>Upload separate files</strong>
+              <span>Add one synced video file per speaker.</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="add-row">
+          <label id="linkField">
+            Recording link
+            <input type="url" id="linkInput" placeholder="https://riverside.fm/…">
+          </label>
+          <button type="button" id="addSource">Add speaker track</button>
+        </div>
+      </fieldset>
+
+      <section class="workspace" aria-label="Episode setup workspace">
+        <div class="panel">
+          <h2>Speaker tracks</h2>
+          <div class="tracks" id="tracks"></div>
+        </div>
+
+        <aside class="panel" aria-live="polite">
+          <h2>Setup summary</h2>
+          <p class="summary-line" id="sourceSummary"></p>
+          <ul class="speakers" id="speakerList"></ul>
+          <div class="ready-note" id="readyNote" hidden>Setup is complete. Continue carries it into episode readiness.</div>
+          <ul class="issues" id="issues"></ul>
+          <div class="actions">
+            <a class="continue-link" id="continue" aria-disabled="true">Continue to episode readiness</a>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const handoffApi = window.PodcastEpisodeSetupHandoff;
+      function handoffStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      const ROLES = handoffApi ? handoffApi.ROLES : [];
+      const SOURCE_TYPES = handoffApi ? handoffApi.SOURCE_TYPES : { link: "Recording link", upload: "Uploaded speaker files" };
+
+      // A reviewer should be able to open this screen and Continue immediately, then watch the
+      // gate close when a name, role, or source is missing. A test can inject a different
+      // starting setup through window.__SETUP_SEED__ to exercise the incomplete/duplicate paths.
+      const DEFAULT_SETUP = {
+        sourceType: "link",
+        speakers: [
+          { sourceName: "riverside.fm/host", name: "Dana Brooks", role: "host", social: "https://x.com/danabrooks" },
+          { sourceName: "riverside.fm/guest", name: "Marcus Lee", role: "guest-1", social: "" },
+        ],
+      };
+      const seed = (typeof window !== "undefined" && window.__SETUP_SEED__) || DEFAULT_SETUP;
+
+      let sourceType = SOURCE_TYPES[seed.sourceType] ? seed.sourceType : "link";
+      let nextId = 0;
+      let speakers = (seed.speakers || []).map((speaker) => ({
+        id: (nextId += 1),
+        sourceName: speaker.sourceName || "",
+        name: speaker.name || "",
+        role: speaker.role || "",
+        social: speaker.social || "",
+      }));
+
+      const sourcesElement = document.querySelector("#sources");
+      const linkInput = document.querySelector("#linkInput");
+      const linkField = document.querySelector("#linkField");
+      const addSourceButton = document.querySelector("#addSource");
+      const tracksElement = document.querySelector("#tracks");
+      const sourceSummaryElement = document.querySelector("#sourceSummary");
+      const speakerListElement = document.querySelector("#speakerList");
+      const issuesElement = document.querySelector("#issues");
+      const readyNoteElement = document.querySelector("#readyNote");
+      const continueLink = document.querySelector("#continue");
+
+      function sourceLabelFor(type) {
+        return SOURCE_TYPES[type] || "";
+      }
+
+      function defaultSourceName() {
+        if (sourceType === "link") {
+          const link = (linkInput && linkInput.value || "").trim();
+          return link || `riverside.fm/track-${speakers.length + 1}`;
+        }
+        return `speaker-${speakers.length + 1}.mp4`;
+      }
+
+      function addSpeaker() {
+        speakers.push({
+          id: (nextId += 1),
+          sourceName: defaultSourceName(),
+          name: "",
+          role: "",
+          social: "",
+        });
+        if (linkInput) {
+          linkInput.value = "";
+        }
+        render();
+      }
+
+      function removeSpeaker(id) {
+        speakers = speakers.filter((speaker) => speaker.id !== id);
+        render();
+      }
+
+      function setSourceType(type) {
+        if (!SOURCE_TYPES[type] || type === sourceType) {
+          return;
+        }
+        // Switching how the episode is brought in clears stale tracks so the creator
+        // never mixes a leftover link track into a fresh multi-file upload.
+        sourceType = type;
+        speakers = [];
+        render();
+      }
+
+      function renderSelect(selectedRole) {
+        const select = document.createElement("select");
+        select.dataset.field = "role";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Choose a role…";
+        placeholder.selected = !selectedRole;
+        select.append(placeholder);
+        for (const role of ROLES) {
+          const option = document.createElement("option");
+          option.value = role.value;
+          option.textContent = role.label;
+          option.selected = role.value === selectedRole;
+          select.append(option);
+        }
+        return select;
+      }
+
+      function renderField(labelText, control) {
+        const label = document.createElement("label");
+        label.append(document.createTextNode(labelText), control);
+        return label;
+      }
+
+      function renderTrack(speaker) {
+        const row = document.createElement("article");
+        row.className = "track";
+
+        const head = document.createElement("div");
+        head.className = "track-head";
+        const pill = document.createElement("span");
+        pill.className = "track-source";
+        pill.textContent = speaker.sourceName || "Untitled source";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove";
+        remove.textContent = "Remove";
+        remove.addEventListener("click", () => removeSpeaker(speaker.id));
+        head.append(pill, remove);
+
+        const nameInput = document.createElement("input");
+        nameInput.dataset.field = "name";
+        nameInput.value = speaker.name;
+        nameInput.placeholder = "Who is speaking?";
+
+        const socialInput = document.createElement("input");
+        socialInput.type = "url";
+        socialInput.dataset.field = "social";
+        socialInput.value = speaker.social;
+        socialInput.placeholder = "Optional public link";
+
+        const roleSelect = renderSelect(speaker.role);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+        fields.append(
+          renderField("Speaker name", nameInput),
+          renderField("Role", roleSelect),
+          renderField("Social link (optional)", socialInput),
+        );
+
+        row.append(head, fields);
+        row.addEventListener("input", (event) => updateSpeaker(event, speaker.id));
+        row.addEventListener("change", (event) => updateSpeaker(event, speaker.id));
+        return row;
+      }
+
+      function updateSpeaker(event, id) {
+        const field = event.target && event.target.dataset ? event.target.dataset.field : "";
+        if (!field) {
+          return;
+        }
+        const speaker = speakers.find((candidate) => candidate.id === id);
+        if (!speaker) {
+          return;
+        }
+        speaker[field] = event.target.value;
+        render();
+      }
+
+      // Creator-facing reasons the setup is not ready yet. These mirror the single
+      // completeness gate in episode-setup-handoff.js so the screen and the carried
+      // handoff never disagree about whether the setup is done.
+      function collectIssues() {
+        const issues = [];
+        if (!sourceLabelFor(sourceType)) {
+          issues.push("Choose how you're bringing in this episode.");
+        }
+        if (!speakers.length) {
+          issues.push("Add at least one speaker track.");
+        }
+        const roleCounts = {};
+        for (const speaker of speakers) {
+          if (speaker.role) {
+            roleCounts[speaker.role] = (roleCounts[speaker.role] || 0) + 1;
+          }
+        }
+        for (const speaker of speakers) {
+          const who = speaker.name.trim() || speaker.sourceName || "A speaker";
+          if (!speaker.name.trim()) {
+            issues.push(`${speaker.sourceName || "A speaker track"} still needs a speaker name.`);
+          }
+          if (!speaker.role) {
+            issues.push(`${who} needs a speaker role.`);
+          }
+        }
+        for (const role of Object.keys(roleCounts)) {
+          if (roleCounts[role] > 1) {
+            issues.push(`${handoffApi.ROLE_LABELS[role] || role} is assigned to more than one speaker.`);
+          }
+        }
+        return issues;
+      }
+
+      function pathSuffix() {
+        const path = new URLSearchParams(window.location.search).get("path");
+        return path === "episode" || path === "ingest" ? `path=${path}` : "";
+      }
+
+      function continueHref(state) {
+        const parts = [handoffApi.queryForState(state), pathSuffix()].filter(Boolean);
+        return parts.length ? `episode-readiness.html?${parts.join("&")}` : "episode-readiness.html";
+      }
+
+      function renderSummary() {
+        const state = handoffApi.normalize({ sourceType, speakers });
+        sourceSummaryElement.textContent = state
+          ? handoffApi.sourceSummary(state)
+          : `${sourceLabelFor(sourceType) || "No source chosen yet"} — ${speakers.length} ${speakers.length === 1 ? "speaker" : "speakers"} so far`;
+
+        speakerListElement.replaceChildren(...speakers.map((speaker) => {
+          const item = document.createElement("li");
+          const role = document.createElement("span");
+          role.className = "role";
+          role.textContent = speaker.role ? `${handoffApi.ROLE_LABELS[speaker.role] || speaker.role}: ` : "Unassigned: ";
+          item.append(role, document.createTextNode(speaker.name.trim() || speaker.sourceName || "—"));
+          return item;
+        }));
+
+        const issues = collectIssues();
+        issuesElement.replaceChildren(...issues.map((text) => {
+          const item = document.createElement("li");
+          item.textContent = text;
+          return item;
+        }));
+
+        const complete = Boolean(state);
+        readyNoteElement.hidden = !complete;
+        continueLink.dataset.ready = String(complete);
+        continueLink.setAttribute("aria-disabled", String(!complete));
+        if (complete) {
+          handoffApi.save(handoffStorage(), state);
+          continueLink.href = continueHref(state);
+        } else {
+          handoffApi.clear(handoffStorage());
+          continueLink.removeAttribute("href");
+          continueLink.href = "";
+        }
+      }
+
+      function renderSourceChoice() {
+        if (sourcesElement && sourcesElement.querySelectorAll) {
+          sourcesElement.querySelectorAll(".source").forEach((node) => {
+            const input = node.querySelector ? node.querySelector("input") : null;
+            const selected = Boolean(input && input.value === sourceType);
+            if (node.classList) {
+              node.classList.toggle("selected", selected);
+            }
+            if (input) {
+              input.checked = selected;
+            }
+          });
+        }
+        if (linkField) {
+          linkField.hidden = sourceType !== "link";
+        }
+        if (addSourceButton) {
+          addSourceButton.textContent = sourceType === "upload" ? "Add speaker file" : "Add speaker track";
+        }
+      }
+
+      function render() {
+        renderSourceChoice();
+        tracksElement.replaceChildren(...speakers.map(renderTrack));
+        renderSummary();
+      }
+
+      if (sourcesElement && sourcesElement.addEventListener) {
+        sourcesElement.addEventListener("change", (event) => {
+          if (event.target && event.target.name === "source-type") {
+            setSourceType(event.target.value);
+          }
+        });
+      }
+      if (addSourceButton) {
+        addSourceButton.addEventListener("click", addSpeaker);
+      }
+
+      render();
+    </script>
+  </body>
+</html>
