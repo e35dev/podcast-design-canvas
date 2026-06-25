@@ -663,17 +663,17 @@
                 <div class="drop-zone host" data-slot="host" tabindex="0" role="button" aria-label="Place the selected track into the host video slot">
                   <span class="slot-label">Host video slot</span>
                   <span class="slot-note">Drop the host video file here, or choose one. Keep room for captions and chapter callouts.</span>
-                  <input class="slot-file" type="file" accept="video/*" data-file-input="host" aria-label="Choose host video file">
+                  <input class="slot-file" type="file" accept="video/*" multiple data-file-input="host" aria-label="Choose host video file">
                 </div>
                 <div class="drop-zone guest" data-slot="guest" tabindex="0" role="button" aria-label="Place the selected track into the guest video slot">
                   <span class="slot-label">Guest video slot</span>
                   <span class="slot-note">Drop the guest video file here, or choose one, matched to framing and safe-area rules.</span>
-                  <input class="slot-file" type="file" accept="video/*" data-file-input="guest" aria-label="Choose guest video file">
+                  <input class="slot-file" type="file" accept="video/*" multiple data-file-input="guest" aria-label="Choose guest video file">
                 </div>
                 <div class="drop-zone guest-b is-hidden" data-slot="guest-b" tabindex="0" role="button" aria-label="Place the selected track into the second guest video slot">
                   <span class="slot-label">Guest 2 video slot</span>
                   <span class="slot-note">Drop the second guest video file here, or choose one, when the panel grid is selected.</span>
-                  <input class="slot-file" type="file" accept="video/*" data-file-input="guest-b" aria-label="Choose second guest video file">
+                  <input class="slot-file" type="file" accept="video/*" multiple data-file-input="guest-b" aria-label="Choose second guest video file">
                 </div>
               </div>
               <div class="canvas-footer">
@@ -684,7 +684,7 @@
                 <div class="title-slot drop-zone broll" data-slot="broll" tabindex="0" role="button" aria-label="Place the selected track into the b-roll drop zone">
                   <span class="slot-label">B-roll drop zone</span>
                   <div class="slot-note">Place contextual visuals, title cards, or screen shares without hiding the conversation.</div>
-                  <input class="slot-file" type="file" accept="video/*" data-file-input="broll" aria-label="Choose optional b-roll video file">
+                  <input class="slot-file" type="file" accept="video/*" multiple data-file-input="broll" aria-label="Choose optional b-roll video file">
                 </div>
               </div>
             </div>
@@ -1498,6 +1498,67 @@
           updateSlotStatus();
         }
 
+        // A file the placement path will actually accept into a slot: a video that carries real
+        // bytes. A non-video or a 0-byte export passes neither, so it never consumes a slot.
+        function isPlaceableVideo(file) {
+          return isVideoFile(file) && !isEmptyExport(file);
+        }
+
+        // The visible slots, in layout order, that are still empty — where extra recordings from a
+        // multi-file drop spill (required speaker slots first, optional b-roll last). Optionally
+        // excludes the slot the drop landed on, which already took the first file.
+        function openVisibleSlots(exceptZone) {
+          return currentDefinition().visibleSlots
+            .map(function (slot) { return document.querySelector(slotSelector(slot)); })
+            .filter(function (zone) {
+              return zone && zone !== exceptZone && !zone.classList.contains("filled");
+            });
+        }
+
+        // Place several recordings from one drop or file pick: fill the slot they landed on, then
+        // spill the remaining videos into the next empty visible slots in order. This lets a
+        // creator drop all of their synced speaker recordings onto the layout at once instead of
+        // one slot at a time, matching the layout-first start. Duplicate copies of the same source
+        // in a single drop are dropped (one source can't fill two speaker slots), and the creator
+        // is told when videos overflow the open slots or a non-video file was skipped.
+        function placeVideoFiles(zone, fileList) {
+          var all = Array.prototype.slice.call(fileList || []).filter(Boolean);
+          var seen = {};
+          var files = all.filter(function (file) {
+            var sig = fileSignature(file);
+            if (!sig) return true;
+            if (seen[sig]) return false;
+            seen[sig] = true;
+            return true;
+          });
+          if (!files.length) return;
+          placeVideoFile(zone, files[0]);
+          if (!zone.classList.contains("filled")) {
+            // The target slot rejected the first file — do not spill the rest into other slots.
+            return;
+          }
+          var extras = files.slice(1).filter(isPlaceableVideo);
+          var skippedNonVideo = files.slice(1).length - extras.length;
+          var open = openVisibleSlots(zone);
+          var overflow = 0;
+          extras.forEach(function (file, index) {
+            if (open[index]) {
+              placeVideoFile(open[index], file);
+            } else {
+              overflow += 1;
+            }
+          });
+          if (overflow > 0) {
+            updateSlotStatus("There's no open slot left, so " + overflow + " extra "
+              + (overflow === 1 ? "video wasn't" : "videos weren't")
+              + " placed. Remove a video to make room for another.");
+          } else if (skippedNonVideo > 0) {
+            updateSlotStatus(skippedNonVideo + " "
+              + (skippedNonVideo === 1 ? "file in that drop wasn't a video, so it was" : "files in that drop weren't videos, so they were")
+              + " skipped. Only video files can fill a slot.");
+          }
+        }
+
         function placeTrack(zone, track) {
           if (!zone || track !== zone.dataset.slot) {
             updateSlotStatus("That track belongs in a different slot.");
@@ -1602,9 +1663,9 @@
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
             zone.classList.remove("drag-over");
-            var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
-            if (file) {
-              placeVideoFile(zone, file);
+            var files = event.dataTransfer && event.dataTransfer.files;
+            if (files && files.length) {
+              placeVideoFiles(zone, files);
               return;
             }
             var track = event.dataTransfer.getData("text/plain");
@@ -1660,7 +1721,7 @@
         document.querySelectorAll(".slot-file").forEach(function (input) {
           input.addEventListener("change", function () {
             var zone = document.querySelector('.drop-zone[data-slot="' + input.dataset.fileInput + '"]');
-            placeVideoFile(zone, input.files && input.files[0]);
+            placeVideoFiles(zone, input.files);
           });
         });
 

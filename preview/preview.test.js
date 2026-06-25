@@ -69,12 +69,12 @@ assert.ok(
 );
 assert.match(
   html,
-  /class="slot-file" type="file" accept="video\/\*" data-file-input="host"/,
+  /class="slot-file" type="file" accept="video\/\*" multiple data-file-input="host"/,
   "preview canvas accepts a real uploaded host video, not only the sample track",
 );
 assert.match(
   html,
-  /class="slot-file" type="file" accept="video\/\*" data-file-input="guest-b"/,
+  /class="slot-file" type="file" accept="video\/\*" multiple data-file-input="guest-b"/,
   "preview canvas accepts a real uploaded second guest video when the panel layout is selected",
 );
 assert.match(
