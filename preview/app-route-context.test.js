@@ -194,8 +194,8 @@ assert.equal(
 );
 assert.equal(
   layoutStartRoles.nodes.nextStep.href,
-  "#source-media-health?path=episode",
-  "layout-first handoff does not leak layout params into later episode screens",
+  "#source-media-health?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff carries placed slots into the source media health step",
 );
 layoutStartRoles.reroute("#episode-readiness?path=episode&layout=panel&slots=host,guest,guest-b");
 assert.equal(
@@ -265,6 +265,24 @@ assert.equal(
   episodeRoles.nodes.nextStep.href,
   "#speaker-sync-repair?path=episode",
   "episode path source media step continues to speaker sync with route context",
+);
+
+const layoutStartSourceHealth = runApp("#source-media-health?path=episode&layout=panel&slots=host,guest,guest-b");
+assert.equal(
+  layoutStartSourceHealth.nodes.frame.src,
+  "../prototype/source-media-health.html?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff keeps the selected layout and required placed slots on source media health",
+);
+assert.equal(
+  layoutStartSourceHealth.nodes.prevStep.href,
+  "#speaker-role-mapping?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "layout-first handoff survives stepping back from source media health to role mapping",
+);
+layoutStartSourceHealth.reroute("#speaker-role-mapping?path=episode&layout=panel&slots=host,guest,guest-b");
+assert.equal(
+  layoutStartSourceHealth.nodes.nextStep.href,
+  "#source-media-health?path=episode&layout=panel&slots=host%2Cguest%2Cguest-b",
+  "returning to source media health restores the layout-first placement handoff",
 );
 
 episodeRoles.reroute("#speaker-sync-repair?path=episode");
