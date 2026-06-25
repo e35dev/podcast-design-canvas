@@ -36,6 +36,7 @@ function createPreviewAppRouting(order) {
     "start-from-previous-episode",
     "episode-chapter-markers",
     "intro-outro-builder",
+    "show-brand-kit-setup",
     "episode-runtime-shaping",
   ];
   const musicScreens = [

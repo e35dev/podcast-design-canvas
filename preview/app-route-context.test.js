@@ -417,7 +417,7 @@ assert.equal(
 );
 assert.equal(
   reusePath.nodes.nextStep.href,
-  "#episode-runtime-shaping?path=episode",
+  "#show-brand-kit-setup?path=episode",
   "episode reuse path steps forward with route context",
 );
 

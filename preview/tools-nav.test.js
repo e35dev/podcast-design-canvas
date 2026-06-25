@@ -74,6 +74,7 @@ const reuseFlow = new Set([
   "start-from-previous-episode.html",
   "episode-chapter-markers.html",
   "intro-outro-builder.html",
+  "show-brand-kit-setup.html",
   "episode-runtime-shaping.html",
 ]);
 

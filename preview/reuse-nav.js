@@ -11,6 +11,7 @@ const REUSE_FLOW = [
   { id: "start-from-previous-episode", file: "start-from-previous-episode.html", label: "Start from previous episode" },
   { id: "episode-chapter-markers", file: "episode-chapter-markers.html", label: "Episode chapter markers" },
   { id: "intro-outro-builder", file: "intro-outro-builder.html", label: "Intro & outro builder" },
+  { id: "show-brand-kit-setup", file: "show-brand-kit-setup.html", label: "Show brand kit" },
   { id: "episode-runtime-shaping", file: "episode-runtime-shaping.html", label: "Episode runtime shaping" },
 ];
 
