@@ -43,6 +43,7 @@ const publishFlow = new Set([
   "long-form-navigation.html",
   "episode-watch-through-preview.html",
   "destination-crop-preview.html",
+  "publish-destination-presets.html",
   "thumbnail-cover-frame.html",
   "show-notes-assembly.html",
   "episode-metadata-publishing.html",

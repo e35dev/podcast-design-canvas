@@ -18,6 +18,7 @@ const PUBLISH_FLOW = [
     label: "Watch-through preview",
   },
   { id: "destination-crop-preview", file: "destination-crop-preview.html", label: "Destination crop preview" },
+  { id: "publish-destination-presets", file: "publish-destination-presets.html", label: "Destination presets" },
   { id: "thumbnail-cover-frame", file: "thumbnail-cover-frame.html", label: "Thumbnail cover frame" },
   { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
   { id: "episode-metadata-publishing", file: "episode-metadata-publishing.html", label: "Episode metadata publishing" },

@@ -480,7 +480,7 @@ assert.equal(
 );
 assert.equal(
   publishPath.nodes.nextStep.href,
-  "#thumbnail-cover-frame?path=publish",
+  "#publish-destination-presets?path=publish",
   "publish path context is preserved when stepping forward inside publish prep",
 );
 

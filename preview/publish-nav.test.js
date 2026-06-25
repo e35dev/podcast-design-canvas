@@ -190,13 +190,13 @@ assert.ok(
   "first publish screen renders the next publish step",
 );
 const firstStep = firstNav.find(
-  (node) => node.textContent === "Publish step 1 of 10 · Long-form navigation",
+  (node) => node.textContent === "Publish step 1 of 11 · Long-form navigation",
 );
 assert.ok(firstStep, "first publish screen renders its visible step label");
 assert.equal(firstStep.attributes["aria-current"], "step", "current publish step exposes aria-current");
 
 assert.ok(
-  linkWithText(middleNav, "Next: Thumbnail cover frame"),
+  linkWithText(middleNav, "Next: Destination presets"),
   "middle publish screen renders the next publish step",
 );
 
@@ -253,10 +253,10 @@ assert.equal(
   "../preview/app.html#episode-watch-through-preview?path=publish",
   "embedded publish nav preserves publish path context on previous links",
 );
-const publishPathNext = linkWithText(publishPathNav, "Next: Thumbnail cover frame");
+const publishPathNext = linkWithText(publishPathNav, "Next: Destination presets");
 assert.equal(
   publishPathNext.href,
-  "../preview/app.html#thumbnail-cover-frame?path=publish",
+  "../preview/app.html#publish-destination-presets?path=publish",
   "embedded publish nav preserves publish path context on next links",
 );
 

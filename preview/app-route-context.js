@@ -82,6 +82,7 @@ function createPreviewAppRouting(order) {
   const pathedPublishScreens = new Set([
     "episode-watch-through-preview",
     "destination-crop-preview",
+    "publish-destination-presets",
     "thumbnail-cover-frame",
     "show-notes-assembly",
     "episode-metadata-publishing",
