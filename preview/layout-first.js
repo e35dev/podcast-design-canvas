@@ -641,7 +641,7 @@
       });
     }
 
-    function placeVideoFile(zone, file) {
+    function placeVideoFile(zone, file, options) {
       if (!zone || zone.classList.contains("is-hidden")) {
         return;
       }
@@ -663,7 +663,14 @@
         zone.dataset.invalidMessage = "";
       }
       delete invalidAside[zone.dataset.slot];
-      clearMatchingSource(zone, file);
+      // A move out of the b-roll slot relocates a recording that was deliberately reused there
+      // (#1304): a host/guest take and its b-roll cutaway can share one recording. That move
+      // must vacate only the b-roll source, so it skips the speaker-slot matching-source cleanup
+      // below — otherwise the cleanup would silently delete the separate speaker placement the
+      // recording was reused from. A normal placement still enforces one source per speaker slot.
+      if (!(options && options.skipMatchingClear)) {
+        clearMatchingSource(zone, file);
+      }
       clearZone(zone);
       zone.classList.add("filled");
       zone.dataset.fileName = file.name || "";
@@ -952,7 +959,10 @@
       // Read the target's current file before any placement clears it; if it has one we are
       // swapping, otherwise we are moving into an empty slot.
       const toFile = toZone.classList.contains("filled") ? toZone.placedFile : null;
-      placeVideoFile(toZone, fromFile);
+      // Moving a recording OUT of the b-roll slot must preserve any speaker slot that
+      // legitimately shares it (the reuse invariant from #1304): relocate only the b-roll
+      // source instead of also clearing the speaker placement as if it were a duplicate.
+      placeVideoFile(toZone, fromFile, { skipMatchingClear: isBrollSlot(fromZone) });
       if (toFile) {
         placeVideoFile(fromZone, toFile);
       } else {
