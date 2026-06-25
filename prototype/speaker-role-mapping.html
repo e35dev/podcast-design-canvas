@@ -345,6 +345,7 @@
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
       <script src="../preview/layout-handoff.js"></script>
+      <script src="../preview/episode-setup-handoff.js"></script>
   </head>
   <body data-ingest-step="speaker-role-mapping">
     <main>
@@ -420,9 +421,40 @@
       const layoutHandoff = layoutHandoffApi
         ? layoutHandoffApi.load(layoutHandoffStorage(), window.location.search)
         : null;
-      const initialTracks = layoutHandoffApi
+
+      // The guided episode setup intake already assigned each speaker a role and a name. Carry
+      // that here through the shared setup handoff so role mapping opens pre-filled instead of
+      // asking for the same roles again — the layout-first start still takes precedence when
+      // both are present.
+      const setupHandoffApi = window.PodcastEpisodeSetupHandoff;
+      function setupHandoffStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+      const setupHandoff = !layoutHandoff && setupHandoffApi
+        ? setupHandoffApi.load(setupHandoffStorage(), window.location.search)
+        : null;
+      function roleMapRoleFor(role) {
+        return role === "host" || role === "co-host" || role === "producer" ? role : "guest";
+      }
+      function tracksFromSetup(setup) {
+        return setup.speakers.map((speaker, index) => ({
+          id: `setup-${index + 1}`,
+          name: speaker.name,
+          role: roleMapRoleFor(speaker.role),
+          signal: "speaker-name",
+          decision: "suggested",
+        }));
+      }
+
+      const initialTracks = layoutHandoff && layoutHandoffApi
         ? layoutHandoffApi.tracksFromState(layoutHandoff, sampleTracks)
-        : structuredClone(sampleTracks);
+        : setupHandoff
+          ? tracksFromSetup(setupHandoff)
+          : structuredClone(sampleTracks);
 
       let tracks = structuredClone(initialTracks);
 
