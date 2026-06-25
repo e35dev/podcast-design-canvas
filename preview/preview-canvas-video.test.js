@@ -244,10 +244,37 @@ assert.ok(zoneFor("host").classList.contains("filled"), "removing one slot leave
 assert.equal(continueLink.attributes["aria-disabled"], "true", "Continue re-gates after a required video is removed");
 assert.ok(revoked.length > 0, "removing a placed video revokes its object URL");
 
+// An empty slot that rejects a bad file is clearly flagged invalid on the canvas itself — not
+// just a side-panel sentence a creator could miss while scanning the slots (#1131).
+const guestIndicatorAfterRemoval = zoneFor("guest").querySelector(".slot-state");
+zoneFor("guest").listeners.drop({
+  preventDefault() {},
+  dataTransfer: { files: [{ name: "notes.txt", type: "text/plain" }], getData() { return ""; } },
+});
+assert.equal(zoneFor("guest").classList.contains("filled"), false, "the rejected file does not fill the empty guest slot");
+assert.equal(guestIndicatorAfterRemoval.textContent, "Invalid file", "the empty guest slot badge names the rejection");
+assert.ok(guestIndicatorAfterRemoval.classList.contains("is-invalid"), "the empty guest slot badge carries the invalid state class");
+
+// Placing a real video afterward clears the invalid flag along with filling the slot.
+dropFile("guest", video("guest-retry.mp4", 4000, 44));
+assert.equal(guestIndicatorAfterRemoval.textContent, "Ready", "a valid recording clears the invalid badge");
+assert.ok(guestIndicatorAfterRemoval.classList.contains("is-ready"), "the guest slot returns to the ready state class");
+
 // Reset clears every placement and revokes all remaining object URLs.
 resetButton.listeners.click();
 assert.equal(zones.filter((zone) => zone.classList.contains("filled")).length, 0, "reset clears every placed video");
 assert.equal(continueLink.attributes["aria-disabled"], "true", "reset re-gates Continue");
 assert.equal(revoked.length, createdUrls.length, "reset revokes every object URL the canvas created");
+
+// Reset also clears an invalid flag left on a slot that never held a valid file.
+zoneFor("host").listeners.drop({
+  preventDefault() {},
+  dataTransfer: { files: [{ name: "notes.txt", type: "text/plain" }], getData() { return ""; } },
+});
+const hostIndicatorFinal = zoneFor("host").querySelector(".slot-state");
+assert.ok(hostIndicatorFinal.classList.contains("is-invalid"), "dropping a bad file on the reset host slot flags it invalid");
+resetButton.listeners.click();
+assert.equal(hostIndicatorFinal.textContent, "Needs video", "reset clears the invalid badge on a slot that was never filled");
+assert.ok(hostIndicatorFinal.classList.contains("is-missing"), "the slot returns to the plain missing state, not invalid");
 
 console.log("preview canvas video: real media placement, duplicate guard, preservation, and cleanup verified");
