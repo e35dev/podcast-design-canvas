@@ -506,7 +506,11 @@
           issues.push(issueRecord("limit", "Check that the guest still looks natural", guest.note));
         }
         if (presetHandoffReady()) {
-          issues.push(issueRecord("ready", "Preset setup ready", "Open preset styling to continue with this speaker look."));
+          issues.push({
+            ...issueRecord("ready", "Preset setup ready", "Open preset styling to continue with this speaker look."),
+            fixScreen: nextVisualSurface,
+            fixLabel: "preset styling",
+          });
         }
         issuesElement.replaceChildren(
           ...issues.map(renderIssue),
