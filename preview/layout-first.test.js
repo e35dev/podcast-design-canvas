@@ -1236,23 +1236,33 @@ const pickerShortcuts = layoutButtons[0].getAttribute("aria-keyshortcuts") || ""
 assert.equal(layoutButtons[0].getAttribute("tabindex"), "0", "the active layout option is in the tab order");
 assert.equal(layoutButtons[1].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
 assert.equal(layoutButtons[2].getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
-layoutButtons[0].listeners.keydown({ key: "ArrowRight", preventDefault() {} });
+function firePickerKey(button, key, target) {
+  button.listeners.keydown({ key, preventDefault() {}, target: target === undefined ? button : target });
+}
+firePickerKey(layoutButtons[0], "ArrowRight");
 assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowRight applies the next layout (solo)");
 assert.equal(lastFocused, layoutButtons[1], "ArrowRight moves focus to the next layout option");
 assert.equal(layoutButtons[1].getAttribute("tabindex"), "0", "the newly active layout option becomes tabbable after navigation");
 assert.equal(layoutButtons[0].getAttribute("tabindex"), "-1", "the previously active layout option leaves the tab order");
-layoutButtons[1].listeners.keydown({ key: "ArrowDown", preventDefault() {} });
+firePickerKey(layoutButtons[1], "ArrowDown");
 assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "ArrowDown also advances to the next layout (panel)");
-layoutButtons[2].listeners.keydown({ key: "ArrowUp", preventDefault() {} });
+// Stepping to panel reveals Guest 2; focus must stay on the picker, not jump into the new slot.
+assert.equal(lastFocused, layoutButtons[2], "arrow-key layout stepping keeps focus on the picker, not a newly visible slot");
+firePickerKey(layoutButtons[2], "ArrowUp");
 assert.equal(layoutButtons[1].getAttribute("aria-pressed"), "true", "ArrowUp steps back to the previous layout");
-layoutButtons[1].listeners.keydown({ key: "ArrowLeft", preventDefault() {} });
+firePickerKey(layoutButtons[1], "ArrowLeft");
 assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "ArrowLeft steps back to the previous layout");
-layoutButtons[0].listeners.keydown({ key: "End", preventDefault() {} });
+firePickerKey(layoutButtons[0], "End");
 assert.equal(layoutButtons[2].getAttribute("aria-pressed"), "true", "End applies the last layout (panel)");
-layoutButtons[2].listeners.keydown({ key: "Home", preventDefault() {} });
+firePickerKey(layoutButtons[2], "Home");
 assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "Home applies the first layout (interview)");
-layoutButtons[0].listeners.keydown({ key: "Enter", preventDefault() {} });
+firePickerKey(layoutButtons[0], "Enter");
 assert.equal(layoutButtons[0].getAttribute("aria-pressed"), "true", "a non-navigation key leaves the layout selection unchanged");
+// A navigation key bubbling from a nested label must not step layouts — same guard as placed-video move.
+const beforeBubbleLayout = layoutButtons[0].getAttribute("aria-pressed");
+firePickerKey(layoutButtons[0], "ArrowRight", layoutButtons[0].children[0]);
+assert.equal(layoutButtons[0].getAttribute("aria-pressed"), beforeBubbleLayout, "an arrow key from a nested label does not step layouts");
+assert.equal(lastFocused, layoutButtons[0], "focus stays on the current layout option when a child had focus");
 controller.applyLayout("interview");
 
 // The gated Continue stays keyboard-reachable: an <a> with no href falls out of the tab order,
