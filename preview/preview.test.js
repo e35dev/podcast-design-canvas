@@ -26,6 +26,11 @@ assert.match(html, /<title>Podcast Design Canvas — Preview<\/title>/, "preview
 assert.match(html, /aria-label="Podcast Design Canvas preview shell"/, "preview shell exposes landmark label");
 assert.match(html, /Example podcast layout canvas/, "preview shell leads with an example podcast layout canvas");
 assert.match(html, /Starting layout options/, "preview shell exposes layout choices before placement");
+// The starting-layout picker is single-select with arrow-key navigation, so it must carry
+// radio-group semantics (not toggle-button aria-pressed) for assistive technology.
+assert.match(html, /class="layout-picker" role="radiogroup"/, "the shell layout picker is a radio group");
+assert.match(html, /data-layout="interview" role="radio" aria-checked="true"/, "the active shell layout option is a checked radio");
+assert.match(html, /data-layout="solo" role="radio" aria-checked="false"/, "an inactive shell layout option is an unchecked radio");
 assert.match(html, /Use solo spotlight/, "preview shell offers a visibly different solo layout");
 assert.match(html, /Use panel grid/, "preview shell offers a three-speaker panel layout");
 assert.match(html, /Host video slot/, "preview shell shows a host video drop zone");

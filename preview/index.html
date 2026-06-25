@@ -344,13 +344,13 @@
         line-height: 1.35;
       }
 
-      .layout-choice[aria-pressed="true"] {
+      .layout-choice[aria-checked="true"] {
         border-color: var(--accent);
         background: #123d35;
         color: #ffffff;
       }
 
-      .layout-choice[aria-pressed="true"] span {
+      .layout-choice[aria-checked="true"] span {
         color: rgba(255, 255, 255, 0.82);
       }
 
@@ -632,16 +632,16 @@
           <div>
             <h2 class="canvas-title" id="canvas-title">Example podcast layout canvas</h2>
             <p class="canvas-lede">Start with a concrete long-form episode composition: place real host and guest videos into their slots, or select the sample tracks and choose their places, keep the title and captions readable, and reserve a dedicated drop zone for b-roll moments.</p>
-            <div class="layout-picker" role="group" aria-label="Starting layout options">
-              <button type="button" class="layout-choice" data-layout="interview" aria-pressed="true">
+            <div class="layout-picker" role="radiogroup" aria-label="Starting layout options">
+              <button type="button" class="layout-choice" data-layout="interview" role="radio" aria-checked="true">
                 <strong data-layout-label>Using interview split</strong>
                 <span>Host and guest side by side.</span>
               </button>
-              <button type="button" class="layout-choice" data-layout="solo" aria-pressed="false">
+              <button type="button" class="layout-choice" data-layout="solo" role="radio" aria-checked="false">
                 <strong data-layout-label>Use solo spotlight</strong>
                 <span>One speaker with a larger frame.</span>
               </button>
-              <button type="button" class="layout-choice" data-layout="panel" aria-pressed="false">
+              <button type="button" class="layout-choice" data-layout="panel" role="radio" aria-checked="false">
                 <strong data-layout-label>Use panel grid</strong>
                 <span>Host plus two guests.</span>
               </button>
@@ -1562,7 +1562,10 @@
             var buttonLayout = layouts[button.dataset.layout] || layouts.interview;
             var active = button.dataset.layout === currentLayout;
             var label = button.querySelector("[data-layout-label]");
-            button.setAttribute("aria-pressed", active ? "true" : "false");
+            button.setAttribute("aria-checked", active ? "true" : "false");
+            // Roving tabindex: the picker is one tab stop and the arrow keys move within it, so
+            // only the active option is tabbable; the rest are reached with the arrow keys.
+            button.setAttribute("tabindex", active ? "0" : "-1");
             if (label) label.textContent = active ? buttonLayout.activeLabel : buttonLayout.readyLabel;
           });
 
@@ -1629,9 +1632,28 @@
           });
         });
 
-        document.querySelectorAll("[data-layout]").forEach(function (button) {
+        var layoutButtons = Array.prototype.slice.call(document.querySelectorAll("[data-layout]"));
+        layoutButtons.forEach(function (button, index) {
+          // Advertise the arrow-key shortcuts so a keyboard user discovers they can step through
+          // layouts without tabbing button to button; the keys must match the handler below.
+          button.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight ArrowUp ArrowDown Home End");
           button.addEventListener("click", function () {
             applyLayout(button.dataset.layout);
+          });
+          // Arrow keys move between layout options and apply the one they land on; Home/End jump
+          // to the first/last. Focus follows so the creator keeps stepping through the radio group.
+          button.addEventListener("keydown", function (event) {
+            var key = event && event.key;
+            var nextIndex = null;
+            if (key === "ArrowRight" || key === "ArrowDown") nextIndex = (index + 1) % layoutButtons.length;
+            else if (key === "ArrowLeft" || key === "ArrowUp") nextIndex = (index - 1 + layoutButtons.length) % layoutButtons.length;
+            else if (key === "Home") nextIndex = 0;
+            else if (key === "End") nextIndex = layoutButtons.length - 1;
+            if (nextIndex === null) return;
+            if (typeof event.preventDefault === "function") event.preventDefault();
+            var target = layoutButtons[nextIndex];
+            applyLayout(target.dataset.layout);
+            if (target && typeof target.focus === "function") target.focus();
           });
         });
 

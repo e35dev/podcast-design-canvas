@@ -267,7 +267,7 @@ const soloButton = layoutButtons.find((button) => button.dataset.layout === "sol
 const panelButton = layoutButtons.find((button) => button.dataset.layout === "panel");
 const interviewButton = layoutButtons.find((button) => button.dataset.layout === "interview");
 
-assert.equal(interviewButton.getAttribute("aria-pressed"), "true", "interview starts selected");
+assert.equal(interviewButton.getAttribute("aria-checked"), "true", "interview starts selected");
 assert.equal(guestBChip.hidden, true, "the second guest track is hidden until the panel layout is selected");
 assert.equal(guestBZone.classList.contains("is-hidden"), true, "the second guest slot is hidden in the interview layout");
 
@@ -298,7 +298,7 @@ assert.strictEqual(
 );
 
 soloButton.click();
-assert.equal(soloButton.getAttribute("aria-pressed"), "true", "solo layout button becomes active");
+assert.equal(soloButton.getAttribute("aria-checked"), "true", "solo layout button becomes active");
 assert.equal(speakerRow.className, "speaker-row layout-solo", "solo layout visibly switches to a one-speaker composition");
 assert.equal(hostZone.classList.contains("filled"), true, "switching to solo preserves the placed host track");
 assert.equal(guestZone.classList.contains("filled"), true, "switching to solo keeps the guest placement available for switching back");
@@ -311,7 +311,7 @@ assert.strictEqual(
 );
 
 panelButton.click();
-assert.equal(panelButton.getAttribute("aria-pressed"), "true", "panel layout button becomes active");
+assert.equal(panelButton.getAttribute("aria-checked"), "true", "panel layout button becomes active");
 assert.equal(speakerRow.className, "speaker-row layout-panel", "panel layout visibly switches to a three-speaker composition");
 assert.equal(guestZone.classList.contains("is-hidden"), false, "panel restores the first guest slot with its placement");
 assert.equal(guestBZone.classList.contains("is-hidden"), false, "panel reveals the second guest slot");
@@ -386,5 +386,21 @@ resetButton.click();
 pressKey(brollChip, "Tab");
 assert.equal(brollChip.getAttribute("aria-pressed"), "false", "a non-activating key does not select a chip");
 assert.match(slotStatus.textContent, /Optional b-roll can be added later\./, "reset returns b-roll copy to the optional-later state");
+
+// The layout picker is a radio group: a roving tabindex makes it a single tab stop, and the
+// arrow keys move between options and apply the one they land on (Home/End jump to first/last).
+interviewButton.click();
+assert.equal(interviewButton.getAttribute("aria-checked"), "true", "interview is the active radio");
+assert.equal(interviewButton.getAttribute("tabindex"), "0", "the active layout option is the picker's tab stop");
+assert.equal(soloButton.getAttribute("tabindex"), "-1", "an inactive layout option is removed from the tab order");
+pressKey(interviewButton, "ArrowRight");
+assert.equal(soloButton.getAttribute("aria-checked"), "true", "ArrowRight moves to and applies the next layout (solo)");
+assert.equal(soloButton.focused, true, "ArrowRight moves focus to the next layout option");
+pressKey(soloButton, "ArrowLeft");
+assert.equal(interviewButton.getAttribute("aria-checked"), "true", "ArrowLeft steps back to the previous layout");
+pressKey(interviewButton, "End");
+assert.equal(panelButton.getAttribute("aria-checked"), "true", "End applies the last layout (panel)");
+pressKey(panelButton, "Home");
+assert.equal(interviewButton.getAttribute("aria-checked"), "true", "Home applies the first layout (interview)");
 
 console.log("layout-first canvas handoff: keyboard, click, and drag placement all unlock continue correctly");
