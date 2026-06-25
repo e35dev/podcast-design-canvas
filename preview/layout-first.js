@@ -197,6 +197,21 @@
       backLink.textContent = "← Back to " + origin.label;
     })();
 
+    // When the creator arrived from the episode-flow placement detour, continue back into source
+    // media health with the placed videos — not the generic production-workspace handoff.
+    (function applyOriginContinueHref() {
+      if (!continueLink || !continueLink.dataset) return;
+      const loc = options.location || global.location;
+      const search = loc && loc.search;
+      if (!search) return;
+      const params = new URLSearchParams(search);
+      if (params.get("from") !== "episode") return;
+      const path = params.get("path");
+      const hash = path === "episode" ? "source-media-health?path=episode" : "source-media-health";
+      continueLink.dataset.readyHref = `./app.html#${hash}`;
+      continueLink.textContent = "Continue to source media health →";
+    })();
+
     // When Continue is gated, a screen-reader user focusing it should hear WHY, not just that
     // it is dimmed. The live placement status names which required videos are still missing
     // (and reads "Required speaker videos ready." once they are all placed), so describe the

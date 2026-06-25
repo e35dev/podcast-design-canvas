@@ -305,6 +305,26 @@
         outline-offset: 2px;
       }
 
+      .layout-handoff {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+        border: 1px solid #b8d7d0;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .layout-handoff strong {
+        color: var(--accent);
+      }
+
+      .layout-handoff p {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -497,6 +517,7 @@
       <section class="workspace" aria-label="Source media health workspace">
         <div class="panel">
           <h2>Speaker files</h2>
+          <div id="layout-handoff" class="layout-handoff" hidden></div>
           <div class="batch-import" id="batchImport" aria-live="polite">
             <div class="batch-head">
               <span id="batchStatus" class="batch-status all-clear">All clear</span>
@@ -523,6 +544,7 @@
       </section>
     </main>
 
+    <script src="../preview/layout-handoff.js"></script>
     <script>
       // Each health check maps a detected source problem to plain creator language and a next step.
       const conditions = {
@@ -632,7 +654,22 @@
         { id: "guest-3", role: "Guest 3", name: "Guest 3 — Alex Kim", condition: "quiet", disposition: "keep" },
       ];
 
-      let speakers = structuredClone(sampleSpeakers);
+      const layoutHandoffApi = window.PodcastLayoutHandoff;
+      function layoutHandoffStorage() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+      const layoutHandoff = layoutHandoffApi
+        ? layoutHandoffApi.load(layoutHandoffStorage(), window.location.search)
+        : null;
+      const initialSpeakers = layoutHandoffApi
+        ? layoutHandoffApi.speakersFromState(layoutHandoff, sampleSpeakers)
+        : structuredClone(sampleSpeakers);
+
+      let speakers = structuredClone(initialSpeakers);
       let showFlaggedOnly = false;
 
       const speakersElement = document.querySelector("#speakers");
@@ -645,6 +682,7 @@
       const batchLinksElement = document.querySelector("#batchLinks");
       const batchConditionTagsElement = document.querySelector("#batchConditionTags");
       const batchFilterNoteElement = document.querySelector("#batchFilterNote");
+      const layoutHandoffElement = document.querySelector("#layout-handoff");
 
       document.querySelector("#addSpeaker").addEventListener("click", () => {
         const next = speakers.length;
@@ -659,10 +697,34 @@
       });
 
       document.querySelector("#reset").addEventListener("click", () => {
-        speakers = structuredClone(sampleSpeakers);
+        speakers = structuredClone(initialSpeakers);
         showFlaggedOnly = false;
         render();
       });
+
+      function joinNames(names) {
+        const clean = names.map((name) => (name || "").trim()).filter(Boolean);
+        if (clean.length === 0) return "Two speakers";
+        if (clean.length === 1) return clean[0];
+        if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+        return `${clean.slice(0, -1).join(", ")} and ${clean[clean.length - 1]}`;
+      }
+
+      function hasCarriedSig(speaker) {
+        return Boolean(speaker && speaker.sig);
+      }
+
+      function assignedSourceCounts(list) {
+        return layoutHandoffApi && layoutHandoffApi.assignedSourceCounts
+          ? layoutHandoffApi.assignedSourceCounts(list, hasCarriedSig)
+          : {};
+      }
+
+      function assignedSourceNames(list, sig) {
+        return layoutHandoffApi && layoutHandoffApi.assignedSourceNames
+          ? layoutHandoffApi.assignedSourceNames(list, sig, hasCarriedSig)
+          : [];
+      }
 
       // Rolled-up batch status follows the most serious track: action needed wins over
       // attention suggested, which wins over all clear.
@@ -695,6 +757,7 @@
       // Single source of truth: map each speaker's detected condition + creator choice
       // to one of the spec's readiness states, plus a creator-facing issue.
       function evaluate(list) {
+        const sigCount = assignedSourceCounts(list);
         const results = list.map((speaker) => {
           const condition = conditions[speaker.condition];
           // Honor only steps that are valid for this condition; ignore any stale
@@ -704,7 +767,15 @@
           let state = "ready";
           let issue = null;
 
-          if (speaker.condition === "good") {
+          if (speaker.sig && sigCount[speaker.sig] > 1) {
+            state = "review suggested";
+            issue = {
+              title: `${speaker.name} shares a recording with another speaker`,
+              action: "Replace one of the files with a separate recording — one video can't fill two speaker frames.",
+              tone: "review",
+              groupKey: `sig:${speaker.sig}`,
+            };
+          } else if (speaker.condition === "good") {
             state = "ready";
           } else if (disposition === "replace") {
             state = "ready";
@@ -893,12 +964,44 @@
             ? "Some files need replacing"
             : "Review suggested";
 
-        const issues = evaluation.results.map((result) => result.issue).filter(Boolean);
+        const issues = [];
+        const seenGroup = new Set();
+        evaluation.results.forEach((result, index) => {
+          if (!result.issue) return;
+          const speaker = speakers[index];
+          if (result.issue.groupKey && result.issue.groupKey.startsWith("sig:")) {
+            const key = result.issue.groupKey;
+            if (seenGroup.has(key)) return;
+            seenGroup.add(key);
+            const names = assignedSourceNames(speakers, speaker.sig);
+            issues.push({
+              title: `${joinNames(names)} use the same recording`,
+              action: "Give each speaker their own video — one recording can't fill multiple speaker frames.",
+              tone: "review",
+            });
+            return;
+          }
+          issues.push(result.issue);
+        });
         issuesElement.replaceChildren(
           ...(issues.length
             ? issues.map(renderIssue)
             : [Object.assign(document.createElement("p"), { textContent: "All speaker files are ready for preset selection." })]),
         );
+        renderLayoutHandoff();
+      }
+
+      function renderLayoutHandoff() {
+        if (!layoutHandoffElement || !layoutHandoff) {
+          return;
+        }
+        const slotNames = layoutHandoffApi.placementList(layoutHandoff);
+        const heading = document.createElement("strong");
+        heading.textContent = `From layout start: ${layoutHandoff.layoutLabel}`;
+        const copy = document.createElement("p");
+        copy.textContent = `Placed videos ready for source review: ${slotNames}.`;
+        layoutHandoffElement.replaceChildren(heading, copy);
+        layoutHandoffElement.hidden = false;
       }
 
       function badgeClass(state) {
