@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Setup Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 20px;
+        margin-top: 24px;
+        background: #ffffff;
+      }
+
+      .panel > h2 {
+        font-size: 18px;
+        margin-bottom: 4px;
+      }
+
+      .panel-note {
+        color: var(--muted);
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+      }
+
+      legend {
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .source-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .source-option {
+        flex: 1 1 220px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        cursor: pointer;
+      }
+
+      .source-option[data-selected="true"] {
+        border-color: var(--accent);
+        background: var(--panel);
+      }
+
+      .source-option strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .source-option span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .link-row {
+        margin-top: 16px;
+      }
+
+      label.field {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="url"],
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font: inherit;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      .sources {
+        display: grid;
+        gap: 14px;
+      }
+
+      .source-row {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 12px 16px;
+      }
+
+      .source-row .source-label {
+        grid-column: 1 / -1;
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .source-row .remove {
+        border: 0;
+        background: none;
+        color: var(--block);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .empty-sources {
+        color: var(--muted);
+        font-size: 14px;
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        padding: 18px;
+        text-align: center;
+      }
+
+      button.add {
+        margin-top: 14px;
+        border: 1px solid var(--accent);
+        background: var(--panel);
+        color: var(--accent);
+        font: inherit;
+        font-weight: 700;
+        padding: 9px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .status {
+        margin-top: 24px;
+        font-weight: 700;
+        padding: 10px 14px;
+        border-radius: 8px;
+      }
+
+      .status.ready {
+        background: #e7f4ef;
+        color: #0d5b46;
+      }
+
+      .status.incomplete {
+        background: #fdf3e3;
+        color: var(--warn);
+      }
+
+      .continue-note {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 12px;
+      }
+
+      .continue-link {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 11px 20px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .continue-link[aria-disabled="true"] {
+        background: #cdd6d2;
+        color: #6c7672;
+        pointer-events: none;
+      }
+
+      .continue-link:focus-visible,
+      button:focus-visible,
+      .source-option:focus-within {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 640px) {
+        .source-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script src="../preview/ingest-nav.js" defer></script>
+    <script src="../preview/episode-setup-handoff.js"></script>
+  </head>
+  <body data-ingest-step="episode-setup-intake">
+    <main>
+      <h1>Start a new episode</h1>
+      <p class="lede">
+        Bring in the recording, give each source a speaker role, and add the names and
+        social links the rest of the workflow needs before you choose a style. You can
+        continue once the host is assigned and every source has a name.
+      </p>
+
+      <section class="panel" aria-labelledby="source-heading">
+        <h2 id="source-heading">1. Bring in the recording</h2>
+        <p class="panel-note">Choose how this episode was recorded.</p>
+        <fieldset>
+          <legend>How are you adding the recording?</legend>
+          <div class="source-options" id="source-options" role="radiogroup" aria-label="Recording source"></div>
+        </fieldset>
+        <div class="link-row" id="link-row" hidden>
+          <label class="field" for="recording-link">Recording link</label>
+          <input type="url" id="recording-link" placeholder="https://riverside.fm/studio/your-episode" autocomplete="off">
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">2. Assign each source to a speaker</h2>
+        <p class="panel-note">
+          Give every source a role (Host, Guest 1, or Guest 2), a name, and an optional
+          social link. The host is required; guests are added as you need them.
+        </p>
+        <div class="sources" id="sources"></div>
+        <button type="button" class="add" id="add-source">Add a source</button>
+      </section>
+
+      <p class="status incomplete" id="status" role="status"></p>
+      <p class="continue-note" id="continueNote"></p>
+      <a class="continue-link" id="continue" aria-disabled="true">Continue to episode readiness</a>
+    </main>
+
+    <script>
+      "use strict";
+
+      const setupApi = window.PodcastEpisodeSetup;
+      const BUCKET_LABELS = setupApi.BUCKET_LABELS;
+
+      const SOURCE_TYPES = [
+        {
+          id: "recording-link",
+          title: "Recording link",
+          note: "Paste a Riverside-style link; add a track for each participant.",
+        },
+        {
+          id: "separate-files",
+          title: "Separate synced files",
+          note: "Add one synced file per speaker.",
+        },
+      ];
+
+      const state = {
+        sourceType: "",
+        recordingLink: "",
+        tracks: [],
+      };
+      let nextId = 1;
+
+      const sourceOptionsEl = document.querySelector("#source-options");
+      const linkRowEl = document.querySelector("#link-row");
+      const linkInputEl = document.querySelector("#recording-link");
+      const sourcesEl = document.querySelector("#sources");
+      const addSourceEl = document.querySelector("#add-source");
+      const statusEl = document.querySelector("#status");
+      const continueLink = document.querySelector("#continue");
+      const continueNoteEl = document.querySelector("#continueNote");
+
+      function sessionStore() {
+        try {
+          return window.sessionStorage;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function currentPath() {
+        return new URLSearchParams(window.location.search).get("path") || "";
+      }
+
+      // When the screen runs inside the unified preview app's iframe, route the
+      // handoff through the app shell (top frame) so the next step loads in place.
+      function isEmbeddedInPreviewApp() {
+        try {
+          return window.self !== window.top && /\/preview\/app\.html$/.test(window.top.location.pathname);
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function nextStepHref() {
+        const path = currentPath();
+        if (isEmbeddedInPreviewApp()) {
+          const suffix = path === "episode" || path === "ingest" ? `?path=${path}` : "";
+          return `../preview/app.html#episode-readiness${suffix}`;
+        }
+        const query = setupApi.queryForState(setupApi.toHandoffState(state));
+        const params = new URLSearchParams(query);
+        if (path === "episode" || path === "ingest") {
+          params.set("path", path);
+        }
+        const search = params.toString();
+        return `episode-readiness.html${search ? `?${search}` : ""}`;
+      }
+
+      function defaultLabel() {
+        if (state.sourceType === "separate-files") {
+          return `speaker-${nextId}.mp4`;
+        }
+        return `Participant ${nextId} track`;
+      }
+
+      function suggestBucket() {
+        const taken = new Set(state.tracks.map((track) => track.bucket).filter(Boolean));
+        return Object.keys(BUCKET_LABELS).find((bucket) => !taken.has(bucket)) || "";
+      }
+
+      function addTrack() {
+        state.tracks.push({
+          id: `t${nextId}`,
+          label: defaultLabel(),
+          bucket: suggestBucket(),
+          name: "",
+          social: "",
+        });
+        nextId += 1;
+        render();
+      }
+
+      function removeTrack(id) {
+        state.tracks = state.tracks.filter((track) => track.id !== id);
+        render();
+      }
+
+      function renderSourceOptions() {
+        sourceOptionsEl.replaceChildren(
+          ...SOURCE_TYPES.map((type) => {
+            const label = document.createElement("label");
+            label.className = "source-option";
+            label.dataset.selected = String(state.sourceType === type.id);
+
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "source-type";
+            radio.value = type.id;
+            radio.checked = state.sourceType === type.id;
+            radio.addEventListener("change", () => selectSourceType(type.id));
+
+            const text = document.createElement("span");
+            const strong = document.createElement("strong");
+            strong.textContent = type.title;
+            const note = document.createElement("span");
+            note.textContent = type.note;
+            text.append(strong, note);
+
+            label.append(radio, text);
+            return label;
+          }),
+        );
+      }
+
+      function selectSourceType(id) {
+        if (state.sourceType === id) {
+          return;
+        }
+        state.sourceType = id;
+        // A fresh source type starts a fresh source list so a half-built list from the
+        // other path can never carry forward by accident.
+        state.tracks = [];
+        nextId = 1;
+        linkRowEl.hidden = id !== "recording-link";
+        addSourceEl.textContent =
+          id === "separate-files" ? "Add a speaker file" : "Add a participant track";
+        addTrack();
+      }
+
+      function bucketSelect(track) {
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `Speaker role for ${track.label}`);
+
+        const unassigned = document.createElement("option");
+        unassigned.value = "";
+        unassigned.textContent = "Unassigned";
+        select.appendChild(unassigned);
+
+        Object.entries(BUCKET_LABELS).forEach(([value, label]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          select.appendChild(option);
+        });
+
+        select.value = track.bucket;
+        select.addEventListener("change", () => {
+          track.bucket = select.value;
+          render();
+        });
+        return select;
+      }
+
+      function textField(labelText, value, placeholder, onInput, ariaLabel) {
+        const wrap = document.createElement("div");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = value;
+        input.placeholder = placeholder;
+        input.setAttribute("aria-label", ariaLabel);
+        input.addEventListener("input", () => onInput(input.value));
+        const label = document.createElement("label");
+        label.className = "field";
+        label.textContent = labelText;
+        wrap.append(label, input);
+        return wrap;
+      }
+
+      function renderSources() {
+        if (!state.tracks.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-sources";
+          empty.textContent = state.sourceType
+            ? "Add a source to assign your first speaker."
+            : "Choose how you are adding the recording to begin.";
+          sourcesEl.replaceChildren(empty);
+          return;
+        }
+
+        sourcesEl.replaceChildren(
+          ...state.tracks.map((track) => {
+            const row = document.createElement("article");
+            row.className = "source-row";
+
+            const labelLine = document.createElement("div");
+            labelLine.className = "source-label";
+            const name = document.createElement("span");
+            name.textContent = track.label;
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "remove";
+            remove.textContent = "Remove";
+            remove.setAttribute("aria-label", `Remove ${track.label}`);
+            remove.addEventListener("click", () => removeTrack(track.id));
+            labelLine.append(name, remove);
+
+            const roleWrap = document.createElement("div");
+            const roleLabel = document.createElement("label");
+            roleLabel.className = "field";
+            roleLabel.textContent = "Speaker role";
+            roleWrap.append(roleLabel, bucketSelect(track));
+
+            const nameField = textField(
+              "Speaker name",
+              track.name,
+              "Who is speaking?",
+              (value) => {
+                track.name = value;
+                updateContinue();
+              },
+              `Speaker name for ${track.label}`,
+            );
+
+            const socialField = textField(
+              "Social link (optional)",
+              track.social,
+              "https://… (optional)",
+              (value) => {
+                track.social = value;
+                updateContinue();
+              },
+              `Social link for ${track.label}`,
+            );
+
+            row.append(labelLine, roleWrap, nameField, socialField);
+            return row;
+          }),
+        );
+      }
+
+      const ISSUE_NOTES = {
+        "choose-source": "Choose how you are adding the recording.",
+        "recording-link": "Paste the recording link.",
+        "no-sources": "Add at least one source.",
+        "unassigned-source": "Give every source a speaker role.",
+        "no-host": "Assign the Host role before continuing.",
+        "duplicate-bucket": "Each speaker role can be used once — resolve the duplicate.",
+        "missing-name": "Add a name for every assigned speaker.",
+      };
+
+      function updateContinue() {
+        const result = setupApi.evaluateSetup(state);
+        const ready = result.complete;
+
+        statusEl.className = `status ${ready ? "ready" : "incomplete"}`;
+        statusEl.textContent = ready
+          ? "Setup complete — ready to continue."
+          : `Setup incomplete — ${result.issues.length} ${result.issues.length === 1 ? "item" : "items"} left.`;
+
+        continueLink.setAttribute("aria-disabled", String(!ready));
+        if (ready) {
+          // Persist the setup so it carries into the next preview step even when the
+          // query string is dropped by the app shell's hash routing.
+          setupApi.save(sessionStore(), setupApi.toHandoffState(state));
+          continueLink.href = nextStepHref();
+          if (isEmbeddedInPreviewApp()) {
+            continueLink.target = "_top";
+          }
+          continueNoteEl.textContent =
+            "The source type, speaker roles, names, and social links carry into episode readiness.";
+        } else {
+          continueLink.removeAttribute("href");
+          continueNoteEl.textContent = ISSUE_NOTES[result.issues[0]] || "Finish the setup to continue.";
+        }
+      }
+
+      function render() {
+        renderSourceOptions();
+        renderSources();
+        updateContinue();
+      }
+
+      linkInputEl.addEventListener("input", () => {
+        state.recordingLink = linkInputEl.value;
+        updateContinue();
+      });
+      addSourceEl.addEventListener("click", () => {
+        if (!state.sourceType) {
+          selectSourceType("separate-files");
+          return;
+        }
+        addTrack();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

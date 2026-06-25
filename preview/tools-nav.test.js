@@ -34,6 +34,7 @@ const coreFlow = new Set([
 ]);
 
 const ingestFlow = new Set([
+  "episode-setup-intake.html",
   "episode-readiness.html",
   "speaker-role-mapping.html",
   "social-context-intake.html",

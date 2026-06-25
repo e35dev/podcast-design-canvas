@@ -286,6 +286,7 @@
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
       <script src="../preview/layout-handoff.js"></script>
+      <script src="../preview/episode-setup-handoff.js"></script>
   </head>
   <body data-ingest-step="episode-readiness">
     <main>
@@ -304,6 +305,7 @@
 
         <aside class="panel" aria-live="polite">
           <h2>Readiness summary</h2>
+          <div id="episode-setup-handoff" class="layout-handoff" hidden></div>
           <div id="layout-handoff" class="layout-handoff" hidden></div>
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
@@ -399,6 +401,27 @@
         copy.textContent = `Placed videos carried into readiness: ${slotNames}.`;
         layoutHandoffElement.replaceChildren(heading, copy);
         layoutHandoffElement.hidden = false;
+      }
+
+      // Surface the guided setup the creator just completed (#1326) — source type,
+      // speaker roles, names, and social links — so the intake context is visibly
+      // carried into this next step rather than silently dropped.
+      const episodeSetupApi = window.PodcastEpisodeSetup;
+      const episodeSetup = episodeSetupApi
+        ? episodeSetupApi.load(layoutHandoffStorage(), window.location.search)
+        : null;
+      const episodeSetupElement = document.querySelector("#episode-setup-handoff");
+
+      function renderEpisodeSetupHandoff() {
+        if (!episodeSetupElement || !episodeSetup) {
+          return;
+        }
+        const heading = document.createElement("strong");
+        heading.textContent = `From episode setup: ${episodeSetupApi.sourceLabel(episodeSetup)}`;
+        const copy = document.createElement("p");
+        copy.textContent = `Carried into readiness: ${episodeSetupApi.summary(episodeSetup)}.`;
+        episodeSetupElement.replaceChildren(heading, copy);
+        episodeSetupElement.hidden = false;
       }
 
       document.querySelector("#addGuest").addEventListener("click", () => {
@@ -707,6 +730,7 @@
 
       render();
       renderLayoutHandoff();
+      renderEpisodeSetupHandoff();
     </script>
   </body>
 </html>
