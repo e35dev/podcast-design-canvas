@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Setup Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      fieldset {
+        margin: 24px 0 0;
+        padding: 0;
+        border: 0;
+      }
+
+      legend {
+        padding: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .source-types {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .source-type {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: start;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+
+      .source-type input {
+        margin-top: 3px;
+      }
+
+      .source-type strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .source-type span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .source-type:has(input:checked) {
+        border-color: var(--accent);
+        background: #eef6f3;
+      }
+
+      .source-type:focus-within {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .tracks {
+        display: grid;
+        gap: 14px;
+      }
+
+      .track {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .track-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .track-head strong {
+        font-size: 14px;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+      }
+
+      .fields-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border-radius: 999px;
+        padding: 0 11px;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .badge.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .badge.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .badge.duplicate {
+        color: #9a2b1d;
+        background: #fbe0df;
+      }
+
+      .track-remove {
+        min-height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 10px;
+        cursor: pointer;
+      }
+
+      .track-remove:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      button.add,
+      button.reset {
+        min-height: 40px;
+        border: 1px solid #0f5d53;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.reset {
+        background: #ffffff;
+        color: var(--accent);
+      }
+
+      button.add:focus-visible,
+      button.reset:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-weight: 800;
+      }
+
+      .status.ready {
+        color: #075246;
+        background: #dff5ef;
+      }
+
+      .status.review {
+        color: #7a4400;
+        background: #fff1d6;
+      }
+
+      .needs {
+        display: grid;
+        gap: 8px;
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .needs li {
+        border-left: 4px solid var(--warn);
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .continue {
+        display: inline-flex;
+        align-items: center;
+        min-height: 42px;
+        margin-top: 16px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: none;
+        padding: 0 16px;
+      }
+
+      .continue[aria-disabled="true"] {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .continue:hover,
+      .continue:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .summary-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 14px 0 0;
+      }
+
+      @media (max-width: 840px) {
+        .workspace,
+        .source-types,
+        .fields-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script src="../preview/episode-setup-handoff.js" defer></script>
+    <script src="../preview/ingest-nav.js" defer></script>
+  </head>
+  <body data-ingest-step="episode-setup-intake">
+    <main>
+      <h1>Start a new episode</h1>
+      <p class="lede">Bring in this episode's recording, then tell us who is speaking. Import a Riverside-style recording link or add separate synced speaker files, name each speaker and give them a role, and add optional social links so the edit gets names, spellings, and references right from the start. You can continue once every speaker has a name and a role.</p>
+
+      <fieldset id="source-types-group">
+        <legend>How is this episode recorded?</legend>
+        <div class="source-types" id="source-types" role="radiogroup" aria-label="Episode source type"></div>
+      </fieldset>
+
+      <section class="workspace" aria-label="Episode setup workspace">
+        <div class="panel">
+          <h2 id="tracks-heading">Speakers in this episode</h2>
+          <div class="tracks" id="tracks" aria-labelledby="tracks-heading"></div>
+          <div class="actions">
+            <button type="button" class="add" id="addTrack">Add a speaker</button>
+            <button type="button" class="reset" id="reset">Reset sample</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-label="Setup readiness">
+          <h2>Setup readiness</h2>
+          <div id="status" class="status review" aria-live="polite">Finish the setup</div>
+          <ul class="needs" id="needs"></ul>
+          <a class="continue" id="continue" aria-disabled="true">Add a speaker name and role to continue</a>
+          <p class="summary-note">Nothing is published from here. The source you choose, each speaker's role and name, and any social links are carried into episode readiness — the next step.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      // The two ways a creator starts an episode. The label on "Add a speaker" and each track's
+      // source line adapt to the chosen path so the screen reads like the real workflow.
+      const sourceTypes = [
+        {
+          id: "uploaded-files",
+          label: "Upload separate speaker files",
+          blurb: "Add one synced video file per speaker (Riverside-style separate tracks).",
+          sourcePlaceholder: "e.g. host-cam.mp4",
+          sourceFieldLabel: "Speaker file",
+          addLabel: "Add a speaker file",
+        },
+        {
+          id: "recording-link",
+          label: "Import a recording link",
+          blurb: "Paste a Riverside-style link; add a row for each speaker it contains.",
+          sourcePlaceholder: "e.g. https://riverside.fm/…",
+          sourceFieldLabel: "Recording link",
+          addLabel: "Add a speaker",
+        },
+      ];
+
+      // Speaker roles a track can take. "" means it hasn't been assigned yet and blocks continue.
+      const roles = [
+        ["", "Unassigned"],
+        ["host", "Host"],
+        ["guest-1", "Guest 1"],
+        ["guest-2", "Guest 2"],
+      ];
+      const roleLabels = Object.fromEntries(roles);
+
+      function sampleTracks() {
+        return [
+          { id: "t1", source: "host-cam.mp4", name: "Dana Brooks", role: "host", social: "https://example.com/dana" },
+          { id: "t2", source: "guest-cam.mp4", name: "Marcus Lee", role: "guest-1", social: "" },
+        ];
+      }
+
+      let sourceType = "uploaded-files";
+      let tracks = sampleTracks();
+      let nextId = tracks.length + 1;
+
+      const sourceTypesElement = document.querySelector("#source-types");
+      const tracksElement = document.querySelector("#tracks");
+      const statusElement = document.querySelector("#status");
+      const needsElement = document.querySelector("#needs");
+      const continueLink = document.querySelector("#continue");
+
+      function currentSource() {
+        return sourceTypes.find((type) => type.id === sourceType) || sourceTypes[0];
+      }
+
+      function shellPath() {
+        const path = new URLSearchParams(window.location.search).get("path");
+        return path === "episode" || path === "ingest" ? path : "ingest";
+      }
+
+      // Evaluate every track once: a track is ready when it has a name and a role; a role used by
+      // more than one track is a duplicate (two speakers can't share one seat). Returns per-track
+      // states plus the plain-language reasons the creator still can't continue.
+      function evaluate() {
+        const roleCounts = {};
+        tracks.forEach((track) => {
+          if (track.role) {
+            roleCounts[track.role] = (roleCounts[track.role] || 0) + 1;
+          }
+        });
+
+        const results = tracks.map((track) => {
+          if (!track.name.trim()) {
+            return { state: "review", label: "needs a name" };
+          }
+          if (!track.role) {
+            return { state: "review", label: "needs a role" };
+          }
+          if (roleCounts[track.role] > 1) {
+            return { state: "duplicate", label: "duplicate role" };
+          }
+          return { state: "ready", label: roleLabels[track.role] };
+        });
+
+        const needs = [];
+        if (!tracks.length) {
+          needs.push("Add at least one speaker to this episode.");
+        }
+        const unnamed = tracks.filter((track) => !track.name.trim()).length;
+        if (unnamed) {
+          needs.push(`Name ${unnamed === 1 ? "the speaker that still needs a name" : `all ${unnamed} unnamed speakers`}.`);
+        }
+        const unassigned = tracks.filter((track) => track.name.trim() && !track.role).length;
+        if (unassigned) {
+          needs.push(`Give ${unassigned === 1 ? "the remaining speaker" : `all ${unassigned} remaining speakers`} a role.`);
+        }
+        const duplicateRoles = Object.keys(roleCounts).filter((role) => roleCounts[role] > 1);
+        if (duplicateRoles.length) {
+          needs.push(`Give each speaker a different role — ${duplicateRoles.map((role) => roleLabels[role]).join(" and ")} ${duplicateRoles.length === 1 ? "is" : "are"} used twice.`);
+        }
+
+        return { results, ready: needs.length === 0, needs };
+      }
+
+      function setOption(select, value, text, selected) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        if (selected) {
+          option.selected = true;
+        }
+        select.append(option);
+      }
+
+      function renderSourceTypes() {
+        sourceTypesElement.replaceChildren(
+          ...sourceTypes.map((type) => {
+            const wrap = document.createElement("label");
+            wrap.className = "source-type";
+
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = "source-type";
+            input.value = type.id;
+            input.checked = type.id === sourceType;
+            input.addEventListener("change", () => {
+              sourceType = type.id;
+              render();
+            });
+
+            const copy = document.createElement("div");
+            const strong = document.createElement("strong");
+            strong.textContent = type.label;
+            const span = document.createElement("span");
+            span.textContent = type.blurb;
+            copy.append(strong, span);
+
+            wrap.append(input, copy);
+            return wrap;
+          }),
+        );
+      }
+
+      function renderTrack(track, index, result) {
+        const source = currentSource();
+        const article = document.createElement("article");
+        article.className = "track";
+
+        const head = document.createElement("div");
+        head.className = "track-head";
+        const title = document.createElement("strong");
+        title.textContent = `Speaker ${index + 1}`;
+        const badge = document.createElement("span");
+        badge.className = `badge ${result.state}`;
+        badge.textContent = result.label;
+        head.append(title, badge);
+
+        const fields = document.createElement("div");
+        fields.className = "fields";
+
+        const sourceLabel = document.createElement("label");
+        sourceLabel.append(document.createTextNode(source.sourceFieldLabel));
+        const sourceInput = document.createElement("input");
+        sourceInput.dataset.field = "source";
+        sourceInput.value = track.source;
+        sourceInput.placeholder = source.sourcePlaceholder;
+        sourceInput.setAttribute("aria-label", `${source.sourceFieldLabel} for speaker ${index + 1}`);
+        sourceLabel.append(sourceInput);
+
+        const row = document.createElement("div");
+        row.className = "fields-row";
+
+        const nameLabel = document.createElement("label");
+        nameLabel.append(document.createTextNode("Speaker name"));
+        const nameInput = document.createElement("input");
+        nameInput.dataset.field = "name";
+        nameInput.value = track.name;
+        nameInput.placeholder = "e.g. Dana Brooks";
+        nameInput.setAttribute("aria-label", `Name for speaker ${index + 1}`);
+        nameLabel.append(nameInput);
+
+        const roleLabel = document.createElement("label");
+        roleLabel.append(document.createTextNode("Role"));
+        const roleSelect = document.createElement("select");
+        roleSelect.dataset.field = "role";
+        roleSelect.setAttribute("aria-label", `Role for speaker ${index + 1}`);
+        roles.forEach(([value, text]) => setOption(roleSelect, value, text, value === track.role));
+        roleLabel.append(roleSelect);
+
+        row.append(nameLabel, roleLabel);
+
+        const socialLabel = document.createElement("label");
+        socialLabel.append(document.createTextNode("Social link (optional)"));
+        const socialInput = document.createElement("input");
+        socialInput.dataset.field = "social";
+        socialInput.value = track.social;
+        socialInput.placeholder = "e.g. https://x.com/handle";
+        socialInput.setAttribute("aria-label", `Optional social link for speaker ${index + 1}`);
+        socialLabel.append(socialInput);
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "track-remove";
+        remove.textContent = "Remove";
+        remove.setAttribute("aria-label", `Remove speaker ${index + 1}`);
+        remove.addEventListener("click", () => {
+          tracks.splice(index, 1);
+          render();
+        });
+
+        fields.append(sourceLabel, row, socialLabel);
+        article.append(head, fields, remove);
+
+        // Text fields update live (badge + summary refresh in place so the field keeps focus);
+        // the role select rebuilds fully on change (a select holds no caret, so it's safe).
+        article.addEventListener("input", (event) => onEdit(event, index, false));
+        article.addEventListener("change", (event) => onEdit(event, index, true));
+        return article;
+      }
+
+      function onEdit(event, index, full) {
+        const field = event.target.dataset.field;
+        if (!field || !tracks[index]) {
+          return;
+        }
+        if (!full && event.target.tagName !== "INPUT") {
+          return;
+        }
+        tracks[index][field] = event.target.value;
+        if (full) {
+          render();
+        } else {
+          refreshStates();
+        }
+      }
+
+      function applyEvaluation(evaluation) {
+        statusElement.className = `status ${evaluation.ready ? "ready" : "review"}`;
+        statusElement.textContent = evaluation.ready ? "Setup ready" : "Finish the setup";
+
+        needsElement.replaceChildren(
+          ...(evaluation.needs.length
+            ? evaluation.needs.map((text) => {
+              const li = document.createElement("li");
+              li.textContent = text;
+              return li;
+            })
+            : [Object.assign(document.createElement("li"), {
+              textContent: "Every speaker has a name and a role. You're ready to continue.",
+            })]),
+        );
+
+        updateContinue(evaluation.ready);
+      }
+
+      function setupState() {
+        return {
+          sourceType,
+          speakers: tracks.map((track) => ({
+            role: track.role,
+            name: track.name,
+            social: track.social,
+          })),
+        };
+      }
+
+      function updateContinue(ready) {
+        const handoff = window.PodcastEpisodeSetupHandoff;
+        if (!ready || !handoff) {
+          continueLink.setAttribute("aria-disabled", "true");
+          continueLink.removeAttribute("href");
+          continueLink.textContent = "Add a speaker name and role to continue";
+          if (handoff) {
+            handoff.clear(safeSessionStorage());
+          }
+          return;
+        }
+
+        const state = setupState();
+        handoff.save(safeSessionStorage(), state);
+        const base = `episode-readiness.html?path=${shellPath()}`;
+        continueLink.href = handoff.hrefWithState(base, state);
+        continueLink.setAttribute("aria-disabled", "false");
+        continueLink.textContent = "Continue to episode readiness →";
+      }
+
+      function safeSessionStorage() {
+        try {
+          return window.sessionStorage || null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      // Full rebuild: load, source-type change, add, remove, reset, and role changes.
+      function render() {
+        const evaluation = evaluate();
+        renderSourceTypes();
+        tracksElement.replaceChildren(
+          ...tracks.map((track, index) => renderTrack(track, index, evaluation.results[index])),
+        );
+        applyEvaluation(evaluation);
+      }
+
+      // Light update while typing in a text field: refresh each badge and the summary without
+      // replacing the input the creator is typing in.
+      function refreshStates() {
+        const evaluation = evaluate();
+        Array.from(tracksElement.children).forEach((card, index) => {
+          const badge = card.querySelector(".badge");
+          if (badge && evaluation.results[index]) {
+            badge.className = `badge ${evaluation.results[index].state}`;
+            badge.textContent = evaluation.results[index].label;
+          }
+        });
+        applyEvaluation(evaluation);
+      }
+
+      document.querySelector("#addTrack").addEventListener("click", () => {
+        tracks.push({ id: `t${nextId++}`, source: "", name: "", role: "", social: "" });
+        render();
+      });
+
+      document.querySelector("#reset").addEventListener("click", () => {
+        sourceType = "uploaded-files";
+        tracks = sampleTracks();
+        nextId = tracks.length + 1;
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

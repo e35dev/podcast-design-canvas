@@ -286,6 +286,7 @@
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
       <script src="../preview/layout-handoff.js"></script>
+      <script src="../preview/episode-setup-handoff.js"></script>
   </head>
   <body data-ingest-step="episode-readiness">
     <main>
@@ -304,6 +305,7 @@
 
         <aside class="panel" aria-live="polite">
           <h2>Readiness summary</h2>
+          <div id="setup-handoff" class="layout-handoff" hidden></div>
           <div id="layout-handoff" class="layout-handoff" hidden></div>
           <div id="status" class="status ready">Ready</div>
           <div id="issues" class="issues"></div>
@@ -705,8 +707,37 @@
         return article;
       }
 
+      // The guided setup intake (#1326) is the step before this one. When a creator arrives with
+      // a completed setup, surface the chosen source and speakers here so they can confirm the
+      // episode started from the right recording and roles before styling.
+      const setupHandoffApi = window.PodcastEpisodeSetupHandoff;
+      const setupHandoffElement = document.querySelector("#setup-handoff");
+
+      function renderSetupHandoff() {
+        if (!setupHandoffApi || !setupHandoffElement) {
+          return;
+        }
+        const setup = setupHandoffApi.load(layoutHandoffStorage(), window.location.search);
+        const lines = setupHandoffApi.summaryLines(setup);
+        if (!lines.length) {
+          return;
+        }
+        const heading = document.createElement("strong");
+        heading.textContent = "Carried from episode setup";
+        setupHandoffElement.replaceChildren(
+          heading,
+          ...lines.map((line) => {
+            const p = document.createElement("p");
+            p.textContent = line;
+            return p;
+          }),
+        );
+        setupHandoffElement.hidden = false;
+      }
+
       render();
       renderLayoutHandoff();
+      renderSetupHandoff();
     </script>
   </body>
 </html>

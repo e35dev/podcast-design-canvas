@@ -73,6 +73,7 @@ function createPreviewAppRouting(order) {
     ...cleanupScreens,
   ]);
   const pathedIngestScreens = new Set([
+    "episode-setup-intake",
     "episode-readiness",
     "speaker-role-mapping",
     "social-context-intake",
@@ -233,8 +234,14 @@ function createPreviewAppRouting(order) {
       }
     }
     if (pathContext === "ingest") {
-      if (screen === "episode-readiness" && offset < 0) {
+      if (screen === "episode-setup-intake" && offset < 0) {
         return {};
+      }
+      if (screen === "episode-setup-intake" && offset > 0) {
+        return { screen: "episode-readiness", search };
+      }
+      if (screen === "episode-readiness" && offset < 0) {
+        return { screen: "episode-setup-intake", search };
       }
       if (screen === "episode-readiness" && offset > 0) {
         return { screen: "speaker-role-mapping", search };
