@@ -86,6 +86,10 @@ assert.ok(
   html.includes("same video is in more than one speaker slot"),
   "preview canvas flags duplicate speaker recordings as invalid media assignments",
 );
+assert.ok(
+  /document\.addEventListener\("drop"/.test(html) && /document\.addEventListener\("dragover"/.test(html),
+  "preview canvas guards off-slot/page drops so a stray real video never navigates the browser away (#1213-style)",
+);
 
 for (const step of flowSteps) {
   assert.ok(html.includes(step), `preview shell links to ${step}`);

@@ -1601,6 +1601,9 @@
           });
           zone.addEventListener("drop", function (event) {
             event.preventDefault();
+            // A drop aimed at this slot is owned by the slot — stop it bubbling to the document
+            // guard below, which would otherwise route the same file into another open slot.
+            if (typeof event.stopPropagation === "function") event.stopPropagation();
             zone.classList.remove("drag-over");
             var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
             if (file) {
@@ -1631,6 +1634,43 @@
             placeTrack(zone, selectedTrack);
           });
         });
+
+        // The first visible slot still waiting for a video, in layout order (Host, Guest, Guest 2,
+        // then optional B-roll) — where an off-slot drop is routed so a near-miss still places.
+        function firstOpenSlot() {
+          var zones = document.querySelectorAll(".drop-zone[data-slot]");
+          for (var i = 0; i < zones.length; i++) {
+            if (!zones[i].classList.contains("is-hidden") && !zones[i].classList.contains("filled")) {
+              return zones[i];
+            }
+          }
+          return null;
+        }
+
+        // A real video released anywhere on the page — the canvas gaps, the header, the page
+        // margins — would otherwise trigger the browser's default "open this file" navigation,
+        // discarding the shell and every placement the creator has made. This example canvas
+        // accepts real uploads into its slots, so it is exposed to the same data loss the
+        // layout-first canvas was hardened against (#1213). Guard at the document level: keep
+        // drops catchable (preventDefault on dragover) and route an off-slot video into the first
+        // open slot so a near-miss still places. On-slot drops stopPropagation, so they never
+        // reach this handler. A dragged sample track carries no file, so it is a harmless no-op.
+        if (document && typeof document.addEventListener === "function") {
+          document.addEventListener("dragover", function (event) {
+            if (event && typeof event.preventDefault === "function") event.preventDefault();
+          });
+          document.addEventListener("drop", function (event) {
+            if (event && typeof event.preventDefault === "function") event.preventDefault();
+            var file = event && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+            if (!file) return;
+            var target = firstOpenSlot();
+            if (target) {
+              placeVideoFile(target, file);
+            } else {
+              updateSlotStatus("Every slot is filled. Remove a video to make room for another.");
+            }
+          });
+        }
 
         var layoutButtons = Array.prototype.slice.call(document.querySelectorAll("[data-layout]"));
         layoutButtons.forEach(function (button, index) {

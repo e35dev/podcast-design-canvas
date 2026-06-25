@@ -132,7 +132,9 @@ const byId = {
 
 function zoneFor(slot) { return zones.find((zone) => zone.dataset.slot === slot); }
 
+const docHandlers = {};
 const document = {
+  addEventListener(type, fn) { docHandlers[type] = fn; },
   getElementById(id) { return byId[id] || null; },
   createElement(tagName) { return new Element(tagName); },
   querySelector(selector) {
@@ -250,4 +252,33 @@ assert.equal(zones.filter((zone) => zone.classList.contains("filled")).length, 0
 assert.equal(continueLink.attributes["aria-disabled"], "true", "reset re-gates Continue");
 assert.equal(revoked.length, createdUrls.length, "reset revokes every object URL the canvas created");
 
-console.log("preview canvas video: real media placement, duplicate guard, preservation, and cleanup verified");
+// Off-slot / page-level drop guard: a real video released anywhere on the page (not on a slot)
+// must NOT let the browser navigate away and discard placements — it is prevented and routed
+// into the first open slot so a near-miss still places. (All slots are empty after the reset.)
+assert.equal(typeof docHandlers.dragover, "function", "the canvas guards page-level dragover so drops are catchable");
+assert.equal(typeof docHandlers.drop, "function", "the canvas guards page-level drop");
+let dragPrevented = false;
+docHandlers.dragover({ preventDefault() { dragPrevented = true; } });
+assert.equal(dragPrevented, true, "page-level dragover is prevented so the drop is catchable");
+
+let navPrevented = false;
+docHandlers.drop({
+  preventDefault() { navPrevented = true; },
+  dataTransfer: { files: [video("off-slot.mp4", 4242, 99)], getData() { return ""; } },
+});
+assert.equal(navPrevented, true, "an off-slot page drop is prevented, so the browser never navigates away and loses placements");
+assert.ok(zoneFor("host").classList.contains("filled"), "an off-slot real video still routes into the first open slot");
+
+// With every visible slot filled, an off-slot drop is still prevented (no navigation) and the
+// creator is told how to make room rather than the file silently vanishing.
+dropFile("guest", video("g-fill.mp4", 51, 51));
+dropFile("broll", video("b-fill.mp4", 61, 61));
+let fullNavPrevented = false;
+docHandlers.drop({
+  preventDefault() { fullNavPrevented = true; },
+  dataTransfer: { files: [video("extra.mp4", 71, 71)], getData() { return ""; } },
+});
+assert.equal(fullNavPrevented, true, "a page drop on a full layout is still prevented");
+assert.match(slotStatus.textContent, /filled|make room/i, "a page drop with no open slot tells the creator to make room");
+
+console.log("preview canvas video: real media placement, duplicate guard, preservation, cleanup, and off-slot drop guard verified");
