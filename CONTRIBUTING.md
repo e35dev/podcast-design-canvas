@@ -19,7 +19,7 @@ Every PR is checked out and executed in a sandbox: it must build, the existing t
 - A PR is merged only when it clearly completes the step and its benefit outweighs the added complexity; otherwise it is closed with a specific reason.
 
 ### Labels
-Labels applied at merge are economic scoring signals, not decoration. The maintainer applies one only when a PR delivers working product behavior in that area.
+This repo does not require Gittensor scoring labels on merged PRs. The maintainer may use operational labels such as active-step labels only for workflow control.
 <!-- /builderloops:contributing -->
 
 # Contributing
