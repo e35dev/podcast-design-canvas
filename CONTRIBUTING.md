@@ -9,6 +9,7 @@ At any moment there is exactly **one** open issue labeled `bl:active-step`. That
 ### Open a pull request that completes that step
 - Your PR must fully satisfy the active step's Acceptance, and reference it (for example, "Closes #<number>").
 - Keep it focused: do that step and nothing unrelated.
+- **One PR per contributor per step.** You may have only one open pull request for the active step, so put your best work into it. If you open a second PR for the same step, it is closed automatically. To revise your submission, push to your existing PR's branch (it is re-reviewed automatically) instead of opening another.
 
 ### Your PR is run, not just read
 Every PR is checked out and executed in a sandbox: it must build, the existing tests must still pass, and the repo's acceptance checks (see `.builderloops/verify.json` if present) must pass. A PR that does not build, breaks tests, or fails acceptance is closed automatically. Make sure it genuinely works.
