@@ -368,10 +368,14 @@
         const main = el("div", { class: "layer-main" }, [nameRow, meta]);
 
         const up = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " up", text: "▲" }, []);
-        if (index === 0) { up.disabled = true; }
+        // Disable ▲ when at the top, when this layer is locked, or when the
+        // layer above is locked (moving into a locked neighbor displaces it).
+        if (index === 0 || layer.locked || (layers[index - 1] && layers[index - 1].locked)) { up.disabled = true; }
         up.addEventListener("click", function () { move(index, -1); });
         const down = el("button", { type: "button", class: "tiny secondary", "aria-label": "Move " + type.label + " down", text: "▼" }, []);
-        if (index === layers.length - 1) { down.disabled = true; }
+        // Disable ▼ when at the bottom, when this layer is locked, or when the
+        // layer below is locked (moving into a locked neighbor displaces it).
+        if (index === layers.length - 1 || layer.locked || (layers[index + 1] && layers[index + 1].locked)) { down.disabled = true; }
         down.addEventListener("click", function () { move(index, 1); });
 
         const vis = el("button", { type: "button", class: "tiny secondary", text: layer.visible ? "Hide" : "Show" }, []);
@@ -402,13 +406,23 @@
         return row;
       }
 
-      function move(index, delta) {
+      // Pure reorder primitive that respects locked layers (#1248).
+      // Refuses the move when the layer being moved is locked, or when
+      // the destination neighbor is locked (moving an unlocked layer
+      // into a locked layer's slot displaces it, breaking the lock guarantee).
+      function reorderLayers(list, index, delta) {
         const target = index + delta;
-        if (target < 0 || target >= layers.length) { return; }
-        const copy = layers.slice();
+        if (target < 0 || target >= list.length) { return list; }
+        if (list[index].locked) { return list; }
+        if (list[target].locked) { return list; }
+        const copy = list.slice();
         const item = copy.splice(index, 1)[0];
         copy.splice(target, 0, item);
-        layers = copy;
+        return copy;
+      }
+
+      function move(index, delta) {
+        layers = reorderLayers(layers, index, delta);
         render();
       }
 
