@@ -174,9 +174,19 @@ function chooseFile(slot, file) {
   input.listeners.change();
 }
 
+// A rejected file on an empty slot is visible at the slot, not only in the side-panel line.
+dropFile("host", { name: "notes.txt", type: "text/plain", size: 120 });
+const initialHostIndicator = zoneFor("host").querySelector(".slot-state");
+assert.equal(zoneFor("host").classList.contains("filled"), false, "a non-video file does not fill an empty slot");
+assert.equal(zoneFor("host").classList.contains("is-invalid"), true, "a rejected file flags the target slot");
+assert.equal(initialHostIndicator.textContent, "Invalid file", "the target slot badge names the invalid assignment");
+assert.ok(initialHostIndicator.classList.contains("is-invalid"), "the invalid slot badge carries the invalid state class");
+assert.equal(continueLink.attributes["aria-disabled"], "true", "Continue stays gated while the required slot is invalid");
+
 // Distinct host and guest videos: each renders in its slot and Continue unlocks with the handoff.
 dropFile("host", video("host.mp4", 1000, 11));
 assert.ok(zoneFor("host").classList.contains("filled"), "dropping a real host video fills the host slot");
+assert.equal(zoneFor("host").classList.contains("is-invalid"), false, "placing a valid video clears the invalid slot state");
 const hostVideo = zoneFor("host").querySelector(".placed-video");
 assert.ok(hostVideo, "the host slot renders a placed video");
 const hostVideoEl = hostVideo.children.find((child) => child.tagName === "video");
@@ -232,8 +242,9 @@ zoneFor("host").listeners.drop({
   preventDefault() {},
   dataTransfer: { files: [{ name: "notes.txt", type: "text/plain" }], getData() { return ""; } },
 });
-assert.match(slotStatus.textContent, /video file/i, "a non-video file surfaces a creator-facing hint");
+assert.match(slotStatus.textContent, /current Host video/i, "a non-video replacement surfaces a creator-facing hint");
 assert.equal(zoneFor("host").classList.contains("filled"), beforeFill, "a rejected file leaves the prior host placement intact");
+assert.equal(zoneFor("host").classList.contains("is-invalid"), false, "a rejected replacement does not mark a valid filled slot invalid");
 
 // Per-slot remove clears just that slot, revokes its object URL, and re-gates Continue.
 const guestRemove = zoneFor("guest").querySelector(".placed-remove");
