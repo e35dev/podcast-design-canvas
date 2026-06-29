@@ -6,6 +6,8 @@ This product is built one step at a time by an automated maintainer that turns t
 ### Work the one active step
 At any moment there is exactly **one** open issue labeled `bl:active-step`. That issue is the only work being accepted right now. It describes what to build and a clear **Acceptance** (definition of done). Find it in this repo's Issues filtered by the `bl:active-step` label.
 
+The maintainer acts like a hands-on product lead: it keeps the current goal focused, verifies behavior in the running product, and may replace a step with a prerequisite if repeated PRs show the target was missing a foundation.
+
 ### Open a pull request that completes that step
 - Your PR must fully satisfy the active step's Acceptance, and reference it (for example, "Closes #<number>").
 - Keep it focused: do that step and nothing unrelated.
