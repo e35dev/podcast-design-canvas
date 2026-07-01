@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Episode Setup Intake Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #16211f;
+        --muted: #5e6b67;
+        --line: #d9e0dd;
+        --panel: #f7faf8;
+        --accent: #136f63;
+        --accent-ink: #075246;
+        --warn: #a15c00;
+        --block: #a52828;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+
+      .lede {
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .step-section {
+        margin-bottom: 24px;
+      }
+
+      .step-section:last-child {
+        margin-bottom: 0;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      h3 {
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+
+      .step-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+
+      .source-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .source-option {
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 14px;
+        cursor: pointer;
+        font: inherit;
+        color: var(--ink);
+        display: grid;
+        gap: 4px;
+      }
+
+      .source-option[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        background: #f1f9f6;
+      }
+
+      .source-option strong {
+        font-size: 14px;
+      }
+
+      .source-option span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .source-input {
+        margin-top: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input, select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #bfcbc7;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      .file-drop {
+        border: 2px dashed #bfcbc7;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+      }
+
+      .file-drop:hover, .file-drop:focus-within {
+        border-color: var(--accent);
+        background: #f1f9f6;
+      }
+
+      .file-drop input[type="file"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+
+      .tracks {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .track {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .track-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .track-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .track-name {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .track-detail {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .track-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .social-fields {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+
+      .social-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .toggle-social {
+        border: none;
+        background: none;
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 6px 0;
+        text-align: left;
+      }
+
+      .toggle-social:hover {
+        text-decoration: underline;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .status.ready { color: #075246; background: #dff5ef; }
+      .status.incomplete { color: #7a4400; background: #fff1d6; }
+
+      .summary {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        align-items: start;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .summary-item .check {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .summary-item .missing {
+        color: var(--warn);
+        font-weight: 700;
+      }
+
+      .handoff {
+        margin-top: 16px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .handoff h3 {
+        margin-bottom: 8px;
+      }
+
+      .handoff-detail {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .handoff-detail + .handoff-detail {
+        margin-top: 4px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .primary {
+        min-height: 42px;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        padding: 0 20px;
+        cursor: pointer;
+      }
+
+      .primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .secondary {
+        min-height: 42px;
+        border: 1px solid #bfcbc7;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 700;
+        padding: 0 16px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 800px) {
+        .workspace { grid-template-columns: 1fr; }
+        .source-options { grid-template-columns: 1fr; }
+        .track-fields { grid-template-columns: 1fr; }
+        .social-row { grid-template-columns: 1fr; }
+      }
+    </style>
+    <script src="../preview/episode-setup-handoff.js"></script>
+  </head>
+  <body data-ingest-step="episode-setup-intake">
+    <main aria-label="Episode setup intake">
+      <h1>Start a new episode</h1>
+      <p class="lede">Import your recording and assign each speaker before styling. Paste a Riverside link or upload separate synced speaker files, then confirm speaker roles and optional social links.</p>
+
+      <section class="workspace" aria-label="Episode setup workspace">
+        <div class="panel">
+          <div class="step-section" id="source-step">
+            <h2>1. Choose your source</h2>
+            <p class="step-note">How was this episode recorded?</p>
+            <div class="source-options" role="group" aria-label="Recording source type">
+              <button type="button" class="source-option" id="opt-link" aria-pressed="false">
+                <strong>Riverside link</strong>
+                <span>Paste a share link and the product imports each speaker track automatically.</span>
+              </button>
+              <button type="button" class="source-option" id="opt-files" aria-pressed="false">
+                <strong>Upload speaker files</strong>
+                <span>Upload separate synced video files for each speaker in the episode.</span>
+              </button>
+            </div>
+
+            <div class="source-input" id="link-input" hidden>
+              <label>
+                Riverside share link
+                <input type="url" id="riverside-url" placeholder="https://riverside.fm/s/…" autocomplete="off">
+              </label>
+              <div class="actions" style="margin-top: 10px;">
+                <button type="button" class="primary" id="import-link">Import tracks</button>
+              </div>
+            </div>
+
+            <div class="source-input" id="file-input" hidden>
+              <div class="file-drop" id="file-drop" role="button" tabindex="0" aria-label="Upload speaker video files">
+                <p style="margin: 0;"><strong>Drop speaker files here</strong></p>
+                <p style="margin: 4px 0 0;">or click to browse — one synced video per speaker</p>
+                <input type="file" id="file-picker" multiple accept="video/*" aria-label="Select speaker video files">
+              </div>
+            </div>
+          </div>
+
+          <div class="step-section" id="tracks-step" hidden>
+            <h2>2. Assign speaker roles</h2>
+            <p class="step-note">Confirm each track belongs to the right speaker. Every role must be assigned before continuing.</p>
+            <div class="tracks" id="track-list" aria-label="Imported speaker tracks"></div>
+
+            <div style="margin-top: 12px;">
+              <button type="button" class="secondary" id="add-track">+ Add another speaker</button>
+            </div>
+          </div>
+
+          <div class="step-section" id="social-step" hidden>
+            <h2>3. Social links <span style="font-weight: 400; font-size: 14px; color: var(--muted);">(optional)</span></h2>
+            <p class="step-note">Add social profiles so the product can improve name spellings, b-roll choices, and on-screen context.</p>
+            <div id="social-list"></div>
+          </div>
+
+          <div class="actions" id="main-actions">
+            <a class="primary" id="continue-btn" role="link" aria-disabled="true" style="display:inline-flex;align-items:center;text-decoration:none;">Continue to episode readiness</a>
+            <button type="button" class="secondary" id="reset-btn">Reset</button>
+          </div>
+        </div>
+
+        <aside class="panel" aria-live="polite" aria-label="Setup summary">
+          <h2>Setup summary</h2>
+          <span class="status incomplete" id="status-badge">Incomplete</span>
+          <div class="summary" id="summary"></div>
+
+          <div id="handoff-section" hidden>
+            <div class="handoff">
+              <h3>Carried into next step</h3>
+              <div id="handoff-detail"></div>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      var ROLES = ["Host", "Guest 1", "Guest 2", "Co-host", "Producer"];
+
+      var state = {
+        sourceType: "",
+        riversideUrl: "",
+        tracks: [],
+        socialExpanded: {},
+      };
+
+      var trackCounter = 0;
+
+      // --- Source selection ---
+
+      var optLink = document.querySelector("#opt-link");
+      var optFiles = document.querySelector("#opt-files");
+      var linkInput = document.querySelector("#link-input");
+      var fileInput = document.querySelector("#file-input");
+
+      function clearTracks() {
+        state.tracks = [];
+        state.socialExpanded = {};
+        trackCounter = 0;
+        document.querySelector("#tracks-step").hidden = true;
+        document.querySelector("#social-step").hidden = true;
+      }
+
+      optLink.addEventListener("click", function () {
+        if (state.sourceType === "link") { return; }
+        state.sourceType = "link";
+        clearTracks();
+        optLink.setAttribute("aria-pressed", "true");
+        optFiles.setAttribute("aria-pressed", "false");
+        linkInput.hidden = false;
+        fileInput.hidden = true;
+        filePicker.value = "";
+        render();
+      });
+
+      optFiles.addEventListener("click", function () {
+        if (state.sourceType === "files") { return; }
+        state.sourceType = "files";
+        clearTracks();
+        optLink.setAttribute("aria-pressed", "false");
+        optFiles.setAttribute("aria-pressed", "true");
+        linkInput.hidden = true;
+        fileInput.hidden = false;
+        document.querySelector("#riverside-url").value = "";
+        state.riversideUrl = "";
+        render();
+      });
+
+      // --- Riverside link import ---
+
+      document.querySelector("#import-link").addEventListener("click", function () {
+        var url = document.querySelector("#riverside-url").value.trim();
+        if (!url) { return; }
+        state.riversideUrl = url;
+        state.tracks = [
+          makeTrack("host-video.mp4", "video", "Host"),
+          makeTrack("guest1-video.mp4", "video", "Guest 1"),
+        ];
+        showTracks();
+        render();
+      });
+
+      // --- File upload ---
+
+      var fileDrop = document.querySelector("#file-drop");
+      var filePicker = document.querySelector("#file-picker");
+
+      fileDrop.addEventListener("click", function () {
+        filePicker.click();
+      });
+
+      fileDrop.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          filePicker.click();
+        }
+      });
+
+      filePicker.addEventListener("change", function () {
+        var files = filePicker.files;
+        if (!files || files.length === 0) { return; }
+        for (var i = 0; i < files.length; i++) {
+          var defaultRole = i === 0 ? "Host" : "Guest " + i;
+          state.tracks.push(makeTrack(files[i].name, "video", defaultRole));
+        }
+        showTracks();
+        render();
+      });
+
+      function makeTrack(filename, mediaType, defaultRole) {
+        trackCounter += 1;
+        return {
+          id: "t" + trackCounter,
+          filename: filename,
+          mediaType: mediaType,
+          role: defaultRole,
+          name: "",
+          twitter: "",
+          website: "",
+        };
+      }
+
+      function showTracks() {
+        document.querySelector("#tracks-step").hidden = false;
+        document.querySelector("#social-step").hidden = false;
+      }
+
+      // --- Add speaker ---
+
+      document.querySelector("#add-track").addEventListener("click", function () {
+        var idx = state.tracks.length;
+        var defaultRole = idx === 0 ? "Host" : "Guest " + idx;
+        state.tracks.push(makeTrack("speaker-" + (idx + 1) + ".mp4", "video", defaultRole));
+        render();
+      });
+
+      // --- Continue ---
+
+      document.querySelector("#continue-btn").addEventListener("click", function (e) {
+        if (!isComplete()) {
+          e.preventDefault();
+          return;
+        }
+        // Persist the completed setup via the shared handoff module so episode
+        // readiness can read back source type, speaker roles, names, and social links.
+        if (typeof PodcastEpisodeSetupHandoff !== "undefined") {
+          var speakers = state.tracks.map(function (t) {
+            return { role: t.role, name: t.name.trim(), twitter: t.twitter.trim(), website: t.website.trim() };
+          });
+          PodcastEpisodeSetupHandoff.save(sessionStorage, {
+            sourceType: state.sourceType,
+            speakers: speakers,
+          });
+        }
+        // Let the anchor's href carry the reviewer into episode readiness. Saving
+        // first means the next step can read the setup back; re-rendering here would
+        // strip the href before the browser follows it.
+      });
+
+      // --- Reset ---
+
+      document.querySelector("#reset-btn").addEventListener("click", function () {
+        state = { sourceType: "", riversideUrl: "", tracks: [], socialExpanded: {} };
+        trackCounter = 0;
+        optLink.setAttribute("aria-pressed", "false");
+        optFiles.setAttribute("aria-pressed", "false");
+        linkInput.hidden = true;
+        fileInput.hidden = true;
+        document.querySelector("#tracks-step").hidden = true;
+        document.querySelector("#social-step").hidden = true;
+        document.querySelector("#riverside-url").value = "";
+        filePicker.value = "";
+        render();
+      });
+
+      // --- Validation ---
+
+      function isComplete() {
+        if (!state.sourceType) { return false; }
+        if (state.tracks.length === 0) { return false; }
+        var usedRoles = {};
+        for (var i = 0; i < state.tracks.length; i++) {
+          var t = state.tracks[i];
+          if (!t.role || !t.name.trim()) { return false; }
+          if (usedRoles[t.role]) { return false; }
+          usedRoles[t.role] = true;
+        }
+        return true;
+      }
+
+      function missingFields() {
+        var missing = [];
+        if (!state.sourceType) { missing.push("Choose a recording source"); }
+        if (state.tracks.length === 0) { missing.push("Import or upload speaker tracks"); }
+        for (var i = 0; i < state.tracks.length; i++) {
+          var t = state.tracks[i];
+          if (!t.name.trim()) { missing.push(t.role + " needs a name"); }
+          if (!t.role) { missing.push("Track " + (i + 1) + " needs a role"); }
+        }
+        var roles = state.tracks.map(function (t) { return t.role; });
+        var seen = {};
+        for (var j = 0; j < roles.length; j++) {
+          if (roles[j] && seen[roles[j]]) {
+            missing.push("Duplicate role: " + roles[j]);
+          }
+          seen[roles[j]] = true;
+        }
+        return missing;
+      }
+
+      // --- Render ---
+
+      function updateContinueState() {
+        var btn = document.querySelector("#continue-btn");
+        var complete = isComplete();
+        btn.setAttribute("aria-disabled", String(!complete));
+        if (complete) {
+          var pathParam = new URLSearchParams(window.location.search).get("path");
+          var target = "episode-readiness.html";
+          btn.href = pathParam ? target + "?path=" + encodeURIComponent(pathParam) : target;
+        } else {
+          btn.removeAttribute("href");
+        }
+      }
+
+      function render() {
+        renderTracks();
+        renderSocial();
+        renderSummary();
+        updateContinueState();
+      }
+
+      function renderTracks() {
+        var list = document.querySelector("#track-list");
+        var children = [];
+        for (var i = 0; i < state.tracks.length; i++) {
+          children.push(renderTrack(state.tracks[i], i));
+        }
+        list.replaceChildren.apply(list, children);
+      }
+
+      function renderTrack(track, index) {
+        var article = document.createElement("article");
+        article.className = "track";
+        article.setAttribute("aria-label", track.role || "Unassigned track");
+
+        var header = document.createElement("div");
+        header.className = "track-header";
+
+        var icon = document.createElement("div");
+        icon.className = "track-icon";
+        icon.textContent = track.mediaType === "video" ? "\uD83C\uDFA5" : "\uD83C\uDFA4";
+        icon.setAttribute("aria-hidden", "true");
+
+        var info = document.createElement("div");
+        var nameEl = document.createElement("div");
+        nameEl.className = "track-name";
+        nameEl.textContent = track.filename;
+        var detail = document.createElement("div");
+        detail.className = "track-detail";
+        detail.textContent = track.mediaType === "video" ? "Synced speaker video" : "Audio track";
+        info.appendChild(nameEl);
+        info.appendChild(detail);
+
+        header.appendChild(icon);
+        header.appendChild(info);
+        article.appendChild(header);
+
+        var fields = document.createElement("div");
+        fields.className = "track-fields";
+
+        var roleLabel = document.createElement("label");
+        roleLabel.textContent = "Speaker role";
+        var roleSelect = document.createElement("select");
+        roleSelect.setAttribute("data-track-id", track.id);
+        roleSelect.setAttribute("data-field", "role");
+        for (var r = 0; r < ROLES.length; r++) {
+          var opt = document.createElement("option");
+          opt.value = ROLES[r];
+          opt.textContent = ROLES[r];
+          if (ROLES[r] === track.role) { opt.selected = true; }
+          roleSelect.appendChild(opt);
+        }
+        roleLabel.appendChild(roleSelect);
+
+        var nameLabel = document.createElement("label");
+        nameLabel.textContent = "Speaker name";
+        var nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.placeholder = "e.g. Sarah Chen";
+        nameInput.value = track.name;
+        nameInput.setAttribute("data-track-id", track.id);
+        nameInput.setAttribute("data-field", "name");
+        nameInput.autocomplete = "off";
+        nameLabel.appendChild(nameInput);
+
+        fields.appendChild(roleLabel);
+        fields.appendChild(nameLabel);
+        article.appendChild(fields);
+
+        article.addEventListener("input", function (e) {
+          var target = e.target;
+          var tid = target.getAttribute("data-track-id");
+          var field = target.getAttribute("data-field");
+          if (!tid || !field) { return; }
+          var t = findTrack(tid);
+          if (!t) { return; }
+          t[field] = target.value;
+          renderSummary();
+          updateContinueState();
+        });
+
+        article.addEventListener("change", function (e) {
+          var target = e.target;
+          var tid = target.getAttribute("data-track-id");
+          var field = target.getAttribute("data-field");
+          if (!tid || !field) { return; }
+          var t = findTrack(tid);
+          if (!t) { return; }
+          t[field] = target.value;
+          renderSummary();
+          updateContinueState();
+        });
+
+        return article;
+      }
+
+      function renderSocial() {
+        var list = document.querySelector("#social-list");
+        var children = [];
+        for (var i = 0; i < state.tracks.length; i++) {
+          children.push(renderSocialCard(state.tracks[i]));
+        }
+        list.replaceChildren.apply(list, children);
+      }
+
+      function renderSocialCard(track) {
+        var card = document.createElement("div");
+        card.style.marginBottom = "12px";
+
+        var expanded = state.socialExpanded[track.id] || false;
+
+        var toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "toggle-social";
+        toggle.textContent = (expanded ? "\u25BC " : "\u25B6 ") + (track.name || track.role || "Speaker") + " social links";
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.addEventListener("click", function () {
+          state.socialExpanded[track.id] = !state.socialExpanded[track.id];
+          render();
+        });
+        card.appendChild(toggle);
+
+        if (expanded) {
+          var fields = document.createElement("div");
+          fields.className = "social-fields";
+
+          var row = document.createElement("div");
+          row.className = "social-row";
+
+          var twLabel = document.createElement("label");
+          twLabel.textContent = "Twitter / X handle";
+          var twInput = document.createElement("input");
+          twInput.type = "text";
+          twInput.placeholder = "@handle";
+          twInput.value = track.twitter;
+          twInput.setAttribute("data-social-id", track.id);
+          twInput.setAttribute("data-social-field", "twitter");
+          twInput.autocomplete = "off";
+          twLabel.appendChild(twInput);
+
+          var webLabel = document.createElement("label");
+          webLabel.textContent = "Website";
+          var webInput = document.createElement("input");
+          webInput.type = "url";
+          webInput.placeholder = "https://…";
+          webInput.value = track.website;
+          webInput.setAttribute("data-social-id", track.id);
+          webInput.setAttribute("data-social-field", "website");
+          webInput.autocomplete = "off";
+          webLabel.appendChild(webInput);
+
+          row.appendChild(twLabel);
+          row.appendChild(webLabel);
+          fields.appendChild(row);
+
+          fields.addEventListener("input", function (e) {
+            var target = e.target;
+            var tid = target.getAttribute("data-social-id");
+            var field = target.getAttribute("data-social-field");
+            if (!tid || !field) { return; }
+            var t = findTrack(tid);
+            if (!t) { return; }
+            t[field] = target.value;
+            renderSummary();
+          });
+
+          card.appendChild(fields);
+        }
+
+        return card;
+      }
+
+      function renderSummary() {
+        var summary = document.querySelector("#summary");
+        var badge = document.querySelector("#status-badge");
+        var handoff = document.querySelector("#handoff-section");
+        var handoffDetail = document.querySelector("#handoff-detail");
+        var complete = isComplete();
+        var items = [];
+
+        badge.className = "status " + (complete ? "ready" : "incomplete");
+        badge.textContent = complete ? "Ready to continue" : "Incomplete";
+
+        // Source type
+        if (state.sourceType) {
+          items.push(summaryItem(true, "Source: " + (state.sourceType === "link" ? "Riverside link" : "Uploaded files")));
+        } else {
+          items.push(summaryItem(false, "No recording source selected"));
+        }
+
+        // Tracks
+        if (state.tracks.length > 0) {
+          items.push(summaryItem(true, state.tracks.length + " speaker track" + (state.tracks.length === 1 ? "" : "s") + " imported"));
+        } else {
+          items.push(summaryItem(false, "No speaker tracks"));
+        }
+
+        // Role assignment
+        var assigned = 0;
+        var named = 0;
+        var withSocial = 0;
+        for (var i = 0; i < state.tracks.length; i++) {
+          if (state.tracks[i].role) { assigned++; }
+          if (state.tracks[i].name.trim()) { named++; }
+          if (state.tracks[i].twitter.trim() || state.tracks[i].website.trim()) { withSocial++; }
+        }
+
+        if (state.tracks.length > 0) {
+          var missing = missingFields();
+          if (missing.length === 0) {
+            items.push(summaryItem(true, "All speakers named and assigned"));
+          } else {
+            for (var m = 0; m < missing.length; m++) {
+              items.push(summaryItem(false, missing[m]));
+            }
+          }
+        }
+
+        if (withSocial > 0) {
+          items.push(summaryItem(true, withSocial + " speaker" + (withSocial === 1 ? "" : "s") + " with social links"));
+        }
+
+        summary.replaceChildren.apply(summary, items);
+
+        // Handoff detail
+        if (complete) {
+          handoff.hidden = false;
+          var details = [];
+          details.push(handoffLine("Source type", state.sourceType === "link" ? "Riverside link" : "Uploaded files"));
+          for (var j = 0; j < state.tracks.length; j++) {
+            var t = state.tracks[j];
+            var socials = [];
+            if (t.twitter.trim()) { socials.push(t.twitter.trim()); }
+            if (t.website.trim()) { socials.push(t.website.trim()); }
+            var socialNote = socials.length > 0 ? " — " + socials.join(", ") : "";
+            details.push(handoffLine(t.role, t.name.trim() + socialNote));
+          }
+          handoffDetail.replaceChildren.apply(handoffDetail, details);
+        } else {
+          handoff.hidden = true;
+        }
+      }
+
+      function summaryItem(ok, text) {
+        var div = document.createElement("div");
+        div.className = "summary-item";
+        var indicator = document.createElement("span");
+        indicator.className = ok ? "check" : "missing";
+        indicator.textContent = ok ? "\u2713" : "\u2022";
+        var label = document.createElement("span");
+        label.textContent = text;
+        div.appendChild(indicator);
+        div.appendChild(label);
+        return div;
+      }
+
+      function handoffLine(label, value) {
+        var p = document.createElement("p");
+        p.className = "handoff-detail";
+        p.innerHTML = "";
+        var strong = document.createElement("strong");
+        strong.textContent = label + ": ";
+        p.appendChild(strong);
+        p.appendChild(document.createTextNode(value));
+        return p;
+      }
+
+      function findTrack(id) {
+        for (var i = 0; i < state.tracks.length; i++) {
+          if (state.tracks[i].id === id) { return state.tracks[i]; }
+        }
+        return null;
+      }
+
+      render();
+    </script>
+    <script src="../preview/ingest-nav.js" defer></script>
+  </body>
+</html>

@@ -286,11 +286,16 @@
     </style>
       <script src="../preview/ingest-nav.js" defer></script>
       <script src="../preview/layout-handoff.js"></script>
+      <script src="../preview/episode-setup-handoff.js"></script>
   </head>
   <body data-ingest-step="episode-readiness">
     <main>
       <h1>Episode readiness</h1>
       <p class="lede">Review synced speaker tracks before choosing a preset. Each flagged issue links to the right fix — this screen stays focused on getting every speaker assigned, not technical diagnostics.</p>
+      <div id="setup-carried" hidden style="margin-bottom: 18px; padding: 14px; border: 1px solid #136f63; border-radius: 8px; background: #f1f9f6; font-size: 13px;">
+        <strong style="display: block; margin-bottom: 6px; color: #075246;">Setup carried from intake</strong>
+        <div id="setup-carried-detail" style="color: #5e6b67;"></div>
+      </div>
 
       <section class="workspace" aria-label="Episode readiness workspace">
         <div class="panel">
@@ -707,6 +712,23 @@
 
       render();
       renderLayoutHandoff();
+
+      // Show the setup data carried from the episode setup intake screen.
+      (function renderSetupCarried() {
+        if (typeof PodcastEpisodeSetupHandoff === "undefined") { return; }
+        var setup = PodcastEpisodeSetupHandoff.load(typeof sessionStorage !== "undefined" ? sessionStorage : null);
+        if (!setup) { return; }
+        var banner = document.querySelector("#setup-carried");
+        var detail = document.querySelector("#setup-carried-detail");
+        if (!banner || !detail) { return; }
+        var lines = [PodcastEpisodeSetupHandoff.sourceLabel(setup)];
+        var speakerLines = PodcastEpisodeSetupHandoff.summaryLines(setup);
+        for (var i = 0; i < speakerLines.length; i++) {
+          lines.push(speakerLines[i]);
+        }
+        detail.textContent = lines.join(" · ");
+        banner.hidden = false;
+      })();
     </script>
   </body>
 </html>

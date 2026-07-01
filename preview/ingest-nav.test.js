@@ -293,19 +293,30 @@ assert.equal(
 );
 assert.equal(dynamicSocialLink.target, "_top", "dynamic embedded ingest links target the parent app");
 
-const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
-assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on first screen");
+const intakeNav = renderNavFor("episode-setup-intake.html", "episode-setup-intake");
+assert.ok(intakeNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on intake screen");
 assert.ok(
-  !firstNav.nodes.some((node) => node.textContent === "Place videos in layout"),
-  "first ingest screen does not offer layout-first placement before roles are mapped",
+  !intakeNav.nodes.some((node) => node.textContent === "Place videos in layout"),
+  "intake screen does not offer layout-first placement before roles are mapped",
 );
 assert.ok(
-  !firstNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Previous:")),
-  "first ingest screen does not render a previous link",
+  !intakeNav.nodes.some((node) => node.textContent && node.textContent.startsWith("Previous:")),
+  "intake screen does not render a previous link",
+);
+assert.ok(
+  intakeNav.nodes.some((node) => node.textContent === "Next: Episode readiness"),
+  "intake screen renders next link to episode readiness",
+);
+
+const firstNav = renderNavFor("episode-readiness.html", "episode-readiness");
+assert.ok(firstNav.nodes.some((node) => node.className === "ingest-nav"), "ingest nav renders on readiness screen");
+assert.ok(
+  firstNav.nodes.some((node) => node.textContent === "Previous: Start a new episode"),
+  "episode readiness renders previous link back to intake",
 );
 assert.ok(
   firstNav.nodes.some((node) => node.textContent === "Next: Speaker roles"),
-  "first ingest screen renders next link",
+  "episode readiness renders next link to speaker roles",
 );
 
 const middleNav = renderNavFor("speaker-role-mapping.html", "speaker-role-mapping", "?path=ingest");
@@ -324,7 +335,7 @@ assert.ok(
   "ingest path at speaker roles links forward to social context",
 );
 const currentStep = middleNav.nodes.find((node) =>
-  node.textContent === "Setup step 2 of 3 · Speaker roles",
+  node.textContent === "Setup step 3 of 4 · Speaker roles",
 );
 assert.ok(currentStep, "middle ingest screen renders visible step label");
 assert.equal(currentStep.attributes["aria-current"], "step", "current ingest step exposes aria-current");
