@@ -197,6 +197,25 @@
       backLink.textContent = "← Back to " + origin.label;
     })();
 
+    // The Continue target defaults to the episode path (data-ready-href), but the ingest path's
+    // "Place videos in layout" link brings the creator here with path=ingest. The back link
+    // already returns them to the ingest path; Continue must not silently switch them onto the
+    // episode path. Rewrite the ready href's path to match the incoming ingest shell path; any
+    // other or absent value keeps the default episode path.
+    function readyHrefForShellPath(baseHref) {
+      if (!baseHref) return baseHref;
+      const loc = options.location || global.location;
+      const search = loc && loc.search;
+      if (!search) return baseHref;
+      if (new URLSearchParams(search).get("path") !== "ingest") return baseHref;
+      const [beforeHash, hash = ""] = baseHref.split("#");
+      if (!hash) return baseHref;
+      const [screen, hashSearch = ""] = hash.split("?");
+      const hashParams = new URLSearchParams(hashSearch);
+      hashParams.set("path", "ingest");
+      return `${beforeHash}#${screen}?${hashParams.toString()}`;
+    }
+
     // When Continue is gated, a screen-reader user focusing it should hear WHY, not just that
     // it is dimmed. The live placement status names which required videos are still missing
     // (and reads "Required speaker videos ready." once they are all placed), so describe the
@@ -466,12 +485,13 @@
       if (ready && continueLink.dataset.readyHref) {
         // Enabled: the href puts it in the tab order, so no explicit tabindex is needed.
         if (typeof continueLink.removeAttribute === "function") continueLink.removeAttribute("tabindex");
+        const readyHref = readyHrefForShellPath(continueLink.dataset.readyHref);
         const state = handoff && handoff.stateFromZones(currentLayout, zones);
         if (handoff && state) {
           handoff.save(storage, state);
-          continueLink.href = handoff.hrefWithState(continueLink.dataset.readyHref, state);
+          continueLink.href = handoff.hrefWithState(readyHref, state);
         } else {
-          continueLink.href = continueLink.dataset.readyHref;
+          continueLink.href = readyHref;
         }
       } else {
         continueLink.removeAttribute("href");
