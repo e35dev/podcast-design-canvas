@@ -106,7 +106,11 @@ function createPreviewAppRouting(order) {
   }
 
   function layoutHandoffEntries(screen, params) {
-    if (!layoutHandoffScreens.has(screen) || params.get("path") !== "episode") {
+    // The layout-first Continue arrives on the episode path by default, but a creator who took
+    // the placement detour from the ingest path continues with path=ingest — the handoff carry
+    // must survive on both, or ingest-path role mapping falls back to generic names.
+    const path = params.get("path");
+    if (!layoutHandoffScreens.has(screen) || (path !== "episode" && path !== "ingest")) {
       return [];
     }
     const layout = params.get("layout");
